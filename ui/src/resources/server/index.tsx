@@ -22,7 +22,7 @@ import { ServerLoadAverage } from "./stats/current/load-average";
 import { ServerRamUsage } from "./stats/current/ram";
 import ServerDiskUsage from "./diskUsage";
 import ServerCpuUsage from "./stats/current/cpu";
-import HoverError from "@/ui/hover-error";
+import { HoverError } from "mogh_ui";
 
 export function useServer(id: string | undefined, useName?: boolean) {
   return useRead("ListServers", {}).data?.find((r) =>

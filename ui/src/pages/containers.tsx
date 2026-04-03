@@ -11,7 +11,7 @@ import { Group, MultiSelect, Stack } from "@mantine/core";
 import { useCallback, useMemo, useState } from "react";
 import { DividedChildren } from "mogh_ui";
 import ResourceLink from "@/resources/link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function Containers() {
   const [search, setSearch] = useState("");

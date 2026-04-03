@@ -2,7 +2,7 @@ import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "mogh_ui";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import { Section } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";
 import TableSkeleton from "@/ui/table-skeleton";

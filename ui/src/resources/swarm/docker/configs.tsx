@@ -6,7 +6,7 @@ import { Section } from "mogh_ui";
 import { Badge, Group } from "@mantine/core";
 import { DataTable, SortableHeader } from "mogh_ui";
 import SwarmResourceLink from "@/components/swarm/link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import NewSwarmConfig from "@/resources/swarm/new/config";
 
 export default function SwarmConfigs({

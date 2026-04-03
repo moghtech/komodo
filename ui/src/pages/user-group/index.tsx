@@ -4,7 +4,7 @@ import { ICONS } from "@/lib/icons";
 import { DividedChildren } from "mogh_ui";
 import EntityHeader from "@/ui/entity-header";
 import EntityPage from "@/ui/entity-page";
-import PageGuard from "@/ui/page-guard";
+import { PageGuard } from "mogh_ui";
 import { Section } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";

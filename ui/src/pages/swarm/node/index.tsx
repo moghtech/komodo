@@ -6,7 +6,7 @@ import { ICONS } from "@/lib/icons";
 import RemoveSwarmResource from "@/components/swarm/remove";
 import ResourceSubPage from "@/resources/sub-page";
 import SwarmNodeTabs from "./tabs";
-import PageGuard from "@/ui/page-guard";
+import { PageGuard } from "mogh_ui";
 import UpdateSwarmNodes from "@/resources/swarm/docker/nodes/update";
 
 export default function SwarmNode() {

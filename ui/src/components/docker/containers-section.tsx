@@ -11,7 +11,7 @@ import DockerResourceLink from "./link";
 import { StatusBadge } from "mogh_ui";
 import { containerStateIntention } from "@/lib/color";
 import ContainerPorts from "@/components/docker/container-ports";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import { DividedChildren } from "mogh_ui";
 
 export interface ContainersSectionProps extends SectionProps {

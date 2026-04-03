@@ -6,7 +6,7 @@ import ShowHideButton from "@/ui/show-hide-button";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import SwarmResourceLink from "./link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export interface SwarmServicesSectionProps extends SectionProps {
   id: string;

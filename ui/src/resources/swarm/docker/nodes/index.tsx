@@ -11,7 +11,7 @@ import {
   swarmNodeRoleIntention,
   swarmNodeStateIntention,
 } from "@/lib/color";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import { RowSelectionState } from "@tanstack/react-table";
 import UpdateSwarmNode from "./update";
 import { HoverCard } from "@mantine/core";

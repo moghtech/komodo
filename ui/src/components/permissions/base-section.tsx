@@ -13,7 +13,7 @@ import { Types } from "komodo_client";
 import { useState } from "react";
 import PermissionLevelSelector from "./level-selector";
 import SpecificPermissionSelector from "./specific-selector";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import LabelledSwitch from "@/ui/labelled-switch";
 
 export interface BasePermissionsSectionProps extends SectionProps {

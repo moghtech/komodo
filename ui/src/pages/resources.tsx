@@ -18,7 +18,7 @@ import TagsFilter from "@/components/tags/filter";
 import ResourceNotFound from "@/resources/not-found";
 import ExportToml from "@/components/export-toml";
 import ServerShowStats from "@/resources/server/show-stats";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import LabelledSwitch from "@/ui/labelled-switch";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {

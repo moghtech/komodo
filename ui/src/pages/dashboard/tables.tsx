@@ -14,7 +14,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNoResources from "./no-resources";
 import ShowHideButton from "@/ui/show-hide-button";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function DashboardTables() {
   const [search, setSearch] = useState("");

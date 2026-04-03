@@ -9,7 +9,7 @@ import SwarmResourceLink from "./link";
 import { useRead } from "@/lib/hooks";
 import { swarmTaskStateIntention } from "@/lib/color";
 import { StatusBadge } from "mogh_ui";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export interface SwarmTasksSectionProps extends SectionProps {
   id: string;

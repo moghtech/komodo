@@ -3,7 +3,7 @@ import { useRead, useSetTitle } from "@/lib/hooks";
 import ResourceSubPage from "@/resources/sub-page";
 import { useSwarm } from "@/resources/swarm";
 import { ICONS } from "@/lib/icons";
-import PageGuard from "@/ui/page-guard";
+import { PageGuard } from "mogh_ui";
 import { Badge } from "@mantine/core";
 import { useParams } from "react-router-dom";
 import SwarmSecretTabs from "./tabs";

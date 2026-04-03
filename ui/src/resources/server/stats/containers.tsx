@@ -8,7 +8,7 @@ import { useState } from "react";
 import { filterBySplit } from "@/lib/utils";
 import DockerResourceLink from "@/components/docker/link";
 import { useIsServerAvailable } from "../hooks";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 
 export default function ServerContainerStats({ id }: { id: string }) {
