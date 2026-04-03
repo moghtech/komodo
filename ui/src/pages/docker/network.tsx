@@ -7,7 +7,7 @@ import { useServer } from "@/resources/server";
 import ResourceSubPage from "@/resources/sub-page";
 import { ICONS } from "@/lib/icons";
 import { ConfirmButton } from "mogh_ui";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { Section } from "mogh_ui";
 import { Center, Group, Loader, Text } from "@mantine/core";
 import { Types } from "komodo_client";

@@ -2,8 +2,8 @@ import { useRead } from "@/lib/hooks";
 import { useServer } from ".";
 import { Group, HoverCard, Text } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
-import { colorByIntention } from "@/lib/color";
 import { Types } from "komodo_client";
+import { hexColorByIntention } from "mogh_ui";
 
 export default function ServerVersion({ id }: { id: string }) {
   const coreVersion = useRead("GetVersion", {}).data?.version;
@@ -17,11 +17,11 @@ export default function ServerVersion({ id }: { id: string }) {
       <HoverCard.Target>
         <Group gap="xs" wrap="nowrap">
           {!serverVersion ? (
-            <ICONS.Alert size="1rem" color={colorByIntention("Unknown")} />
+            <ICONS.Alert size="1rem" color={hexColorByIntention("Unknown")} />
           ) : mismatch ? (
-            <ICONS.Alert size="1rem" color={colorByIntention("Critical")} />
+            <ICONS.Alert size="1rem" color={hexColorByIntention("Critical")} />
           ) : (
-            <ICONS.Check size="1rem" color={colorByIntention("Good")} />
+            <ICONS.Check size="1rem" color={hexColorByIntention("Good")} />
           )}
           <Text>{serverVersion ?? "Unknown"}</Text>
         </Group>

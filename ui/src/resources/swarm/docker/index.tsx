@@ -9,7 +9,7 @@ import {
   MobileFriendlyTabsSelector,
   TabNoContent,
 } from "mogh_ui";
-import { colorByIntention, swarmStateIntention } from "@/lib/color";
+import { swarmStateIntention } from "@/lib/color";
 import { ICONS } from "@/lib/icons";
 import SwarmNodes from "./nodes";
 import SwarmStacks from "./stacks";
@@ -119,7 +119,7 @@ export default function SwarmDockerResources({
 
   return (
     <Section titleOther={titleOther}>
-      <Tabs color={colorByIntention(swarmStateIntention(state))} value={view}>
+      <Tabs color={swarmStateIntention(state)} value={view}>
         {View}
       </Tabs>
     </Section>

@@ -9,7 +9,7 @@ import { useMemo } from "react";
 import { useSwarm } from ".";
 import SwarmConfig from "./config";
 import { Tabs } from "@mantine/core";
-import { colorByIntention, swarmStateIntention } from "@/lib/color";
+import { swarmStateIntention } from "@/lib/color";
 import SwarmDockerResources from "./docker";
 import InspectSection from "@/components/inspect-section";
 import SwarmHostedResourcesSection from "./resources";
@@ -102,10 +102,7 @@ export default function SwarmTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs
-      color={colorByIntention(swarmStateIntention(swarmInfo?.state))}
-      value={view}
-    >
+    <Tabs color={swarmStateIntention(swarmInfo?.state)} value={view}>
       {View}
     </Tabs>
   );

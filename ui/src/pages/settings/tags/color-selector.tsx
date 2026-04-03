@@ -1,4 +1,4 @@
-import { fmtUpperCamelcase } from "@/lib/formatting";
+import { fmtUpperCamelcase } from "mogh_ui";
 import { useInvalidate, useSearchCombobox, useWrite } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";

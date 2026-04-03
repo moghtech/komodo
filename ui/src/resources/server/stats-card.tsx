@@ -12,7 +12,7 @@ import {
   Text,
   useComputedColorScheme,
 } from "@mantine/core";
-import { ColorIntention, hexColorByIntention } from "@/lib/color";
+import { ColorIntention, hexColorByIntention } from "mogh_ui";
 import { LucideIcon } from "lucide-react";
 
 export interface ServerStatsCardProps {

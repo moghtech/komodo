@@ -9,7 +9,7 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
+import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
 import { MonacoEditor } from "@/components/monaco";
 import Config from "@/ui/config";
 import ActionLastRun from "./last-run";

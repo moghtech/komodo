@@ -10,7 +10,7 @@ import {
 } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { Tabs } from "@mantine/core";
-import { colorByIntention, deploymentStateIntention } from "@/lib/color";
+import { deploymentStateIntention } from "@/lib/color";
 import DeploymentConfig from "./config";
 import LogSection from "@/components/log-section";
 import TerminalSection from "@/components/terminal/section";
@@ -129,9 +129,7 @@ export default function DeploymentTabs({ id }: { id: string }) {
 
   return (
     <Tabs
-      color={colorByIntention(
-        deploymentStateIntention(state, info?.update_available),
-      )}
+      color={deploymentStateIntention(state, info?.update_available)}
       value={view}
     >
       {View}

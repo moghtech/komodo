@@ -1,4 +1,4 @@
-import { hexColorByIntention } from "@/lib/color";
+import { hexColorByIntention } from "mogh_ui";
 import { Group, Progress, StackProps, Text } from "@mantine/core";
 import { ReactNode } from "react";
 import InfoCard from "./info-card";

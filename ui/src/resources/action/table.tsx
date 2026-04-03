@@ -1,5 +1,5 @@
 import { Types } from "komodo_client";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { useSelectedResources } from "@/lib/hooks";
 import { ActionComponents } from ".";
 import TableTags from "@/components/tags/table";

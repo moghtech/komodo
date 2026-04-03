@@ -2,7 +2,7 @@ import { useInvalidate, useUserTargetPermissions, useWrite } from "@/lib/hooks";
 import { levelSortingFn } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import SearchInput from "@/ui/search-input";
 import { Section, SectionProps } from "mogh_ui";
 import { Group, Text } from "@mantine/core";

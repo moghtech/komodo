@@ -1,6 +1,6 @@
-import { colorByIntention, ColorIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
 import {
+  ColorIntention,
   MobileFriendlyTabsSelector,
   TabNoContent,
 } from "mogh_ui";
@@ -88,7 +88,7 @@ export default function SwarmNodeTabs({
   }
 
   return (
-    <Tabs color={colorByIntention(intent)} value={view}>
+    <Tabs color={intent} value={view}>
       {View}
     </Tabs>
   );

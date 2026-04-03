@@ -1,9 +1,4 @@
-import {
-  fmtDateWithMinutes,
-  fmtDuration,
-  fmtOperation,
-  fmtVersion,
-} from "@/lib/formatting";
+import { fmtVersion } from "@/lib/formatting";
 import { useRead } from "@/lib/hooks";
 import { useWebsocketMessages } from "@/lib/socket";
 import { updateLogToHtml, versionIsNone } from "@/lib/utils";
@@ -12,7 +7,12 @@ import { ActionIcon, Code, Drawer, Group, Stack, Text } from "@mantine/core";
 import UserAvatar from "@/components/user-avatar";
 import { ICONS } from "@/lib/icons";
 import { Clock, Link2, SquarePen } from "lucide-react";
-import { CopyButton } from "mogh_ui";
+import {
+  CopyButton,
+  fmtDateWithMinutes,
+  fmtDuration,
+  fmtUpperCamelcase,
+} from "mogh_ui";
 import { Section } from "mogh_ui";
 import { MonacoDiffEditor } from "@/components/monaco";
 import LoadingScreen from "@/ui/loading-screen";
@@ -83,7 +83,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
       {/** HEADER */}
       <Group justify="space-between">
         <Text fz="h2">
-          {fmtOperation(update.operation)}{" "}
+          {fmtUpperCamelcase(update.operation)}{" "}
           {!versionIsNone(update.version) && fmtVersion(update.version)}
         </Text>
         <ActionIcon size="lg" variant="filled" color="red" onClick={close}>

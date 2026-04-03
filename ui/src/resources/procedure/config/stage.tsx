@@ -1,4 +1,4 @@
-import { DataTable } from "@/ui/data-table";
+import { DataTable } from "mogh_ui";
 import {
   ActionIcon,
   Button,

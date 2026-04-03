@@ -1,11 +1,8 @@
-import {
-  containerStateIntention,
-  hexColorByIntention,
-  swarmStateIntention,
-} from "@/lib/color";
+import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { Group, Text } from "@mantine/core";
+import { hexColorByIntention } from "mogh_ui";
 import { Link } from "react-router-dom";
 
 export interface StackServiceLinkProps {

@@ -11,7 +11,7 @@ import { Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import NewProviderAccount from "./new";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import DeleteProviderAccount from "./delete";
 import ProvidersFromConfig from "./from-config";
 import { CopyButton } from "mogh_ui";

@@ -1,8 +1,8 @@
 import { useRead } from "@/lib/hooks";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import { Box, Group, HoverCard, Loader, Stack, Text } from "@mantine/core";
 import SwarmResourceLink, { SwarmResourceType } from "@/components/swarm/link";
-import { ColorIntention } from "@/lib/color";
+import { ColorIntention } from "mogh_ui";
 
 export interface SwarmHeaderInfoProps<R> {
   swarmId: string;
