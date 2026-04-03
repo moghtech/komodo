@@ -3,7 +3,7 @@ import { UsableResource } from ".";
 import { notifications } from "@mantine/notifications";
 import TextUpdateModal from "@/ui/text-update-modal";
 import { Button, Text } from "@mantine/core";
-import { fmtUpperCamelcase } from "@/lib/formatting";
+import { fmtUpperCamelcase } from "mogh_ui";
 
 export default function ResourceDescription({
   type,

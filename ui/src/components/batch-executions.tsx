@@ -1,4 +1,4 @@
-import { fmtUpperCamelcase } from "@/lib/formatting";
+import { fmtUpperCamelcase } from "mogh_ui";
 import { useExecute, useSelectedResources, useWrite } from "@/lib/hooks";
 import { usableResourceExecuteKey } from "@/lib/utils";
 import { UsableResource } from "@/resources";

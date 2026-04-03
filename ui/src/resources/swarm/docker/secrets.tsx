@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { useSwarmDockerSearch } from ".";
 import { Section } from "mogh_ui";
 import { Badge, Group } from "@mantine/core";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import SwarmResourceLink from "@/components/swarm/link";
 import SearchInput from "@/ui/search-input";
 import NewSwarmSecret from "@/resources/swarm/new/secret";

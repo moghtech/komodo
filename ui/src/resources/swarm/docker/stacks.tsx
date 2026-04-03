@@ -3,9 +3,9 @@ import { filterBySplit } from "@/lib/utils";
 import { ReactNode } from "react";
 import { useSwarmDockerSearch } from ".";
 import { Section } from "mogh_ui";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import SwarmResourceLink from "@/components/swarm/link";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import { swarmStateIntention } from "@/lib/color";
 import SearchInput from "@/ui/search-input";
 

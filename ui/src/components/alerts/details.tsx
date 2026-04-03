@@ -1,8 +1,4 @@
-import {
-  fmtDateWithMinutes,
-  fmtDuration,
-  fmtUpperCamelcase,
-} from "@/lib/formatting";
+import { fmtDateWithMinutes, fmtDuration, fmtUpperCamelcase } from "mogh_ui";
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { ActionIcon, Drawer, Group, Stack, Text } from "@mantine/core";

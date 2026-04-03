@@ -1,11 +1,10 @@
 import { useSelectedResources } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, fmtRateBytes, SortableHeader } from "mogh_ui";
 import { BoxProps, Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useServerStats, useServerThresholds } from "@/resources/server/hooks";
 import StatCell from "@/ui/stat-cell";
-import { fmtRateBytes } from "@/lib/formatting";
 import ServerVersion from "@/resources/server/version";
 import ServerDiskUsage from "../diskUsage";
 

@@ -1,4 +1,4 @@
-import { fmtDate, fmtVersion } from "@/lib/formatting";
+import { fmtVersion } from "@/lib/formatting";
 import { useRead, useSearchCombobox } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { filterBySplit } from "@/lib/utils";
@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { ChevronsUpDown } from "lucide-react";
+import { fmtDate } from "mogh_ui";
 
 export interface DeploymentImageConfigProps {
   image: Types.DeploymentImage | undefined;

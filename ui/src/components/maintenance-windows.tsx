@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useState } from "react";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { Calendar, CalendarDays, Clock } from "lucide-react";
 import { fmtMaintenanceWindowTime } from "@/lib/formatting";
 import { ICONS } from "@/lib/icons";

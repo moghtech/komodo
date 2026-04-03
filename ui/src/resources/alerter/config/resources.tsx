@@ -4,7 +4,7 @@ import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { ICONS } from "@/lib/icons";
 import { ConfigItem } from "@/ui/config/item";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import SearchInput from "@/ui/search-input";
 import { Button, Group, Modal, Stack, Switch, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";

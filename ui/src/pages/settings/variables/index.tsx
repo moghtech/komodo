@@ -8,7 +8,7 @@ import {
 } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { CopyButton } from "mogh_ui";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import {
   Badge,
   Button,

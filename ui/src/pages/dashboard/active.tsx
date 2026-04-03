@@ -2,7 +2,6 @@ import {
   actionStateIntention,
   buildStateIntention,
   deploymentStateIntention,
-  hexColorByIntention,
   procedureStateIntention,
   repoStateIntention,
   stackStateIntention,
@@ -10,9 +9,9 @@ import {
 import { useRead } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { ICONS } from "@/lib/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, hexColorByIntention, SortableHeader } from "mogh_ui";
 import { Section } from "mogh_ui";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Circle } from "lucide-react";

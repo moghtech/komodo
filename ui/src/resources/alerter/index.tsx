@@ -6,7 +6,7 @@ import NewResource from "@/resources/new";
 import AlerterTable from "./table";
 import ResourceHeader from "../header";
 import AlerterConfig from "./config";
-import { hexColorByIntention } from "@/lib/color";
+import { hexColorByIntention } from "mogh_ui";
 import BatchExecutions from "@/components/batch-executions";
 import { ConfirmButton } from "mogh_ui";
 

@@ -5,7 +5,7 @@ import { filterBySplit } from "@/lib/utils";
 import { Section } from "mogh_ui";
 import { Prune } from "../executions";
 import { Badge, Group } from "@mantine/core";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import DockerResourceLink from "@/components/docker/link";
 import SearchInput from "@/ui/search-input";
 

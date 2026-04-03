@@ -1,4 +1,4 @@
-import { DataTable } from "@/ui/data-table";
+import { DataTable } from "mogh_ui";
 import { Section } from "mogh_ui";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";

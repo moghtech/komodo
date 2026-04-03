@@ -1,4 +1,4 @@
-import { fmtUpperCamelcase } from "@/lib/formatting";
+import { fmtUpperCamelcase } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { ConfigItem } from "@/ui/config/item";
 import { Badge, Group, Select } from "@mantine/core";
