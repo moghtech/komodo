@@ -4,7 +4,7 @@ import { Prune } from "@/resources/server/executions";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Section, SectionProps } from "mogh_ui";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import DockerResourceLink from "./link";

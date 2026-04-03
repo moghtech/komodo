@@ -1,7 +1,7 @@
 import { useUser } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { ConfirmButton } from "mogh_ui";
-import ConfirmModal from "@/ui/confirm-modal";
+import { ConfirmModal } from "mogh_ui";
 import { DataTable } from "mogh_ui";
 import { StatusBadge } from "mogh_ui";
 import { Badge, BoxProps } from "@mantine/core";

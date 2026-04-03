@@ -11,7 +11,7 @@ import { updateLogToHtml } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import { DividedChildren } from "mogh_ui";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { MonacoEditor } from "@/components/monaco";
 
 export default function ResourceSyncInfo({

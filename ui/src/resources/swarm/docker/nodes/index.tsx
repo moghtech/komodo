@@ -15,7 +15,7 @@ import { SearchInput } from "mogh_ui";
 import { RowSelectionState } from "@tanstack/react-table";
 import UpdateSwarmNode from "./update";
 import { HoverCard } from "@mantine/core";
-import LabelsGroup from "@/ui/labels-group";
+import { LabelsGroup } from "mogh_ui";
 
 export default function SwarmNodes({
   id,

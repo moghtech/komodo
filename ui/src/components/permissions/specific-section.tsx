@@ -10,7 +10,7 @@ import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import ResourceTypeSelector from "../resource-type-selector";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 import PermissionLevelSelector from "./level-selector";
 import SpecificPermissionSelector from "./specific-selector";
 

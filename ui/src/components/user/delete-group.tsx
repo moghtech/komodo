@@ -1,6 +1,6 @@
 import { useInvalidate, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import ConfirmModal from "@/ui/confirm-modal";
+import { ConfirmModal } from "mogh_ui";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { useNavigate } from "react-router-dom";

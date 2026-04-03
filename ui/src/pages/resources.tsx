@@ -12,14 +12,14 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import { Page } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
-import TableSkeleton from "@/ui/table-skeleton";
+import { TableSkeleton } from "mogh_ui";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";
 import ResourceNotFound from "@/resources/not-found";
 import ExportToml from "@/components/export-toml";
 import ServerShowStats from "@/resources/server/show-stats";
 import { SearchInput } from "mogh_ui";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;

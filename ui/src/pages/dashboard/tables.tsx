@@ -13,7 +13,7 @@ import { Types } from "komodo_client";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNoResources from "./no-resources";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
 
 export default function DashboardTables() {
