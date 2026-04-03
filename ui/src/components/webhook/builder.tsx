@@ -4,7 +4,7 @@ import {
   WebhookIdOrName,
   WebhookIntegration,
 } from "@/lib/hooks";
-import { ConfigItem, ConfigItemProps } from "@/ui/config/item";
+import { ConfigItem, ConfigItemProps } from "mogh_ui";
 import { Select, Stack } from "@mantine/core";
 import { ReactNode } from "react";
 

@@ -3,7 +3,7 @@ import { filterBySplit } from "@/lib/utils";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { ICONS } from "@/lib/icons";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
 import { Button, Group, Modal, Stack, Switch, Text } from "@mantine/core";

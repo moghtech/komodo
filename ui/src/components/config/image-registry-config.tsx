@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { ActionIcon, Badge, Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import ProviderSelector from "./provider-selector";

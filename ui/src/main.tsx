@@ -14,6 +14,8 @@ import "@mantine/notifications/styles.css";
 import "@mantine/spotlight/styles.css";
 // Import local css after to avoid mantine default body color flash.
 import "./index.scss";
+// Import mogh_ui scss
+import "mogh_ui/index.scss";
 
 initMonaco();
 
