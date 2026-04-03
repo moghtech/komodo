@@ -167,6 +167,20 @@ init_admin_password = "changeme"
 ## Default: false
 disable_user_registration = false
 
+## Disable local (username/password) user registration only.
+## When set to true, the "Sign Up" button is hidden and local signups are blocked,
+## but OIDC and other external provider signups are still allowed.
+## If not set, falls back to `disable_user_registration`.
+## Env: KOMODO_DISABLE_LOCAL_USER_REGISTRATION
+# disable_local_user_registration = true
+
+## Disable OIDC user registration only.
+## When set to true, new users cannot register via OIDC,
+## but local and other provider signups are still allowed.
+## If not set, falls back to `disable_user_registration`.
+## Env: KOMODO_DISABLE_OIDC_USER_REGISTRATION
+# disable_oidc_user_registration = true
+
 ## New users will be automatically enabled when they sign up.
 ## Otherwise, new users will be disabled on first login.
 ## The first user to login will always be enabled on creation.

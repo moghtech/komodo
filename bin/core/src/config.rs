@@ -345,6 +345,12 @@ pub fn core_config() -> &'static CoreConfig {
       disable_user_registration: env
         .komodo_disable_user_registration
         .unwrap_or(config.disable_user_registration),
+      disable_local_user_registration: env
+        .komodo_disable_local_user_registration
+        .or(config.disable_local_user_registration),
+      disable_oidc_user_registration: env
+        .komodo_disable_oidc_user_registration
+        .or(config.disable_oidc_user_registration),
       disable_non_admin_create: env
         .komodo_disable_non_admin_create
         .unwrap_or(config.disable_non_admin_create),

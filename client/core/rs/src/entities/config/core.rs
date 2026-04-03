@@ -124,6 +124,10 @@ pub struct Env {
   pub komodo_enable_new_users: Option<bool>,
   /// Override `disable_user_registration`
   pub komodo_disable_user_registration: Option<bool>,
+  /// Override `disable_local_user_registration`
+  pub komodo_disable_local_user_registration: Option<bool>,
+  /// Override `disable_oidc_user_registration`
+  pub komodo_disable_oidc_user_registration: Option<bool>,
   /// Override `lock_login_credentials_for`
   pub komodo_lock_login_credentials_for: Option<Vec<String>>,
   /// Override `disable_confirm_dialog`
@@ -456,6 +460,20 @@ pub struct CoreConfig {
   /// With `disable_user_registration = true`, only the first user to log in will registered as a user.
   #[serde(default)]
   pub disable_user_registration: bool,
+
+  /// Disable local (username/password) user registration only.
+  /// When set, the "Sign Up" button is hidden and local signups are blocked,
+  /// but OIDC and other external provider signups are still allowed.
+  /// If not set, falls back to `disable_user_registration`.
+  #[serde(default)]
+  pub disable_local_user_registration: Option<bool>,
+
+  /// Disable OIDC user registration only.
+  /// When set, new users cannot register via OIDC,
+  /// but local and other provider signups are still allowed.
+  /// If not set, falls back to `disable_user_registration`.
+  #[serde(default)]
+  pub disable_oidc_user_registration: Option<bool>,
 
   /// List of usernames for which the update username / password
   /// APIs are disabled. Used by demo to lock the 'demo' : 'demo' login.
@@ -826,6 +844,8 @@ impl Default for CoreConfig {
       transparent_mode: Default::default(),
       enable_new_users: Default::default(),
       disable_user_registration: Default::default(),
+      disable_local_user_registration: Default::default(),
+      disable_oidc_user_registration: Default::default(),
       lock_login_credentials_for: Default::default(),
       disable_non_admin_create: Default::default(),
       jwt_secret: Default::default(),
@@ -909,6 +929,10 @@ impl CoreConfig {
       enable_fancy_toml: config.enable_fancy_toml,
       enable_new_users: config.enable_new_users,
       disable_user_registration: config.disable_user_registration,
+      disable_local_user_registration: config
+        .disable_local_user_registration,
+      disable_oidc_user_registration: config
+        .disable_oidc_user_registration,
       disable_non_admin_create: config.disable_non_admin_create,
       lock_login_credentials_for: config.lock_login_credentials_for,
       local_auth: config.local_auth,

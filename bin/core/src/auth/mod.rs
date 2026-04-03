@@ -205,6 +205,20 @@ impl AuthImpl for KomodoAuthImpl {
     core_config().disable_user_registration
   }
 
+  fn local_registration_disabled(&self) -> bool {
+    let config = core_config();
+    config
+      .disable_local_user_registration
+      .unwrap_or(config.disable_user_registration)
+  }
+
+  fn oidc_registration_disabled(&self) -> bool {
+    let config = core_config();
+    config
+      .disable_oidc_user_registration
+      .unwrap_or(config.disable_user_registration)
+  }
+
   fn validate_username(
     &self,
     username: &str,
