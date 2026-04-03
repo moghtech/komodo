@@ -8,7 +8,7 @@ import ResourceHeader from "../header";
 import AlerterConfig from "./config";
 import { hexColorByIntention } from "@/lib/color";
 import BatchExecutions from "@/components/batch-executions";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 
 export function useAlerter(id: string | undefined, useName?: boolean) {
   return useRead("ListAlerters", {}).data?.find((r) =>

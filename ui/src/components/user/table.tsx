@@ -1,6 +1,6 @@
 import { useUser } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import ConfirmModal from "@/ui/confirm-modal";
 import { DataTable } from "@/ui/data-table";
 import StatusBadge from "@/ui/status-badge";

@@ -1,5 +1,5 @@
 import { ICONS } from "@/lib/icons";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { CopyText } from "mogh_ui";
 import { DataTable } from "@/ui/data-table";
 import { Text } from "@mantine/core";

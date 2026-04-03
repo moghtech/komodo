@@ -9,7 +9,7 @@ import { Types } from "komodo_client";
 import { DividedChildren } from "mogh_ui";
 import ResourceLink from "@/resources/link";
 import { UsableResource } from "@/resources";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { SquarePlay } from "lucide-react";
 import { MonacoDiffEditor, MonacoEditor } from "@/components/monaco";
 import { colorByIntention, diffTypeIntention } from "@/lib/color";

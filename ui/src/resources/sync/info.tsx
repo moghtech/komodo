@@ -5,7 +5,7 @@ import { ReactNode, useState } from "react";
 import { useFullResourceSync } from ".";
 import { Section } from "mogh_ui";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";

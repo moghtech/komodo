@@ -6,7 +6,7 @@ import { DEFAULT_STACK_FILE_CONTENTS, useFullStack, useStack } from ".";
 import { Types } from "komodo_client";
 import { Section } from "mogh_ui";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
 import { CopyButton } from "mogh_ui";

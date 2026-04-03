@@ -2,7 +2,7 @@ import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { useRepo } from ".";
 import { useBuilder } from "../builder";
 import { Types } from "komodo_client";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 
 export function CloneRepo({ id }: { id: string }) {

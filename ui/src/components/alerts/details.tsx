@@ -14,7 +14,7 @@ import LoadingScreen from "@/ui/loading-screen";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
 import { notifications } from "@mantine/notifications";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { To, useLocation, useNavigate } from "react-router-dom";
 
 const alertDetailsAtom = atom<string>();

@@ -7,7 +7,7 @@ import {
 } from "@/lib/hooks";
 import { Button, Loader } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { useFullResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";
 import { fileContentsEmpty, resourceSyncNoChanges } from "@/lib/utils";

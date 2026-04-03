@@ -1,7 +1,7 @@
 import { useExecute, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { useStack } from ".";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
