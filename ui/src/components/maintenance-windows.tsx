@@ -319,7 +319,7 @@ function MaintenanceWindowForm({
 
       {formData.schedule_type === "Weekly" && (
         <Select
-          value={formData.schedule_type}
+          value={formData.schedule_type as string}
           onChange={(value) =>
             value &&
             setFormData((data) => ({
