@@ -6,7 +6,7 @@ import { useCtrlKeyListener, useKeyListener } from "@/lib/hooks";
 import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { deepCompare, envToText } from "@/lib/utils";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 
 export default function ConfirmUpdate<T>({
   original,

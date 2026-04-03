@@ -12,7 +12,7 @@ import { updateLogToHtml } from "@/lib/utils";
 import { CopyButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { languageFromPath, MonacoEditor } from "@/components/monaco";
 
 export default function StackInfo({

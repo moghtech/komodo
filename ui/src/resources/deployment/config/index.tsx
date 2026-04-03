@@ -15,7 +15,7 @@ import SecretsSearch from "@/components/config/secrets-search";
 import DeploymentRestartSelector from "./restart";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
-import InputList from "@/ui/input-list";
+import { InputList } from "mogh_ui";
 import { TerminationSignal, TerminationTimeout } from "./termination";
 import { ReactNode } from "react";
 import { useFullDeployment } from "..";

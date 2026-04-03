@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import Topbar from "@/app/topbar";
 import Sidebar from "@/app/sidebar";
-import LoadingScreen from "@/ui/loading-screen";
+import { LoadingScreen } from "mogh_ui";
 import UpdateDetails from "@/components/updates/details";
 import AlertDetails from "@/components/alerts/details";
 

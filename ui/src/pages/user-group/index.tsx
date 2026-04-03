@@ -10,7 +10,7 @@ import { Group, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useParams } from "react-router-dom";
 import UserGroupAddUser from "./add-user";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 import BasePermissionsSection from "@/components/permissions/base-section";
 import SpecificPermissionsSection from "@/components/permissions/specific-section";
 import DeleteUserGroup from "./delete";

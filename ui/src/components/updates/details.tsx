@@ -15,7 +15,7 @@ import {
 } from "mogh_ui";
 import { Section } from "mogh_ui";
 import { MonacoDiffEditor } from "@/components/monaco";
-import LoadingScreen from "@/ui/loading-screen";
+import { LoadingScreen } from "mogh_ui";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
 import { To, useLocation, useNavigate } from "react-router-dom";

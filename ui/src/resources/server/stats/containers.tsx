@@ -1,7 +1,7 @@
 import { useRead } from "@/lib/hooks";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Section } from "mogh_ui";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";

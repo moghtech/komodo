@@ -2,7 +2,7 @@ import { ICONS } from "@/lib/icons";
 import { Section, SectionProps } from "mogh_ui";
 import { useState } from "react";
 import { MonacoEditor } from "./monaco";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { Box } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";

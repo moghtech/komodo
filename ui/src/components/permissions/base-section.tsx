@@ -14,7 +14,7 @@ import { useState } from "react";
 import PermissionLevelSelector from "./level-selector";
 import SpecificPermissionSelector from "./specific-selector";
 import { SearchInput } from "mogh_ui";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 
 export interface BasePermissionsSectionProps extends SectionProps {
   userTarget: Types.UserTarget;

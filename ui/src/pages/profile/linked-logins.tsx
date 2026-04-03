@@ -6,7 +6,7 @@ import { notifications } from "@mantine/notifications";
 import { useLoginOptions, useManageAuth } from "@/lib/hooks";
 import { DataTable } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
-import ConfirmModal from "@/ui/confirm-modal";
+import { ConfirmModal } from "mogh_ui";
 import { Section } from "mogh_ui";
 
 const useLinkWithExternalLogin = () => {

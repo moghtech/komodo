@@ -15,7 +15,7 @@ import { ICONS } from "@/lib/icons";
 import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 import TimezoneSelector from "@/components/timezone-selector";
 import WebhookBuilder from "@/components/webhook/builder";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
 import { useFullProcedure } from "..";
 

@@ -4,8 +4,8 @@ import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
 import { Section } from "mogh_ui";
-import ShowHideButton from "@/ui/show-hide-button";
-import TableSkeleton from "@/ui/table-skeleton";
+import { ShowHideButton } from "mogh_ui";
+import { TableSkeleton } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { useState } from "react";
 

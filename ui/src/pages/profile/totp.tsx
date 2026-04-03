@@ -13,7 +13,7 @@ import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { Check, RotateCcwKey, Trash } from "lucide-react";
 import { useState } from "react";
-import ConfirmModal from "@/ui/confirm-modal";
+import { ConfirmModal } from "mogh_ui";
 
 export const EnrollTotp = ({ user }: { user: Types.User }) => {
   const userInvalidate = useUserInvalidate();

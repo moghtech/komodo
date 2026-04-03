@@ -5,7 +5,7 @@ import { Types } from "komodo_client";
 import { hexColorByIntention } from "mogh_ui";
 import { useRead } from "@/lib/hooks";
 import { ChartLine, Download, Upload } from "lucide-react";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import {
   Center,
   Group,

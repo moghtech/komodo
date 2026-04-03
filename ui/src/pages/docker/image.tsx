@@ -9,7 +9,7 @@ import { ConfirmButton, fmtDateWithMinutes, fmtSizeBytes } from "mogh_ui";
 import { DataTable } from "mogh_ui";
 import { PageGuard } from "mogh_ui";
 import { Section } from "mogh_ui";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { Box, Center, Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useState } from "react";

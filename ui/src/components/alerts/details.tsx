@@ -6,7 +6,7 @@ import { ICONS } from "@/lib/icons";
 import { Clock, Link2 } from "lucide-react";
 import { CopyButton } from "mogh_ui";
 import { MonacoEditor } from "@/components/monaco";
-import LoadingScreen from "@/ui/loading-screen";
+import { LoadingScreen } from "mogh_ui";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
 import { notifications } from "@mantine/notifications";

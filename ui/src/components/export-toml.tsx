@@ -5,7 +5,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { MonacoEditor } from "@/components/monaco";
 import { CopyButton } from "mogh_ui";
-import LoadingScreen from "@/ui/loading-screen";
+import { LoadingScreen } from "mogh_ui";
 
 export interface ExportTomlProps {
   targets?: Types.ResourceTarget[];

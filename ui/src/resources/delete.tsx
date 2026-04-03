@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { UsableResource } from ".";
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { usableResourcePath } from "@/lib/utils";
-import ConfirmModal from "@/ui/confirm-modal";
+import { ConfirmModal } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 
 export default function DeleteResource({
