@@ -10,7 +10,7 @@ import {
   Text,
 } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
-import ThemeToggle from "@/ui/theme-toggle";
+import { ThemeToggle } from "mogh_ui";
 import UserDropdown from "@/app/topbar/user-dropdown";
 import TopbarUpdates from "@/app/topbar/updates";
 import OmniSearch from "@/app/topbar/omni-search";

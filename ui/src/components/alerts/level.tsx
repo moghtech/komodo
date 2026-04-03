@@ -1,5 +1,5 @@
 import { alertLevelIntention } from "@/lib/color";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import { Types } from "komodo_client";
 
 export default function AlertLevel({

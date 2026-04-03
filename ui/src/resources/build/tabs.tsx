@@ -1,4 +1,4 @@
-import { buildStateIntention, colorByIntention } from "@/lib/color";
+import { buildStateIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import {
   MobileFriendlyTabsSelector,
@@ -86,10 +86,7 @@ export default function BuildTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs
-      color={colorByIntention(buildStateIntention(info?.state))}
-      value={view}
-    >
+    <Tabs color={buildStateIntention(info?.state)} value={view}>
       {View}
     </Tabs>
   );

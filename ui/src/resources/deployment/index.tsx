@@ -1,9 +1,9 @@
-import { deploymentStateIntention, hexColorByIntention } from "@/lib/color";
+import { deploymentStateIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import DeploymentTable from "./table";
 import DeploymentTabs from "./tabs";
 import {
@@ -26,6 +26,7 @@ import DeploymentUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
+import { hexColorByIntention } from "mogh_ui";
 
 export function useDeployment(id: string | undefined, useName?: boolean) {
   return useRead("ListDeployments", {}).data?.find((r) =>

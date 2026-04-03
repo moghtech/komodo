@@ -1,6 +1,6 @@
 import { filterMultitermBySplit } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { Section, SectionProps } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";
 import { Group } from "@mantine/core";
@@ -8,7 +8,7 @@ import { Types } from "komodo_client";
 import SwarmResourceLink from "./link";
 import { useRead } from "@/lib/hooks";
 import { swarmTaskStateIntention } from "@/lib/color";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import SearchInput from "@/ui/search-input";
 
 export interface SwarmTasksSectionProps extends SectionProps {

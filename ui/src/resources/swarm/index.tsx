@@ -1,6 +1,5 @@
 import {
   swarmStateIntention,
-  hexColorByIntention,
   swarmNodeStateIntention,
   swarmTaskStateIntention,
 } from "@/lib/color";
@@ -8,7 +7,7 @@ import { usePermissions, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import SwarmTable from "./table";
 import NewResource from "@/resources/new";
 import SwarmTabs from "./tabs";
@@ -19,6 +18,7 @@ import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import SwarmHeaderInfo from "./header-info";
 import HoverError from "@/ui/hover-error";
+import { hexColorByIntention } from "mogh_ui";
 
 export function useSwarm(id: string | undefined, useName?: boolean) {
   return useRead("ListSwarms", {}).data?.find((r) =>

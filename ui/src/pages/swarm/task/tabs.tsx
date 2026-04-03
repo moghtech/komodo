@@ -1,8 +1,7 @@
 import LogSection from "@/components/log-section";
-import { colorByIntention, ColorIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { MobileFriendlyTabsSelector } from "mogh_ui";
+import { ColorIntention, MobileFriendlyTabsSelector } from "mogh_ui";
 import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
@@ -82,7 +81,7 @@ export default function SwarmTaskTabs({
   }
 
   return (
-    <Tabs color={colorByIntention(intent)} value={view} mt="lg">
+    <Tabs color={intent} value={view} mt="lg">
       {View}
     </Tabs>
   );

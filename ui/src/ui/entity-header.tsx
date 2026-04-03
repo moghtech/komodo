@@ -1,6 +1,6 @@
-import { ColorIntention, hexColorByIntention } from "@/lib/color";
 import { ICONS } from "@/lib/icons";
 import { ActionIcon, Group, Stack, Text, TextInput } from "@mantine/core";
+import { ColorIntention, hexColorByIntention } from "mogh_ui";
 import { FC, ReactNode, useEffect, useState } from "react";
 
 export interface EntityHeaderProps {

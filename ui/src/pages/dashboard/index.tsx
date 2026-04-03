@@ -1,4 +1,4 @@
-import Page from "@/ui/page";
+import { Page } from "mogh_ui";
 import { useDashboardPreferences, useSetTitle } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { Group } from "@mantine/core";

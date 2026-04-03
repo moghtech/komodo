@@ -2,9 +2,10 @@ import { ReactNode } from "react";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { hexColorByIntention, containerStateIntention } from "@/lib/color";
+import { containerStateIntention } from "@/lib/color";
 import { Box, Group, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
+import { hexColorByIntention } from "mogh_ui";
 
 export type DockerResourceType = "Container" | "Network" | "Image" | "Volume";
 

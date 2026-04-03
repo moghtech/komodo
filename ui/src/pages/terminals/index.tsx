@@ -1,10 +1,9 @@
 import TerminalTargetLink from "@/pages/terminals/target-link";
-import { fmtDateWithMinutes } from "@/lib/formatting";
 import { useRead, useSetTitle } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { filterBySplit, terminalLink } from "@/lib/utils";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Page from "@/ui/page";
+import { DataTable, fmtDateWithMinutes, SortableHeader } from "mogh_ui";
+import { Page } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import { Link } from "react-router-dom";

@@ -1,8 +1,8 @@
-import { hexColorByIntention } from "@/lib/color";
 import { useWebsocketConnected, useWebsocketReconnect } from "@/lib/socket";
 import { ActionIcon, Box, HoverCard, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Circle } from "lucide-react";
+import { hexColorByIntention } from "mogh_ui";
 
 export default function WebsocketStatus() {
   const connected = useWebsocketConnected();

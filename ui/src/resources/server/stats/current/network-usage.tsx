@@ -1,7 +1,7 @@
-import { fmtRateBytes } from "@/lib/formatting";
 import InfoCard from "@/ui/info-card";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
+import { fmtRateBytes } from "mogh_ui";
 
 export default function ServerNetworkUsage({
   stats,

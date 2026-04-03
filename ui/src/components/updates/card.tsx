@@ -2,13 +2,13 @@ import { BoxProps, Flex, FlexProps, Group, Loader, Stack } from "@mantine/core";
 import { Types } from "komodo_client";
 import { UpdateStatus } from "komodo_client/dist/types";
 import { Check, X } from "lucide-react";
-import { fmtDate, fmtOperation, fmtVersion } from "@/lib/formatting";
+import { fmtVersion } from "@/lib/formatting";
 import { versionIsNone } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
 import UserAvatar from "@/components/user-avatar";
 import { useUpdateDetails } from "./details";
 import ResourceLink from "@/resources/link";
-import { hexColorByIntention } from "@/lib/color";
+import { fmtDate, fmtUpperCamelcase, hexColorByIntention } from "mogh_ui";
 
 export default function UpdateCard({
   update,
@@ -33,7 +33,7 @@ export default function UpdateCard({
     >
       <Group wrap="nowrap" gap="xs">
         <Icon update={update} />
-        {fmtOperation(update.operation)}
+        {fmtUpperCamelcase(update.operation)}
         {!versionIsNone(update.version) && (
           <Group c="dimmed" gap="xs">
             <ICONS.Version size="1rem" />

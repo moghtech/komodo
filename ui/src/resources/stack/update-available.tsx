@@ -19,7 +19,7 @@ import {
 } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
-import { hexColorByIntention } from "@/lib/color";
+import { hexColorByIntention } from "mogh_ui";
 
 export default function StackUpdateAvailable({
   id,

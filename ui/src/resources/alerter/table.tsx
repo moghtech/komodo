@@ -1,10 +1,10 @@
 import { useSelectedResources } from "@/lib/hooks";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { Badge, BoxProps } from "@mantine/core";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import TableTags from "@/components/tags/table";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 
 export default function AlerterTable({
   resources,

@@ -4,7 +4,7 @@ import { Badge, Button, Text } from "@mantine/core";
 import { KOMODO_BASE_URL } from "@/main";
 import { notifications } from "@mantine/notifications";
 import { useLoginOptions, useManageAuth } from "@/lib/hooks";
-import { DataTable } from "@/ui/data-table";
+import { DataTable } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import ConfirmModal from "@/ui/confirm-modal";
 import { Section } from "mogh_ui";

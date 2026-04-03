@@ -1,13 +1,12 @@
 import ContainersSection from "@/components/docker/containers-section";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import InspectSection from "@/components/inspect-section";
-import { fmtDateWithMinutes, fmtSizeBytes } from "@/lib/formatting";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import { useServer } from "@/resources/server";
 import ResourceSubPage from "@/resources/sub-page";
 import { ICONS } from "@/lib/icons";
-import { ConfirmButton } from "mogh_ui";
-import { DataTable } from "@/ui/data-table";
+import { ConfirmButton, fmtDateWithMinutes, fmtSizeBytes } from "mogh_ui";
+import { DataTable } from "mogh_ui";
 import PageGuard from "@/ui/page-guard";
 import { Section } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";

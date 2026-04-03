@@ -9,7 +9,7 @@ import {
   MobileFriendlyTabsSelector,
   TabNoContent,
 } from "mogh_ui";
-import { colorByIntention, serverStateIntention } from "@/lib/color";
+import { serverStateIntention } from "@/lib/color";
 import ServerContainers from "./containers";
 import ServerNetworks from "./networks";
 import { ICONS } from "@/lib/icons";
@@ -101,11 +101,9 @@ export default function ServerDockerResources({
   return (
     <Section titleOther={titleOther}>
       <Tabs
-        color={colorByIntention(
-          serverStateIntention(
-            state,
-            !!coreVersion && !!info?.version && coreVersion !== info.version,
-          ),
+        color={serverStateIntention(
+          state,
+          !!coreVersion && !!info?.version && coreVersion !== info.version,
         )}
         value={view}
       >

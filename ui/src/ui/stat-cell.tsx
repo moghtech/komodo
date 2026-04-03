@@ -1,4 +1,4 @@
-import { ColorIntention, hexColorByIntention } from "@/lib/color";
+import { ColorIntention, hexColorByIntention } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import {
   ActionIcon,

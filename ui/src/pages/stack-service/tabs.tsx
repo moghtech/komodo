@@ -1,10 +1,10 @@
 import LogSection from "@/components/log-section";
 import TerminalSection from "@/components/terminal/section";
-import { colorByIntention, ColorIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
 import { useServer } from "@/resources/server";
 import { ICONS } from "@/lib/icons";
 import {
+  ColorIntention,
   MobileFriendlyTabsSelector,
   TabNoContent,
 } from "mogh_ui";
@@ -146,7 +146,7 @@ export default function StackServiceTabs({
   }
 
   return (
-    <Tabs color={colorByIntention(intention)} value={view}>
+    <Tabs color={intention} value={view}>
       {View}
     </Tabs>
   );

@@ -10,7 +10,7 @@ import {
 } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
-import Page from "@/ui/page";
+import { Page } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
 import TableSkeleton from "@/ui/table-skeleton";
 import TemplateQuerySelector from "@/components/template-query-selector";

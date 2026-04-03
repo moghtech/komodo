@@ -3,10 +3,9 @@ import { useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useCtrlKeyListener, useKeyListener } from "@/lib/hooks";
-import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
+import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { deepCompare, envToText } from "@/lib/utils";
-import { colorByIntention } from "@/lib/color";
 import ShowHideButton from "@/ui/show-hide-button";
 
 export default function ConfirmUpdate<T>({
@@ -173,9 +172,7 @@ function ConfirmUpdateItem<T>({
       bdrs="md"
     >
       <Group justify="space-between">
-        <Text c={colorByIntention("Neutral")}>
-          {fmtSnakeCaseToUpperSpaceCase(_key as string)}
-        </Text>
+        <Text c="Neutral">{fmtSnakeCaseToUpperSpaceCase(_key as string)}</Text>
         <ShowHideButton show={show} setShow={setShow} />
       </Group>
       {show && (
@@ -198,13 +195,13 @@ function ConfirmUpdateItem<T>({
             />
           ) : (
             <Box component="pre" mih={0}>
-              <Text component="span" c={colorByIntention("Critical")}>
+              <Text component="span" c="Critical">
                 {prev_val || "None"}
               </Text>{" "}
               <Text component="span" c="dimmed">
                 {"->"}
               </Text>{" "}
-              <Text component="span" c={colorByIntention("Good")}>
+              <Text component="span" c="Good">
                 {val || "None"}
               </Text>
             </Box>

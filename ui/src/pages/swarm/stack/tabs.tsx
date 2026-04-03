@@ -1,12 +1,11 @@
 import { usePermissions } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { MobileFriendlyTabsSelector } from "mogh_ui";
+import { ColorIntention, MobileFriendlyTabsSelector } from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo, useState } from "react";
 import SwarmServicesSection from "@/components/swarm/services-section";
 import SwarmTasksSection from "@/components/swarm/tasks-section";
-import { colorByIntention, ColorIntention } from "@/lib/color";
 import { Tabs } from "@mantine/core";
 import SwarmStackLogsSection from "./logs";
 import InspectSection from "@/components/inspect-section";
@@ -118,7 +117,7 @@ export default function SwarmStackTabs({
   }
 
   return (
-    <Tabs color={colorByIntention(intent)} value={view}>
+    <Tabs color={intent} value={view}>
       {View}
     </Tabs>
   );
