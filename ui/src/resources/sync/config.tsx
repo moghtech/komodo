@@ -1,7 +1,7 @@
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import Tags from "@/components/tags";
 import TagSelector from "@/components/tags/selector";
 import WebhookBuilder from "@/components/webhook/builder";

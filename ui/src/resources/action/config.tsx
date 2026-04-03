@@ -10,7 +10,7 @@ import {
   useWrite,
 } from "@/lib/hooks";
 import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import Config from "@/ui/config";
 import ActionLastRun from "./last-run";
 import { ConfigItem, ConfigSwitch } from "@/ui/config/item";

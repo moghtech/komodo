@@ -14,7 +14,7 @@ import {
   fmtUpperCamelcase,
 } from "mogh_ui";
 import { Section } from "mogh_ui";
-import { MonacoDiffEditor } from "@/components/monaco";
+import { MonacoDiffEditor } from "mogh_monaco";
 import { LoadingScreen } from "mogh_ui";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";

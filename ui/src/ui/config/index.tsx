@@ -1,5 +1,5 @@
 import { Fragment, ReactNode, SetStateAction, useMemo } from "react";
-import { MonacoLanguage } from "@/components/monaco";
+import { MonacoLanguage } from "mogh_monaco";
 import { ICONS } from "@/lib/icons";
 import {
   Anchor,

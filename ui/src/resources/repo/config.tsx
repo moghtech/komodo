@@ -15,7 +15,7 @@ import { Group, Stack, Text } from "@mantine/core";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import SecretsSearch from "@/components/config/secrets-search";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import SystemCommand from "@/components/config/system-command";
 import { ReactNode } from "react";
 import CopyWebhookUrl from "@/components/webhook/copy-url";

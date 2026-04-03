@@ -11,7 +11,7 @@ import ResourceLink from "@/resources/link";
 import { UsableResource } from "@/resources";
 import { ConfirmButton } from "mogh_ui";
 import { SquarePlay } from "lucide-react";
-import { MonacoDiffEditor, MonacoEditor } from "@/components/monaco";
+import { MonacoDiffEditor, MonacoEditor } from "mogh_monaco";
 import { diffTypeIntention } from "@/lib/color";
 
 export default function ResourceSyncPending({

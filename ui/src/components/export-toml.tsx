@@ -3,7 +3,7 @@ import { ICONS } from "@/lib/icons";
 import { Box, Button, Modal } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import { CopyButton } from "mogh_ui";
 import { LoadingScreen } from "mogh_ui";
 

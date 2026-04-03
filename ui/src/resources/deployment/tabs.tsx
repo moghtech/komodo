@@ -14,7 +14,7 @@ import { deploymentStateIntention } from "@/lib/color";
 import DeploymentConfig from "./config";
 import LogSection from "@/components/log-section";
 import TerminalSection from "@/components/terminal/section";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import { Section } from "mogh_ui";
 
 type DeploymentTabsView = "Config" | "Tasks" | "Log" | "Inspect" | "Terminals";
