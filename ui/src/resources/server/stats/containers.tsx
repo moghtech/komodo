@@ -5,7 +5,7 @@ import { ShowHideButton } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import DockerResourceLink from "@/components/docker/link";
 import { useIsServerAvailable } from "../hooks";
 import { SearchInput } from "mogh_ui";

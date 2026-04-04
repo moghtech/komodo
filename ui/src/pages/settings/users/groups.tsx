@@ -1,6 +1,6 @@
 import ExportToml from "@/components/export-toml";
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { DataTable } from "mogh_ui";
 import { Section } from "mogh_ui";
