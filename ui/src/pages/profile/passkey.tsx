@@ -1,9 +1,9 @@
-import { useManageAuth, useUserInvalidate } from "@/lib/hooks";
+import { useUserInvalidate } from "@/lib/hooks";
 import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { MoghAuth, Types } from "komodo_client";
 import { Fingerprint, Trash } from "lucide-react";
-import { ConfirmModal } from "mogh_ui";
+import { ConfirmModal, useManageAuth } from "mogh_ui";
 
 export const EnrollPasskey = ({ user }: { user: Types.User }) => {
   const userInvalidate = useUserInvalidate();

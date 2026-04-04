@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
-import { ThemeProvider } from "mogh_ui";
+import { setAuthUrl, ThemeProvider } from "mogh_ui";
 import { themeAdditionalColors } from "@/lib/color";
 import { Notifications } from "@mantine/notifications";
 import initMonaco from "@/monaco";
@@ -26,6 +26,8 @@ export const UPDATE_WS_URL =
 const client = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
+
+setAuthUrl(KOMODO_BASE_URL + "/auth");
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

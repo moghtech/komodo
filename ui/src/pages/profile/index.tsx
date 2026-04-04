@@ -1,4 +1,4 @@
-import { useLoginOptions, useManageAuth, useUser } from "@/lib/hooks";
+import { useUser } from "@/lib/hooks";
 import {
   ActionIcon,
   Group,
@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { LinkedLogins } from "./linked-logins";
 import { EnrollPasskey } from "./passkey";
 import { EnrollTotp } from "./totp";
-import { EnableSwitch } from "mogh_ui";
+import { EnableSwitch, useLoginOptions, useManageAuth } from "mogh_ui";
 import { PageGuard } from "mogh_ui";
 import { EntityPage } from "mogh_ui";
 import ApiKeysSection from "@/components/api-keys/section";
