@@ -167,8 +167,13 @@ fn shell() -> &'static str {
       String::from("/bin/bash")
     } else if PathBuf::from("/usr/bin/bash").exists() {
       String::from("/usr/bin/bash")
-    } else {
+    } else if PathBuf::from("/bin/sh").exists() {
       String::from("/bin/sh")
+    } else if PathBuf::from("/usr/bin/sh").exists() {
+      String::from("/usr/bin/sh")
+    } else {
+      // try to use sh wherever it is on host by name.
+      String::from("sh")
     }
   })
 }
