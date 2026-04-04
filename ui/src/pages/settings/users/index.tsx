@@ -2,14 +2,13 @@ import { Group, Stack } from "@mantine/core";
 import SettingsUserGroups from "./groups";
 import {
   useInvalidate,
-  useLoginOptions,
   useRead,
   useSetTitle,
   useUser,
   useWrite,
 } from "@/lib/hooks";
 import { useState } from "react";
-import { Section } from "mogh_ui";
+import { Section, useLoginOptions } from "mogh_ui";
 import { notifications } from "@mantine/notifications";
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";

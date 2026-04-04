@@ -1,6 +1,5 @@
-import { useInvalidate, useManageAuth, useWrite } from "@/lib/hooks";
+import { useInvalidate, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { CopyText } from "mogh_ui";
 import {
   Button,
   Group,
@@ -13,6 +12,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
+import { CopyText, useManageAuth } from "mogh_ui";
 
 const ONE_DAY_MS = 1000 * 60 * 60 * 24;
 type ExpiresOptions = "90 days" | "180 days" | "1 year" | "Never";
@@ -133,12 +133,20 @@ export default function NewApiKey({ userId }: { userId?: string }) {
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Key</Text>
-                <CopyText content={created.key} label="API key" w={{ base: 200, lg: 250 }} />
+                <CopyText
+                  content={created.key}
+                  label="API key"
+                  w={{ base: 200, lg: 250 }}
+                />
               </Group>
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Secret</Text>
-                <CopyText content={created.secret} label="API secret" w={{ base: 200, lg: 250 }} />
+                <CopyText
+                  content={created.secret}
+                  label="API secret"
+                  w={{ base: 200, lg: 250 }}
+                />
               </Group>
 
               <Group justify="end" onClick={close}>

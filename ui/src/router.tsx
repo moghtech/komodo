@@ -7,8 +7,8 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
-import { LoadingScreen } from "mogh_ui";
-import { useAuthState, useUser } from "@/lib/hooks";
+import { LoadingScreen, useAuthState } from "mogh_ui";
+import { useUser } from "@/lib/hooks";
 import { MoghAuth } from "komodo_client";
 import App from "@/app";
 
