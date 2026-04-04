@@ -1,4 +1,4 @@
-import { useUser } from "@/lib/hooks";
+import { useUser, useUserInvalidate } from "@/lib/hooks";
 import {
   ActionIcon,
   Group,
@@ -10,19 +10,25 @@ import {
 import { notifications } from "@mantine/notifications";
 import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import { LinkedLogins } from "./linked-logins";
-import { EnrollPasskey } from "./passkey";
-import { EnrollTotp } from "./totp";
-import { EnableSwitch, useLoginOptions, useManageAuth } from "mogh_ui";
-import { PageGuard } from "mogh_ui";
-import { EntityPage } from "mogh_ui";
+import {
+  EnableSwitch,
+  useLoginOptions,
+  useManageAuth,
+  Section,
+  LinkedLogins,
+  PageGuard,
+  EntityPage,
+  EnrollPasskey,
+  EnrollTotp,
+} from "mogh_ui";
 import ApiKeysSection from "@/components/api-keys/section";
 import UserHeader from "@/components/user/header";
-import { Section } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
+import { Types } from "komodo_client";
 
 export default function Profile() {
   const options = useLoginOptions().data;
+  const userInvalidate = useUserInvalidate();
   const { data: user, refetch: refetchUser, isPending } = useUser();
   const [username, setUsername] = useState(user?.username);
   useEffect(() => {
@@ -110,7 +116,42 @@ export default function Profile() {
             </Stack>
           </Section>
 
-          <LinkedLogins user={user} refetchUser={refetchUser} />
+          <LinkedLogins
+            refetchUser={refetchUser}
+            passwordSet={
+              !!(
+                user.linked_logins?.Local as Extract<
+                  Types.UserConfig,
+                  { type: "Local" }
+                >
+              )?.data?.password
+            }
+            oidcLinkedId={
+              (
+                user.linked_logins?.Oidc as Extract<
+                  Types.UserConfig,
+                  { type: "Oidc" }
+                >
+              )?.data?.user_id
+            }
+            githubLinkedId={
+              (
+                user.linked_logins?.Github as Extract<
+                  Types.UserConfig,
+                  { type: "Github" }
+                >
+              )?.data?.github_id
+            }
+            googleLinkedId={
+              (
+                user.linked_logins?.Google as Extract<
+                  Types.UserConfig,
+                  { type: "Google" }
+                >
+              )?.data?.google_id
+            }
+            extraProviderFilter={(provider) => user.config.type !== provider}
+          />
 
           <Section
             title="2FA"
@@ -119,8 +160,16 @@ export default function Profile() {
             withBorder
           >
             <Group>
-              <EnrollPasskey user={user} />
-              <EnrollTotp user={user} />
+              <EnrollPasskey
+                userInvalidate={userInvalidate}
+                passkeyEnrolled={!!user.passkey?.created_at}
+                totpEnrolled={!!user.totp?.confirmed_at}
+              />
+              <EnrollTotp
+                userInvalidate={userInvalidate}
+                passkeyEnrolled={!!user.passkey?.created_at}
+                totpEnrolled={!!user.totp?.confirmed_at}
+              />
               {(!!user.totp?.confirmed_at || !!user.passkey?.created_at) && (
                 <EnableSwitch
                   label="Skip 2FA for external logins"
