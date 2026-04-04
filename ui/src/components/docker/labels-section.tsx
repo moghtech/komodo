@@ -1,4 +1,4 @@
-import { filterMultitermBySplit } from "@/lib/utils";
+import { filterMultitermBySplit } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { Section, SectionProps } from "mogh_ui";
 import { Box, GroupProps } from "@mantine/core";

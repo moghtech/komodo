@@ -7,7 +7,7 @@ import {
   useTags,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { ICONS } from "@/lib/icons";

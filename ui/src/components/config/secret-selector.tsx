@@ -1,6 +1,6 @@
 import { useSettingsView } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { Button, Combobox, ComboboxProps } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSearchCombobox } from "mogh_ui";

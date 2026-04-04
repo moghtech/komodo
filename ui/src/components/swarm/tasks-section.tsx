@@ -1,4 +1,4 @@
-import { filterMultitermBySplit } from "@/lib/utils";
+import { filterMultitermBySplit } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Section, SectionProps } from "mogh_ui";

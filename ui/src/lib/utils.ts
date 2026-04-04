@@ -201,42 +201,6 @@ export function getUpdateQuery(
   }
 }
 
-export function filterBySplit<T>(
-  items: T[] | undefined,
-  search: string,
-  extract: (item: T) => string,
-) {
-  const split = search.toLowerCase().split(" ");
-  return (
-    (split.length
-      ? items?.filter((item) => {
-          const target = extract(item).toLowerCase();
-          return split.every((term) => target.includes(term));
-        })
-      : items) ?? []
-  );
-}
-
-export function filterMultitermBySplit<T>(
-  items: T[] | undefined,
-  search: string,
-  extract: (item: T) => (string | undefined)[],
-) {
-  const split = search.toLowerCase().split(" ");
-  return (
-    (split.length
-      ? items?.filter((item) => {
-          const target = extract(item)
-            .filter((str) => str)
-            .map((str) => str!.toLowerCase());
-          return split.every(
-            (term) => target.findIndex((t) => t.includes(term)) !== -1,
-          );
-        })
-      : items) ?? []
-  );
-}
-
 /** This does NOT include pending deploys, which are only for Execute direction. */
 export function resourceSyncNoChanges(sync: Types.ResourceSync) {
   return (

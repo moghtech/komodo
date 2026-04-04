@@ -6,7 +6,7 @@ import {
   useUser,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { CopyButton } from "mogh_ui";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Badge, Button, Group, Stack, Switch, Text } from "@mantine/core";
