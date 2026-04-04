@@ -109,14 +109,6 @@ impl Build {
     let mut tags = Vec::new();
 
     for image_name in image_names {
-      // Pure image tag passthrough when provided
-      if !image_tag.is_empty() {
-        tags.push(format!("{image_name}:{image_tag}"));
-      }
-      // `:latest` / `:latest-tag`
-      if *include_latest_tag {
-        tags.push(format!("{image_name}:latest{image_tag_postfix}"));
-      }
       // `:1.19.5` + `:1.19` etc. / `1.19.5-tag`
       if *include_version_tag {
         tags
@@ -129,8 +121,16 @@ impl Build {
       if *include_commit_tag && let Some(hash) = commit_hash {
         tags.push(format!("{image_name}:{hash}{image_tag_postfix}"));
       }
+      // Pure image tag passthrough when provided
+      if !image_tag.is_empty() {
+        tags.push(format!("{image_name}:{image_tag}"));
+      }
       for tag in additional {
         tags.push(format!("{image_name}:{tag}"))
+      }
+      // `:latest` / `:latest-tag`
+      if *include_latest_tag || tags.is_empty() {
+        tags.push(format!("{image_name}:latest{image_tag_postfix}"));
       }
     }
 
