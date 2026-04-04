@@ -3,20 +3,6 @@ import { Types } from "komodo_client";
 import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
 
-export function sanitizeQuery() {
-  sanitizeQueryInner(new URLSearchParams(location.search));
-}
-
-export function sanitizeQueryInner(search: URLSearchParams) {
-  search.delete("redeem_ready");
-  search.delete("totp");
-  search.delete("passkey");
-  const query = search.toString();
-  location.replace(
-    `${location.origin}${location.pathname}${query.length ? "?" + query : ""}`,
-  );
-}
-
 export function objectKeys<T extends object>(o: T): (keyof T)[] {
   return Object.keys(o) as (keyof T)[];
 }

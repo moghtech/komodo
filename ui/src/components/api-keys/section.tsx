@@ -1,8 +1,8 @@
 import { ICONS } from "@/lib/icons";
-import { Section, SectionProps } from "mogh_ui";
+import { Section, SectionProps, useManageAuth } from "mogh_ui";
 import NewApiKey from "./new";
 import ApiKeysTable from "./table";
-import { useInvalidate, useManageAuth, useRead, useWrite } from "@/lib/hooks";
+import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
 import { notifications } from "@mantine/notifications";
 import { Box } from "@mantine/core";
 
@@ -47,7 +47,6 @@ export default function ApiKeysSection({
       isPending={isPending}
       title="API Keys"
       titleFz="h3"
-     
       icon={<ICONS.Key size="1.2rem" />}
       titleRight={
         <Box ml="md">

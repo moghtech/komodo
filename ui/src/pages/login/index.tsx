@@ -1,5 +1,4 @@
-import { useLogin, useLoginOptions, useUserInvalidate } from "@/lib/hooks";
-import { sanitizeQuery } from "@/lib/utils";
+import { useUserInvalidate } from "@/lib/hooks";
 import {
   Button,
   Center,
@@ -16,6 +15,7 @@ import { MoghAuth } from "komodo_client";
 import { AlertTriangle, KeyRound } from "lucide-react";
 import { useState } from "react";
 import LoginHeader from "./header";
+import { sanitizeQuery, useLogin, useLoginOptions } from "mogh_ui";
 
 export default function Login({
   passkeyIsPending: _passkeyIsPending,

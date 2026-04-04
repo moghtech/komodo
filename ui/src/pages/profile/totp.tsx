@@ -1,5 +1,5 @@
-import { CopyButton } from "mogh_ui";
-import { useManageAuth, useUserInvalidate } from "@/lib/hooks";
+import { CopyButton, useManageAuth, ConfirmModal } from "mogh_ui";
+import { useUserInvalidate } from "@/lib/hooks";
 import {
   Button,
   Center,
@@ -13,7 +13,6 @@ import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { Check, RotateCcwKey, Trash } from "lucide-react";
 import { useState } from "react";
-import { ConfirmModal } from "mogh_ui";
 
 export const EnrollTotp = ({ user }: { user: Types.User }) => {
   const userInvalidate = useUserInvalidate();

@@ -1,4 +1,4 @@
-import { komodo_client, useLoginOptions } from "@/lib/hooks";
+import { komodo_client } from "@/lib/hooks";
 import {
   Button,
   Group,
@@ -8,6 +8,7 @@ import {
 } from "@mantine/core";
 import { MoghAuth } from "komodo_client";
 import { KeyRound } from "lucide-react";
+import { useLoginOptions } from "mogh_ui";
 
 export default function LoginHeader({
   secondFactorPending,
