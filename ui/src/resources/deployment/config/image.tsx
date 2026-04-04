@@ -1,7 +1,7 @@
 import { fmtVersion } from "@/lib/formatting";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import ResourceSelector from "@/resources/selector";
 import {
   Button,

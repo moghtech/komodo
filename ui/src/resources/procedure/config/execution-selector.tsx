@@ -1,6 +1,6 @@
 import { Types } from "komodo_client";
 import { PROCEDURE_EXECUTIONS } from "./executions";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { Button, ButtonProps, Combobox, ComboboxProps } from "@mantine/core";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtUpperCamelcase } from "mogh_ui";

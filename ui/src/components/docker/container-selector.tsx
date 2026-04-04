@@ -12,7 +12,7 @@ import {
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { DOCKER_LINK_ICONS } from "@/components/docker/link";
 import { useSearchCombobox } from "mogh_ui";
 

@@ -1,11 +1,11 @@
 import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
-import { filterBySplit, levelSortingFn } from "@/lib/utils";
+import { levelSortingFn } from "@/lib/utils";
 import {
   RESOURCE_TARGETS,
   ResourceComponents,
   UsableResource,
 } from "@/resources";
-import { DataTable, SortableHeader } from "mogh_ui";
+import { DataTable, SortableHeader, filterBySplit } from "mogh_ui";
 import { Section, SectionProps } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -84,7 +84,6 @@ export default function BasePermissionsSection({
       }
       title="Base Permissions on Resource Types"
       titleFz="h3"
-     
       actions={
         <Group>
           <SearchInput value={search} onSearch={setSearch} />

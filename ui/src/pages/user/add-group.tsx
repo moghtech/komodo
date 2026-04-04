@@ -3,7 +3,7 @@ import {
   useRead,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { Button, Combobox, ComboboxProps, Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";

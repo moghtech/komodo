@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useServerDockerSearch } from ".";
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { fmtSizeBytes, Section } from "mogh_ui";
 import { Badge, Group } from "@mantine/core";
 import { Prune } from "../executions";

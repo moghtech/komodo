@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { Button, Combobox } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import { useSearchCombobox } from "mogh_ui";

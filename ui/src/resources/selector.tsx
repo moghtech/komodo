@@ -11,7 +11,7 @@ import {
   InputWrapperProps,
   Text,
 } from "@mantine/core";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtResourceType } from "@/lib/formatting";
 import { ICONS } from "@/lib/icons";

@@ -1,8 +1,13 @@
 import TerminalTargetLink from "@/pages/terminals/target-link";
 import { useRead, useSetTitle } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { filterBySplit, terminalLink } from "@/lib/utils";
-import { DataTable, fmtDateWithMinutes, SortableHeader } from "mogh_ui";
+import { terminalLink } from "@/lib/utils";
+import {
+  DataTable,
+  fmtDateWithMinutes,
+  SortableHeader,
+  filterBySplit,
+} from "mogh_ui";
 import { Page } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { useState } from "react";

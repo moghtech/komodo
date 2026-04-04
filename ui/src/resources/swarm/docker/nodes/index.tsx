@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ReactNode, useState } from "react";
 import { useSwarmDockerSearch } from "..";
 import { Section } from "mogh_ui";

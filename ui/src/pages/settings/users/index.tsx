@@ -10,7 +10,7 @@ import {
 import { useState } from "react";
 import { Section, useLoginOptions } from "mogh_ui";
 import { notifications } from "@mantine/notifications";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import UserTable from "@/components/user/table";
 import NewServiceUser from "./new-service-user";
