@@ -17,11 +17,12 @@ export default defineConfig({
     },
     dedupe: [
       "@mantine/core",
+      "@mantine/form",
       "@mantine/hooks",
       "@mantine/notifications",
+      "@monaco-editor/react",
       "@tanstack/react-table",
       "@tanstack/react-query",
-      "@monaco-editor/react",
       "lucide-react",
       "mogh_auth_client",
       "monaco-editor",
