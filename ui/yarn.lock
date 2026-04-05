@@ -899,10 +899,10 @@ marked@14.0.0:
   resolved "https://registry.yarnpkg.com/marked/-/marked-14.0.0.tgz#79a1477358a59e0660276f8fec76de2c33f35d83"
   integrity sha512-uIj4+faQ+MgHgwUW1l2PsPglZLOLOT1uErt06dAPtx2kjteLAkbsd/0FiYg/MGS+i7ZKLb7w2WClxHkzOOuryQ==
 
-mogh_ui@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/mogh_ui/-/mogh_ui-0.2.1.tgz#47f148758f773146dbeacbb741eeaa6a3220320c"
-  integrity sha512-aSVdA2EV8KTDpPAG+TC0chSZiANlLkDc5q+na9u6BGegDQ2j+SLprXiRnqxQ1XqTvEfkYbypCXMGY1Yip/IztA==
+mogh_ui@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/mogh_ui/-/mogh_ui-0.3.1.tgz#c36cd511531f8481afcd72e11f988039de67b06e"
+  integrity sha512-gL1tqQUnO9mTI4Effr3jhRnz+jwSvb4bwYUVKGRBB/t153tP6zfG8GKao3uXdshMKJJ6jCJxpWarw0GKtay6Dg==
 
 monaco-editor@^0.55.1:
   version "0.55.1"

@@ -25,7 +25,7 @@
     "jotai-family": "^1.0.1",
     "jotai-location": "^0.6.2",
     "lucide-react": "^1.7.0",
-    "mogh_ui": "^0.2.1",
+    "mogh_ui": "^0.3.1",
     "monaco-editor": "^0.55.1",
     "monaco-yaml": "^5.4.1",
     "react": "^19.2.4",
