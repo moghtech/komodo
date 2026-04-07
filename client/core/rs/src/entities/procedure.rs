@@ -82,12 +82,20 @@ pub type _PartialProcedureConfig = PartialProcedureConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Partial, Builder)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ProcedureConfig {
   /// The stages to be run by the procedure.
   #[serde(default, alias = "stage")]
   #[partial_attr(serde(alias = "stage"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "stage"))
+  )]
   #[builder(default)]
   pub stages: Vec<ProcedureStage>,
 
@@ -207,6 +215,7 @@ impl utoipa::ToSchema for PartialProcedureConfig {}
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ProcedureStage {
   /// A name for the procedure
   pub name: String,
@@ -215,6 +224,7 @@ pub struct ProcedureStage {
   pub enabled: bool,
   /// The executions in the stage
   #[serde(default, alias = "execution")]
+  #[cfg_attr(feature = "schemars", schemars(rename = "execution"))]
   pub executions: Vec<EnabledExecution>,
 }
 
@@ -222,6 +232,7 @@ pub struct ProcedureStage {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct EnabledExecution {
   /// The execution request to run.
   pub execution: Execution,

@@ -74,6 +74,10 @@ pub struct Alert {
     utoipa::ToSchema
   ))
 )]
+#[cfg_attr(
+  feature = "schemars",
+  strum_discriminants(derive(schemars::JsonSchema))
+)]
 #[serde(tag = "type", content = "data")]
 pub enum AlertData {
   /// A null alert
@@ -382,6 +386,7 @@ impl Default for AlertDataVariant {
   EnumString,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(rename_all = "UPPERCASE")]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum SeverityLevel {

@@ -1,2 +1,5 @@
+[alias]
+xtask = "run --package xtask --"
+
 [build]
 rustflags = ["-Wunused-crate-dependencies"]

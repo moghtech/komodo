@@ -103,6 +103,7 @@ pub type _Serror = Serror;
   Debug, Clone, Default, PartialEq, Serialize, Deserialize, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct NoData {}
 
 pub trait MergePartial: Sized {
@@ -210,6 +211,7 @@ pub struct __Serror {
   Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SystemCommand {
   #[serde(default)]
   pub path: String,
@@ -238,6 +240,7 @@ impl SystemCommand {
 #[typeshare]
 #[derive(Serialize, Debug, Clone, Copy, Default, PartialEq)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Version {
   pub major: i32,
   pub minor: i32,
@@ -488,6 +491,7 @@ impl ImageDigest {
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct MaintenanceWindow {
   /// Name for the maintenance window (required)
   pub name: String,
@@ -920,6 +924,7 @@ pub enum DayOfWeek {
   Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MaintenanceScheduleType {
   /// Daily at the specified time
   #[default]
@@ -1364,6 +1369,7 @@ pub enum SearchCombinator {
   EnumString,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(rename_all = "UPPERCASE")]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum TerminationSignal {
@@ -1421,6 +1427,11 @@ pub enum TerminationSignal {
     utoipa::ToSchema,
   ))
 )]
+#[cfg_attr(
+  feature = "schemars",
+  strum_discriminants(derive(schemars::JsonSchema))
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(tag = "type", content = "id")]
 pub enum ResourceTarget {
   System(String),
@@ -1577,6 +1588,7 @@ impl ResourceTargetVariant {
   Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum ScheduleFormat {
   #[default]
   English,
@@ -1588,6 +1600,7 @@ pub enum ScheduleFormat {
   Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum FileFormat {
   #[default]

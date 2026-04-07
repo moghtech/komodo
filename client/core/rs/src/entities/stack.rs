@@ -293,6 +293,10 @@ pub type _PartialStackConfig = PartialStackConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct StackConfig {
@@ -302,6 +306,10 @@ pub struct StackConfig {
   /// swarm_id overrides server_id and the Stack will be in Swarm mode.
   #[serde(default, alias = "swarm")]
   #[partial_attr(serde(alias = "swarm"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "swarm"))
+  )]
   #[builder(default)]
   pub swarm_id: String,
 
@@ -311,6 +319,10 @@ pub struct StackConfig {
   /// swarm_id overrides server_id and the Stack will be in Swarm mode.
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "server"))
+  )]
   #[builder(default)]
   pub server_id: String,
 
@@ -915,6 +927,7 @@ pub struct StackRemoteFileContents {
   Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum StackFileRequires {
   /// Diff requires service redeploy.
   #[serde(alias = "redeploy")]
@@ -933,6 +946,7 @@ pub enum StackFileRequires {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AdditionalEnvFile {
   /// File path relative to run directory
   pub path: String,
@@ -1012,6 +1026,7 @@ impl<'de> Deserialize<'de> for AdditionalEnvFile {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StackFileDependency {
   /// Specify the file
   pub path: String,

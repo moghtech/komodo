@@ -3,6 +3,7 @@ resolver = "2"
 members = [
 	"bin/*",
 	"lib/*",
+	"xtask",
 	"client/core/rs",
 	"client/periphery/rs",
 ]
@@ -41,7 +42,8 @@ mogh_auth_server = "1.2.13"
 mogh_secret_file = "1.0.1"
 mogh_validations = "1.0.1"
 mogh_rate_limit = "1.0.1"
-partial_derive2 = "0.4.5"
+# partial_derive2 = "0.4.5"
+partial_derive2 = { git = "https://github.com/mbecker20/partial_derive2.git", rev = "46bd8dcfc768700df427fa7f6b1737481cf2e4ea" }
 mongo_indexed = "2.0.2"
 mogh_resolver = "1.0.0"
 mogh_config = "1.0.5"
@@ -129,6 +131,7 @@ croner = "3.0.1"
 
 # MISC
 async-compression = { version = "0.4.41", features = ["tokio", "gzip"] }
+schemars = { version = "1.2.1", features = ["indexmap2"] }
 derive_builder = "0.20.2"
 comfy-table = "7.2.2"
 typeshare = "1.0.5"

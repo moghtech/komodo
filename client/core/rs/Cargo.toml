@@ -14,6 +14,7 @@ repository.workspace = true
 blocking = ["reqwest/blocking"]
 mongo = ["dep:mongo_indexed"]
 utoipa = ["dep:utoipa", "mogh_auth_client/utoipa", "mogh_error/utoipa"]
+schemars = ["dep:schemars"]
 logger = ["dep:mogh_logger"]
 cli = ["logger", "dep:mogh_pki",]
 core = ["mongo", "utoipa", "logger", "dep:mogh_server"]
@@ -33,6 +34,7 @@ partial_derive2.workspace = true
 mogh_resolver.workspace = true
 # external
 ipnetwork = { workspace = true, optional = true }
+schemars = { workspace = true, optional = true }
 utoipa = { workspace = true, optional = true }
 tokio-tungstenite.workspace = true
 derive_builder.workspace = true

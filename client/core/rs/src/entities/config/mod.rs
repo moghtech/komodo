@@ -119,6 +119,7 @@ impl DatabaseConfig {
   Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct GitProvider {
   /// The git provider domain. Default: `github.com`.
   #[serde(default = "default_git_provider")]
@@ -152,6 +153,7 @@ fn default_git_https() -> bool {
   Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DockerRegistry {
   /// The docker provider domain. Default: `docker.io`.
   #[serde(default = "default_docker_provider")]
@@ -182,6 +184,7 @@ fn default_docker_provider() -> String {
   Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ProviderAccount {
   /// The account username. Required.
   #[serde(alias = "account")]
