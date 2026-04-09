@@ -133,7 +133,7 @@ pub struct ResourcesToml {
     alias = "variable",
     skip_serializing_if = "Vec::is_empty"
   )]
-  #[cfg_attr(feature = "schemars", schemars(rename = "variables"))]
+  #[cfg_attr(feature = "schemars", schemars(rename = "variable"))]
   pub variables: Vec<Variable>,
 }
 
@@ -205,7 +205,6 @@ pub struct UserGroupToml {
 
   /// Permissions given to the group
   #[serde(default, alias = "permission")]
-  #[cfg_attr(feature = "schemars", schemars(rename = "permission"))]
   pub permissions: Vec<PermissionToml>,
 }
 

@@ -96,7 +96,7 @@ pub struct SwarmConfig {
   #[partial_attr(serde(alias = "servers"))]
   #[cfg_attr(
     feature = "schemars",
-    partial_attr(schemars(rename = "server"))
+    partial_attr(schemars(rename = "servers"))
   )]
   #[builder(default)]
   pub server_ids: Vec<String>,

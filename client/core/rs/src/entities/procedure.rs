@@ -224,7 +224,6 @@ pub struct ProcedureStage {
   pub enabled: bool,
   /// The executions in the stage
   #[serde(default, alias = "execution")]
-  #[cfg_attr(feature = "schemars", schemars(rename = "execution"))]
   pub executions: Vec<EnabledExecution>,
 }
 
