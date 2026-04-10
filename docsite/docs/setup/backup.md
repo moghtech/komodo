@@ -102,7 +102,7 @@ services:
       KOMODO_CLI_DATABASE_TARGET_ADDRESS: komodo.example.com:27017
       KOMODO_CLI_DATABASE_TARGET_USERNAME: <db username>
       KOMODO_CLI_DATABASE_TARGET_PASSWORD: <db password>
-      KOMODO_CLI_DATABASE_TARGET_DB_NAME: komodo-restore
+      KOMODO_CLI_DATABASE_TARGET_DB_NAME: komodo
 ```
 
 :::warning
