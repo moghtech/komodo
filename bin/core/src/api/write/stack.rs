@@ -555,8 +555,9 @@ impl Resolve<WriteArgs> for RefreshStackCache {
             &mut services,
           ) {
             warn!(
-              "failed to extract stack services, things won't works correctly. stack: {} | {e:#}",
-              stack.name
+              stack = stack.id,
+              stack_name = stack.name,
+              "Failed to extract stack services | {e:#}",
             );
           }
         }
