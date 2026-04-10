@@ -16,8 +16,9 @@ import StackInfo from "./info";
 import StackServices from "./services";
 import StackLog from "./log";
 import TerminalSection from "@/components/terminal/section";
+import StackContainerStats from "./stats/container";
 
-type StackTabsView = "Config" | "Info" | "Services" | "Log" | "Terminals";
+type StackTabsView = "Config" | "Info" | "Services" | "Log" | "Terminals" | "Stats";
 
 export default function StackTabs({ id }: { id: string }) {
   const [_view, setView] = useLocalStorage<StackTabsView>({
@@ -87,6 +88,10 @@ export default function StackTabs({ id }: { id: string }) {
         hidden: !specificTerminal,
         icon: ICONS.Terminal,
       },
+      {
+        value: "Stats",
+        icon: ICONS.Stats,
+      },
     ],
     [
       hideInfo,
@@ -138,6 +143,9 @@ export default function StackTabs({ id }: { id: string }) {
           titleOther={Selector}
         />
       );
+      break;
+    case "Stats":
+      View = <StackContainerStats id={id} titleOther={Selector} />;
       break;
   }
 
