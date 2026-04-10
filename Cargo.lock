@@ -2888,6 +2888,7 @@ dependencies = [
  "partial_derive2",
  "rand 0.10.0",
  "reqwest 0.13.2",
+ "schemars 1.2.1",
  "serde",
  "serde_json",
  "serde_qs",
@@ -3964,8 +3965,7 @@ dependencies = [
 [[package]]
 name = "partial_derive2"
 version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9aea8d1d439a598918da9f57e336712feca21d8b1f0935abab2ec1a725fe4477"
+source = "git+https://github.com/mbecker20/partial_derive2.git?rev=46bd8dcfc768700df427fa7f6b1737481cf2e4ea#46bd8dcfc768700df427fa7f6b1737481cf2e4ea"
 dependencies = [
  "partial_derive2_derive",
 ]
@@ -3973,8 +3973,7 @@ dependencies = [
 [[package]]
 name = "partial_derive2_derive"
 version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d60d971bb4035146776bdf7b516e24a7ed6f6d8005ba8f224ffbb51ada3c8144"
+source = "git+https://github.com/mbecker20/partial_derive2.git?rev=46bd8dcfc768700df427fa7f6b1737481cf2e4ea#46bd8dcfc768700df427fa7f6b1737481cf2e4ea"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4828,14 +4827,28 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54e910108742c57a770f492731f99be216a52fadd361b06c8fb59d74ccc267d2"
+checksum = "a2b42f36aa1cd011945615b92222f6bf73c599a102a300334cd7f8dbeec726cc"
 dependencies = [
  "dyn-clone",
+ "indexmap 2.13.0",
  "ref-cast",
+ "schemars_derive",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "schemars_derive"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d115b50f4aaeea07e79c1912f645c7513d81715d0420f8bc77a18c6260b307f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_derive_internals",
+ "syn",
 ]
 
 [[package]]
@@ -4958,6 +4971,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_derive_internals"
+version = "0.29.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "serde_json"
 version = "1.0.149"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5047,7 +5071,7 @@ dependencies = [
  "indexmap 1.9.3",
  "indexmap 2.13.0",
  "schemars 0.9.0",
- "schemars 1.2.0",
+ "schemars 1.2.1",
  "serde_core",
  "serde_json",
  "serde_with_macros",
@@ -7165,6 +7189,16 @@ name = "xmlparser"
 version = "0.13.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66fee0b777b0f5ac1c69bb06d361268faafa61cd4682ae064a171c16c433e9e4"
+
+[[package]]
+name = "xtask"
+version = "2.1.1"
+dependencies = [
+ "anyhow",
+ "clap",
+ "komodo_client",
+ "schemars 1.2.1",
+]
 
 [[package]]
 name = "yoke"

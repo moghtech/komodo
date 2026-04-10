@@ -80,6 +80,10 @@ pub type _PartialDeploymentConfig = PartialDeploymentConfig;
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct DeploymentConfig {
@@ -89,6 +93,10 @@ pub struct DeploymentConfig {
   /// swarm_id overrides server_id and the Deployment will be in Swarm mode.
   #[serde(default, alias = "swarm")]
   #[partial_attr(serde(alias = "swarm"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "swarm"))
+  )]
   #[builder(default)]
   pub swarm_id: String,
 
@@ -98,6 +106,10 @@ pub struct DeploymentConfig {
   /// swarm_id overrides server_id and the Deployment will be in Swarm mode.
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "server"))
+  )]
   #[builder(default)]
   pub server_id: String,
 
@@ -355,6 +367,7 @@ impl utoipa::ToSchema for PartialDeploymentConfig {}
     utoipa::ToSchema
   ))
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(tag = "type", content = "params")]
 pub enum DeploymentImage {
   /// Deploy any external image.
@@ -368,6 +381,7 @@ pub enum DeploymentImage {
   Build {
     /// The id of the Build
     #[serde(default, alias = "build")]
+    #[cfg_attr(feature = "schemars", schemars(rename = "build"))]
     build_id: String,
     /// Use a custom / older version of the image produced by the build.
     /// if version is 0.0.0, this means `latest` image.
@@ -500,6 +514,7 @@ impl From<ContainerStateStatusEnum> for DeploymentState {
   AsRefStr,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum RestartMode {
   #[default]
   #[serde(rename = "no")]

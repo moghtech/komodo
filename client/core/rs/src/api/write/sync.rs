@@ -242,6 +242,7 @@ pub fn commit_sync() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]

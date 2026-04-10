@@ -28,6 +28,7 @@ pub fn clear_repo_cache() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -60,6 +61,7 @@ pub fn backup_core_database() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -92,6 +94,7 @@ pub fn global_auto_update() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -125,6 +128,7 @@ pub fn rotate_all_server_keys() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -155,6 +159,7 @@ pub fn rotate_core_keys() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]

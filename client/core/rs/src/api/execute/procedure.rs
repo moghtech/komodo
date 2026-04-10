@@ -27,6 +27,7 @@ pub fn run_procedure() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -55,6 +56,7 @@ pub fn batch_run_procedure() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(mogh_error::Error)]

@@ -26,12 +26,15 @@ use super::{
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[cfg_attr(feature = "schemars", schemars(rename = "Resources"))]
 pub struct ResourcesToml {
   #[serde(
     default,
     alias = "swarm",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "swarm"))]
   pub swarms: Vec<ResourceToml<_PartialSwarmConfig>>,
 
   #[serde(
@@ -39,6 +42,7 @@ pub struct ResourcesToml {
     alias = "server",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "server"))]
   pub servers: Vec<ResourceToml<_PartialServerConfig>>,
 
   #[serde(
@@ -46,6 +50,7 @@ pub struct ResourcesToml {
     alias = "deployment",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "deployment"))]
   pub deployments: Vec<ResourceToml<_PartialDeploymentConfig>>,
 
   #[serde(
@@ -53,6 +58,7 @@ pub struct ResourcesToml {
     alias = "stack",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "stack"))]
   pub stacks: Vec<ResourceToml<_PartialStackConfig>>,
 
   #[serde(
@@ -60,6 +66,7 @@ pub struct ResourcesToml {
     alias = "build",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "build"))]
   pub builds: Vec<ResourceToml<_PartialBuildConfig>>,
 
   #[serde(
@@ -67,6 +74,7 @@ pub struct ResourcesToml {
     alias = "repo",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "repo"))]
   pub repos: Vec<ResourceToml<_PartialRepoConfig>>,
 
   #[serde(
@@ -74,6 +82,7 @@ pub struct ResourcesToml {
     alias = "procedure",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "procedure"))]
   pub procedures: Vec<ResourceToml<_PartialProcedureConfig>>,
 
   #[serde(
@@ -81,6 +90,7 @@ pub struct ResourcesToml {
     alias = "action",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "action"))]
   pub actions: Vec<ResourceToml<_PartialActionConfig>>,
 
   #[serde(
@@ -88,6 +98,7 @@ pub struct ResourcesToml {
     alias = "alerter",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "alerter"))]
   pub alerters: Vec<ResourceToml<_PartialAlerterConfig>>,
 
   #[serde(
@@ -95,12 +106,17 @@ pub struct ResourcesToml {
     alias = "builder",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "builder"))]
   pub builders: Vec<ResourceToml<_PartialBuilderConfig>>,
 
   #[serde(
     default,
     alias = "resource_sync",
     skip_serializing_if = "Vec::is_empty"
+  )]
+  #[cfg_attr(
+    feature = "schemars",
+    schemars(rename = "resource_sync")
   )]
   pub resource_syncs: Vec<ResourceToml<_PartialResourceSyncConfig>>,
 
@@ -109,6 +125,7 @@ pub struct ResourcesToml {
     alias = "user_group",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "user_group"))]
   pub user_groups: Vec<UserGroupToml>,
 
   #[serde(
@@ -116,12 +133,14 @@ pub struct ResourcesToml {
     alias = "variable",
     skip_serializing_if = "Vec::is_empty"
   )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "variable"))]
   pub variables: Vec<Variable>,
 }
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ResourceToml<PartialConfig: Default> {
   /// The resource name. Required
   pub name: String,
@@ -165,6 +184,7 @@ fn is_false(b: &bool) -> bool {
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct UserGroupToml {
   /// User group name
   pub name: String,
@@ -191,6 +211,7 @@ pub struct UserGroupToml {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PermissionToml {
   /// Id can be:
   ///   - resource name. `id = "abcd-build"`
