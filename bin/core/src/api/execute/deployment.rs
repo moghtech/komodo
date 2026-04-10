@@ -123,26 +123,24 @@ impl Resolve<ExecuteArgs> for Deploy {
       DeploymentImage::Build { build_id, version } => {
         let build = resource::get::<Build>(build_id).await?;
         let image_names = build.get_image_names();
-        let image_name = image_names
+        let tags = build.get_image_tags(
+          &image_names,
+          build.info.built_hash.as_deref(),
+          &vec![], // Unused for now
+        );
+        let image_name = tags
           .first()
           .context("No image name could be created")
-          .context("Failed to create image name")?;
+          .context("Failed to create image name")?
+          .clone();
         let version = if version.is_none() {
           build.config.version
         } else {
           *version
         };
-        let version_str = version.to_string();
-        // Potentially add the build image_tag postfix
-        let version_str = if build.config.image_tag.is_empty() {
-          version_str
-        } else {
-          format!("{version_str}-{}", build.config.image_tag)
-        };
         // replace image with corresponding build image.
-        deployment.config.image = DeploymentImage::Image {
-          image: format!("{image_name}:{version_str}"),
-        };
+        deployment.config.image =
+          DeploymentImage::Image { image: image_name };
         let first_registry = build
           .config
           .image_registry
@@ -308,26 +306,23 @@ pub async fn pull_deployment_inner(
   server: &Server,
 ) -> anyhow::Result<Log> {
   let (image, account, token) = match deployment.config.image {
-    DeploymentImage::Build { build_id, version } => {
+    DeploymentImage::Build {
+      build_id,
+      version: _,
+    } => {
       let build = resource::get::<Build>(&build_id).await?;
       let image_names = build.get_image_names();
-      let image_name = image_names
+      let tags = build.get_image_tags(
+        &image_names,
+        build.info.built_hash.as_deref(),
+        &vec![], // Unused for now
+      );
+      // replace image with corresponding build image.
+      let image = tags
         .first()
         .context("No image name could be created")
-        .context("Failed to create image name")?;
-      let version = if version.is_none() {
-        build.config.version.to_string()
-      } else {
-        version.to_string()
-      };
-      // Potentially add the build image_tag postfix
-      let version = if build.config.image_tag.is_empty() {
-        version
-      } else {
-        format!("{version}-{}", build.config.image_tag)
-      };
-      // replace image with corresponding build image.
-      let image = format!("{image_name}:{version}");
+        .context("Failed to create image name")?
+        .clone();
       let first_registry = build
         .config
         .image_registry
