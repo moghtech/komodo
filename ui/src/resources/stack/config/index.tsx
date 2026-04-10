@@ -95,6 +95,8 @@ export default function StackConfig({
   const disabled = global_disabled || !canWrite;
 
   const runBuild = update.run_build ?? config.run_build;
+  const poll_for_updates = update.poll_for_updates ?? config.poll_for_updates;
+
   const mode = getStackMode(update, config);
 
   const gitProvider = update.git_provider ?? config.git_provider;
@@ -389,6 +391,27 @@ export default function StackConfig({
             />
           );
         },
+        auto_update_skip_services: (values, set) =>
+          poll_for_updates && (
+            <ConfigItem
+              label="Ignore Services During Polling"
+              description="Services listed here are skipped only during Global Auto Update checks. Manual checks still include all services."
+            >
+              <MultiSelect
+                leftSection={<ICONS.Service size="1rem" />}
+                placeholder={values?.length ? "Add services" : "Select services"}
+                value={values}
+                data={allServices}
+                onChange={(auto_update_skip_services) =>
+                  set({ auto_update_skip_services })
+                }
+                disabled={disabled}
+                w="fit-content"
+                searchable
+                clearable
+              />
+            </ConfigItem>
+          ),
         auto_update: {
           description: "Trigger a redeploy if a newer image is found.",
         },
