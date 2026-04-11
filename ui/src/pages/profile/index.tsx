@@ -128,7 +128,6 @@ export default function Profile() {
                   onCheckedChange={(external_skip_2fa) =>
                     updateExternalSkip2fa({ external_skip_2fa })
                   }
-                  redDisabled={false}
                 />
               )}
             </Group>

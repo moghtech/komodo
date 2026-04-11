@@ -98,7 +98,7 @@ export function AlertDetailsContent({
       {/** HEADER */}
       <Group justify="space-between">
         <Text fz="h1">{fmtUpperCamelcase(alert.data.type)}</Text>
-        <ActionIcon size="lg" variant="filled" color="red" onClick={close}>
+        <ActionIcon size="lg" variant="subtle" color="dimmed" onClick={close}>
           <ICONS.Clear size="1.3rem" />
         </ActionIcon>
       </Group>

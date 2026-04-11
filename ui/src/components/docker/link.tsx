@@ -82,7 +82,7 @@ export const DOCKER_LINK_ICONS: {
       : noContainers
         ? ["none", "host", "bridge"].includes(name)
           ? "None"
-          : "Critical"
+          : "Neutral"
         : "Good";
     return <ICONS.Network size={size} color={hexColorByIntention(intention)} />;
   },
@@ -92,7 +92,7 @@ export const DOCKER_LINK_ICONS: {
     const noContainers = !name
       ? false
       : containers.every((container) => container.image_id !== name);
-    const intention = !name ? "Warning" : noContainers ? "Critical" : "Good";
+    const intention = !name ? "Warning" : noContainers ? "Neutral" : "Good";
     return <ICONS.Image size={size} color={hexColorByIntention(intention)} />;
   },
   Volume: ({ serverId, name, size = "1rem" }) => {
@@ -101,7 +101,7 @@ export const DOCKER_LINK_ICONS: {
     const noContainers = !name
       ? false
       : containers.every((container) => !container.volumes?.includes(name));
-    const intention = !name ? "Warning" : noContainers ? "Critical" : "Good";
+    const intention = !name ? "Warning" : noContainers ? "Neutral" : "Good";
     return <ICONS.Volume size={size} color={hexColorByIntention(intention)} />;
   },
 };
