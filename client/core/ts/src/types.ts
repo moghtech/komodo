@@ -6816,7 +6816,8 @@ export interface CreateOnboardingKey {
 	expires?: I64;
 	/**
 	 * Optionally specify an existing private key, otherwise
-	 * generate fresh key.
+	 * generate fresh key. This key is not stored directly,
+	 * only the public key.
 	 */
 	private_key?: string;
 	/** Default tags to apply to Servers created using this key. */
