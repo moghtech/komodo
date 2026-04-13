@@ -9,7 +9,7 @@ import {
   SimpleGrid,
   Text,
 } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ThemeToggle } from "mogh_ui";
 import UserDropdown from "@/app/topbar/user-dropdown";
 import TopbarUpdates from "@/app/topbar/updates";
@@ -27,7 +27,6 @@ const Topbar = ({
   opened: boolean;
   toggle: () => void;
 }) => {
-  const nav = useNavigate();
   const version = useRead("GetVersion", {}, { refetchInterval: 30_000 }).data
     ?.version;
   return (
@@ -46,21 +45,22 @@ const Topbar = ({
       {/** LEFT AREA */}
       <Group gap="xs" wrap="nowrap" w="fit-content">
         <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+
         <ActionIcon
           variant="subtle"
-          onClick={() => nav("/")}
+          renderRoot={(props) => <Link to="/" {...props} />}
           size="lg"
           hiddenFrom="md"
         >
           <img src="/mogh-512x512.png" width={32} alt="moghtech" />
         </ActionIcon>
+
         <Button
           variant="subtle"
-          c="inherit"
+          renderRoot={(props) => <Link to="/" {...props} />}
           leftSection={
             <img src="/mogh-512x512.png" width={32} alt="moghtech" />
           }
-          onClick={() => nav("/")}
           size="lg"
           visibleFrom="md"
         >
