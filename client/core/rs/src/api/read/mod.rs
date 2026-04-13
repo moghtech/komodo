@@ -144,7 +144,7 @@ pub struct GetCoreInfoResponse {
   pub enable_fancy_toml: bool,
   /// TZ identifier Core is using, if manually set.
   pub timezone: String,
-  /// Default public key allowing this Core to authenticate to Periphery agents.
+  /// Public key for Core / Periphery authentication.
   pub public_key: String,
 }
 
