@@ -39,6 +39,7 @@ pub struct StatsClient {
   system: sysinfo::System,
   disks: sysinfo::Disks,
   networks: sysinfo::Networks,
+  components: sysinfo::Components,
 }
 
 const BYTES_PER_GB: f64 = 1073741824.0;
@@ -50,6 +51,7 @@ impl Default for StatsClient {
     let system = sysinfo::System::new_all();
     let disks = sysinfo::Disks::new_with_refreshed_list();
     let networks = sysinfo::Networks::new_with_refreshed_list();
+    let components = sysinfo::Components::new_with_refreshed_list();
     let stats = SystemStats {
       polling_rate: periphery_config().stats_polling_rate,
       ..Default::default()
@@ -59,6 +61,7 @@ impl Default for StatsClient {
       system,
       disks,
       networks,
+      components,
       stats,
     }
   }
@@ -75,6 +78,7 @@ impl StatsClient {
     );
     self.disks.refresh(true);
     self.networks.refresh(true);
+    self.components.refresh(true);
   }
 
   pub fn get_system_stats(&self) -> SystemStats {
@@ -91,8 +95,21 @@ impl StatsClient {
 
     let load_avg = System::load_average();
 
+    let cpu_temp = self
+      .components
+      .iter()
+      .filter(|c| {
+        let label = c.label().to_lowercase();
+        label.contains("core")
+          || label.contains("package")
+          || label.contains("cpu")
+      })
+      .filter_map(|c| c.temperature())
+      .max_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+
     SystemStats {
       cpu_perc: self.system.global_cpu_usage(),
+      cpu_temp,
       load_average: SystemLoadAverage {
         one: load_avg.one,
         five: load_avg.five,

@@ -191,7 +191,11 @@ function StatItem({
                 : hexColorByIntention(intention(percentage, type))
             }
           >
-            {isUnreachable ? "N/A" : `${percentage.toFixed(1)}%`}
+            {isUnreachable
+              ? "N/A"
+              : type === "cpu" && stats?.cpu_temp !== undefined
+                ? `${stats.cpu_temp.toFixed(0)}°C | ${percentage.toFixed(1)}%`
+                : `${percentage.toFixed(1)}%`}
           </Text>
         </Group>
         <Progress color="bw" value={percentage} size={4} />

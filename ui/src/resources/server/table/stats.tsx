@@ -27,7 +27,7 @@ export default function StatsServerTable({
       }}
       columns={[
         {
-          size: 250,
+          size: 200,
           accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
@@ -38,17 +38,22 @@ export default function StatsServerTable({
         },
         {
           header: "CPU",
-          size: 200,
+          size: 180,
           cell: ({ row }) => <CpuCell id={row.original.id} />,
         },
         {
+          header: "Temp",
+          size: 80,
+          cell: ({ row }) => <TempCell id={row.original.id} />,
+        },
+        {
           header: "Memory",
-          size: 200,
+          size: 180,
           cell: ({ row }) => <MemCell id={row.original.id} />,
         },
         {
           header: "Disk",
-          size: 200,
+          size: 180,
           cell: ({ row }) => <DiskCell id={row.original.id} />,
         },
         {
@@ -79,6 +84,24 @@ function CpuCell({ id }: { id: string }) {
   const intent: "Good" | "Warning" | "Critical" =
     cpu < warning ? "Good" : cpu < critical ? "Warning" : "Critical";
   return <StatCell value={stats ? cpu : undefined} intent={intent} />;
+}
+
+function TempCell({ id }: { id: string }) {
+  const stats = useServerStats(id);
+  const temp = stats?.cpu_temp;
+  const intent: "Good" | "Warning" | "Critical" =
+    temp === undefined
+      ? "Good"
+      : temp < 65
+        ? "Good"
+        : temp < 80
+          ? "Warning"
+          : "Critical";
+  return (
+    <Text c={temp !== undefined ? hexColorByIntention(intent) : "dimmed"}>
+      {temp !== undefined ? `${temp.toFixed(0)}°C` : "N/A"}
+    </Text>
+  );
 }
 
 function MemCell({ id }: { id: string }) {

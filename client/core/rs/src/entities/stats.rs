@@ -43,6 +43,9 @@ pub struct SystemStatsRecord {
   // basic stats
   /// Cpu usage percentage
   pub cpu_perc: f32,
+  /// CPU temperature in Celsius
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub cpu_temp: Option<f32>,
   /// Load average (1m, 5m, 15m)
   #[serde(default)]
   pub load_average: SystemLoadAverage,
@@ -74,6 +77,9 @@ pub struct SystemStatsRecord {
 pub struct SystemStats {
   /// Cpu usage percentage
   pub cpu_perc: f32,
+  /// CPU temperature in Celsius
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub cpu_temp: Option<f32>,
   ///  Load average (1m, 5m, 15m)
   #[serde(default)]
   pub load_average: SystemLoadAverage,

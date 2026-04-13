@@ -37,7 +37,7 @@ export default function StatCell({
     <Progress
       value={value ?? 0}
       color={hexColorByIntention(intent)}
-      w={200}
+      w={120}
       size="xl"
       {...barProps}
     />
@@ -45,7 +45,7 @@ export default function StatCell({
   return (
     <Group gap="xs" justify="space-between" wrap="nowrap" {...groupProps}>
       <Text
-        w={64}
+        w={48}
         c={value === undefined ? "dimmed" : undefined}
         {...textProps}
       >
