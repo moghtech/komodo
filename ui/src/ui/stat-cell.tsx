@@ -21,6 +21,7 @@ export interface StatCellProps extends GroupProps {
   info?: ReactNode;
   infoPosition?: FloatingPosition;
   infoDisabled?: boolean;
+  suffix?: string;
 }
 
 export default function StatCell({
@@ -31,6 +32,7 @@ export default function StatCell({
   info,
   infoPosition = "left-start",
   infoDisabled,
+  suffix = "%",
   ...groupProps
 }: StatCellProps) {
   const ProgressComponent = (
@@ -49,7 +51,7 @@ export default function StatCell({
         c={value === undefined ? "dimmed" : undefined}
         {...textProps}
       >
-        {value === undefined ? "N/A" : value.toFixed(1) + "%"}
+        {value === undefined ? "N/A" : value.toFixed(1) + suffix}
       </Text>
       {!info && ProgressComponent}
       {info && (

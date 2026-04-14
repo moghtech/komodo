@@ -136,6 +136,7 @@ export default function ServerStatsCard({ id }: ServerStatsCardProps) {
           key={item.label}
           isUnreachable={isUnreachable || isDisabled}
           intention={intention}
+          cpuTemp={item.label === "CPU" ? stats?.cpu_temp : undefined}
           {...item}
         />
       ))}
@@ -166,6 +167,7 @@ function StatItem({
   type,
   isUnreachable,
   intention,
+  cpuTemp,
 }: {
   icon: LucideIcon;
   label: string;
@@ -176,6 +178,7 @@ function StatItem({
     percentage: number,
     type: "cpu" | "memory" | "disk",
   ) => ColorIntention;
+  cpuTemp?: number;
 }) {
   return (
     <Group gap="xs" wrap="nowrap" c="dimmed">
@@ -193,8 +196,8 @@ function StatItem({
           >
             {isUnreachable
               ? "N/A"
-              : type === "cpu" && stats?.cpu_temp !== undefined
-                ? `${stats.cpu_temp.toFixed(0)}°C | ${percentage.toFixed(1)}%`
+              : type === "cpu" && cpuTemp !== undefined
+                ? `${cpuTemp.toFixed(0)}°C | ${percentage.toFixed(1)}%`
                 : `${percentage.toFixed(1)}%`}
           </Text>
         </Group>

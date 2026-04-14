@@ -98,9 +98,17 @@ function TempCell({ id }: { id: string }) {
           ? "Warning"
           : "Critical";
   return (
-    <Text c={temp !== undefined ? hexColorByIntention(intent) : "dimmed"}>
-      {temp !== undefined ? `${temp.toFixed(0)}°C` : "N/A"}
-    </Text>
+    <StatCell
+      value={temp}
+      intent={intent}
+      suffix="°C"
+      infoDisabled={temp === undefined}
+      info={
+        <Text size="sm">
+          CPU Temperature: <b>{temp?.toFixed(1)}°C</b>
+        </Text>
+      }
+    />
   );
 }
 
