@@ -30,6 +30,13 @@ export default function ServerCurrentStats({
           <StatBar
             title="CPU Usage"
             icon={<ICONS.Cpu size="1.3rem" />}
+            description={
+              stats?.cpu_temp !== undefined && (
+                <>
+                  Temperature: <b>{stats.cpu_temp.toFixed(1)}°C</b>
+                </>
+              )
+            }
             percentage={stats?.cpu_perc}
             warning={server?.config?.cpu_warning}
             critical={server?.config?.cpu_critical}

@@ -210,6 +210,33 @@ export const ServerComponents: RequiredResourceComponents<
         </HoverCard>
       );
     },
+    Temperature: ({ id }) => {
+      const isServerAvailable = useIsServerAvailable(id);
+      const stats = useRead(
+        "GetSystemStats",
+        { server: id },
+        {
+          enabled: isServerAvailable,
+          refetchInterval: 5000,
+        },
+      ).data;
+
+      const temp = stats?.cpu_temp;
+
+      return (
+        <HoverCard position="bottom-start">
+          <HoverCard.Target>
+            <Group gap="xs">
+              <ICONS.Temperature size="1rem" />
+              {temp !== undefined ? `${temp.toFixed(1)}°C` : "N/A"}
+            </Group>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
+            CPU Temperature: <b>{temp !== undefined ? `${temp.toFixed(1)}°C` : "N/A"}</b>
+          </HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
     LoadAvg: ({ id }) => {
       const isServerAvailable = useIsServerAvailable(id);
       const stats = useRead(

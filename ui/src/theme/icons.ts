@@ -69,6 +69,7 @@ import {
   Tag,
   Tags,
   Terminal,
+  Thermometer,
   Trash,
   Trash2,
   TriangleAlert,
@@ -121,6 +122,7 @@ export const ICONS = {
   // Device
   IP: Globe,
   Cpu,
+  Temperature: Thermometer,
   LoadAvg: ChartLine,
   Memory: MemoryStick,
   Disk: Database,
