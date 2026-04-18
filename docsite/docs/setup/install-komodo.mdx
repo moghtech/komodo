@@ -1,0 +1,229 @@
+---
+slug: /setup/install-core
+sidebar_label: Install Komodo
+title: Install Komodo
+---
+
+<!-- markdownlint-disable no-inline-html -->
+
+```mdx-code-block
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
+```
+
+Read [What Is Komodo](../intro.md) for the system overview. [Setup](./index.md) and
+[Database](../database.md) cover database choice and Periphery installation shape in more detail.
+
+## What This Installs
+
+The provided [Docker Compose](https://docs.docker.com/compose/) files install:
+
+- Komodo Core
+- one database backend:
+  - [MongoDB](./mongo.mdx), or
+  - [FerretDB](./ferretdb.mdx), which itself runs on Postgres
+- a Periphery container in the same stack
+
+Komodo uses [Docker](https://docs.docker.com/engine/install/) as the container engine for build and
+deployment. [Podman](https://podman.io/) is also supported via the `podman` -> `docker` alias.
+
+The bundled `periphery` service in these Compose files is one valid install path. A separately
+managed Periphery is another. Do not run both for the same host.
+
+If Periphery will be managed separately with `systemd` or another host-level process manager, use
+the Compose files here for the Core and database setup, then remove or comment out the `periphery`
+service block from the Compose file before `docker compose up`. Then continue to
+[Connect More Servers](./connect-servers.mdx) for the host-side Periphery install.
+
+If the machine does not have `systemd`, the bundled containerized Periphery path keeps Core, the
+database, and Periphery in one stack. A separate Periphery install is a different setup shape. See
+[Periphery](../periphery.md) and [Host Model](../host-model.md).
+
+If you are using the bundled Periphery container on macOS, remove or comment out the
+`/proc:/proc` bind mount in the sample Compose file before startup. That mount is only there to let
+Periphery inspect host processes outside the container. Komodo can run without it.
+
+For the full local-evaluation caveats on macOS, see
+[Run Komodo Locally On macOS](../how-to/run-komodo-locally-on-macos.md).
+
+The Compose-based differences between the database paths are small:
+
+- the MongoDB stack runs `mongo`
+- the FerretDB stack runs `postgres` plus `ferretdb`
+
+The Core service, environment variables, and first login flow are otherwise the same.
+
+## Copy The Compose Files
+
+Create a working directory and copy the shared environment file plus the Compose file for your
+database choice.
+
+<Tabs groupId="database-backend">
+  <TabItem value="mongo" label="MongoDB">
+
+```bash
+mkdir -p komodo
+wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/mongo.compose.yaml
+wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/compose.env
+```
+
+  </TabItem>
+  <TabItem value="ferretdb" label="FerretDB">
+
+```bash
+mkdir -p komodo
+wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/ferretdb.compose.yaml
+wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/compose.env
+```
+
+  </TabItem>
+</Tabs>
+
+## Edit The First Variables
+
+Before starting the stack, edit `komodo/compose.env`.
+
+Change these values before first startup:
+
+- **`KOMODO_HOST`**: URL or host users will use to reach Core, such as
+  `http://nas.local:9120` or `https://komodo.example.com`.
+- **`KOMODO_INIT_ADMIN_USERNAME`**: initial admin username, such as `admin`.
+- **`KOMODO_INIT_ADMIN_PASSWORD`**: initial admin password. Use a long random password, not
+  `changeme`.
+- **`KOMODO_DATABASE_USERNAME`**: database username for the Compose stack. The sample default is
+  `admin`.
+- **`KOMODO_DATABASE_PASSWORD`**: database password for the Compose stack. The sample default is
+  `admin`.
+- **`KOMODO_FIRST_SERVER_NAME`**: name of the bundled first Server, such as `nas`, `laptop`, or
+  `Local`.
+
+Review these settings in the same edit:
+
+- **`TZ`**: timezone for schedules, such as `America/Los_Angeles`.
+- **`KOMODO_WEBHOOK_SECRET`**: secret used to authenticate incoming webhooks. Change it from the
+  sample value.
+- **`KOMODO_JWT_SECRET`**: secret used for JWT generation. Change it from the sample value.
+
+The default Compose files publish Core on port `9120`, so `KOMODO_HOST` should reflect that unless
+you are placing Komodo behind a reverse proxy. The sample file uses placeholder values
+and insecure defaults for convenience. Change them before using the stack outside a throwaway local
+test.
+
+### Security Notes
+
+- `compose.env` contains secrets. Treat it as sensitive host configuration, not as a file to check
+  into source control.
+- Several secret variables support the `${VARIABLE}_FILE` pattern. If you are using Docker secrets
+  or another secret-management path, prefer that over storing passwords directly in `compose.env`.
+  See [Docker Secrets And `_FILE` Variables](../how-to/docker-secrets-files.md).
+- Shared application values and secret references are also covered in
+  [Variables and Secrets](../configuration/variables.md).
+- `KOMODO_INIT_ADMIN_PASSWORD`, `KOMODO_DATABASE_PASSWORD`, `KOMODO_WEBHOOK_SECRET`, and
+  `KOMODO_JWT_SECRET` should all be changed from the sample values before exposing Core to other
+  users or networks.
+- If you are deploying behind HTTPS and a stable hostname, set `KOMODO_HOST` to that external URL
+  early. It is used for OAuth and webhook URL suggestions.
+
+See the full environment file here:
+
+- [`compose/compose.env`](https://github.com/moghtech/komodo/blob/main/compose/compose.env)
+
+<details>
+<summary>View sample <code>compose.env</code></summary>
+
+```mdx-code-block
+<RemoteCodeFile
+  title="https://github.com/moghtech/komodo/blob/main/compose/compose.env"
+  url="https://raw.githubusercontent.com/moghtech/komodo/main/compose/compose.env"
+  language="bash"
+/>
+```
+
+</details>
+
+## Compose File Reference
+
+The exact Compose files for the two database paths are below.
+
+<details>
+<summary>View sample Compose files</summary>
+
+<Tabs groupId="database-backend">
+  <TabItem value="mongo" label="MongoDB">
+    <RemoteCodeFile
+      title="https://github.com/moghtech/komodo/blob/main/compose/mongo.compose.yaml"
+      url="https://raw.githubusercontent.com/moghtech/komodo/main/compose/mongo.compose.yaml"
+      language="yaml"
+    />
+  </TabItem>
+  <TabItem value="ferretdb" label="FerretDB">
+    <RemoteCodeFile
+      title="https://github.com/moghtech/komodo/blob/main/compose/ferretdb.compose.yaml"
+      url="https://raw.githubusercontent.com/moghtech/komodo/main/compose/ferretdb.compose.yaml"
+      language="yaml"
+    />
+  </TabItem>
+</Tabs>
+
+</details>
+
+## Initial Admin And Login Options
+
+The sample Compose environment enables local username/password login with
+`KOMODO_LOCAL_AUTH=true`, `KOMODO_INIT_ADMIN_USERNAME=admin`, and
+`KOMODO_INIT_ADMIN_PASSWORD=...`. On first startup, Komodo creates that admin user and you can log
+in directly with those credentials.
+
+Other login paths:
+
+- **Local auth + signup flow**: comment out `KOMODO_INIT_ADMIN_USERNAME` if you do not want the
+  stack to create the first admin automatically, then create the first user through the signup
+  button in the UI.
+- **OIDC / OAuth2**: configure an external identity provider. See
+  [OIDC / OAuth2 Login](../how-to/oidc-oauth2.md).
+- **Mounted config file**: move Core settings into `core.config.toml`. See
+  [Mounted Config Files](../how-to/mounted-config-files.mdx).
+
+## Start The Stack
+
+Run one of the following [`docker compose up`](https://docs.docker.com/reference/cli/docker/compose/up/)
+commands from the host.
+
+<Tabs groupId="database-backend">
+  <TabItem value="mongo" label="MongoDB">
+
+```bash
+docker compose -p komodo -f komodo/mongo.compose.yaml --env-file komodo/compose.env up -d
+```
+
+  </TabItem>
+  <TabItem value="ferretdb" label="FerretDB">
+
+```bash
+docker compose -p komodo -f komodo/ferretdb.compose.yaml --env-file komodo/compose.env up -d
+```
+
+  </TabItem>
+</Tabs>
+
+## After Startup
+
+After the stack starts successfully, check three things:
+
+1. the Core UI is reachable on port `9120`, unless you changed the Compose file
+2. login works with the configured initial admin credentials, or through the signup flow if
+   `KOMODO_INIT_ADMIN_USERNAME` is unset
+3. the first Server appears and its connection status is `OK`
+
+If the Core UI comes up but the Server does not connect, continue to
+[Connect More Servers](./connect-servers.mdx) to check the Periphery install mode, root directory,
+and onboarding details.
+
+## What Comes Next
+
+Once Core is running:
+
+1. confirm the first Server is connected
+2. read [After First Server](./after-first-server.md)
+3. if needed, create an onboarding key and [add another server](../how-to/add-another-server.md)

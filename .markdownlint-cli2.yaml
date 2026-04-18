@@ -1,0 +1,12 @@
+globs:
+  - "docsite/docs/**/*.md"
+  - "docsite/docs/**/*.mdx"
+
+config:
+  default: true
+  line-length:
+    line_length: 100
+  table-pipe-style:
+    style: leading_and_trailing
+  table-column-style:
+    style: compact

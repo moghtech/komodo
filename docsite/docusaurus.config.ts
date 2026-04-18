@@ -112,7 +112,8 @@ const config: Config = {
         {
           title: "Docs",
           items: [
-            { label: "Getting Started", to: "/docs/intro" },
+            { label: "Docs Home", to: "/docs" },
+            { label: "What Is Komodo", to: "/docs/intro" },
             { label: "Setup", to: "/docs/setup" },
             { label: "Resources", to: "/docs/resources" },
           ],

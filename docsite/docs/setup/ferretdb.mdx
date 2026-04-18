@@ -1,24 +1,70 @@
-# FerretDB
+---
+sidebar_label: FerretDB
+---
+
+# FerretDB Reference
 
 :::info
-- If you setup Komodo using **Postgres** or **Sqlite** options prior to [**Komodo v1.18.0**](https://github.com/moghtech/komodo/releases/tag/v1.18.0), you are using **FerretDB v1**.
-- Komodo now uses **FerretDB v2**. For existing users, [**upgrading requires a migration**](https://github.com/moghtech/komodo/blob/main/bin/cli/docs/copy-database.md#ferretdb-v2-update-guide).
+
+- If you setup Komodo using **Postgres** or **Sqlite** options prior to
+  [**Komodo v1.18.0**](https://github.com/moghtech/komodo/releases/tag/v1.18.0), you are using
+  **FerretDB v1**.
+- Komodo now uses **FerretDB v2**. Existing users need the
+  [migration guide](https://github.com/moghtech/komodo/blob/main/bin/cli/docs/copy-database.md#ferretdb-v2-update-guide).
+
 :::
 
-[**FerretDB**](https://www.ferretdb.com) is a MongoDB-compatible database backed by [Postgres + DocumentDB extension](https://github.com/microsoft/documentdb).
-It is a solid option with performance comparable to MongoDB, and can also be run on some systems which [do not support MongoDB](https://github.com/moghtech/komodo/issues/59).
+[FerretDB](https://www.ferretdb.com) is a MongoDB-compatible database layer backed by Postgres and
+[DocumentDB](https://github.com/microsoft/documentdb). It is useful where MongoDB support is
+awkward or where the Postgres-backed path is preferred.
 
-1. Copy `komodo/ferretdb.compose.yaml` and `komodo/compose.env` to your host:
-```bash
-wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/ferretdb.compose.yaml && \
-  wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/compose.env
-```
-2. Edit the variables in `komodo/compose.env`.
-3. Deploy using command:
+[Install Komodo](./install-komodo.mdx) covers the main first-time setup flow. FerretDB-specific
+stack details are below, separated from the MongoDB path.
 
-```bash
-docker compose -p komodo -f komodo/ferretdb.compose.yaml --env-file komodo/compose.env up -d
-```
+## When To Use It
+
+FerretDB fits systems where MongoDB is inconvenient or where the database layer should run on
+Postgres.
+
+See [Database](../database.md) for the conceptual role of the database in Komodo and
+[Setup](./index.md) for the higher-level setup choices.
+
+## What Is Different In This Stack
+
+Compared to the [MongoDB](./mongo.mdx) path, the FerretDB stack adds another layer:
+
+- a `postgres` service for storage
+- a `ferretdb` service that exposes a MongoDB-compatible interface to Core
+- `core` connects to `ferretdb:27017`, not directly to Postgres
+
+This path exists for systems where MongoDB packaging or support is awkward, or where the
+Postgres-backed route is preferred.
+
+## Settings That Matter Here
+
+The FerretDB-specific settings are spread across two services:
+
+- `KOMODO_DATABASE_USERNAME` and `KOMODO_DATABASE_PASSWORD` initialize Postgres
+- `FERRETDB_POSTGRESQL_URL` points FerretDB at the Postgres service
+- `core` sets `KOMODO_DATABASE_ADDRESS=ferretdb:27017`
+- storage is split between the `postgres-data` and `ferretdb-state` volumes
+
+The rest of the first-start configuration still lives in the shared `compose.env` file described in
+[Install Komodo](./install-komodo.mdx).
+
+## Operational Notes
+
+The sample FerretDB stack pins both database images indirectly through the Compose file rather than
+using floating package-manager installs on the host:
+
+- `ghcr.io/ferretdb/postgres-documentdb`
+- `ghcr.io/ferretdb/ferretdb`
+
+The sample comments already warn that these images should stay pinned because updates can be
+breaking. This path has more moving parts than MongoDB, but those differences stay isolated in one
+stack definition.
+
+## Sample Files
 
 ```mdx-code-block
 import ComposeAndEnv from "@site/src/components/ComposeAndEnv";

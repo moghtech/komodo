@@ -1,22 +1,27 @@
 # Sync Resources
 
-Komodo is able to create, update, delete, and deploy resources declared in TOML files by diffing them against the existing resources,
-and apply updates based on the diffs. Similar to Stacks, the files can be configured in UI, in a local file, or in files pushed to a remote git repo.
-The Komodo Core backend will poll the files for any updates, and alert about pending changes when diffs are detected.
+Komodo can create, update, delete, and deploy resources declared in TOML files by diffing them
+against existing resources and applying changes from those diffs.
 
-You can spread out your resource declarations across any number of files
-and use any nesting of folders to organize resources inside a root folder.
-Additionally, you can create multiple `ResourceSyncs` and configure `Match Tags` to filter down which resources are synced,
-and each sync will be handled independently. This allows different syncs to manage resources on a "per-project" basis.
+Like Stacks, the files can come from the UI, a local file, or files in a remote git repository.
+Core polls for updates and alerts when diffs are detected.
 
-The UI will display the computed sync actions and only execute them upon manual confirmation.
-Or the sync execution git webhook may be configured on the git repo to
-automatically execute syncs upon pushes to the configured branch.
+Use Resource Sync when the source of truth for Komodo resources should live in files instead of only
+in the UI.
+
+You can spread resource declarations across any number of files and use any folder structure inside
+a root folder. You can also create multiple `ResourceSyncs` and configure `Match Tags` so each sync
+manages a separate project or slice of the environment.
+
+The UI shows the computed sync actions and only executes them after manual confirmation. A sync
+execution webhook can also be configured so pushes to the configured branch automatically execute
+the sync.
 
 ## Commit to Syncs
 
-If the Sync is pointing to just a single file, you can enable "Managed Mode" to allow Core to write the updates you made in UI _back to the file_.
-This works no matter where the files are located, and will create a commit to your git repository for repo based files.
+If the sync points to a single file, you can enable `Managed Mode` to let Core write UI changes
+back to that file. This works regardless of where the file lives, and will create a commit for
+repo-based files.
 
 ## Example Declarations
 
@@ -144,7 +149,8 @@ name = "test-logger-02"
 description = "test logger deployment 2"
 tags = ["test"]
 deploy = true
-# Create a dependency on test-logger-01. This deployment will only be deployed after test-logger-01 is deployed.
+# Create a dependency on test-logger-01.
+# This deployment will only be deployed after test-logger-01 is deployed.
 # Additionally, any sync deploy of test-logger-01 will also trigger sync deploy of this deployment.
 after = ["test-logger-01"]
 [deployment.config]
@@ -254,7 +260,7 @@ repo = "moghtech/komodo"
 resource_path = ["stacks.toml", "repos.toml"]
 ```
 
-### User Group:
+### User Group
 
 - [UserGroup schema](https://docs.rs/komodo_client/latest/komodo_client/entities/toml/struct.UserGroupToml.html)
 
@@ -272,8 +278,16 @@ all.Builder = { level = "Read", specific = ["Attach"] }
 permissions = [
   # Attach permissions to specific resources by name
   { target.type = "Repo", target.id = "komodo-periphery", level = "Execute" },
-  # Attach permissions to many resources with name matching regex (this uses '^(.+)-(.+)$' as regex expression)
+  # Attach permissions to many resources with name matching regex.
+  # This uses '^(.+)-(.+)$' as the regex expression.
   { target.type = "Server", target.id = "\\^(.+)-(.+)$\\", level = "Read" },
   { target.type = "Deployment", target.id = "\\^immich\\", level = "Execute" },
 ]
 ```
+
+## Related Pages
+
+- [Resources](../resources.md)
+- [Repo](../repo.md)
+- [Webhooks](./webhooks.md)
+- [Permissioning](../configuration/permissioning.md)
