@@ -2,8 +2,10 @@ use std::{fs, path::PathBuf};
 
 use anyhow::Context;
 use formatting::format_serror;
+use git::RemoteState;
 use komodo_client::entities::{
   FileContents, RepoExecutionArgs,
+  all_logs_success,
   repo::Repo,
   stack::{Stack, StackRemoteFileContents},
   update::Log,
@@ -108,10 +110,109 @@ pub async fn ensure_remote_repo(
     clone_args.unique_path(&core_config().repo_directory)?;
   clone_args.destination = Some(repo_path.display().to_string());
 
-  git::pull_or_clone(clone_args, &config.repo_directory, access_token)
-    .await
-    .context("Failed to clone stack repo")
-    .map(|(res, _)| {
-      (repo_path, res.logs, res.commit_hash, res.commit_message)
-    })
+  // Probe the remote first so we can distinguish "repo unreachable"
+  // from "repo reachable but empty / branch missing" and bootstrap
+  // empty remotes locally instead of failing on `git pull`.
+  let remote_state = git::check_remote_state(
+    &clone_args,
+    access_token.as_deref(),
+  )
+  .await
+  .context("Failed to check remote state before clone")?;
+
+  match remote_state {
+    RemoteState::Unreachable { stderr } => {
+      let log = Log::error(
+        "Check Remote",
+        format!(
+          "Remote repository is not reachable.\n\nVerify:\n  \
+           \u{2022} The repository exists at {}/{}\n  \
+           \u{2022} The configured git account has access to it\n  \
+           \u{2022} The token has not expired\n\n\
+           git stderr:\n{stderr}",
+          clone_args.provider,
+          clone_args.repo.as_deref().unwrap_or(""),
+        ),
+      );
+      Ok((repo_path, vec![log], None, None))
+    }
+    RemoteState::Empty => {
+      let mut logs =
+        bootstrap_local_clone(&repo_path, &clone_args, &access_token)
+          .await?;
+      if !all_logs_success(&logs) {
+        return Ok((repo_path, logs, None, None));
+      }
+      logs.push(Log::simple(
+        "Check Remote",
+        format!(
+          "Remote repository is reachable but empty. \
+           Initialized local clone on branch {}. \
+           Use Initialize File to write the first commit.",
+          clone_args.branch,
+        ),
+      ));
+      Ok((repo_path, logs, None, None))
+    }
+    RemoteState::BranchMissing { available_branches } => {
+      let mut logs =
+        bootstrap_local_clone(&repo_path, &clone_args, &access_token)
+          .await?;
+      if !all_logs_success(&logs) {
+        return Ok((repo_path, logs, None, None));
+      }
+      logs.push(Log::simple(
+        "Check Remote",
+        format!(
+          "Remote repository is reachable but branch '{}' does not \
+           exist. Available branches: [{}]. Use Initialize File to \
+           create the branch from the first commit.",
+          clone_args.branch,
+          available_branches.join(", "),
+        ),
+      ));
+      Ok((repo_path, logs, None, None))
+    }
+    RemoteState::BranchExists => {
+      git::pull_or_clone(
+        clone_args,
+        &config.repo_directory,
+        access_token,
+      )
+      .await
+      .context("Failed to clone stack repo")
+      .map(|(res, _)| {
+        (repo_path, res.logs, res.commit_hash, res.commit_message)
+      })
+    }
+  }
+}
+
+/// Ensure the local clone directory exists and is initialized as a git repo
+/// pointing at origin + the configured branch. Used when the remote is
+/// reachable but has nothing to pull (empty repo or branch missing).
+async fn bootstrap_local_clone(
+  repo_path: &std::path::Path,
+  clone_args: &RepoExecutionArgs,
+  access_token: &Option<String>,
+) -> anyhow::Result<Vec<Log>> {
+  let mut logs = Vec::new();
+  if let Some(parent) = repo_path.parent() {
+    tokio::fs::create_dir_all(parent).await.with_context(|| {
+      format!("Failed to create repo parent directory {parent:?}")
+    })?;
+  }
+  tokio::fs::create_dir_all(repo_path).await.with_context(
+    || format!("Failed to create repo directory {repo_path:?}"),
+  )?;
+  if !repo_path.join(".git").exists() {
+    git::init_folder_as_repo(
+      repo_path,
+      clone_args,
+      access_token.as_deref(),
+      &mut logs,
+    )
+    .await;
+  }
+  Ok(logs)
 }

@@ -357,6 +357,42 @@ async fn write_stack_file_contents_git(
     })?;
   }
 
+  // Probe the remote first so an empty remote (or missing branch) can be
+  // bootstrapped locally instead of failing on `git pull`, and an
+  // unreachable remote surfaces an actionable error before any local work.
+  let remote_state =
+    match git::check_remote_state(&repo_args, git_token.as_deref())
+      .await
+      .context("Failed to check remote state")
+    {
+      Ok(state) => state,
+      Err(e) => {
+        update
+          .push_error_log("Check Remote", format_serror(&e.into()));
+        update.finalize();
+        update.id = add_update(update.clone()).await?;
+        return Ok(update);
+      }
+    };
+
+  if let git::RemoteState::Unreachable { stderr } = &remote_state {
+    update.push_error_log(
+      "Check Remote",
+      format!(
+        "Remote repository is not reachable.\n\nVerify:\n  \
+         \u{2022} The repository exists at {}/{}\n  \
+         \u{2022} The configured git account has access to it\n  \
+         \u{2022} The token has not expired\n\n\
+         git stderr:\n{stderr}",
+        repo_args.provider,
+        repo_args.repo.as_deref().unwrap_or(""),
+      ),
+    );
+    update.finalize();
+    update.id = add_update(update.clone()).await?;
+    return Ok(update);
+  }
+
   // Ensure the folder is initialized as git repo.
   // This allows a new file to be committed on a branch that may not exist.
   if !root.join(".git").exists() {
@@ -377,27 +413,54 @@ async fn write_stack_file_contents_git(
 
   // Save this for later -- repo_args moved next.
   let branch = repo_args.branch.clone();
-  // Pull latest changes to repo to ensure linear commit history
-  match git::pull_or_clone(
-    repo_args,
-    &core_config().repo_directory,
-    git_token,
-  )
-  .await
-  .context("Failed to pull latest changes before commit")
-  {
-    Ok((res, _)) => update.logs.extend(res.logs),
-    Err(e) => {
-      update.push_error_log("Pull Repo", format_serror(&e.into()));
-      update.finalize();
-      return Ok(update);
-    }
-  };
 
-  if !all_logs_success(&update.logs) {
-    update.finalize();
-    update.id = add_update(update.clone()).await?;
-    return Ok(update);
+  match remote_state {
+    git::RemoteState::BranchExists => {
+      // Pull latest changes to repo to ensure linear commit history
+      match git::pull_or_clone(
+        repo_args,
+        &core_config().repo_directory,
+        git_token,
+      )
+      .await
+      .context("Failed to pull latest changes before commit")
+      {
+        Ok((res, _)) => update.logs.extend(res.logs),
+        Err(e) => {
+          update
+            .push_error_log("Pull Repo", format_serror(&e.into()));
+          update.finalize();
+          return Ok(update);
+        }
+      };
+
+      if !all_logs_success(&update.logs) {
+        update.finalize();
+        update.id = add_update(update.clone()).await?;
+        return Ok(update);
+      }
+    }
+    git::RemoteState::Empty => {
+      update.push_simple_log(
+        "Check Remote",
+        format!(
+          "Remote is empty. Bootstrapping branch '{branch}' from \
+           this initial commit."
+        ),
+      );
+    }
+    git::RemoteState::BranchMissing { available_branches } => {
+      update.push_simple_log(
+        "Check Remote",
+        format!(
+          "Branch '{branch}' does not exist on remote. Available \
+           branches: [{}]. Bootstrapping branch '{branch}' from \
+           this initial commit.",
+          available_branches.join(", "),
+        ),
+      );
+    }
+    git::RemoteState::Unreachable { .. } => unreachable!(),
   }
 
   if let Err(e) = tokio::fs::write(&full_path, &contents)
