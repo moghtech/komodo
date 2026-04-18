@@ -97,6 +97,15 @@
             "problemMatcher": []
         },
         {
+            "label": "Init UI Client",
+            "type": "shell",
+            "command": "yarn link komodo_client && yarn install",
+            "options": {
+                "cwd": "${workspaceFolder}/ui",
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "Init UI",
             "dependsOn": [
                 "Build TS Client Types",
