@@ -125,13 +125,11 @@ pub async fn ensure_remote_repo(
       let log = Log::error(
         "Check Remote",
         format!(
-          "Remote repository is not reachable.\n\nVerify:\n  \
-           \u{2022} The repository exists at {}/{}\n  \
-           \u{2022} The configured git account has access to it\n  \
-           \u{2022} The token has not expired\n\n\
-           git stderr:\n{stderr}",
+          "Remote not reachable: {}/{}\n\n{}\n\n\
+           Create the repo or fix credentials, then refresh this stack.",
           clone_args.provider,
           clone_args.repo.as_deref().unwrap_or(""),
+          stderr.trim(),
         ),
       );
       Ok((repo_path, vec![log], None, None))

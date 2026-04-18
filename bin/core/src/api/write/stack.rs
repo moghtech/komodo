@@ -379,13 +379,11 @@ async fn write_stack_file_contents_git(
     update.push_error_log(
       "Check Remote",
       format!(
-        "Remote repository is not reachable.\n\nVerify:\n  \
-         \u{2022} The repository exists at {}/{}\n  \
-         \u{2022} The configured git account has access to it\n  \
-         \u{2022} The token has not expired\n\n\
-         git stderr:\n{stderr}",
+        "Remote not reachable: {}/{}\n\n{}\n\n\
+         Create the repo or fix credentials, then refresh this stack.",
         repo_args.provider,
         repo_args.repo.as_deref().unwrap_or(""),
+        stderr.trim(),
       ),
     );
     update.finalize();
