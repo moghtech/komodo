@@ -38,8 +38,6 @@ pub fn extract_services_into_res(
         "failed to parse service names from compose contents",
       )?;
 
-  let mut services = Vec::with_capacity(compose.services.capacity());
-
   for (
     service_name,
     ComposeService {
@@ -49,17 +47,29 @@ pub fn extract_services_into_res(
     },
   ) in compose.services
   {
-    let image = image.unwrap_or_default();
-    services.push(StackServiceNames {
-      container_name: container_name
-        .unwrap_or_else(|| format!("{project_name}-{service_name}")),
-      image_digest: service_image_digests.get(&service_name).cloned(),
-      service_name,
-      image,
-    });
+    if let Some(existing) =
+      res.iter_mut().find(|s| s.service_name == service_name)
+    {
+      // Override any defined fields
+      if let Some(container_name) = container_name {
+        existing.container_name = container_name;
+      }
+      if let Some(image) = image {
+        existing.image = image;
+      }
+    } else {
+      res.push(StackServiceNames {
+        container_name: container_name.unwrap_or_else(|| {
+          format!("{project_name}-{service_name}")
+        }),
+        image_digest: service_image_digests
+          .get(&service_name)
+          .cloned(),
+        image: image.unwrap_or_default(),
+        service_name,
+      });
+    }
   }
-
-  res.extend(services);
 
   Ok(())
 }
