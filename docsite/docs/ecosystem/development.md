@@ -80,7 +80,7 @@ Make sure your Rust toolchain is up to date and install the CLI tools:
 ```sh
 rustup update
 cargo install typeshare-cli runnables-cli
-run link-client
+run yarn-install
 ```
 
 ### Starting the services
@@ -105,6 +105,7 @@ run dev-core
 
 ```sh
 run dev-periphery
+```
 
 ```sh
 run dev-ui      # Start in dev (watch) mode

@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "preview": "vite preview --host --port 5173",
-    "build": "tsc && vite build",
-    "build-client": "cd ../client/core/ts && yarn && yarn build && yarn link"
+    "build": "tsc && vite build"
   },
   "dependencies": {
     "@mantine/core": "^8.3.15",
@@ -24,6 +23,7 @@
     "jotai": "^2.18.0",
     "jotai-family": "^1.0.1",
     "jotai-location": "^0.6.2",
+    "komodo_client": "workspace:*",
     "lucide-react": "^1.6.0",
     "monaco-editor": "^0.55.1",
     "monaco-yaml": "^5.4.1",
