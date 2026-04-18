@@ -97,15 +97,6 @@
             "problemMatcher": []
         },
         {
-            "label": "Init TS Client",
-            "type": "shell",
-            "command": "yarn && yarn build && yarn link",
-            "options": {
-                "cwd": "${workspaceFolder}/client/core/ts",
-            },
-            "problemMatcher": []
-        },
-        {
             "label": "Init UI Client",
             "type": "shell",
             "command": "yarn link komodo_client && yarn install",

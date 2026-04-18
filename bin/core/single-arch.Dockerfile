@@ -9,10 +9,10 @@ FROM ${BINARIES_IMAGE} AS binaries
 # Build UI
 FROM node:22.12-alpine AS ui-builder
 WORKDIR /builder
+COPY package.json yarn.lock ./
 COPY ./ui ./ui
 COPY ./client/core/ts ./client
-RUN cd client && yarn && yarn build && yarn link
-RUN cd ui && yarn link komodo_client && yarn && yarn build
+RUN yarn && yarn workspace komodo-ui build
 
 FROM debian:trixie-slim
 

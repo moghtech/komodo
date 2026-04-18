@@ -18,11 +18,7 @@ cmd = "cargo run -p komodo_periphery --release -- -c .dev/periphery.config.toml 
 [yarn-install]
 alias = "yi"
 description = "downloads latest javacript dependencies for client and ui"
-cmd = """
-cd ui && yarn && \
-cd ../docsite && yarn && \
-cd ../client/core/ts && yarn
-"""
+cmd = "yarn"
 
 [gen-client]
 alias = "gc"
@@ -33,13 +29,6 @@ node ./client/core/ts/generate_types.mjs && \
 cd ./client/core/ts && yarn build && \
 cp -r dist/. ../../../ui/public/client/. &&
 cd ../../../ui && node fix_public_client.mjs"""
-
-[link-client]
-description = "yarn links the ts client to the ui"
-after = "gen-client"
-cmd = """
-cd ./client/core/ts && yarn link && \
-cd ../../../ui && yarn link komodo_client && yarn"""
 
 [dev-compose]
 description = "deploys dev.compose.yaml"
