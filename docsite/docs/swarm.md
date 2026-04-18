@@ -1,10 +1,15 @@
 # Swarm
 
-Komodo can manage Docker Swarm clusters through the `Swarm` resource. Connect your swarm manager nodes and manage nodes, services, stacks, configs, and secrets from a single interface.
+Komodo can manage Docker Swarm clusters through the `Swarm` resource. A Swarm resource points at
+one or more manager nodes that already exist as connected [Server](./server.md) resources.
 
-## Configuration
+Use this when the target environment is an existing Docker Swarm rather than a single-host Docker
+or Docker Compose deployment.
 
-A Swarm resource points to one or more **manager nodes** — these are Servers that already have Periphery installed and are part of a Docker Swarm as managers. If one manager is unreachable, Komodo will try the next one in the list.
+## Swarm Configuration
+
+A Swarm resource points to one or more manager nodes. If one manager is unreachable, Komodo tries
+the next one in the list.
 
 ```toml
 [[swarm]]
@@ -14,94 +19,100 @@ server_ids = ["manager-01", "manager-02", "manager-03"]
 send_unhealthy_alerts = true
 ```
 
-### Config fields
+### Config Fields
 
 | Field | Description | Default |
-|---|---|---|
-| `servers` | List of Swarm manager Server names/IDs. Tries each sequentially on failure. | `[]` |
+| --- | --- | --- |
+| `servers` | Swarm manager Server names or IDs. Tried sequentially on failure. | `[]` |
 | `send_unhealthy_alerts` | Send alerts when nodes or tasks are unhealthy. | `true` |
 | `maintenance_windows` | Scheduled windows during which alerts are suppressed. | `[]` |
 | `links` | Quick links displayed in the resource header. | `[]` |
 
-## Getting Started
+## Get Started
 
-To use Docker Swarm with Komodo, you first need to initialize a swarm on one of your connected servers.
+To use Docker Swarm with Komodo, initialize a swarm on one connected server first.
 
-### 1. Initialize the Swarm
+### Initialize The Swarm
 
-SSH into your server (or use a Komodo terminal) and run [`docker swarm init`](https://docs.docker.com/reference/cli/docker/swarm/init/):
+Use a shell on the host, or a Komodo terminal, and run
+[`docker swarm init`](https://docs.docker.com/reference/cli/docker/swarm/init/):
 
 ```bash
 docker swarm init --advertise-addr <SERVER_IP>
 ```
 
-### 2. Create the Swarm resource in Komodo
+### Create The Swarm Resource In Komodo
 
-Create a new Swarm resource and add the server as a manager node. Once created, Komodo will detect the swarm and display its nodes.
+Create a Swarm resource and add the server as a manager node. Once created, Komodo detects the
+swarm and shows its nodes.
 
-### 3. Join additional nodes
+### Join Additional Nodes
 
-To add more servers to the swarm, navigate to the Swarm's node list in the UI and click the **Join** button. This will display the [`docker swarm join`](https://docs.docker.com/reference/cli/docker/swarm/join/) command with the correct token and address — copy it and run it on the server you want to add.
+To add more servers, open the Swarm resource's node list in the UI and click **Join**. Komodo will
+show the correct [`docker swarm join`](https://docs.docker.com/reference/cli/docker/swarm/join/)
+command and token for the selected role.
 
-There are separate join commands for **worker** and **manager** nodes.
+There are separate join commands for worker and manager nodes.
 
 :::tip
-After a node joins, add it as a Server in Komodo and (for managers) include it in the Swarm resource's `servers` list for redundancy.
+After a node joins, add it as a Server in Komodo and, for manager nodes, include it in the Swarm
+resource's `servers` list for redundancy.
 :::
 
-## Nodes
+## What Komodo Manages
 
-View all nodes in the swarm with their role, availability, status, and other information.
+### Nodes
 
-## Services
+Komodo shows node role, availability, status, and related cluster information.
 
-Swarm services can be managed directly, or created from 
-**Deployment** resources by configuring `swarm` instead of `server` in the Deployment config.
+### Services
 
-- View running, desired, and completed task counts.
-- Inspect service configuration and attached configs/secrets.
-- View and search service logs with grep support.
+Swarm services can be managed directly, or created from [Containers](./deploy/containers.md) by
+configuring `swarm` instead of `server` in the Deployment config.
 
-## Stacks
+- view running, desired, and completed task counts
+- inspect service configuration and attached configs or secrets
+- view and search service logs
 
-Deploy compose-based stacks to the swarm using `docker stack deploy`.
-**Stack** resources can target a Swarm by configuring `swarm` instead of `server` in the Stack config.
+### Stacks
 
-- Define compose files in the UI, on the host, or in a git repo (same as regular Stacks).
-- View the services and tasks that make up a stack.
+Compose-based stacks can be deployed to the swarm with `docker stack deploy`.
+[Docker Compose](./deploy/compose.md) resources can target a Swarm by configuring `swarm` instead
+of `server`.
 
-## Configs and Secrets
+- define compose files in the UI, on the host, or in git
+- view the services and tasks that make up a stack
 
-Manage Docker Swarm configs and secrets directly from Komodo.
+### Configs And Secrets
 
-- **Create** configs and secrets with labels and an optional template driver.
-- **Rotate** configs and secrets — since they are immutable in Docker, Komodo handles the rotation pattern automatically:
-  1. Creates a temporary replacement.
-  2. Updates all referencing services to use the temporary version.
-  3. Removes and recreates the original with the new data.
-  4. Updates services back to the original name.
-- **Remove** configs and secrets.
+Komodo can manage Docker Swarm configs and secrets directly.
+
+- create configs and secrets with labels and an optional template driver
+- rotate them even though Docker treats them as immutable
+- remove them when no longer needed
 
 :::note
-Configs and secrets have a maximum size of 500KB.
+Docker Swarm configs and secrets have a maximum size of 500 KB.
 :::
 
 ## Health Monitoring
 
-Komodo tracks the overall health of each Swarm:
+Komodo tracks overall Swarm health:
 
 | State | Meaning |
-|---|---|
+| --- | --- |
 | **Healthy** | All nodes and tasks are OK. |
-| **Unhealthy** | Some nodes or tasks don't match the desired state. |
+| **Unhealthy** | Some nodes or tasks do not match the desired state. |
 | **Down** | All nodes or tasks are down. |
 | **Unknown** | Status cannot be determined. |
 
-When `send_unhealthy_alerts` is enabled, Komodo will route alerts through your configured [Alerters](resources#alerter).
+When `send_unhealthy_alerts` is enabled, Komodo routes alerts through configured
+[Alerters](./alerter.md).
 
-## Deploying to a Swarm
+## Related Pages
 
-Both **Deployments** and **Stacks** can target a Swarm instead of a single Server:
-
-- On a **Deployment**, set `swarm` to deploy the container as a Swarm service. You can attach swarm configs and secrets to the service.
-- On a **Stack**, set `swarm` to deploy via `docker stack deploy` instead of `docker compose up`.
+- [Server](./server.md)
+- [Containers](./deploy/containers.md)
+- [Docker Compose](./deploy/compose.md)
+- [Alerter](./alerter.md)
+- [Terminals](./terminals.md)

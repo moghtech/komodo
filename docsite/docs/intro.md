@@ -2,49 +2,93 @@
 slug: /intro
 ---
 
-# What is Komodo?
+# What Is Komodo
 
-Komodo is a web application for managing servers, builds, deployments, and automated procedures.
+Komodo is a control plane for managing container workloads across one or more servers. It does not
+replace Docker or Podman. It sits above the container runtime and provides a web UI, API, and
+resource model for describing what should run, where it should run, and how it should be updated.
 
-- **Connect servers**. Monitor CPU, memory, and disk usage with alerts. Connect to shell sessions.
-- **Deploy containers**. Create, start, stop, and redeploy Docker containers. View status, logs, and exec into shells.
-- **Deploy compose stacks**. Define compose files in the UI, on the host, or in a git repo with auto-deploy on push.
-- **Manage Docker Swarms**. Connect swarm managers and deploy services and stacks across your cluster.
-- **Build images**. Define the dockerfile in UI or clone a git repo. Supports AWS EC2 spot instances for scalable build capacity.
-- **Run automation**. Orchestrate multi-step workflows with Procedures and Actions. Schedule automations to run regularly.
-- **Manage configuration**. shared variable and secret with interpolation across all resources.
-- **Full audit trail**. every change is recorded, with who made it and when.
+## Core, Periphery, And The Runtime
 
-There is no limit to the number of servers you can connect, and there never will be.
+The system has four main pieces. **Core** provides the web UI and API. The **database** stores
+state, configuration, and history for Core. **Periphery** runs on each managed server and performs
+host-side work on behalf of Core. The **container runtime** is Docker by default, with Podman
+supported through the `podman` -> `docker` alias. It remains the thing that actually starts
+containers, runs Compose projects, and builds images.
 
-## Architecture
+- [**Core**](./core.md) handles user interaction, state, orchestration, and policy.
+- [**Database**](./database.md) stores state, configuration, and history for Core.
+- [**Periphery**](./periphery.md) handles execution on the target host.
+- [**Connection Model**](./connection-model.md) determines how Core and Periphery reach each other,
+  how trust is bootstrapped, and which endpoint needs network exposure.
+- [**Host Model**](./host-model.md) determines how host-side operations, paths, mounts, and
+  container actions are interpreted.
 
-Komodo is composed of two components: **Core** and **Periphery**.
+When a Stack is deployed, Core sends the resolved configuration to Periphery on the attached
+Server, and Periphery runs the corresponding Docker Compose commands on that machine. The same
+execution boundary applies to logs, filesystem paths, git checkouts, and container lifecycle
+operations. Komodo sees and performs those through Periphery, so where Periphery runs changes what
+Komodo can access directly on the host.
 
-| Component | Role |
-|---|---|
-| **Core** | Web server hosting the API and browser UI. All user interaction flows through Core. |
-| **Periphery** | Small, stateless agent running on each connected server. Called by Core to perform actions, report system usage, and retrieve container logs. |
+The network side follows a similar split. Some installs have Periphery call Core. Others have Core
+reach Periphery directly. Those choices affect onboarding, key persistence, reverse proxy setup,
+and whether Periphery needs a public listener. See [Connection Model](./connection-model.md).
 
-## API
+For installation, see [Install Komodo](./setup/install-komodo.mdx) and
+[Connect More Servers](./setup/connect-servers.mdx). For the first workload, recovery steps, and
+second-server setup, see [After First Server](./setup/after-first-server.md).
 
-Core exposes a REST and WebSocket API for programmatic access. Client libraries are available:
+## Resource Model
 
-- [**Komodo CLI**](./ecosystem/cli.mdx)
-- [**Rust crate**](https://crates.io/crates/komodo_client)
-- [**NPM package**](https://www.npmjs.com/package/komodo_client)
-- [**curl examples**](https://docs.rs/komodo_client/latest/komodo_client/api/index.html#curl-example)
+Komodo exposes that execution model through **Resources**. A [**Server**](./server.md) represents a
+real machine with a connected Periphery agent. It is the host-side attachment point for resources
+that need to run work on a machine.
 
-## Permissioning
+The primary workload resources are:
 
-Komodo has a granular, role-based permissioning system so teams of developers, operators, and administrators can collaborate safely. See [Permissioning](/docs/configuration/permissioning) for details.
+- [**Deployment**](./deploy/containers.md): a single container workload attached to a Server
+- [**Stack**](./deploy/compose.md): a Docker Compose project for compose-based or multi-service
+  workloads
+- [**Build**](./build.md): a Docker image build from source rather than a deploy of an existing
+  image from a registry
 
-User sign-on supports **username/password** and **OAuth (GitHub, Google, and generic OIDC)**. See [Core Setup](./setup/index.mdx).
+Supporting resources extend that model:
 
-## Docker
+- [**Builder**](./build.md#builders): chooses where builds run
+- [**Automation**](./automate/procedures.md): Procedures and Actions for multi-step workflows and
+  scripted API work
+- [**Resource Sync**](./automate/sync-resources.md): apply resource configuration declaratively from
+  files in git
+- [**Repo**](./repo.md): run git-backed scripts on a Server or Builder
+- [**Alerter**](./alerter.md): route alerts to external systems
 
-Komodo uses [Docker](https://docs.docker.com/) as the container engine for building and deploying.
+Across resource types, Komodo uses some common concepts: each resource has a name and id, resources
+can be grouped with tags, and resources that need private git or registry access can use configured
+[provider credentials](./configuration/providers.md). The full reference for resource types and
+fields lives in [Resources](./resources.md).
 
-:::info
-[Podman](https://podman.io/) is also supported via the `podman` → `docker` alias.
-:::
+## Topologies And Workflow Shape
+
+Common topologies are:
+
+- **Single host**: Core and the database run in one place, and Periphery runs on the same machine
+  or on the first managed server.
+- **Multi-host**: Core and the database run centrally while each managed machine runs its own
+  Periphery.
+- **Git-backed workflow**: compose files or application source live in git and are cloned onto the
+  target host before deployment or build.
+
+[Setup](./setup) compares those shapes against the database and Periphery installation choices.
+
+## Further Reading
+
+- [Setup](./setup) for installation shape and deployment choices.
+- [Install Komodo](./setup/install-komodo.mdx) for the first-time install path.
+- [After First Server](./setup/after-first-server.md) for the first workload,
+  first recovery steps, and the jump to a second server.
+- [Connection Model](./connection-model.md) for Core, Periphery, onboarding, and network shape.
+- [Server](./server.md) for the host attachment model.
+- [Repo](./repo.md) for git-backed checkouts, commands, and webhooks.
+- [Alerter](./alerter.md) for alert routing and notification filters.
+- [Host Model](./host-model.md) for paths, mounts, and host-side execution.
+- [Resources](./resources.md) for the resource catalog.

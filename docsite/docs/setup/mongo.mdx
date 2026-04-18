@@ -1,20 +1,57 @@
-# MongoDB
+---
+sidebar_label: MongoDB
+---
 
-[**MongoDB**](https://www.mongodb.com) is the recommended database for Komodo. It stores all resource configuration, user accounts, audit logs, and system state. Komodo Core communicates with it directly using the MongoDB driver.
+# MongoDB Reference
 
-## Quick Start
+[MongoDB](https://www.mongodb.com) is the default database path for Komodo. It stores resource
+configuration, user accounts, audit logs, and other Core state.
 
-1. Copy `komodo/mongo.compose.yaml` and `komodo/compose.env` to your host:
-```bash
-wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/mongo.compose.yaml && \
-  wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/compose.env
-```
-2. Edit the variables in `komodo/compose.env`.
-3. Deploy using command:
+[Install Komodo](./install-komodo.mdx) covers the main first-time setup flow. MongoDB-specific
+stack details are below, separated from the FerretDB path.
 
-```bash
-docker compose -p komodo -f komodo/mongo.compose.yaml --env-file komodo/compose.env up -d
-```
+## When To Use It
+
+MongoDB is the simpler path when it runs cleanly on your system and you do not need the
+Postgres-backed FerretDB stack.
+
+See [Database](../database.md) for the conceptual role of the database in Komodo and
+[Setup](./index.md) for the higher-level setup choices.
+
+## What Is Different In This Stack
+
+Compared to the [FerretDB](./ferretdb.mdx) path, the MongoDB stack is smaller:
+
+- one `mongo` service instead of separate `postgres` and `ferretdb` services
+- `core` connects directly to `mongo:27017`
+- no FerretDB adapter state volume
+
+That makes this the more direct database path in the provided Compose setup.
+
+## Settings That Matter Here
+
+The MongoDB-specific parts of the stack are limited:
+
+- `KOMODO_DATABASE_USERNAME` and `KOMODO_DATABASE_PASSWORD` initialize the MongoDB root account
+- `core` sets `KOMODO_DATABASE_ADDRESS=mongo:27017`
+- Mongo data is stored in the `mongo-data` and `mongo-config` volumes
+
+The rest of the first-start configuration still lives in the shared `compose.env` file described in
+[Install Komodo](./install-komodo.mdx).
+
+## Operational Notes
+
+The sample MongoDB service runs with:
+
+- `command: --quiet --wiredTigerCacheSizeGB 0.25`
+- no published database port by default
+- persistent named volumes for the database files
+
+The quiet flag reduces database log noise in the bundled stack. The WiredTiger cache limit keeps the
+default stack lighter on smaller hosts. If MongoDB needs external access, version pinning, or
+different storage behavior, adjust the sample file here.
+
+## Sample Files
 
 ```mdx-code-block
 import ComposeAndEnv from "@site/src/components/ComposeAndEnv";
