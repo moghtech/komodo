@@ -1,16 +1,40 @@
 # Build
 
-Komodo builds Docker images by running `docker build` and pushing the result to a configured image registry.
+Komodo builds container images through Docker and pushes them to one or more configured image
+registries.
 
-## Dockerfile Sources
+By default, Komodo runs [Docker Build](https://docs.docker.com/build/concepts/overview/) with
+`docker build`. When `use_buildx` is enabled, it runs
+[`docker buildx build`](https://docs.docker.com/reference/cli/docker/buildx/build/).
 
-Komodo supports three ways of providing the Dockerfile and build context:
+Use a `Build` when Komodo should own the image build step. Use [Repo](./repo.md) when the goal is
+to manage a checkout and run host-side commands without the image-build workflow.
 
-1. **Write in the UI** — define the Dockerfile contents directly in Komodo. Supports variable and secret interpolation.
-2. **Files on host** — point to an existing Dockerfile and build context already present on the builder machine. Set `files_on_host = true` and use `build_path` / `dockerfile_path` to specify the paths.
-3. **Git repo** — clone a repository containing the Dockerfile. This is the default mode. Configure `repo`, `branch`, and optionally `git_account` for private repos.
+## Builder And Source Model
 
-## Configuration
+Every Build has two location choices:
+
+- **where the build runs**: the attached [`Builder`](./resources.md#builder)
+- **where the source comes from**: UI-managed Dockerfile, files on the host, git, or a linked Repo
+
+A Build combines:
+
+- a machine that can run Docker builds
+- a source tree or Dockerfile source
+- one or more target registries
+- a tag/versioning strategy
+
+## Choose The Source Path
+
+Builds support four source paths:
+
+- **UI-managed Dockerfile**: store Dockerfile contents directly in Komodo.
+- **Files on host**: point at an existing Dockerfile and build context already visible on the
+  builder machine.
+- **Direct git config**: configure `repo`, `branch`, and related git fields on the Build itself.
+- **Linked Repo**: use an existing [Repo](./repo.md) resource as the source checkout.
+
+## Example
 
 ```toml
 [[build]]
@@ -25,159 +49,158 @@ image_registry = [
 ]
 ```
 
-### Config fields
+## Core Fields
 
-| Field | Description | Default |
-|---|---|---|
-| `builder` | The Builder resource to run the build on. | — |
-| `version` | Current build version (`major.minor.patch`). | `0.0.0` |
-| `auto_increment_version` | Auto-increment patch number on each build. | `true` |
-| `image_name` | Alternate image name (uses build name if empty). | `""` |
-| `image_tag` | Extra tag postfix, e.g. `aarch64` → `:1.2.3-aarch64`. | `""` |
-| `include_latest_tag` | Push `:latest` / `:latest-{image_tag}` tags. | `true` |
-| `include_version_tags` | Push semver tags (`:1.2.3`, `:1.2`, `:1`). | `true` |
-| `include_commit_tag` | Push commit hash tag (`:a6v8h83`). | `true` |
-| `linked_repo` | A Komodo Repo resource to source files from. | `""` |
+| Field | Meaning | Default |
+| --- | --- | --- |
+| `builder` | Builder resource that runs the build. | — |
+| `linked_repo` | Existing Komodo `Repo` resource used as the source checkout. | `""` |
+| `repo` | Repository used as the build source. | `""` |
+| `branch` | Branch to clone. | `main` |
+| `commit` | Optional pinned commit hash. | `""` |
+| `files_on_host` | Use files that already exist on the builder host. | `false` |
+| `build_path` | Build context path. Defaults to the repository root. | `.` |
+| `dockerfile_path` | Dockerfile path relative to the build context. | `Dockerfile` |
+| `dockerfile` | UI-managed Dockerfile contents. | `""` |
+| `links` | Quick links shown in the resource header. | `[]` |
+
+## Git And Provider Fields
+
+| Field | Meaning | Default |
+| --- | --- | --- |
 | `git_provider` | Git provider domain. | `github.com` |
-| `git_https` | Use HTTPS to clone (versus HTTP). | `true` |
-| `git_account` | Git provider account for private repos. | `""` |
-| `repo` | Repository in `owner/repo` format. | `""` |
-| `branch` | Branch to clone. Webhooks only trigger on pushes to this branch. | `main` |
-| `commit` | Pin to a specific commit hash. | `""` |
-| `files_on_host` | Source Dockerfile and build context from files already on the builder. | `false` |
-| `dockerfile` | UI-defined Dockerfile contents. Supports variable/secret interpolation. | `""` |
-| `build_path` | Build context directory, relative to the repo root (or absolute path when `files_on_host`). | `.` |
-| `dockerfile_path` | Dockerfile path, relative to the build directory. | `Dockerfile` |
-| `image_registry` | Registry to push images to (domain + account + optional organization). | `[]` |
-| `build_args` | Build arguments in `KEY=value` format. Visible in `docker history`. | `""` |
-| `secret_args` | Build secrets in `KEY=value` format. Access via `RUN --mount=type=secret,id=KEY`. Not visible in image history. | `""` |
-| `skip_secret_interp` | Skip secret interpolation in build_args. | `false` |
-| `extra_args` | Additional flags passed to `docker build`. | `[]` |
-| `use_buildx` | Use `docker buildx build` instead of `docker build`. | `false` |
-| `pre_build` | Command to run after cloning but before `docker build`. | — |
-| `labels` | Docker labels in `key=value` format. | `""` |
-| `webhook_enabled` | Whether incoming webhooks trigger builds. | `true` |
-| `webhook_secret` | Alternate webhook secret (uses default from config if empty). | `""` |
-| `links` | Quick links displayed in the resource header. | `[]` |
+| `git_https` | Use HTTPS instead of HTTP when cloning. | `true` |
+| `git_account` | Provider account for private repository access. | `""` |
+| `webhook_enabled` | Whether git webhooks trigger builds. | `true` |
+| `webhook_secret` | Alternate webhook secret. | `""` |
 
-## Image Versioning and Tagging
+If the Build clones a private repository directly, the token must be available where the build
+runs. If the Build uses a linked Repo, the Repo owns the checkout and its provider configuration
+matters instead.
 
-Komodo uses a `major.minor.patch` versioning scheme. By default, each build auto-increments the patch number. You can control exactly which tags are pushed using the following options:
+See [Providers](./configuration/providers.md), [Repo](./repo.md), and
+[Configure Git-Backed Workflows](./how-to/git-backed-workflows.md).
 
-### Tag types
+## Image Naming And Tagging
 
-| Option | Tags produced | Example |
-|---|---|---|
-| `include_version_tags` | Full semver, minor, and major | `:1.2.3`, `:1.2`, `:1` |
-| `include_latest_tag` | Latest tag | `:latest` |
-| `include_commit_tag` | Short commit hash | `:a6v8h83` |
+Builds produce image names from:
 
-All three are enabled by default. Disable any combination to control which tags are pushed.
+- the Build name, unless `image_name` overrides it
+- the configured `image_registry` entries
+- versioning and tag settings
 
-### Image tag postfix
+By default, Komodo can push:
 
-The `image_tag` field appends a postfix to all generated tags. This is useful for multi-platform or variant builds:
+- semver tags such as `:1.2.3`, `:1.2`, and `:1`
+- `:latest`
+- a short commit-hash tag
 
-| `image_tag` | Version tag | Latest tag | Commit tag |
-|---|---|---|---|
-| _(empty)_ | `:1.2.3` | `:latest` | `:a6v8h83` |
-| `aarch64` | `:1.2.3-aarch64` | `:latest-aarch64` | `:a6v8h83-aarch64` |
+`image_tag` appends a suffix such as `-aarch64` to those generated tags. That is useful when
+multiple builds publish variants of the same image name.
 
-When `image_tag` is set, an additional pure tag is also pushed: `:aarch64`.
+## Versioning Fields
 
-### Custom image name
+| Field | Meaning | Default |
+| --- | --- | --- |
+| `version` | Current build version. | `0.0.0` |
+| `auto_increment_version` | Auto-increment the patch version on each build. | `true` |
+| `image_name` | Override the pushed image name. | `""` |
+| `image_tag` | Extra suffix appended to generated tags. | `""` |
+| `include_latest_tag` | Push latest tags. | `true` |
+| `include_version_tags` | Push semver tags. | `true` |
+| `include_commit_tag` | Push short commit-hash tags. | `true` |
 
-By default, the build's name is used as the image name. Set `image_name` to override this, e.g. if the build name doesn't match the desired image name on the registry.
+Use `image_name` or `image_tag` when several Builds should publish related image variants under one
+registry namespace.
 
-### Manual versioning
+## Registry Configuration
 
-Set `auto_increment_version = false` to manage the `version` field yourself. The major and minor versions are always set manually — only the patch auto-increments.
+`image_registry` is a list, not a single destination. A Build can push to multiple registries in
+one run.
 
-## Image Registry
+Each entry defines:
 
-Komodo supports pushing to any Docker-compatible registry. Configure accounts in [Providers](configuration/providers.md).
+- registry domain
+- account
+- optional organization
 
-A build can push to **multiple registries** simultaneously. The `image_registry` field accepts a list — each entry specifies a domain, account, and optional organization:
-
-```toml
-[build.config]
-image_registry = [
-  { domain = "ghcr.io", account = "my-user", organization = "my-org" },
-  { domain = "docker.io", account = "my-user" },
-]
-```
-
-The first registry in the list is used by default when a Deployment is connected to the Build.
+The first registry in the list becomes the default registry context for attached
+[Containers](./deploy/containers.md).
 
 :::note
-GitHub access tokens must have the `write:packages` permission to push to GHCR.
-See the [GitHub docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic).
+GitHub access tokens need `write:packages` to push to GHCR. See the
+[GitHub container registry docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic).
 :::
 
-When a Build is connected to a Deployment, the Deployment inherits the Build's registry credentials by default. If the builder's account isn't available to the Deployment's server, select a different account in the Deployment config.
+## Build Behavior
 
+| Field | Meaning | Default |
+| --- | --- | --- |
+| `build_args` | Docker build arguments. Visible in image history. | `""` |
+| `secret_args` | Build secrets used through Docker secret mounts. | `""` |
+| `skip_secret_interp` | Skip secret interpolation in `build_args`. | `false` |
+| `extra_args` | Extra Docker build or Buildx arguments. | `[]` |
+| `use_buildx` | Use `docker buildx build` instead of `docker build`. | `false` |
+| `pre_build` | Command run after clone and before the build. | none |
+| `labels` | Docker labels attached during build. | `""` |
 
-## Multi-platform builds (Buildx)
+`build_args` and `secret_args` are not interchangeable:
 
-To build for multiple platforms (e.g. ARM + x86), set up Docker Buildx on the builder:
+- use `build_args` for non-secret build-time values
+- use `secret_args` for values that should not end up visible in image history
 
-```sh
-docker buildx create --name builder --use --bootstrap
-docker buildx install   # makes buildx the default for `docker build`
-```
+## Multi-Platform Builds
 
-Then pass the target platforms in the Build's **Extra Args**:
+Use `use_buildx` when the builder host is configured for Buildx and the image should target more
+than one platform.
 
-```
+For example, after setting up Buildx on the builder, pass the target platforms in `extra_args`:
+
+```text
 --platform linux/amd64,linux/arm64
 ```
 
+That is a build-host concern. The builder machine must already support the requested Buildx flow.
+
 ## Builders
 
-A `Builder` resource defines **where** builds run. Any Server connected to Komodo can be used as a builder, but building on production servers is not recommended.
+A `Builder` resource defines where builds run.
 
-### Server builder
+### Server Builder
 
-Point the builder at an existing Server running the Periphery agent.
+A server builder points at an existing connected [Server](./server.md). Use it when the build
+should run on a machine Core already manages.
 
-### AWS EC2 builder
+### URL Builder
 
-Komodo can launch a temporary EC2 instance for each build and shut it down when finished.
+A URL builder points at a Periphery endpoint by address instead of by an existing Server record.
+This is the direct remote-builder path.
 
-```toml
-[[builder]]
-name = "builder-01"
-[builder.config]
-type = "Aws"
-params.region = "us-east-2"
-params.instance_type = "c5.2xlarge"
-params.ami_id = "ami-xxxxxxxxxxxxxxxxxx"
-params.subnet_id = "subnet-xxxxxxxxxxxxxxxxxx"
-params.key_pair_name = "ssh-key"
-params.assign_public_ip = true ## Required for outbound internet access unless you have network gateway.
-params.use_public_ip = true ## Setting 'false' uses the private IP (when Komodo Core is in same subnet).
-params.security_group_ids = ["sg-xxxxxxxxxxxxxxxxxx"]
-params.user_data = """
-#!/bin/bash
-curl -sSL \
-   https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-periphery.py | \
-  HOME=/root python3 - --version=v2.X.X
-"""
-```
+The key fields are:
 
-To create the AMI:
+- `address`: the Periphery address
+- `periphery_public_key`: expected public key for that Periphery
+- `insecure_tls`: whether to skip TLS certificate validation
+- `passkey`: deprecated older authentication field
 
-1. Launch an EC2 instance and install Docker:
-   ```shell
-   apt update && apt upgrade -y
-   curl -fsSL https://get.docker.com | sh
-   systemctl enable docker.service containerd.service
-   ```
-2. Create an AMI from the instance in the AWS console.
-3. Create a security group and ensure it allows inbound access on port **8120** from Komodo Core.
+Use this when the build runner should be addressed directly as a Periphery endpoint rather than
+through a connected [Server](./server.md). The same trust and network model still applies. See
+[Connection Model](./connection-model.md).
 
-The instance `user_data` will install the Periphery agent as the instance starts up,
-and Komodo Core will then connect and build the image.
+### AWS EC2 Builder
 
+Komodo can also launch a temporary EC2 instance for each build and shut it down afterward. This is
+useful when builds need isolation or more resources than a standing server should provide.
 
+The builder configuration is what describes the instance to launch. The AMI used there must already
+have Docker available, and the EC2 instance must still be able to run Periphery and reach the
+target registries.
 
+## Related Pages
+
+- [Containers](./deploy/containers.md)
+- [Repo](./repo.md)
+- [Providers](./configuration/providers.md)
+- [Connection Model](./connection-model.md)
+- [Configure Git-Backed Workflows](./how-to/git-backed-workflows.md)
+- [Write And Debug Actions](./how-to/write-and-debug-actions.md)

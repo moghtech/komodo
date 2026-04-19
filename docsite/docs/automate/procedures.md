@@ -1,10 +1,26 @@
 # Procedures and Actions
 
-Komodo offers `Procedure` and `Action` resources for orchestrating multi-resource workflows. Both can be run on a **[schedule](schedules)**
+Komodo offers `Procedure` and `Action` resources for multi-step automation.
+
+Use a `Procedure` when the workflow is a sequence of built-in executions such as `RunBuild`,
+`DeployStack`, `Deploy`, or `PullRepo`.
+
+Use an `Action` when the workflow needs TypeScript, branching, iteration, or direct API calls.
+
+Both resources can also be run on a [schedule](./schedules.md) or triggered by
+[webhooks](./webhooks.md).
+
+## Choose Between Procedures And Actions
+
+A `Procedure` runs built-in executions across resources in staged order. An `Action` runs
+TypeScript against the Komodo API when the workflow needs branching, iteration, or logic that does
+not fit well into staged executions.
 
 ## Procedures
 
-A Procedure composes multiple executions (like `RunBuild`, `DeployStack`, `Deploy`) into a series of **Stages**. Executions within a stage run **in parallel**; stages run **sequentially**. The Procedure waits for all executions in a stage to complete before moving to the next.
+A Procedure composes multiple executions into a series of **Stages**. Executions within a stage run
+in parallel. Stages run sequentially. Komodo waits for the whole stage to finish before moving to
+the next one.
 
 ```toml
 [[procedure]]
@@ -25,33 +41,43 @@ executions = [
 ]
 ```
 
-### Config fields
+### Config Fields
 
 | Field | Description | Default |
-|---|---|---|
+| --- | --- | --- |
 | `config.stage[].name` | Display name for the stage. | — |
 | `config.stage[].enabled` | Whether the stage is active. | `true` |
-| `config.stage[].executions` | List of executions to run in parallel within the stage. | `[]` |
-| `schedule` | Schedule expression. See [Schedules](schedules). | `""` |
+| `config.stage[].executions` | Executions to run in parallel within the stage. | `[]` |
+| `schedule` | Schedule expression. See [Schedules](./schedules.md). | `""` |
 | `schedule_format` | `English` or `Cron`. | `English` |
 | `schedule_enabled` | Whether the schedule is active. | `true` |
 
 ### Batch Executions
 
-Many executions have a `Batch` variant (e.g. [**BatchDeployStackIfChanged**](https://docs.rs/komodo_client/latest/komodo_client/api/execute/struct.BatchDeployStackIfChanged.html)) that matches multiple resources by name using [wildcard](https://docs.rs/wildcard/latest/wildcard) and [regex](https://docs.rs/regex/latest/regex) syntax.
+Many executions also have a `Batch` variant. These match multiple resources by name using
+[wildcard](https://docs.rs/wildcard/latest/wildcard) and
+[regex](https://docs.rs/regex/latest/regex) syntax.
+
+For example,
+[BatchDeployStackIfChanged](https://docs.rs/komodo_client/latest/komodo_client/api/execute/struct.BatchDeployStackIfChanged.html)
+can deploy several stacks that match one pattern:
 
 ```toml
 [[procedure.config.stage]]
 name = "Deploy matching stacks"
 executions = [
-  { execution.type = "BatchDeployStackIfChanged", execution.params.pattern = "foo-* , \\^bar-.*$\\" },
+  {
+    execution.type = "BatchDeployStackIfChanged",
+    execution.params.pattern = "foo-* , \\^bar-.*$\\",
+  },
 ]
 ```
 
 ## Actions
 
-Actions let you write Typescript scripts that call the Komodo API. A pre-initialized `komodo` client is available — no API key configuration needed.
-The in UI editor provides type-aware suggestions and inline documentation.
+Actions let you write TypeScript scripts that call the Komodo API from inside Komodo. A
+pre-initialized `komodo` client is available, so the script does not need its own API-key setup.
+The in-UI editor provides type-aware suggestions and inline documentation.
 
 ```ts
 const VERSION = "1.16.5";
@@ -76,11 +102,11 @@ for (const app of APPS) {
 }
 ```
 
-The Typescript client is also [published on NPM](https://www.npmjs.com/package/komodo_client).
+The TypeScript client is also [published on NPM](https://www.npmjs.com/package/komodo_client).
 
-### Action examples
+### Action Examples
 
-#### Restart all deployments matching tags
+#### Restart All Deployments Matching Tags
 
 ```ts
 const deployments = await komodo.read("ListDeployments", {
@@ -95,7 +121,7 @@ for (const deployment of deployments) {
 }
 ```
 
-#### Run a command on a server terminal
+#### Run A Command On A Server Terminal
 
 ```ts
 await komodo.execute_server_terminal({
@@ -108,7 +134,7 @@ await komodo.execute_server_terminal({
 });
 ```
 
-#### Scale a deployment based on time of day
+#### Scale A Deployment Based On Time Of Day
 
 ```ts
 const hour = new Date().getHours();
@@ -124,3 +150,10 @@ await komodo.write("UpdateDeployment", {
 await komodo.execute("Deploy", { deployment: "api-server" });
 console.log(`Scaled api-server to ${replicas} replicas`);
 ```
+
+## Related Pages
+
+- [Write And Debug Actions](../how-to/write-and-debug-actions.md)
+- [Webhooks](./webhooks.md)
+- [Schedules](./schedules.md)
+- [Terminals](../terminals.md)

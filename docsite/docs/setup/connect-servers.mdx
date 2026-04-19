@@ -1,28 +1,73 @@
+---
+sidebar_label: Connect Servers
+---
+
 # Connect More Servers
 
 ```mdx-code-block
 import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
 ```
 
-Every server you want to manage with Komodo needs the **Periphery** agent installed.
-Periphery is a small, stateless binary that provides receives commands from Komodo Core
-over a bi-directional websocket connection.
+Every server you want to manage with Komodo needs the **Periphery** agent installed. Periphery is a
+small, stateless binary that receives commands from Komodo Core over a bi-directional websocket
+connection.
+
+See [Periphery](../periphery.md) for the execution model and [Setup](./index.md) for the
+installation choices. For the shorter follow-up path after your initial install, see
+[Add Another Server](../how-to/add-another-server.md). Once the Server reaches `OK`, continue with
+[After First Server](./after-first-server.md).
 
 Connecting a server has 3 steps:
 
-1.  **Create an onboarding key** via the Komodo Core API / UI.
-2.  **Install the Periphery agent** on the server or VM, passing the onboarding key.
-3.  Confirm the connection status is **OK**.
+1. **Create an onboarding key** via the Komodo Core API / UI.
+2. **Install the Periphery agent** on the server or VM, passing the onboarding key.
+3. Confirm the connection status is **OK**.
 
 ## Install Periphery
 
-You can install Periphery as a systemd managed process, run it as a [docker container](https://github.com/moghtech/komodo/pkgs/container/komodo-periphery), or run the binary directly with another process manager.
+You can install Periphery as a systemd managed process, run it as a
+[Docker container](https://github.com/moghtech/komodo/pkgs/container/komodo-periphery), or run the
+binary directly with another process manager.
+
+## Choose An Install Mode
+
+The choice affects more than process supervision. It changes where the binary, config, keys, and
+root directory live, and it changes how directly Periphery sees the host.
+
+- **Systemd, root install**: host binary with a root-managed service. Default config:
+  `/etc/komodo/periphery.config.toml`. Binary in `/usr/local/bin/periphery`, service in
+  `/etc/systemd/system/periphery.service`, root directory defaults to `/etc/komodo`.
+- **Systemd, user install**: host binary with a user-managed service. Default config:
+  `$HOME/.config/komodo/periphery.config.toml`. Binary in `$HOME/.local/bin`, service in
+  `$HOME/.config/systemd/user/periphery.service`, root directory defaults to `$HOME/komodo`. The
+  user needs Docker access, write permission to the root directory, and `loginctl enable-linger` if
+  the service should survive logout.
+- **Container**: `ghcr.io/moghtech/komodo-periphery` image. Mount config into the
+  container. Requires mounting
+  [`/var/run/docker.sock`](https://docs.docker.com/engine/security/protect-access/), `/proc`, key
+  storage, and the configured
+  root directory. The root directory path must be the same inside and outside the container.
+- **Binary + other process manager**: host binary started manually. This is the most flexible path,
+  but also the most manual. You must create config, ensure Docker access, and manage startup
+  yourself.
+
+The systemd modes run Periphery directly on the host. The container mode adds another execution
+boundary and therefore more path and mount complexity.
+
+If you stay with the container path, read
+[Use Containerized Periphery Without Path Surprises](../how-to/containerized-periphery-paths.md)
+before relying on relative paths or host-like mount behavior.
+
+This same install choice also affects git-backed resources such as [Repo](../repo.md),
+[Build](../build.md), and git-backed [Stacks](../deploy/compose.md), because those checkouts and
+commands run where Periphery can see the host. See
+[Configure Git-Backed Workflows](../how-to/git-backed-workflows.md) and
+[Providers](../configuration/providers.md).
 
 ### Systemd
 
 :::info
-This is the recommended and simplest method to run Periphery.
-It avoids a number of complications which can come up when running Periphery in a container.
+This keeps Periphery on the host and avoids the extra container boundary.
 [See this discussion](https://github.com/moghtech/komodo/discussions/220).
 :::
 
@@ -48,14 +93,15 @@ curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-p
   --onboarding-key="O-..."
 ```
 
-#### Enable the Periphery service to start automatically after a reboot.
+#### Enable the Periphery service to start automatically after a reboot
 
 ```bash
 sudo systemctl enable periphery
 ```
 
 :::warning Important
-**For systemctl user installs**: To ensure periphery stays running when your user logs out, make sure to enable linger:
+**For systemctl user installs**: To ensure periphery stays running when your user logs out, make
+sure to enable linger:
 
 ```bash
 sudo loginctl enable-linger $USER
@@ -70,54 +116,82 @@ The configuration file location will depend on root vs system install:
 - Root install: `/etc/komodo/periphery.config.toml`
 - User install: `$HOME/.config/komodo/periphery.config.toml`
 
+The installer also chooses different defaults for the Periphery root directory:
+
+- Root install: `/etc/komodo`
+- User install: `$HOME/komodo`
+
+See [Host Model](../host-model.md) for how the root directory affects paths, mounts, and checked-out
+files.
+
 The [full example configuration file is here](#configuration).
 
-You can find more information (and view the script) in the [script readme](https://github.com/moghtech/komodo/tree/main/scripts).
+You can find more information and view the script in the
+[script readme](https://github.com/moghtech/komodo/tree/main/scripts).
 
 :::info
-This script can be run multiple times without issue, and it won't change existing config after the first run. Just run it again after a Komodo version release, and it will update the periphery version.
+This script can be run multiple times. After the first run it leaves the existing config alone and
+updates the installed Periphery version.
 :::
 
 :::tip
-For deployment to many servers, a tool like [Ansible](https://docs.ansible.com/) should be used.
-An example of such a setup can be found here: https://github.com/bpbradley/ansible-role-komodo
+For deployment to many servers, use a tool such as
+[Ansible](https://docs.ansible.com/). An example is in the
+[ansible-role-komodo](https://github.com/bpbradley/ansible-role-komodo) repository.
 :::
 
 ### Container
 
-You can use a docker compose file:
+You can use a [Docker Compose](https://docs.docker.com/compose/) file:
 
 ```mdx-code-block
 <RemoteCodeFile
-	title="https://github.com/moghtech/komodo/blob/main/compose/periphery.compose.yaml"
-	url="https://raw.githubusercontent.com/moghtech/komodo/main/compose/periphery.compose.yaml"
-	language="yaml"
+  title="https://github.com/moghtech/komodo/blob/main/compose/periphery.compose.yaml"
+  url="https://raw.githubusercontent.com/moghtech/komodo/main/compose/periphery.compose.yaml"
+  language="yaml"
 />
 ```
 
+The container install has a few important host integration requirements:
+
+- mount the Docker socket at [`/var/run/docker.sock`](https://docs.docker.com/engine/security/protect-access/)
+- mount `/proc` so Periphery can inspect host processes
+- mount persistent key storage at `/config/keys`
+- mount the Periphery root directory at the same path inside and outside the container
+
+That last point matters. If the host uses `/etc/komodo`, the container should also see it as
+`/etc/komodo`. If the paths differ, Docker mounts and other path-based operations become much harder
+to reason about.
+
+For a fuller explanation of these path rules, see
+[Use Containerized Periphery Without Path Surprises](../how-to/containerized-periphery-paths.md).
+
 ### Binary
 
-1.  Download the periphery binary from the latest [release](https://github.com/moghtech/komodo/releases).
+1. Download the periphery binary from the latest
+   [release](https://github.com/moghtech/komodo/releases).
 
-2.  Create and edit your config files, following the [config example](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml).
+2. Create and edit your config files, following the
+   [config example](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml).
 
 :::note
 See the [periphery config docs](https://docs.rs/komodo_client/latest/komodo_client/entities/config/periphery/index.html)
 for more information on configuring periphery.
 :::
 
-3.  Ensure that connectivity with Komodo Core is possible via the chosen connection method. **So either**:
+1. Ensure that connectivity with Komodo Core is possible via the chosen connection method. Either:
 
-        - Periphery can reach Komodo Core at the configured `core_address`.
-        - Komodo Core can reach Periphery on the specified port (default `8120`).
+   - Periphery can reach Komodo Core at the configured `core_address`.
+   - Komodo Core can reach Periphery on the specified port (default `8120`).
 
-4.  Install docker. See the [docker install docs](https://docs.docker.com/engine/install/).
+1. Install [Docker Engine](https://docs.docker.com/engine/install/).
 
 :::note
-Ensure that the user which periphery is run as has access to the docker group without sudo.
+Ensure that the user which Periphery runs as has access to the `docker` group without `sudo`. See
+[Linux post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/).
 :::
 
-5.  Start the periphery binary with your preferred process manager, like systemd.
+1. Start the periphery binary with your preferred process manager, like systemd.
 
 ### Example periphery start command
 
@@ -129,58 +203,71 @@ periphery --config-path /path/to/periphery.config.toml
 You can run `periphery --help` to see the manual.
 :::
 
-When running periphery in docker, use [command](https://docs.docker.com/reference/compose-file/services/#command) to pass in additional arguments.
+When running Periphery in Docker, use
+[command](https://docs.docker.com/reference/compose-file/services/#command) to pass in additional
+arguments.
 
-```
+```yaml
 command: periphery --config-path /path/in/container/to/periphery.config.base.toml
 ```
 
 ## Authentication and Key Rotation
 
-Core and Periphery authenticate using automatically generated public/private key pairs. No manual key management is required.
+Core and Periphery authenticate using automatically generated public/private key pairs. No manual
+key management is required.
+
+See [Onboarding Keys](./onboarding-keys.md) for the key options, privileged behavior, and the
+difference between first onboarding and reconnecting an existing Server.
 
 ### How it works
 
-1. When you create an **onboarding key** in the UI or API, Komodo Core generates a key pair, and the private key is returned once the the user as the "onboarding key".
-2. When Periphery first connects using the onboarding key, it generates its own key pair, and sends just the public key to Core.
+1. When you create an **onboarding key** in the UI or API, Komodo Core generates a key pair, and
+   the private key is returned once to the user as the onboarding key.
+2. When Periphery first connects using the onboarding key, it generates its own key pair, and sends
+   just the public key to Core.
    Core stores this public key for each Server.
 3. All subsequent communication is authenticated by performing a
    [cryptographic handshake](https://noiseprotocol.org/noise.html#interactive-handshake-patterns-fundamental)
    and validating the transfered public key matches.
 
-The onboarding key is no longer needed after the initial connection, and the Periphery private key never leaves the server.
+The onboarding key is no longer needed after the initial connection, and the Periphery private key
+never leaves the server.
 
 ### Default key locations
 
-| Component | Install Method | Default path                           |
-| --------- | -------------- | -------------------------------------- |
-| Core      | Container      | `/config/keys/core.key`                |
-| Periphery | Container      | `/config/keys/periphery.key`           |
-| Periphery | Systemd        | `${root_directory}/keys/periphery.key` |
+| Component | Install Method | Default path |
+| --- | --- | --- |
+| Core | Container | `/config/keys/core.key` |
+| Periphery | Container | `/config/keys/periphery.key` |
+| Periphery | Systemd | `${root_directory}/keys/periphery.key` |
 
 Keys can also be specified inline in config instead of as file paths.
 
 ### Automatic key rotation
 
 Komodo supports automatic rotation of the Periphery key pairs.
-When triggered, already connected Periphery agents generate a new key pair and sends the new public key to Komodo Core,
-which updates its expected public key for that server.
+When triggered, already connected Periphery agents generate a new key pair and send the new public
+key to Komodo Core, which updates its expected public key for that server.
 
-Each Server has an `auto_rotate_keys` setting (default: `true`) that controls whether it participates in the bulk `RotateAllServerKeys` operation.
+Each Server has an `auto_rotate_keys` setting (default: `true`) that controls whether it
+participates in the bulk `RotateAllServerKeys` operation.
 You can also rotate keys for individual servers at any time through the API or UI.
 
 ### Onboarding key options
 
 Onboarding keys are reusable and support several options:
 
-| Option           | Description                                                 |
-| ---------------- | ----------------------------------------------------------- |
-| `enabled`        | Enable or disable the key.                                  |
-| `expires`        | Expiration timestamp (0 = never).                           |
-| `tags`           | Default tags applied to servers created with this key.      |
-| `copy_server`    | Template Server to copy configuration from.                 |
+| Option | Description |
+| --- | --- |
+| `enabled` | Enable or disable the key. |
+| `expires` | Expiration timestamp (0 = never). |
+| `tags` | Default tags applied to servers created with this key. |
+| `copy_server` | Template Server to copy configuration from. |
 | `create_builder` | Automatically create a Builder resource for the new server. |
-| `privileged`     | Allow the key to update public keys on existing servers.    |
+| `privileged` | Allow the key to update public keys on existing servers. |
+
+To reconnect an existing server without creating a fresh onboarding key, see
+[Connect Periphery Without An Onboarding Key](../how-to/connect-periphery-without-onboarding-key.md).
 
 ## Configuration
 
@@ -198,31 +285,40 @@ wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/config/per
 
 ```mdx-code-block
 <RemoteCodeFile
-	title="https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml"
-	url="https://raw.githubusercontent.com/moghtech/komodo/main/config/periphery.config.toml"
-	language="toml"
+  title="https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml"
+  url="https://raw.githubusercontent.com/moghtech/komodo/main/config/periphery.config.toml"
+  language="toml"
 />
 ```
 
 ### Passing config files
 
-Either file paths or directory paths can be passed to `--config-path` (alias: `-c`). By default, no paths will be used, meaning the configuration is entirely
-loaded via environment variables.
+Either file paths or directory paths can be passed to `--config-path` (alias: `-c`). By default, no
+paths will be used, meaning the configuration is entirely loaded via environment variables.
 
-When using directories, the file entries can be filtered by name with the `--config-keyword` argument, which can be passed multiple times to add more keywords.
+When using directories, the file entries can be filtered by name with the `--config-keyword`
+argument, which can be passed multiple times to add more keywords.
 These are each wildcard patterns to match file names.
-Only config files with file names that contain a keyword will be merged, with files matching later defined keywords having higher priority on field conflicts.
-By default, the only keyword is `*config*.*`. This matches files like `config.toml`, `periphery.config.yaml`, etc.
+Only config files with file names that contain a keyword will be merged, with files matching later
+defined keywords having higher priority on field conflicts.
+By default, the only keyword is `*config*.*`. This matches files like `config.toml`,
+`periphery.config.yaml`, and similar names.
 
-When passing multiple config files, later --config-path given in the command will always override previous ones.
-Directory config files are merged in alphabetical order by name, so `config_b.toml` will override `config_a.toml`.
+When passing multiple config files, later `--config-path` values given in the command will always
+override previous ones.
+Directory config files are merged in alphabetical order by name, so `config_b.toml` will override
+`config_a.toml`.
 
 There are two ways to merge config files.
-The default behavior is to completely replace any base fields with whatever fields are present in the override config.
-So if you pass `allowed_ips = []` in your override config, the final allowed_ips will be an empty list as well.
+The default behavior is to completely replace any base fields with whatever fields are present in
+the override config.
+So if you pass `allowed_ips = []` in your override config, the final `allowed_ips` will be an empty
+list as well.
 
 `--merge-nested-config true` will merge config fields recursively and extend config array fields.
 
-For example, with `--merge-nested-config true` you can specify an allowed ip in the base config, and another in the override config, they will both be present in the final config.
+For example, with `--merge-nested-config true` you can specify an allowed IP in the base config,
+and another in the override config. They will both be present in the final config.
 
-Similarly, you can specify a base Docker / GitHub account pair, and extend them with additional accounts in the override config.
+Similarly, you can specify a base Docker / GitHub account pair, and extend them with additional
+accounts in the override config.

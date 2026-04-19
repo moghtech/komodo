@@ -2,7 +2,17 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs";
 
 const sidebars: SidebarsConfig = {
   docs: [
-    "intro",
+    {
+      type: "category",
+      label: "Get Started",
+      link: {
+        type: "doc",
+        id: "index",
+      },
+      items: [
+        "intro",
+      ],
+    },
     {
       type: "category",
       label: "Setup",
@@ -11,26 +21,41 @@ const sidebars: SidebarsConfig = {
         id: "setup/index",
       },
       items: [
+        "setup/install-komodo",
+        "setup/connect-servers",
+        "setup/after-first-server",
+        "setup/onboarding-keys",
         "setup/mongo",
         "setup/ferretdb",
-        "setup/advanced",
-        "setup/connect-servers",
-        "setup/backup",
       ],
     },
-    "resources",
     {
       type: "category",
-      label: "Deploy",
+      label: "Concepts",
+      items: [
+        "core",
+        "database",
+        "periphery",
+        "server",
+        "connection-model",
+        "repo",
+        "host-model",
+        "alerter",
+        "resources",
+      ],
+    },
+    {
+      type: "category",
+      label: "Deploy And Build",
       items: [
         "deploy/compose",
         "deploy/containers",
-        "deploy/auto-update",
+        "build",
+        "swarm",
+        "terminals",
+        "deploy/auto-update"
       ],
     },
-    "swarm",
-    "terminals",
-    "build",
     {
       type: "category",
       label: "Automate",
@@ -38,7 +63,7 @@ const sidebars: SidebarsConfig = {
         "automate/procedures",
         "automate/schedules",
         "automate/sync-resources",
-        "automate/webhooks",
+        "automate/webhooks"
       ],
     },
     {
@@ -47,7 +72,32 @@ const sidebars: SidebarsConfig = {
       items: [
         "configuration/providers",
         "configuration/variables",
-        "configuration/permissioning",
+        "configuration/permissioning"
+      ],
+    },
+    {
+      type: "category",
+      label: "How-To",
+      link: {
+        type: "doc",
+        id: "how-to/index",
+      },
+      items: [
+        "setup/backup",
+        "how-to/add-another-server",
+        "how-to/reverse-proxy-and-periphery-access",
+        "how-to/git-backed-workflows",
+        "how-to/komodo-cli",
+        "how-to/oidc-oauth2",
+        "how-to/custom-ca-certificates",
+        "how-to/mounted-config-files",
+        "how-to/docker-secrets-files",
+        "how-to/encrypted-secrets-workflows",
+        "how-to/containerized-periphery-paths",
+        "how-to/connect-periphery-without-onboarding-key",
+        "how-to/bootstrap-self-hosted-git-provider",
+        "how-to/write-and-debug-actions",
+        "how-to/run-komodo-locally-on-macos",
       ],
     },
     {
@@ -62,6 +112,7 @@ const sidebars: SidebarsConfig = {
         "ecosystem/api",
         "ecosystem/community",
         "ecosystem/development",
+        "ecosystem/writing-guidelines",
       ],
     },
     {
