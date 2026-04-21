@@ -189,7 +189,11 @@ pub async fn handle_post_repo_execution(
       "On Clone",
       path.as_path(),
       on_clone.command,
-      KomodoCommandMode::Multiline,
+      if on_clone.shell_mode {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Multiline
+      },
       &replacers,
     )
     .await
@@ -214,7 +218,11 @@ pub async fn handle_post_repo_execution(
       "On Pull",
       path.as_path(),
       on_pull.command,
-      KomodoCommandMode::Multiline,
+      if on_pull.shell_mode {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Multiline
+      },
       &replacers,
     )
     .await
