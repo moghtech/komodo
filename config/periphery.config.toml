@@ -33,6 +33,7 @@
 ## ------ ./my_stack_2
 ## --- ./repos
 ## ------ ./my_repo_1
+## --- ./builds
 ## Each specific sub-directory (like ./stacks) can be overridden below.
 ## Env: PERIPHERY_ROOT_DIRECTORY
 ## Default: /etc/komodo
