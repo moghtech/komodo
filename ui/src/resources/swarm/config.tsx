@@ -58,8 +58,9 @@ export default function SwarmConfig({
                         <Group
                           key={index}
                           gap="xs"
-                          w={{ base: "85%", lg: 400 }}
+                          w={{ base: "100%", lg: 400 }}
                           justify="space-between"
+                          wrap="nowrap"
                         >
                           <ResourceSelector
                             type="Server"
@@ -105,7 +106,7 @@ export default function SwarmConfig({
                           })
                         }
                         leftSection={<ICONS.Add size="1rem" />}
-                        w={{ base: "85%", lg: 400 }}
+                        w={{ base: "100%", lg: 400 }}
                       >
                         Add Server
                       </Button>
@@ -118,7 +119,6 @@ export default function SwarmConfig({
           {
             label: "Alerts",
             labelHidden: true,
-            contentHidden: ((update.links ?? config.links)?.length ?? 0) === 0,
             fields: {
               send_unhealthy_alerts: {
                 description: "Send alerts when the Swarm is unhealthy",
@@ -150,11 +150,13 @@ export default function SwarmConfig({
           },
           {
             label: "Links",
-            description: "Add quick links in the resource header",
-            contentHidden: ((update.links ?? config.links)?.length ?? 0) === 0,
+            labelHidden: true,
             fields: {
               links: (values, set) => (
                 <ConfigList
+                  label="Links"
+                  addLabel="Add Link"
+                  description="Add quick links in the resource header"
                   field="links"
                   values={values ?? []}
                   set={set}

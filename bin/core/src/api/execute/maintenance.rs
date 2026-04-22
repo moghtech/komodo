@@ -15,7 +15,7 @@ use komodo_client::{
   },
   entities::{
     SwarmOrServer, deployment::DeploymentState, server::ServerState,
-    stack::StackState,
+    stack::StackState, swarm::SwarmState,
   },
 };
 use mogh_error::AddStatusCodeError;
@@ -39,7 +39,7 @@ use crate::{
   resource::rotate_server_keys,
   state::{
     db_client, deployment_status_cache, server_status_cache,
-    stack_status_cache,
+    stack_status_cache, swarm_status_cache,
   },
 };
 
@@ -244,6 +244,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
         .context("Failed to query for stacks from database")?;
 
     let server_status_cache = server_status_cache();
+    let swarm_status_cache = swarm_status_cache();
     let stack_status_cache = stack_status_cache();
 
     // Will be edited later at update.logs[0]
@@ -255,7 +256,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
         continue;
       };
 
-      // Only pull running stacks.
+      // Only check running stacks.
       if !matches!(status.curr.state, StackState::Running) {
         continue;
       }
@@ -267,43 +268,58 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
         &servers,
       )?;
 
-      if let SwarmOrServer::None = &swarm_or_server {
-        continue;
+      // Ensure server / swarm is reachable
+      match &swarm_or_server {
+        SwarmOrServer::None => continue,
+        SwarmOrServer::Server(server) => {
+          if !server_status_cache
+            .get(&server.id)
+            .await
+            .map(|s| matches!(s.state, ServerState::Ok))
+            .unwrap_or_default()
+          {
+            continue;
+          }
+        }
+        SwarmOrServer::Swarm(swarm) => {
+          if !swarm_status_cache
+            .get(&swarm.id)
+            .await
+            .map(|s| {
+              matches!(
+                s.state,
+                SwarmState::Healthy | SwarmState::Unhealthy
+              )
+            })
+            .unwrap_or_default()
+          {
+            continue;
+          }
+        }
       }
 
-      if let Some(server) =
-        servers.iter().find(|s| s.id == stack.config.server_id)
-        // This check is probably redundant along with running check
-        // but shouldn't hurt
-        && server_status_cache
-          .get(&server.id)
-          .await
-          .map(|s| matches!(s.state, ServerState::Ok))
-          .unwrap_or_default()
+      if let Err(e) = check_stack_for_update_inner(
+        stack.id,
+        &swarm_or_server,
+        self.skip_auto_update,
+        true,
+        false,
+      )
+      .await
       {
-        if let Err(e) = check_stack_for_update_inner(
-          stack.id,
-          &swarm_or_server,
-          self.skip_auto_update,
-          true,
-          false,
-        )
-        .await
-        {
-          update.push_error_log(
-            &format!("Check Stack {}", stack.name),
-            format_serror(&e.into()),
-          );
-        } else {
-          if !update.logs[0].stdout.is_empty() {
-            update.logs[0].stdout.push('\n');
-          }
-
-          update.logs[0].stdout.push_str(&format!(
-            "Checked Stack {} ✅",
-            bold(&stack.name)
-          ));
+        update.push_error_log(
+          &format!("Check Stack {}", stack.name),
+          format_serror(&e.into()),
+        );
+      } else {
+        if !update.logs[0].stdout.is_empty() {
+          update.logs[0].stdout.push('\n');
         }
+
+        update.logs[0].stdout.push_str(&format!(
+          "Checked Stack {} ✅",
+          bold(&stack.name)
+        ));
       }
     }
 
@@ -320,7 +336,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
         continue;
       };
 
-      // Only pull running deployments.
+      // Only check running deployments.
       if !matches!(status.curr.state, DeploymentState::Running) {
         continue;
       }
@@ -332,8 +348,34 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
         &servers,
       )?;
 
-      if let SwarmOrServer::None = &swarm_or_server {
-        continue;
+      // Ensure server / swarm is reachable
+      match &swarm_or_server {
+        SwarmOrServer::None => continue,
+        SwarmOrServer::Server(server) => {
+          if !server_status_cache
+            .get(&server.id)
+            .await
+            .map(|s| matches!(s.state, ServerState::Ok))
+            .unwrap_or_default()
+          {
+            continue;
+          }
+        }
+        SwarmOrServer::Swarm(swarm) => {
+          if !swarm_status_cache
+            .get(&swarm.id)
+            .await
+            .map(|s| {
+              matches!(
+                s.state,
+                SwarmState::Healthy | SwarmState::Unhealthy
+              )
+            })
+            .unwrap_or_default()
+          {
+            continue;
+          }
+        }
       }
 
       let name = deployment.name.clone();

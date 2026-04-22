@@ -42,7 +42,7 @@ pub async fn send_alert(
             format!("{level} | Swarm *{name}* is *unhealthy* ❌");
           let err = err
             .as_ref()
-            .map(|e| format!("\nerror: {e}"))
+            .map(|e| format!("\nerror: {e:#?}"))
             .unwrap_or_default();
           let blocks = vec![
             Block::header(level),
@@ -58,35 +58,6 @@ pub async fn send_alert(
         }
         _ => unreachable!(),
       }
-    }
-    AlertData::ServerVersionMismatch {
-      id,
-      name,
-      region,
-      server_version,
-      core_version,
-    } => {
-      let region = fmt_region(region);
-      let text = match alert.level {
-        SeverityLevel::Ok => {
-          format!(
-            "{level} | *{name}*{region} | Periphery version now matches Core version ✅"
-          )
-        }
-        _ => {
-          format!(
-            "{level} | *{name}*{region} | Version mismatch detected ⚠️\nPeriphery: {server_version} | Core: {core_version}"
-          )
-        }
-      };
-      let blocks = vec![
-        Block::header(text.clone()),
-        Block::section(resource_link(
-          ResourceTargetVariant::Server,
-          id,
-        )),
-      ];
-      (text, blocks.into())
     }
     AlertData::ServerUnreachable {
       id,
@@ -128,6 +99,35 @@ pub async fn send_alert(
         }
         _ => unreachable!(),
       }
+    }
+    AlertData::ServerVersionMismatch {
+      id,
+      name,
+      region,
+      server_version,
+      core_version,
+    } => {
+      let region = fmt_region(region);
+      let text = match alert.level {
+        SeverityLevel::Ok => {
+          format!(
+            "{level} | *{name}*{region} | Periphery version now matches Core version ✅"
+          )
+        }
+        _ => {
+          format!(
+            "{level} | *{name}*{region} | Version mismatch detected ⚠️\nPeriphery: {server_version} | Core: {core_version}"
+          )
+        }
+      };
+      let blocks = vec![
+        Block::header(text.clone()),
+        Block::section(resource_link(
+          ResourceTargetVariant::Server,
+          id,
+        )),
+      ];
+      (text, blocks.into())
     }
     AlertData::ServerCpu {
       id,

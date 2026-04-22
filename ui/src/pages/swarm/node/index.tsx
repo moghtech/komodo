@@ -7,6 +7,7 @@ import RemoveSwarmResource from "@/components/swarm/remove";
 import ResourceSubPage from "@/resources/sub-page";
 import SwarmNodeTabs from "./tabs";
 import PageGuard from "@/ui/page-guard";
+import UpdateSwarmNodes from "@/resources/swarm/docker/nodes/update";
 
 export default function SwarmNode() {
   const { id: swarmId, node: __node } = useParams() as {
@@ -52,12 +53,20 @@ export default function SwarmNode() {
         status={node?.Spec?.Role}
         executions={
           node?.ID && (
-            <RemoveSwarmResource
-              swarmId={swarmId}
-              type="Node"
-              resourceId={node.ID}
-              resourceName={node.Description?.Hostname}
-            />
+            <>
+              <UpdateSwarmNodes
+                swarm={swarmId}
+                nodes={
+                  node.Description?.Hostname ? [node.Description?.Hostname] : []
+                }
+              />
+              <RemoveSwarmResource
+                swarmId={swarmId}
+                type="Node"
+                resourceId={node.ID}
+                resourceName={node.Description?.Hostname}
+              />
+            </>
           )
         }
       >

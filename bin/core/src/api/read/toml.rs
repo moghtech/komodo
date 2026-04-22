@@ -1,5 +1,8 @@
 use anyhow::Context;
-use database::mungos::find::find_collect;
+use database::{
+  bson::doc,
+  mungos::{find::find_collect, mongodb::options::FindOptions},
+};
 use komodo_client::{
   api::read::{
     ExportAllResourcesToToml, ExportAllResourcesToTomlResponse,
@@ -215,18 +218,21 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
       .context("failed to add user groups")?;
 
     if include_variables {
-      res.variables =
-        find_collect(&db_client().variables, None, None)
-          .await
-          .context("failed to get variables from db")?
-          .into_iter()
-          .map(|mut variable| {
-            if !user.admin && variable.is_secret {
-              variable.value = "#".repeat(variable.value.len())
-            }
-            variable
-          })
-          .collect();
+      res.variables = find_collect(
+        &db_client().variables,
+        None,
+        FindOptions::builder().sort(doc! { "name": 1 }).build(),
+      )
+      .await
+      .context("failed to get variables from db")?
+      .into_iter()
+      .map(|mut variable| {
+        if !user.admin && variable.is_secret {
+          variable.value = "#".repeat(variable.value.len())
+        }
+        variable
+      })
+      .collect();
     }
 
     let toml = serialize_resources_toml(res)

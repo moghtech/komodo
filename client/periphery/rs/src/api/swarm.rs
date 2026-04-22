@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use komodo_client::entities::{
   SearchCombinator,
   deployment::Deployment,
@@ -63,11 +61,12 @@ pub struct RemoveSwarmNodes {
 #[response(Log)]
 #[error(anyhow::Error)]
 pub struct UpdateSwarmNode {
+  /// Node hostname or id
   pub node: String,
+  /// Update the node's availability: 'active', 'pause', or 'drain'
   pub availability: Option<NodeSpecAvailabilityEnum>,
   /// Add metadata to a swarm node using node labels (`key=value`).
-  /// You can specify a node label as a key with an empty value.
-  pub label_add: Option<HashMap<String, Option<String>>>,
+  pub label_add: Option<Vec<String>>,
   /// Remove labels by the label key.
   pub label_rm: Option<Vec<String>>,
   /// Update the node role (`worker`, `manager`)

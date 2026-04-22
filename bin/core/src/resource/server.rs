@@ -93,6 +93,7 @@ impl super::KomodoResource for Server {
       resource_type: ResourceTargetVariant::Server,
       info: ServerListItemInfo {
         state: status.as_ref().map(|s| s.state).unwrap_or_default(),
+        err: status.as_ref().and_then(|s| s.err.clone()),
         region: server.config.region,
         address: optional_string(server.config.address),
         external_address: optional_string(

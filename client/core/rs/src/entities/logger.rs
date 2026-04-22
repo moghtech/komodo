@@ -17,13 +17,17 @@ pub struct LogConfig {
   pub pretty: bool,
 
   /// Including information about the log location (ie the function which produced the log).
-  /// Tracing refers to this as the 'target'.
+  /// Tracing refers to this as the 'target'. (default: false)
   #[serde(default = "default_location")]
   pub location: bool,
 
-  /// Logs use ansi colors for readability.
+  /// Logs use ansi colors for readability. (default: true)
   #[serde(default = "default_ansi")]
   pub ansi: bool,
+
+  /// Logs include timestamps. (default: true)
+  #[serde(default = "default_timestamps")]
+  pub timestamps: bool,
 
   /// Enable opentelemetry exporting
   #[serde(default)]
@@ -52,6 +56,10 @@ fn default_ansi() -> bool {
   true
 }
 
+fn default_timestamps() -> bool {
+  true
+}
+
 impl Default for LogConfig {
   fn default() -> Self {
     Self {
@@ -60,6 +68,7 @@ impl Default for LogConfig {
       pretty: Default::default(),
       location: default_location(),
       ansi: default_ansi(),
+      timestamps: default_timestamps(),
       otlp_endpoint: Default::default(),
       opentelemetry_service_name: default_opentelemetry_service_name(
       ),
@@ -166,14 +175,17 @@ impl mogh_logger::LogConfig for &LogConfig {
     &TARGETS
   }
 
-  fn ansi(&self) -> bool {
-    self.ansi
-  }
   fn level(&self) -> tracing::Level {
     self.level.into()
   }
   fn location(&self) -> bool {
     self.location
+  }
+  fn ansi(&self) -> bool {
+    self.ansi
+  }
+  fn timestamps(&self) -> bool {
+    self.timestamps
   }
   fn opentelemetry_scope_name(&self) -> String {
     self.opentelemetry_scope_name.clone()

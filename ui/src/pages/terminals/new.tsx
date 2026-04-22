@@ -253,6 +253,7 @@ function CreateServerTerminal({
       finalize={(baseRequest) => ({
         name: baseRequest.name,
         target: { type: "Server", params: { server: server } },
+        command: baseRequest.command,
       })}
       onSuccess={(terminal) => {
         nav(`/servers/${server}/terminal/${terminal.name}`);
@@ -307,11 +308,12 @@ function CreateContainerTerminal({
       setType={setType}
       finalize={(baseRequest) => ({
         name: baseRequest.name,
-        mode: baseRequest.mode,
         target: {
           type: "Container",
           params: { server: params.server, container: params.container },
         },
+        command: baseRequest.command,
+        mode: baseRequest.mode,
       })}
       onSuccess={(terminal) => {
         nav(
@@ -382,11 +384,12 @@ function CreateStackServiceTerminal({
       setType={setType}
       finalize={(baseRequest) => ({
         name: baseRequest.name,
-        mode: baseRequest.mode,
         target: {
           type: "Stack",
           params: { stack: params.stack, service: params.service },
         },
+        command: baseRequest.command,
+        mode: baseRequest.mode,
       })}
       onSuccess={(terminal) => {
         nav(
@@ -459,6 +462,8 @@ function CreateDeploymentTerminal({
       finalize={(baseRequest) => ({
         name: baseRequest.name,
         target: { type: "Deployment", params: { deployment: deployment } },
+        command: baseRequest.command,
+        mode: baseRequest.mode,
       })}
       onSuccess={(terminal) => {
         nav(`/deployments/${deployment}/terminal/${terminal.name}`);

@@ -357,6 +357,11 @@ export function listsEqual(a: string[], b: string[]) {
  * @returns a === b
  */
 export function deepCompare(a: any, b: any) {
+  // Short path for falsy. Important to catch typeof null === "object" edge case.
+  if (!a || !b) {
+    return a === b;
+  }
+
   const ta = typeof a;
   const tb = typeof b;
 

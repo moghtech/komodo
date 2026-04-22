@@ -1167,6 +1167,7 @@ pub enum Operation {
   RenameSwarm,
   DeleteSwarm,
   RemoveSwarmNodes,
+  UpdateSwarmNode,
   RemoveSwarmStacks,
   RemoveSwarmServices,
   CreateSwarmConfig,

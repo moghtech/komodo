@@ -168,8 +168,7 @@ export default function BuildInfo({
                   />
                 </>
               )}
-              {/* The toggle onClick is given to entire header */}
-              <ShowHideButton show={show} setShow={() => {}} />
+              <ShowHideButton show={show} setShow={() => setShow((show) => !show)} />
             </Group>
           </Group>
 

@@ -99,13 +99,9 @@ impl Resolve<crate::api::Args> for UpdateSwarmNode {
     }
 
     if let Some(label_add) = self.label_add {
-      for (key, value) in label_add {
+      for key_value in label_add {
         command += " --label-add ";
-        command += &key;
-        if let Some(value) = value {
-          command += "=";
-          command += &value;
-        }
+        command += &key_value;
       }
     }
 

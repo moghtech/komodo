@@ -1,4 +1,4 @@
-FROM rust:1.94.0-bullseye AS builder
+FROM rust:1.94.1-bullseye AS builder
 RUN cargo install cargo-strip
 
 WORKDIR /builder

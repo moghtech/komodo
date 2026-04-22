@@ -13,12 +13,12 @@ import SwarmTable from "./table";
 import NewResource from "@/resources/new";
 import SwarmTabs from "./tabs";
 import { useDisclosure } from "@mantine/hooks";
-import { Box, Button, HoverCard, Modal, Text } from "@mantine/core";
+import { Box, Button, Modal, Text } from "@mantine/core";
 import JoinSwarmCommands from "./join-commands";
-import { updateLogToHtml } from "@/lib/utils";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import SwarmHeaderInfo from "./header-info";
+import HoverError from "@/ui/hover-error";
 
 export function useSwarm(id: string | undefined, useName?: boolean) {
   return useRead("ListSwarms", {}).data?.find((r) =>
@@ -202,28 +202,7 @@ export const SwarmComponents: RequiredResourceComponents<
       if (!err) return null;
       return (
         <Box>
-          <HoverCard position="bottom-start">
-            <HoverCard.Target>
-              <Button
-                variant="filled"
-                color="red"
-                leftSection={<ICONS.Alert size="1rem" />}
-              >
-                Error
-              </Button>
-            </HoverCard.Target>
-            <HoverCard.Dropdown>
-              <Text
-                component="pre"
-                fz="sm"
-                mah={500}
-                dangerouslySetInnerHTML={{
-                  __html: updateLogToHtml(err),
-                }}
-                style={{ overflowY: "auto" }}
-              />
-            </HoverCard.Dropdown>
-          </HoverCard>
+          <HoverError {...err} />
         </Box>
       );
     },

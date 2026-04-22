@@ -11,7 +11,10 @@ use komodo_client::{
   entities::{
     all_logs_success,
     docker::stack::SwarmStack,
-    stack::{ComposeFile, ComposeService, StackServiceNames},
+    stack::{
+      AdditionalEnvFile, ComposeFile, ComposeService,
+      StackServiceNames,
+    },
     update::Log,
   },
   parsers::parse_multiline_command,
@@ -139,7 +142,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
     replacers.extend(interpolator.secret_replacers);
 
     // Env files are not supported by docker stack deploy so are ignored.
-    let (run_directory, _) = match write_stack(
+    let (run_directory, env_file_path) = match write_stack(
       &stack,
       repo.as_ref(),
       git_token,
@@ -218,10 +221,16 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
         &stack.config.compose_cmd_wrapper_include
       };
 
+    let env_file_args = env_file_args(
+      env_file_path,
+      &stack.config.additional_env_files,
+    )?;
+
     // Uses 'docker stack config' command to extract services (including image)
     // after performing interpolation
     {
-      let command = format!("docker stack config -c {file_args}",);
+      let command =
+        format!("{env_file_args}docker stack config -c {file_args}",);
       let (command, wrapped) = match maybe_wrap_command(
         command,
         &compose_cmd_wrapper,
@@ -234,7 +243,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
           return Ok(res);
         }
       };
-      let mode = if wrapped {
+      let mode = if wrapped || !env_file_args.is_empty() {
         KomodoCommandMode::Shell
       } else {
         KomodoCommandMode::Standard
@@ -288,8 +297,9 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
     }
 
     // Run stack deploy
-    let mut command =
-      format!("docker stack deploy --detach=false -c {file_args}");
+    let mut command = format!(
+      "{env_file_args}docker stack deploy --detach=true -c {file_args}"
+    );
     if use_with_registry_auth {
       command += " --with-registry-auth";
     }
@@ -345,6 +355,43 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       };
     }
 
+    Ok(res)
+  }
+}
+
+/// Prefix docker stack deploy command.
+///
+/// Produces either
+///     - Empty string (no env files defined)
+///     - 'set -a && . .env1 && . .env2 && '
+fn env_file_args(
+  env_file_path: Option<&str>,
+  additional_env_files: &[AdditionalEnvFile],
+) -> anyhow::Result<String> {
+  let mut res = String::new();
+
+  // Add additional env files (except komodo's own, which comes last)
+  for file in additional_env_files
+    .iter()
+    .filter(|f| env_file_path != Some(f.path.as_str()))
+  {
+    let path = &file.path;
+    write!(res, ". {path} && ").with_context(|| {
+      format!("Failed to write env source arg for {path}")
+    })?;
+  }
+
+  // Add komodo's env file last for highest priority
+  if let Some(file) = env_file_path {
+    write!(res, ". {file} && ").with_context(|| {
+      format!("Failed to write env source arg for {file}")
+    })?;
+  }
+
+  if !res.is_empty() {
+    // Add 'set -a' so vars are auto exported to child 'docker stack' process.
+    Ok(format!("set -a && {res}"))
+  } else {
     Ok(res)
   }
 }

@@ -36,7 +36,7 @@ export default function ProviderSelector({
   if (customMode) {
     return (
       <TextInput
-        label="Domain"
+        label={showLabel && "Domain"}
         placeholder="Input custom provider domain"
         w={{ base: "85%", lg: 400 }}
         value={selected}

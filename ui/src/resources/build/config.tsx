@@ -242,12 +242,7 @@ export default function BuildConfig({
 
             {image_registries?.map((registry, index) => (
               <ImageRegistryConfig
-                key={
-                  (registry.domain ?? "") +
-                  (registry.organization ?? "") +
-                  (registry.account ?? "") +
-                  index
-                }
+                key={index}
                 registry={registry}
                 imageName={imageName}
                 setRegistry={(registry) =>

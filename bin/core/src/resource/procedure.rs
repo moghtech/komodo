@@ -183,695 +183,183 @@ async fn validate_config(
   };
   for stage in stages {
     for exec in &mut stage.executions {
-      match &mut exec.execution {
-        Execution::None(_) => {}
-        Execution::RunProcedure(params) => {
-          let procedure = super::get_check_permissions::<Procedure>(
-            &params.procedure,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          match id {
-            Some(id) if procedure.id == id => {
-              return Err(anyhow!(
-                "Cannot have self-referential procedure"
-              ));
-            }
-            _ => {}
-          }
-          params.procedure = procedure.id;
-        }
-        Execution::BatchRunProcedure(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::RunAction(params) => {
-          let action = super::get_check_permissions::<Action>(
-            &params.action,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.action = action.id;
-        }
-        Execution::BatchRunAction(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::RunBuild(params) => {
-          let build = super::get_check_permissions::<Build>(
-            &params.build,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.build = build.id;
-        }
-        Execution::BatchRunBuild(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::CancelBuild(params) => {
-          let build = super::get_check_permissions::<Build>(
-            &params.build,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.build = build.id;
-        }
-        Execution::Deploy(params) => {
-          let deployment =
-            super::get_check_permissions::<Deployment>(
-              &params.deployment,
-              user,
-              PermissionLevel::Execute.into(),
-            )
-            .await?;
-          params.deployment = deployment.id;
-        }
-        Execution::BatchDeploy(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::PullDeployment(params) => {
-          let deployment =
-            super::get_check_permissions::<Deployment>(
-              &params.deployment,
-              user,
-              PermissionLevel::Execute.into(),
-            )
-            .await?;
-          params.deployment = deployment.id;
-        }
-        Execution::StartDeployment(params) => {
-          let deployment =
-            super::get_check_permissions::<Deployment>(
-              &params.deployment,
-              user,
-              PermissionLevel::Execute.into(),
-            )
-            .await?;
-          params.deployment = deployment.id;
-        }
-        Execution::RestartDeployment(params) => {
-          let deployment =
-            super::get_check_permissions::<Deployment>(
-              &params.deployment,
-              user,
-              PermissionLevel::Execute.into(),
-            )
-            .await?;
-          params.deployment = deployment.id;
-        }
-        Execution::PauseDeployment(params) => {
-          let deployment =
-            super::get_check_permissions::<Deployment>(
-              &params.deployment,
-              user,
-              PermissionLevel::Execute.into(),
-            )
-            .await?;
-          params.deployment = deployment.id;
-        }
-        Execution::UnpauseDeployment(params) => {
-          let deployment =
-            super::get_check_permissions::<Deployment>(
-              &params.deployment,
-              user,
-              PermissionLevel::Execute.into(),
-            )
-            .await?;
-          params.deployment = deployment.id;
-        }
-        Execution::StopDeployment(params) => {
-          let deployment =
-            super::get_check_permissions::<Deployment>(
-              &params.deployment,
-              user,
-              PermissionLevel::Execute.into(),
-            )
-            .await?;
-          params.deployment = deployment.id;
-        }
-        Execution::DestroyDeployment(params) => {
-          let deployment =
-            super::get_check_permissions::<Deployment>(
-              &params.deployment,
-              user,
-              PermissionLevel::Execute.into(),
-            )
-            .await?;
-          params.deployment = deployment.id;
-        }
-        Execution::BatchDestroyDeployment(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::CloneRepo(params) => {
-          let repo = super::get_check_permissions::<Repo>(
-            &params.repo,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.repo = repo.id;
-        }
-        Execution::BatchCloneRepo(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::PullRepo(params) => {
-          let repo = super::get_check_permissions::<Repo>(
-            &params.repo,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.repo = repo.id;
-        }
-        Execution::BatchPullRepo(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::BuildRepo(params) => {
-          let repo = super::get_check_permissions::<Repo>(
-            &params.repo,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.repo = repo.id;
-        }
-        Execution::BatchBuildRepo(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::CancelRepoBuild(params) => {
-          let repo = super::get_check_permissions::<Repo>(
-            &params.repo,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.repo = repo.id;
-        }
-        Execution::StartContainer(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::RestartContainer(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PauseContainer(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::UnpauseContainer(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::StopContainer(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::DestroyContainer(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::StartAllContainers(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::RestartAllContainers(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PauseAllContainers(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::UnpauseAllContainers(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::StopAllContainers(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PruneContainers(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::DeleteNetwork(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PruneNetworks(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::DeleteImage(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PruneImages(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::DeleteVolume(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PruneVolumes(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PruneDockerBuilders(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PruneBuildx(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::PruneSystem(params) => {
-          let server = super::get_check_permissions::<Server>(
-            &params.server,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.server = server.id;
-        }
-        Execution::RunSync(params) => {
-          let sync = super::get_check_permissions::<ResourceSync>(
-            &params.sync,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.sync = sync.id;
-        }
-        Execution::CommitSync(params) => {
-          // This one is actually a write operation.
-          let sync = super::get_check_permissions::<ResourceSync>(
-            &params.sync,
-            user,
-            PermissionLevel::Write.into(),
-          )
-          .await?;
-          params.sync = sync.id;
-        }
-        Execution::DeployStack(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::BatchDeployStack(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::DeployStackIfChanged(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::BatchDeployStackIfChanged(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::PullStack(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::BatchPullStack(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::StartStack(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::RestartStack(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::PauseStack(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::UnpauseStack(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::StopStack(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::DestroyStack(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::RunStackService(params) => {
-          let stack = super::get_check_permissions::<Stack>(
-            &params.stack,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.stack = stack.id;
-        }
-        Execution::BatchDestroyStack(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot configure Batch executions"
-            ));
-          }
-        }
-        Execution::TestAlerter(params) => {
-          let alerter = super::get_check_permissions::<Alerter>(
-            &params.alerter,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.alerter = alerter.id;
-        }
-        Execution::SendAlert(params) => {
-          params.alerters = params
-            .alerters
-            .iter()
-            .map(async |alerter| {
-              let id = super::get_check_permissions::<Alerter>(
-                alerter,
+      macro_rules! check_execution_perms {
+        (
+          execute: [$(($Variant:ident, $Type:ident, $field:ident)),* $(,)?],
+          batch_admin: [$($BatchVariant:ident),* $(,)?],
+          admin_only: [$(($AdminVariant:ident, $msg:literal)),* $(,)?],
+        ) => {
+          match &mut exec.execution {
+            $(
+              Execution::$Variant(params) => {
+                let resource = super::get_check_permissions::<$Type>(
+                  &params.$field,
+                  user,
+                  PermissionLevel::Execute.into(),
+                )
+                .await?;
+                params.$field = resource.id;
+              }
+            )*
+            $(
+              Execution::$BatchVariant(_params) => {
+                if !user.admin {
+                  return Err(anyhow!(
+                    "Non admin user cannot configure Batch executions"
+                  ));
+                }
+              }
+            )*
+            $(
+              Execution::$AdminVariant(_params) => {
+                if !user.admin {
+                  return Err(anyhow!($msg));
+                }
+              }
+            )*
+            // Special: self-referential procedure check
+            Execution::RunProcedure(params) => {
+              let procedure = super::get_check_permissions::<Procedure>(
+                &params.procedure,
                 user,
                 PermissionLevel::Execute.into(),
               )
-              .await?
-              .id;
-              anyhow::Ok(id)
-            })
-            .collect::<FuturesUnordered<_>>()
-            .try_collect::<Vec<_>>()
-            .await?;
-        }
-        Execution::RemoveSwarmNodes(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::RemoveSwarmStacks(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::RemoveSwarmServices(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::CreateSwarmConfig(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::RotateSwarmConfig(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::RemoveSwarmConfigs(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::CreateSwarmSecret(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::RotateSwarmSecret(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::RemoveSwarmSecrets(params) => {
-          let swarm = super::get_check_permissions::<Swarm>(
-            &params.swarm,
-            user,
-            PermissionLevel::Execute.into(),
-          )
-          .await?;
-          params.swarm = swarm.id;
-        }
-        Execution::ClearRepoCache(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot clear repo cache"
-            ));
+              .await?;
+              match id {
+                Some(id) if procedure.id == id => {
+                  return Err(anyhow!(
+                    "Cannot have self-referential procedure"
+                  ));
+                }
+                _ => {}
+              }
+              params.procedure = procedure.id;
+            }
+            // Special: CommitSync uses Write permission
+            Execution::CommitSync(params) => {
+              let sync = super::get_check_permissions::<ResourceSync>(
+                &params.sync,
+                user,
+                PermissionLevel::Write.into(),
+              )
+              .await?;
+              params.sync = sync.id;
+            }
+            // Special: SendAlert checks a Vec of alerters
+            Execution::SendAlert(params) => {
+              params.alerters = params
+                .alerters
+                .iter()
+                .map(async |alerter| {
+                  let id = super::get_check_permissions::<Alerter>(
+                    alerter,
+                    user,
+                    PermissionLevel::Execute.into(),
+                  )
+                  .await?
+                  .id;
+                  anyhow::Ok(id)
+                })
+                .collect::<FuturesUnordered<_>>()
+                .try_collect::<Vec<_>>()
+                .await?;
+            }
+            Execution::None(_) | Execution::Sleep(_) => {}
           }
-        }
-        Execution::BackupCoreDatabase(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot trigger core database backup"
-            ));
-          }
-        }
-        Execution::GlobalAutoUpdate(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot trigger global auto update"
-            ));
-          }
-        }
-        Execution::RotateAllServerKeys(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot trigger rotate all server keys"
-            ));
-          }
-        }
-        Execution::RotateCoreKeys(_params) => {
-          if !user.admin {
-            return Err(anyhow!(
-              "Non admin user cannot trigger rotate core keys"
-            ));
-          }
-        }
-        Execution::Sleep(_) => {}
+        };
       }
+      check_execution_perms!(
+        execute: [
+          // Action
+          (RunAction, Action, action),
+          // Build
+          (RunBuild, Build, build),
+          (CancelBuild, Build, build),
+          // Deployment
+          (Deploy, Deployment, deployment),
+          (PullDeployment, Deployment, deployment),
+          (StartDeployment, Deployment, deployment),
+          (RestartDeployment, Deployment, deployment),
+          (PauseDeployment, Deployment, deployment),
+          (UnpauseDeployment, Deployment, deployment),
+          (StopDeployment, Deployment, deployment),
+          (DestroyDeployment, Deployment, deployment),
+          // Repo
+          (CloneRepo, Repo, repo),
+          (PullRepo, Repo, repo),
+          (BuildRepo, Repo, repo),
+          (CancelRepoBuild, Repo, repo),
+          // Server
+          (StartContainer, Server, server),
+          (RestartContainer, Server, server),
+          (PauseContainer, Server, server),
+          (UnpauseContainer, Server, server),
+          (StopContainer, Server, server),
+          (DestroyContainer, Server, server),
+          (StartAllContainers, Server, server),
+          (RestartAllContainers, Server, server),
+          (PauseAllContainers, Server, server),
+          (UnpauseAllContainers, Server, server),
+          (StopAllContainers, Server, server),
+          (PruneContainers, Server, server),
+          (DeleteNetwork, Server, server),
+          (PruneNetworks, Server, server),
+          (DeleteImage, Server, server),
+          (PruneImages, Server, server),
+          (DeleteVolume, Server, server),
+          (PruneVolumes, Server, server),
+          (PruneDockerBuilders, Server, server),
+          (PruneBuildx, Server, server),
+          (PruneSystem, Server, server),
+          // Resource Sync
+          (RunSync, ResourceSync, sync),
+          // Stack
+          (DeployStack, Stack, stack),
+          (DeployStackIfChanged, Stack, stack),
+          (PullStack, Stack, stack),
+          (StartStack, Stack, stack),
+          (RestartStack, Stack, stack),
+          (PauseStack, Stack, stack),
+          (UnpauseStack, Stack, stack),
+          (StopStack, Stack, stack),
+          (DestroyStack, Stack, stack),
+          (RunStackService, Stack, stack),
+          // Alerter
+          (TestAlerter, Alerter, alerter),
+          // Swarm
+          (RemoveSwarmNodes, Swarm, swarm),
+          (UpdateSwarmNode, Swarm, swarm),
+          (RemoveSwarmStacks, Swarm, swarm),
+          (RemoveSwarmServices, Swarm, swarm),
+          (CreateSwarmConfig, Swarm, swarm),
+          (RotateSwarmConfig, Swarm, swarm),
+          (RemoveSwarmConfigs, Swarm, swarm),
+          (CreateSwarmSecret, Swarm, swarm),
+          (RotateSwarmSecret, Swarm, swarm),
+          (RemoveSwarmSecrets, Swarm, swarm),
+        ],
+        batch_admin: [
+          BatchRunProcedure,
+          BatchRunAction,
+          BatchRunBuild,
+          BatchDeploy,
+          BatchDestroyDeployment,
+          BatchCloneRepo,
+          BatchPullRepo,
+          BatchBuildRepo,
+          BatchDeployStack,
+          BatchDeployStackIfChanged,
+          BatchPullStack,
+          BatchDestroyStack,
+        ],
+        admin_only: [
+          (ClearRepoCache, "Non admin user cannot clear repo cache"),
+          (BackupCoreDatabase, "Non admin user cannot trigger core database backup"),
+          (GlobalAutoUpdate, "Non admin user cannot trigger global auto update"),
+          (RotateAllServerKeys, "Non admin user cannot trigger rotate all server keys"),
+          (RotateCoreKeys, "Non admin user cannot trigger rotate core keys"),
+        ],
+      );
     }
   }
 

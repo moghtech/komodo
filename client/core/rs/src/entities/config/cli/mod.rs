@@ -96,6 +96,8 @@ pub struct Env {
   pub komodo_cli_logging_pretty: Option<bool>,
   /// Override `logging.ansi`
   pub komodo_cli_logging_ansi: Option<bool>,
+  /// Override `logging.timestamps`
+  pub komodo_cli_logging_timestamps: Option<bool>,
   /// Override `logging.otlp_endpoint`
   pub komodo_cli_logging_otlp_endpoint: Option<String>,
   /// Override `logging.opentelemetry_service_name`

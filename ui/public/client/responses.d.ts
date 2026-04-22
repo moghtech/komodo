@@ -320,6 +320,7 @@ export type ExecuteResponses = {
     PruneBuildx: Types.Update;
     PruneSystem: Types.Update;
     RemoveSwarmNodes: Types.Update;
+    UpdateSwarmNode: Types.Update;
     RemoveSwarmStacks: Types.Update;
     RemoveSwarmServices: Types.Update;
     CreateSwarmConfig: Types.Update;

@@ -24,7 +24,7 @@
     "jotai": "^2.18.0",
     "jotai-family": "^1.0.1",
     "jotai-location": "^0.6.2",
-    "lucide-react": "^0.575.0",
+    "lucide-react": "^1.6.0",
     "monaco-editor": "^0.55.1",
     "monaco-yaml": "^5.4.1",
     "react": "^19.2.4",
@@ -42,13 +42,14 @@
     "@types/react-dom": "^19.2.3",
     "@types/sanitize-html": "^2.16.0",
     "@types/shell-quote": "^1.7.5",
-    "@vitejs/plugin-react": "^5.1.4",
+    "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^17.3.1",
     "postcss": "^8.5.6",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
     "sass-embedded": "^1.97.3",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1"
-  }
+    "typescript": "^6.0.2",
+    "vite": "^8.0.2"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

@@ -55,7 +55,9 @@ export default function HashCompare({
               <Badge color="accent.9">message</Badge>
               <Text c="dimmed">{lastHash}</Text>
             </Group>
-            <Code>{lastMessage || latestMessage}</Code>
+            <Code maw="calc(100vh - 150px)" style={{ overflow: "auto" }}>
+              {lastMessage || latestMessage}
+            </Code>
           </Stack>
           {outOfDate && (
             <Stack gap="xs">
@@ -65,7 +67,9 @@ export default function HashCompare({
                 </Badge>
                 <Text c="dimmed">{latestHash}</Text>
               </Group>
-              <Code>{latestMessage}</Code>
+              <Code maw="calc(100vh - 150px)" style={{ overflow: "auto" }}>
+                {latestMessage}
+              </Code>
             </Stack>
           )}
         </Stack>

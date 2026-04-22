@@ -52,7 +52,6 @@ export default function StackUpdateAvailable({
 
   if (
     !info ||
-    info.swarm_id ||
     [Types.StackState.Down, Types.StackState.Unknown].includes(state)
   ) {
     return null;
