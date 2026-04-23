@@ -46,6 +46,7 @@ export function RunBuild({ id }: { id: string }) {
   if (building && canCancel) {
     return (
       <ConfirmButton
+        variant="filled"
         color="red"
         icon={<ICONS.Cancel size="1rem" />}
         onClick={() => cancelBuild({ build: id })}
