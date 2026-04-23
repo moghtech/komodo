@@ -1,4 +1,4 @@
-FROM rust:1.94.1-bullseye as builder
+FROM rust:1.94.1-trixie as builder
 WORKDIR /builder
 
 COPY . .
