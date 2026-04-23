@@ -260,10 +260,34 @@ fn standard_alert_content(alert: &Alert) -> String {
         SeverityLevel::Critical => {
           let err = err
             .as_ref()
-            .map(|e| format!("\nerror: {e}"))
+            .map(|e| format!("\nerror: {e:#?}"))
             .unwrap_or_default();
           format!(
             "{level} | Swarm {name} is unhealthy ❌\n{link}{err}"
+          )
+        }
+        _ => unreachable!(),
+      }
+    }
+    AlertData::ServerUnreachable {
+      id,
+      name,
+      region,
+      err,
+    } => {
+      let region = fmt_region(region);
+      let link = resource_link(ResourceTargetVariant::Server, id);
+      match alert.level {
+        SeverityLevel::Ok => {
+          format!("{level} | {name}{region} is now connected\n{link}")
+        }
+        SeverityLevel::Critical => {
+          let err = err
+            .as_ref()
+            .map(|e| format!("\nerror: {e:#?}"))
+            .unwrap_or_default();
+          format!(
+            "{level} | {name}{region} is unreachable ❌\n{link}{err}"
           )
         }
         _ => unreachable!(),
@@ -289,30 +313,6 @@ fn standard_alert_content(alert: &Alert) -> String {
             "{level} | {name}{region} | Version mismatch detected ⚠️\nPeriphery: {server_version} | Core: {core_version}\n{link}"
           )
         }
-      }
-    }
-    AlertData::ServerUnreachable {
-      id,
-      name,
-      region,
-      err,
-    } => {
-      let region = fmt_region(region);
-      let link = resource_link(ResourceTargetVariant::Server, id);
-      match alert.level {
-        SeverityLevel::Ok => {
-          format!("{level} | {name}{region} is now connected\n{link}")
-        }
-        SeverityLevel::Critical => {
-          let err = err
-            .as_ref()
-            .map(|e| format!("\nerror: {e:#?}"))
-            .unwrap_or_default();
-          format!(
-            "{level} | {name}{region} is unreachable ❌\n{link}{err}"
-          )
-        }
-        _ => unreachable!(),
       }
     }
     AlertData::ServerCpu {

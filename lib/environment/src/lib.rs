@@ -32,6 +32,12 @@ pub async fn write_env_file(
     .collect::<Vec<_>>()
     .join("\n");
 
+  let contents = if contents.is_empty() || contents.ends_with('\n') {
+    contents
+  } else {
+    contents + "\n"
+  };
+
   if let Err(e) =
     mogh_secret_file::write_async(&env_file_path, contents)
       .await

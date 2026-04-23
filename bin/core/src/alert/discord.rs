@@ -27,35 +27,13 @@ pub async fn send_alert(
         SeverityLevel::Critical => {
           let err = err
             .as_ref()
-            .map(|e| format!("\n**error**: {e}"))
+            .map(|e| format!("\n**error**: {e:#?}"))
             .unwrap_or_default();
           format!(
             "{level} | Swarm **{name}** is **unhealthy** ❌\n{link}{err}"
           )
         }
         _ => unreachable!(),
-      }
-    }
-    AlertData::ServerVersionMismatch {
-      id,
-      name,
-      region,
-      server_version,
-      core_version,
-    } => {
-      let region = fmt_region(region);
-      let link = resource_link(ResourceTargetVariant::Server, id);
-      match alert.level {
-        SeverityLevel::Ok => {
-          format!(
-            "{level} | **{name}**{region} | Periphery version now matches Core version ✅\n{link}"
-          )
-        }
-        _ => {
-          format!(
-            "{level} | **{name}**{region} | Version mismatch detected ⚠️\nPeriphery: **{server_version}** | Core: **{core_version}**\n{link}"
-          )
-        }
       }
     }
     AlertData::ServerUnreachable {
@@ -82,6 +60,28 @@ pub async fn send_alert(
           )
         }
         _ => unreachable!(),
+      }
+    }
+    AlertData::ServerVersionMismatch {
+      id,
+      name,
+      region,
+      server_version,
+      core_version,
+    } => {
+      let region = fmt_region(region);
+      let link = resource_link(ResourceTargetVariant::Server, id);
+      match alert.level {
+        SeverityLevel::Ok => {
+          format!(
+            "{level} | **{name}**{region} | Periphery version now matches Core version ✅\n{link}"
+          )
+        }
+        _ => {
+          format!(
+            "{level} | **{name}**{region} | Version mismatch detected ⚠️\nPeriphery: **{server_version}** | Core: **{core_version}**\n{link}"
+          )
+        }
       }
     }
     AlertData::ServerCpu {

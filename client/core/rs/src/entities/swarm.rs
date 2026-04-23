@@ -10,7 +10,7 @@ use crate::{
   deserializers::{
     option_string_list_deserializer, string_list_deserializer,
   },
-  entities::MaintenanceWindow,
+  entities::{_Serror, MaintenanceWindow},
 };
 
 use super::resource::{Resource, ResourceListItem, ResourceQuery};
@@ -28,7 +28,7 @@ pub struct SwarmListItemInfo {
   pub state: SwarmState,
   /// If there is an error reaching
   /// Swarm, message will be given here.
-  pub err: Option<String>,
+  pub err: Option<_Serror>,
 }
 
 #[typeshare]

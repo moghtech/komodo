@@ -70,6 +70,7 @@ export var Operation;
     Operation["RenameSwarm"] = "RenameSwarm";
     Operation["DeleteSwarm"] = "DeleteSwarm";
     Operation["RemoveSwarmNodes"] = "RemoveSwarmNodes";
+    Operation["UpdateSwarmNode"] = "UpdateSwarmNode";
     Operation["RemoveSwarmStacks"] = "RemoveSwarmStacks";
     Operation["RemoveSwarmServices"] = "RemoveSwarmServices";
     Operation["CreateSwarmConfig"] = "CreateSwarmConfig";

@@ -9,7 +9,7 @@ import NewResource from "@/resources/new";
 import ConfirmButton from "@/ui/confirm-button";
 import { Prune } from "./executions";
 import ServerVersion from "./version";
-import { Group, HoverCard } from "@mantine/core";
+import { Box, Group, HoverCard } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import ConfirmServerPubkey from "./confirm-pubkey";
 import ServerTabs from "./tabs";
@@ -22,6 +22,7 @@ import { ServerLoadAverage } from "./stats/current/load-average";
 import { ServerRamUsage } from "./stats/current/ram";
 import ServerDiskUsage from "./diskUsage";
 import ServerCpuUsage from "./stats/current/cpu";
+import HoverError from "@/ui/hover-error";
 
 export function useServer(id: string | undefined, useName?: boolean) {
   return useRead("ListServers", {}).data?.find((r) =>
@@ -286,6 +287,15 @@ export const ServerComponents: RequiredResourceComponents<
             <ServerDiskUsage id={id} stats={stats} withHeader />
           </HoverCard.Dropdown>
         </HoverCard>
+      );
+    },
+    Err: ({ id }) => {
+      const err = useServer(id)?.info.err;
+      if (!err) return null;
+      return (
+        <Box>
+          <HoverError {...err} />
+        </Box>
       );
     },
     ConfirmServerPubkey,

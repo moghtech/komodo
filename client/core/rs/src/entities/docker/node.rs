@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 use typeshare::typeshare;
@@ -22,6 +23,7 @@ pub struct SwarmNodeListItem {
   #[serde(rename = "Name")]
   pub name: Option<String>,
 
+  /// Node hostname, more commonly used than Name
   #[serde(rename = "Hostname")]
   pub hostname: Option<String>,
 
@@ -32,6 +34,10 @@ pub struct SwarmNodeListItem {
   /// Availability of the node.
   #[serde(rename = "Availability")]
   pub availability: Option<NodeSpecAvailabilityEnum>,
+
+  /// Labels of the node
+  #[serde(rename = "Labels")]
+  pub labels: Option<HashMap<String, String>>,
 
   /// State of the node
   #[serde(rename = "State")]
@@ -120,6 +126,7 @@ pub struct NodeSpec {
   Serialize,
   Deserialize,
   AsRefStr,
+  ValueEnum,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum NodeSpecRoleEnum {
@@ -145,6 +152,7 @@ pub enum NodeSpecRoleEnum {
   Serialize,
   Deserialize,
   AsRefStr,
+  ValueEnum,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum NodeSpecAvailabilityEnum {

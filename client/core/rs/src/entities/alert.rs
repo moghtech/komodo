@@ -95,7 +95,7 @@ pub enum AlertData {
     /// The name of the swarm
     name: String,
     /// The error data
-    err: Option<String>,
+    err: Option<_Serror>,
   },
 
   /// A server could not be reached.

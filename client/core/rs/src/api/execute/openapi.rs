@@ -7,6 +7,7 @@ use crate::api::execute;
   paths(
     // swarm
     execute::remove_swarm_nodes,
+    execute::update_swarm_node,
     execute::remove_swarm_stacks,
     execute::remove_swarm_services,
     execute::create_swarm_config,

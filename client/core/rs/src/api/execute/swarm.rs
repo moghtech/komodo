@@ -4,7 +4,11 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::{
-  api::execute::KomodoExecuteRequest, entities::update::Update,
+  api::execute::KomodoExecuteRequest,
+  entities::{
+    docker::node::{NodeSpecAvailabilityEnum, NodeSpecRoleEnum},
+    update::Update,
+  },
 };
 
 // ========
@@ -43,6 +47,48 @@ pub struct RemoveSwarmNodes {
   #[serde(default)]
   #[arg(long, short, default_value_t = false)]
   pub force: bool,
+}
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateSwarmNode",
+  description = "Update a swarm node's availability, labels, and role.",
+  request_body(content = UpdateSwarmNode),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn update_swarm_node() {}
+
+/// `docker node update [OPTIONS] NODE`
+///
+/// https://docs.docker.com/reference/cli/docker/node/update/
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(mogh_error::Error)]
+pub struct UpdateSwarmNode {
+  /// Name or id
+  pub swarm: String,
+  /// Node hostname or id
+  pub node: String,
+  /// Update the node's availability: 'active', 'pause', or 'drain'
+  #[arg(long, short = 'a')]
+  pub availability: Option<NodeSpecAvailabilityEnum>,
+  /// Add labels to node (`key=value`).
+  #[arg(long, short = 'l')]
+  pub label_add: Option<Vec<String>>,
+  /// Add labels to node (`key=value`). (alias: `lr`)
+  #[arg(long, alias = "lr")]
+  pub label_rm: Option<Vec<String>>,
+  /// Update the node's role: 'worker' or 'manager'
+  #[arg(long, short = 'r')]
+  pub role: Option<NodeSpecRoleEnum>,
 }
 
 // =========

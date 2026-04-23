@@ -307,6 +307,13 @@ async fn fix_server(
     } else {
       None
     },
+    // Move address to external_address if not set.
+    // This helps preserve container port link behavior.
+    external_address: if !server.config.external_address.is_empty() {
+      Some(server.config.address)
+    } else {
+      None
+    },
     ..Default::default()
   };
   if !config.is_none() {

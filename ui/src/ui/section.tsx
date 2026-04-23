@@ -70,6 +70,11 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
               {titleNode}
               {titleRight}
             </Group>
+          ) : titleRight ? (
+            <Group c={titleDimmed ? "dimmed" : undefined} gap="xs">
+              {titleOther}
+              {titleRight}
+            </Group>
           ) : (
             titleOther
           )}

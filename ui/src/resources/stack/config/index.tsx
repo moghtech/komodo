@@ -237,8 +237,7 @@ export default function StackConfig({
 
   const environment: ConfigGroupArgs<Types.StackConfig> = {
     label: "Environment",
-    hidden: !!currSwarmId,
-    description: "Pass these variables to the compose command",
+    description: `Pass these variables to the docker ${currSwarmId ? "stack" : "compose"} command`,
     actions: (
       <ShowHideButton
         show={show.env}
@@ -334,9 +333,9 @@ export default function StackConfig({
                         ],
                       });
                     }}
-                    w="fit-content"
+                    leftSection={<ICONS.Add size="1rem" />}
+                    w={{ base: "85%", lg: 400 }}
                   >
-                    <ICONS.Add size="1rem" />
                     Add Env File
                   </Button>
                 )}
@@ -532,8 +531,8 @@ export default function StackConfig({
             description={
               <Group gap="xs">
                 <Text>
-                  Pass extra arguments to '
-                  {currSwarmId ? "docker stack deploy" : "docker compose up"}
+                  Pass extra arguments to docker '
+                  {currSwarmId ? "stack deploy" : "compose up"}
                   '.
                 </Text>
                 <Text
@@ -693,7 +692,7 @@ export default function StackConfig({
         destroy_before_deploy: {
           label: "Destroy Before Deploy",
           description: `Ensure '${
-            currSwarmId ? "docker service rm" : "docker compose down"
+            currSwarmId ? "docker stack rm" : "docker compose down"
           }' is run before redeploying the Stack.`,
         },
       },

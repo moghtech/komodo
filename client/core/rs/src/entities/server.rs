@@ -10,7 +10,7 @@ use crate::{
   deserializers::{
     option_string_list_deserializer, string_list_deserializer,
   },
-  entities::{MaintenanceWindow, Timelength},
+  entities::{_Serror, MaintenanceWindow, Timelength},
 };
 
 use super::{
@@ -37,6 +37,9 @@ pub type ServerListItem = ResourceListItem<ServerListItemInfo>;
 pub struct ServerListItemInfo {
   /// The server's state.
   pub state: ServerState,
+  /// If there is an error reaching
+  /// the server, message will be given here.
+  pub err: Option<_Serror>,
   /// Region of the server.
   pub region: String,
   /// Address of the server, or null if empty.

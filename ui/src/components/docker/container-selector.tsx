@@ -43,7 +43,7 @@ export default function ContainerSelector({
     server: serverId,
   }).data?.filter((container) => !state || container.state === state);
 
-  const firstContainer = containers?.[0].name;
+  const firstContainer = containers?.[0]?.name;
   useEffect(() => {
     !clearable && firstContainer && !selected && onSelect?.(firstContainer);
   }, [firstContainer]);

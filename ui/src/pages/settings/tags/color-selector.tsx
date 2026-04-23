@@ -77,7 +77,7 @@ export default function TagColorSelector({
             <Combobox.Option key={color} value={color}>
               <Group justify="space-between">
                 <Text>{fmtUpperCamelcase(color)}</Text>
-                <Box w={25} h={25} bg={"Tag" + color} bdrs="md" />
+                <Box w={25} h={25} bg={`Tag${color}.9`} bdrs="md" />
               </Group>
             </Combobox.Option>
           ))}

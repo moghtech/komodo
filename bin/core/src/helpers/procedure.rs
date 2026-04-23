@@ -11,7 +11,7 @@ use komodo_client::{
     build::Build,
     deployment::Deployment,
     permission::PermissionLevel,
-    procedure::Procedure,
+    procedure::{Procedure, ProcedureStage},
     repo::Repo,
     stack::Stack,
     update::{Log, Update},
@@ -28,7 +28,7 @@ use crate::{
     write::WriteArgs,
   },
   resource::{KomodoResource, list_full_for_user_using_pattern},
-  state::db_client,
+  state::{all_resources_cache, db_client},
 };
 
 use super::update::{init_execution_update, update_update};
@@ -229,1433 +229,58 @@ async fn execute_execution(
 ) -> anyhow::Result<()> {
   let user = procedure_user().to_owned();
   let task_id = Uuid::new_v4();
+  // Standard pattern: init update, resolve with ExecuteArgs, handle result.
+  macro_rules! resolve_execute {
+    ($Variant:ident, $req:expr) => {{
+      let req = ExecuteRequest::$Variant($req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::$Variant(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
+          .await
+          .map_err(|e| e.error)
+          .context(concat!("Failed at ", stringify!($Variant))),
+        &update_id,
+      )
+      .await?
+    }};
+  }
+
+  // Batch methods must be expanded in `execute_stage`.
+  macro_rules! batch_not_implemented {
+    ($Variant:ident) => {
+      return Err(anyhow!(concat!(
+        "Batch method ",
+        stringify!($Variant),
+        " not implemented correctly"
+      )))
+    };
+  }
+
   let update = match execution {
     Execution::None(_) => return Ok(()),
+    // Special: self-referential guard
     Execution::RunProcedure(req) => {
       if req.procedure == parent_id || req.procedure == parent_name {
         return Err(anyhow!("Self referential procedure detected"));
       }
-      let req = ExecuteRequest::RunProcedure(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RunProcedure(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RunProcedure"),
-        &update_id,
-      )
-      .await?
+      resolve_execute!(RunProcedure, req)
     }
-    Execution::BatchRunProcedure(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchRunProcedure not implemented correctly"
-      ));
-    }
-    Execution::RunAction(req) => {
-      let req = ExecuteRequest::RunAction(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RunAction(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RunAction"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchRunAction(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchRunAction not implemented correctly"
-      ));
-    }
-    Execution::RunBuild(req) => {
-      let req = ExecuteRequest::RunBuild(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RunBuild(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RunBuild"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchRunBuild(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchRunBuild not implemented correctly"
-      ));
-    }
-    Execution::CancelBuild(req) => {
-      let req = ExecuteRequest::CancelBuild(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::CancelBuild(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at CancelBuild"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::Deploy(req) => {
-      let req = ExecuteRequest::Deploy(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::Deploy(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at Deploy"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchDeploy(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchDeploy not implemented correctly"
-      ));
-    }
-    Execution::PullDeployment(req) => {
-      let req = ExecuteRequest::PullDeployment(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PullDeployment(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PullDeployment"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::StartDeployment(req) => {
-      let req = ExecuteRequest::StartDeployment(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::StartDeployment(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at StartDeployment"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RestartDeployment(req) => {
-      let req = ExecuteRequest::RestartDeployment(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RestartDeployment(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RestartDeployment"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PauseDeployment(req) => {
-      let req = ExecuteRequest::PauseDeployment(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PauseDeployment(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PauseDeployment"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::UnpauseDeployment(req) => {
-      let req = ExecuteRequest::UnpauseDeployment(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::UnpauseDeployment(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at UnpauseDeployment"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::StopDeployment(req) => {
-      let req = ExecuteRequest::StopDeployment(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::StopDeployment(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at StopDeployment"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::DestroyDeployment(req) => {
-      let req = ExecuteRequest::DestroyDeployment(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::DestroyDeployment(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at DestroyDeployment"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchDestroyDeployment(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchDestroyDeployment not implemented correctly"
-      ));
-    }
-    Execution::CloneRepo(req) => {
-      let req = ExecuteRequest::CloneRepo(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::CloneRepo(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at CloneRepo"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchCloneRepo(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchCloneRepo not implemented correctly"
-      ));
-    }
-    Execution::PullRepo(req) => {
-      let req = ExecuteRequest::PullRepo(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PullRepo(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PullRepo"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchPullRepo(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchPullRepo not implemented correctly"
-      ));
-    }
-    Execution::BuildRepo(req) => {
-      let req = ExecuteRequest::BuildRepo(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::BuildRepo(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at BuildRepo"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchBuildRepo(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchBuildRepo not implemented correctly"
-      ));
-    }
-    Execution::CancelRepoBuild(req) => {
-      let req = ExecuteRequest::CancelRepoBuild(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::CancelRepoBuild(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at CancelRepoBuild"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::StartContainer(req) => {
-      let req = ExecuteRequest::StartContainer(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::StartContainer(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at StartContainer"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RestartContainer(req) => {
-      let req = ExecuteRequest::RestartContainer(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RestartContainer(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RestartContainer"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PauseContainer(req) => {
-      let req = ExecuteRequest::PauseContainer(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PauseContainer(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PauseContainer"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::UnpauseContainer(req) => {
-      let req = ExecuteRequest::UnpauseContainer(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::UnpauseContainer(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at UnpauseContainer"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::StopContainer(req) => {
-      let req = ExecuteRequest::StopContainer(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::StopContainer(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at StopContainer"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::DestroyContainer(req) => {
-      let req = ExecuteRequest::DestroyContainer(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::DestroyContainer(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RemoveContainer"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::StartAllContainers(req) => {
-      let req = ExecuteRequest::StartAllContainers(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::StartAllContainers(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at StartAllContainers"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RestartAllContainers(req) => {
-      let req = ExecuteRequest::RestartAllContainers(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RestartAllContainers(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RestartAllContainers"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PauseAllContainers(req) => {
-      let req = ExecuteRequest::PauseAllContainers(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PauseAllContainers(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PauseAllContainers"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::UnpauseAllContainers(req) => {
-      let req = ExecuteRequest::UnpauseAllContainers(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::UnpauseAllContainers(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at UnpauseAllContainers"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::StopAllContainers(req) => {
-      let req = ExecuteRequest::StopAllContainers(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::StopAllContainers(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at StopAllContainers"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PruneContainers(req) => {
-      let req = ExecuteRequest::PruneContainers(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PruneContainers(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PruneContainers"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::DeleteNetwork(req) => {
-      let req = ExecuteRequest::DeleteNetwork(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::DeleteNetwork(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at DeleteNetwork"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PruneNetworks(req) => {
-      let req = ExecuteRequest::PruneNetworks(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PruneNetworks(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PruneNetworks"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::DeleteImage(req) => {
-      let req = ExecuteRequest::DeleteImage(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::DeleteImage(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at DeleteImage"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PruneImages(req) => {
-      let req = ExecuteRequest::PruneImages(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PruneImages(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PruneImages"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::DeleteVolume(req) => {
-      let req = ExecuteRequest::DeleteVolume(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::DeleteVolume(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at DeleteVolume"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PruneVolumes(req) => {
-      let req = ExecuteRequest::PruneVolumes(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PruneVolumes(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PruneVolumes"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PruneDockerBuilders(req) => {
-      let req = ExecuteRequest::PruneDockerBuilders(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PruneDockerBuilders(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PruneDockerBuilders"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PruneBuildx(req) => {
-      let req = ExecuteRequest::PruneBuildx(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PruneBuildx(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PruneBuildx"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PruneSystem(req) => {
-      let req = ExecuteRequest::PruneSystem(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PruneSystem(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PruneSystem"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RunSync(req) => {
-      let req = ExecuteRequest::RunSync(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RunSync(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RunSync"),
-        &update_id,
-      )
-      .await?
-    }
-    // Exception: This is a write operation.
+    // Special: write operation
     Execution::CommitSync(req) => req
       .resolve(&WriteArgs { user })
       .await
       .map_err(|e| e.error)
       .context("Failed at CommitSync")?,
-    Execution::DeployStack(req) => {
-      let req = ExecuteRequest::DeployStack(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::DeployStack(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at DeployStack"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchDeployStack(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchDeployStack not implemented correctly"
-      ));
-    }
-    Execution::DeployStackIfChanged(req) => {
-      let req = ExecuteRequest::DeployStackIfChanged(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::DeployStackIfChanged(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at DeployStackIfChanged"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchDeployStackIfChanged(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchDeployStackIfChanged not implemented correctly"
-      ));
-    }
-    Execution::PullStack(req) => {
-      let req = ExecuteRequest::PullStack(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PullStack(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PullStack"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchPullStack(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchPullStack not implemented correctly"
-      ));
-    }
-    Execution::StartStack(req) => {
-      let req = ExecuteRequest::StartStack(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::StartStack(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at StartStack"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RestartStack(req) => {
-      let req = ExecuteRequest::RestartStack(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RestartStack(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RestartStack"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::PauseStack(req) => {
-      let req = ExecuteRequest::PauseStack(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::PauseStack(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at PauseStack"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::UnpauseStack(req) => {
-      let req = ExecuteRequest::UnpauseStack(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::UnpauseStack(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at UnpauseStack"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::StopStack(req) => {
-      let req = ExecuteRequest::StopStack(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::StopStack(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at StopStack"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::DestroyStack(req) => {
-      let req = ExecuteRequest::DestroyStack(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::DestroyStack(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at DestroyStack"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RunStackService(req) => {
-      let req = ExecuteRequest::RunStackService(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RunStackService(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RunStackService"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BatchDestroyStack(_) => {
-      // All batch executions must be expanded in `execute_stage`
-      return Err(anyhow!(
-        "Batch method BatchDestroyStack not implemented correctly"
-      ));
-    }
-    Execution::TestAlerter(req) => {
-      let req = ExecuteRequest::TestAlerter(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::TestAlerter(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at TestAlerter"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::SendAlert(req) => {
-      let req = ExecuteRequest::SendAlert(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::SendAlert(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at SendAlert"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RemoveSwarmNodes(req) => {
-      let req = ExecuteRequest::RemoveSwarmNodes(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RemoveSwarmNodes(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RemoveSwarmNodes"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RemoveSwarmStacks(req) => {
-      let req = ExecuteRequest::RemoveSwarmStacks(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RemoveSwarmStacks(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RemoveSwarmStacks"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RemoveSwarmServices(req) => {
-      let req = ExecuteRequest::RemoveSwarmServices(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RemoveSwarmServices(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RemoveSwarmServices"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::CreateSwarmConfig(req) => {
-      let req = ExecuteRequest::CreateSwarmConfig(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::CreateSwarmConfig(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at CreateSwarmConfig"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RotateSwarmConfig(req) => {
-      let req = ExecuteRequest::RotateSwarmConfig(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RotateSwarmConfig(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RotateSwarmConfig"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RemoveSwarmConfigs(req) => {
-      let req = ExecuteRequest::RemoveSwarmConfigs(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RemoveSwarmConfigs(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RemoveSwarmConfigs"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::CreateSwarmSecret(req) => {
-      let req = ExecuteRequest::CreateSwarmSecret(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::CreateSwarmSecret(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at CreateSwarmSecret"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RotateSwarmSecret(req) => {
-      let req = ExecuteRequest::RotateSwarmSecret(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RotateSwarmSecret(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RotateSwarmSecret"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RemoveSwarmSecrets(req) => {
-      let req = ExecuteRequest::RemoveSwarmSecrets(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RemoveSwarmSecrets(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RemoveSwarmSecrets"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::ClearRepoCache(req) => {
-      let req = ExecuteRequest::ClearRepoCache(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::ClearRepoCache(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at ClearRepoCache"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::BackupCoreDatabase(req) => {
-      let req = ExecuteRequest::BackupCoreDatabase(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::BackupCoreDatabase(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at BackupCoreDatabase"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::GlobalAutoUpdate(req) => {
-      let req = ExecuteRequest::GlobalAutoUpdate(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::GlobalAutoUpdate(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at GlobalAutoUpdate"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RotateAllServerKeys(req) => {
-      let req = ExecuteRequest::RotateAllServerKeys(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RotateAllServerKeys(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RotateAllServerKeys"),
-        &update_id,
-      )
-      .await?
-    }
-    Execution::RotateCoreKeys(req) => {
-      let req = ExecuteRequest::RotateCoreKeys(req);
-      let update = init_execution_update(&req, &user).await?;
-      let ExecuteRequest::RotateCoreKeys(req) = req else {
-        unreachable!()
-      };
-      let update_id = update.id.clone();
-      handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
-            user,
-            update,
-            task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context("Failed at RotateCoreKeys"),
-        &update_id,
-      )
-      .await?
-    }
+    // Special: sleep
     Execution::Sleep(req) => {
       let duration = Duration::from_millis(req.duration_ms as u64);
       tokio::time::sleep(duration).await;
@@ -1664,7 +289,198 @@ async fn execute_execution(
         ..Default::default()
       }
     }
+    // Batch variants
+    Execution::BatchRunProcedure(_) => {
+      batch_not_implemented!(BatchRunProcedure)
+    }
+    Execution::BatchRunAction(_) => {
+      batch_not_implemented!(BatchRunAction)
+    }
+    Execution::BatchRunBuild(_) => {
+      batch_not_implemented!(BatchRunBuild)
+    }
+    Execution::BatchDeploy(_) => batch_not_implemented!(BatchDeploy),
+    Execution::BatchDestroyDeployment(_) => {
+      batch_not_implemented!(BatchDestroyDeployment)
+    }
+    Execution::BatchCloneRepo(_) => {
+      batch_not_implemented!(BatchCloneRepo)
+    }
+    Execution::BatchPullRepo(_) => {
+      batch_not_implemented!(BatchPullRepo)
+    }
+    Execution::BatchBuildRepo(_) => {
+      batch_not_implemented!(BatchBuildRepo)
+    }
+    Execution::BatchDeployStack(_) => {
+      batch_not_implemented!(BatchDeployStack)
+    }
+    Execution::BatchDeployStackIfChanged(_) => {
+      batch_not_implemented!(BatchDeployStackIfChanged)
+    }
+    Execution::BatchPullStack(_) => {
+      batch_not_implemented!(BatchPullStack)
+    }
+    Execution::BatchDestroyStack(_) => {
+      batch_not_implemented!(BatchDestroyStack)
+    }
+    // Standard executions
+    Execution::RunAction(req) => resolve_execute!(RunAction, req),
+    Execution::RunBuild(req) => resolve_execute!(RunBuild, req),
+    Execution::CancelBuild(req) => resolve_execute!(CancelBuild, req),
+    Execution::Deploy(req) => resolve_execute!(Deploy, req),
+    Execution::PullDeployment(req) => {
+      resolve_execute!(PullDeployment, req)
+    }
+    Execution::StartDeployment(req) => {
+      resolve_execute!(StartDeployment, req)
+    }
+    Execution::RestartDeployment(req) => {
+      resolve_execute!(RestartDeployment, req)
+    }
+    Execution::PauseDeployment(req) => {
+      resolve_execute!(PauseDeployment, req)
+    }
+    Execution::UnpauseDeployment(req) => {
+      resolve_execute!(UnpauseDeployment, req)
+    }
+    Execution::StopDeployment(req) => {
+      resolve_execute!(StopDeployment, req)
+    }
+    Execution::DestroyDeployment(req) => {
+      resolve_execute!(DestroyDeployment, req)
+    }
+    Execution::CloneRepo(req) => resolve_execute!(CloneRepo, req),
+    Execution::PullRepo(req) => resolve_execute!(PullRepo, req),
+    Execution::BuildRepo(req) => resolve_execute!(BuildRepo, req),
+    Execution::CancelRepoBuild(req) => {
+      resolve_execute!(CancelRepoBuild, req)
+    }
+    Execution::StartContainer(req) => {
+      resolve_execute!(StartContainer, req)
+    }
+    Execution::RestartContainer(req) => {
+      resolve_execute!(RestartContainer, req)
+    }
+    Execution::PauseContainer(req) => {
+      resolve_execute!(PauseContainer, req)
+    }
+    Execution::UnpauseContainer(req) => {
+      resolve_execute!(UnpauseContainer, req)
+    }
+    Execution::StopContainer(req) => {
+      resolve_execute!(StopContainer, req)
+    }
+    Execution::DestroyContainer(req) => {
+      resolve_execute!(DestroyContainer, req)
+    }
+    Execution::StartAllContainers(req) => {
+      resolve_execute!(StartAllContainers, req)
+    }
+    Execution::RestartAllContainers(req) => {
+      resolve_execute!(RestartAllContainers, req)
+    }
+    Execution::PauseAllContainers(req) => {
+      resolve_execute!(PauseAllContainers, req)
+    }
+    Execution::UnpauseAllContainers(req) => {
+      resolve_execute!(UnpauseAllContainers, req)
+    }
+    Execution::StopAllContainers(req) => {
+      resolve_execute!(StopAllContainers, req)
+    }
+    Execution::PruneContainers(req) => {
+      resolve_execute!(PruneContainers, req)
+    }
+    Execution::DeleteNetwork(req) => {
+      resolve_execute!(DeleteNetwork, req)
+    }
+    Execution::PruneNetworks(req) => {
+      resolve_execute!(PruneNetworks, req)
+    }
+    Execution::DeleteImage(req) => resolve_execute!(DeleteImage, req),
+    Execution::PruneImages(req) => resolve_execute!(PruneImages, req),
+    Execution::DeleteVolume(req) => {
+      resolve_execute!(DeleteVolume, req)
+    }
+    Execution::PruneVolumes(req) => {
+      resolve_execute!(PruneVolumes, req)
+    }
+    Execution::PruneDockerBuilders(req) => {
+      resolve_execute!(PruneDockerBuilders, req)
+    }
+    Execution::PruneBuildx(req) => resolve_execute!(PruneBuildx, req),
+    Execution::PruneSystem(req) => resolve_execute!(PruneSystem, req),
+    Execution::RunSync(req) => resolve_execute!(RunSync, req),
+    Execution::DeployStack(req) => resolve_execute!(DeployStack, req),
+    Execution::DeployStackIfChanged(req) => {
+      resolve_execute!(DeployStackIfChanged, req)
+    }
+    Execution::PullStack(req) => resolve_execute!(PullStack, req),
+    Execution::StartStack(req) => resolve_execute!(StartStack, req),
+    Execution::RestartStack(req) => {
+      resolve_execute!(RestartStack, req)
+    }
+    Execution::PauseStack(req) => resolve_execute!(PauseStack, req),
+    Execution::UnpauseStack(req) => {
+      resolve_execute!(UnpauseStack, req)
+    }
+    Execution::StopStack(req) => resolve_execute!(StopStack, req),
+    Execution::DestroyStack(req) => {
+      resolve_execute!(DestroyStack, req)
+    }
+    Execution::RunStackService(req) => {
+      resolve_execute!(RunStackService, req)
+    }
+    Execution::TestAlerter(req) => resolve_execute!(TestAlerter, req),
+    Execution::SendAlert(req) => resolve_execute!(SendAlert, req),
+    Execution::RemoveSwarmNodes(req) => {
+      resolve_execute!(RemoveSwarmNodes, req)
+    }
+    Execution::UpdateSwarmNode(req) => {
+      resolve_execute!(UpdateSwarmNode, req)
+    }
+    Execution::RemoveSwarmStacks(req) => {
+      resolve_execute!(RemoveSwarmStacks, req)
+    }
+    Execution::RemoveSwarmServices(req) => {
+      resolve_execute!(RemoveSwarmServices, req)
+    }
+    Execution::CreateSwarmConfig(req) => {
+      resolve_execute!(CreateSwarmConfig, req)
+    }
+    Execution::RotateSwarmConfig(req) => {
+      resolve_execute!(RotateSwarmConfig, req)
+    }
+    Execution::RemoveSwarmConfigs(req) => {
+      resolve_execute!(RemoveSwarmConfigs, req)
+    }
+    Execution::CreateSwarmSecret(req) => {
+      resolve_execute!(CreateSwarmSecret, req)
+    }
+    Execution::RotateSwarmSecret(req) => {
+      resolve_execute!(RotateSwarmSecret, req)
+    }
+    Execution::RemoveSwarmSecrets(req) => {
+      resolve_execute!(RemoveSwarmSecrets, req)
+    }
+    Execution::ClearRepoCache(req) => {
+      resolve_execute!(ClearRepoCache, req)
+    }
+    Execution::BackupCoreDatabase(req) => {
+      resolve_execute!(BackupCoreDatabase, req)
+    }
+    Execution::GlobalAutoUpdate(req) => {
+      resolve_execute!(GlobalAutoUpdate, req)
+    }
+    Execution::RotateAllServerKeys(req) => {
+      resolve_execute!(RotateAllServerKeys, req)
+    }
+    Execution::RotateCoreKeys(req) => {
+      resolve_execute!(RotateCoreKeys, req)
+    }
   };
+
   if update.success {
     Ok(())
   } else {
@@ -1843,5 +659,128 @@ impl ExtendBatch for BatchDestroyStack {
       remove_orphans: false,
       stop_time: None,
     })
+  }
+}
+
+pub fn replace_procedure_stage_ids_with_names(
+  stages: &mut Vec<ProcedureStage>,
+) {
+  let all = all_resources_cache().load();
+  for stage in stages {
+    for execution in &mut stage.executions {
+      // Replaces an id field on config with the resource name from `all`.
+      macro_rules! replace_id_with_name {
+          ($($Variant:ident => $field:ident, $collection:ident);* $(;)?) => {
+            match &mut execution.execution {
+              $(
+                Execution::$Variant(config) => {
+                  config.$field = all
+                    .$collection
+                    .get(&config.$field)
+                    .map(|r| r.name.clone())
+                    .unwrap_or_default();
+                }
+              )*
+              // SendAlert maps a Vec of alerter ids
+              Execution::SendAlert(config) => {
+                config.alerters = config
+                  .alerters
+                  .iter()
+                  .map(|alerter| {
+                    all
+                      .alerters
+                      .get(alerter)
+                      .map(|a| a.name.clone())
+                      .unwrap_or_default()
+                  })
+                  .collect();
+              }
+              // No-op variants
+              Execution::None(_)
+              | Execution::BatchRunProcedure(_)
+              | Execution::BatchRunAction(_)
+              | Execution::BatchRunBuild(_)
+              | Execution::BatchDeploy(_)
+              | Execution::BatchDestroyDeployment(_)
+              | Execution::BatchCloneRepo(_)
+              | Execution::BatchPullRepo(_)
+              | Execution::BatchBuildRepo(_)
+              | Execution::BatchDeployStack(_)
+              | Execution::BatchDeployStackIfChanged(_)
+              | Execution::BatchPullStack(_)
+              | Execution::BatchDestroyStack(_)
+              | Execution::ClearRepoCache(_)
+              | Execution::BackupCoreDatabase(_)
+              | Execution::GlobalAutoUpdate(_)
+              | Execution::RotateAllServerKeys(_)
+              | Execution::RotateCoreKeys(_)
+              | Execution::Sleep(_) => {}
+            }
+          };
+        }
+
+      replace_id_with_name!(
+        RunProcedure => procedure, procedures;
+        RunAction => action, actions;
+        RunBuild => build, builds;
+        CancelBuild => build, builds;
+        Deploy => deployment, deployments;
+        PullDeployment => deployment, deployments;
+        StartDeployment => deployment, deployments;
+        RestartDeployment => deployment, deployments;
+        PauseDeployment => deployment, deployments;
+        UnpauseDeployment => deployment, deployments;
+        StopDeployment => deployment, deployments;
+        DestroyDeployment => deployment, deployments;
+        CloneRepo => repo, repos;
+        PullRepo => repo, repos;
+        BuildRepo => repo, repos;
+        CancelRepoBuild => repo, repos;
+        StartContainer => server, servers;
+        RestartContainer => server, servers;
+        PauseContainer => server, servers;
+        UnpauseContainer => server, servers;
+        StopContainer => server, servers;
+        DestroyContainer => server, servers;
+        StartAllContainers => server, servers;
+        RestartAllContainers => server, servers;
+        PauseAllContainers => server, servers;
+        UnpauseAllContainers => server, servers;
+        StopAllContainers => server, servers;
+        PruneContainers => server, servers;
+        DeleteNetwork => server, servers;
+        PruneNetworks => server, servers;
+        DeleteImage => server, servers;
+        PruneImages => server, servers;
+        DeleteVolume => server, servers;
+        PruneVolumes => server, servers;
+        PruneDockerBuilders => server, servers;
+        PruneBuildx => server, servers;
+        PruneSystem => server, servers;
+        RunSync => sync, syncs;
+        CommitSync => sync, syncs;
+        DeployStack => stack, stacks;
+        DeployStackIfChanged => stack, stacks;
+        PullStack => stack, stacks;
+        StartStack => stack, stacks;
+        RestartStack => stack, stacks;
+        PauseStack => stack, stacks;
+        UnpauseStack => stack, stacks;
+        StopStack => stack, stacks;
+        DestroyStack => stack, stacks;
+        RunStackService => stack, stacks;
+        TestAlerter => alerter, alerters;
+        RemoveSwarmNodes => swarm, swarms;
+        UpdateSwarmNode => swarm, swarms;
+        RemoveSwarmStacks => swarm, swarms;
+        RemoveSwarmServices => swarm, swarms;
+        CreateSwarmConfig => swarm, swarms;
+        RotateSwarmConfig => swarm, swarms;
+        RemoveSwarmConfigs => swarm, swarms;
+        CreateSwarmSecret => swarm, swarms;
+        RotateSwarmSecret => swarm, swarms;
+        RemoveSwarmSecrets => swarm, swarms;
+      );
+    }
   }
 }

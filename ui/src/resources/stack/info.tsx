@@ -180,8 +180,7 @@ export default function StackInfo({
                       />
                     </>
                   )}
-                  {/* The toggle onClick is given to entire header */}
-                  <ShowHideButton show={showContents} setShow={() => {}} />
+                  <ShowHideButton show={showContents} setShow={handleToggleShow} />
                 </Group>
               </Group>
 

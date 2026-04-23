@@ -378,6 +378,7 @@ export enum Operation {
 	RenameSwarm = "RenameSwarm",
 	DeleteSwarm = "DeleteSwarm",
 	RemoveSwarmNodes = "RemoveSwarmNodes",
+	UpdateSwarmNode = "UpdateSwarmNode",
 	RemoveSwarmStacks = "RemoveSwarmStacks",
 	RemoveSwarmServices = "RemoveSwarmServices",
 	CreateSwarmConfig = "CreateSwarmConfig",
@@ -927,6 +928,7 @@ export type Execution =
 	| { type: "PruneBuildx", params: PruneBuildx }
 	| { type: "PruneSystem", params: PruneSystem }
 	| { type: "RemoveSwarmNodes", params: RemoveSwarmNodes }
+	| { type: "UpdateSwarmNode", params: UpdateSwarmNode }
 	| { type: "RemoveSwarmStacks", params: RemoveSwarmStacks }
 	| { type: "RemoveSwarmServices", params: RemoveSwarmServices }
 	| { type: "CreateSwarmConfig", params: CreateSwarmConfig }
@@ -1561,7 +1563,7 @@ export type AlertData =
 	/** The name of the swarm */
 	name: string;
 	/** The error data */
-	err?: string;
+	err?: _Serror;
 }}
 	/** A server could not be reached. */
 	| { type: "ServerUnreachable", data: {
@@ -5328,9 +5330,21 @@ export enum ServerState {
 	Disabled = "Disabled",
 }
 
+export interface __Serror {
+	error: string;
+	trace: string[];
+}
+
+export type _Serror = __Serror;
+
 export interface ServerListItemInfo {
 	/** The server's state. */
 	state: ServerState;
+	/**
+	 * If there is an error reaching
+	 * the server, message will be given here.
+	 */
+	err?: _Serror;
 	/** Region of the server. */
 	region: string;
 	/** Address of the server, or null if empty. */
@@ -5492,11 +5506,14 @@ export interface SwarmNodeListItem {
 	ID?: string;
 	/** Name for the node. */
 	Name?: string;
+	/** Node hostname, more commonly used than Name */
 	Hostname?: string;
 	/** Role of the node. */
 	Role?: NodeSpecRoleEnum;
 	/** Availability of the node. */
 	Availability?: NodeSpecAvailabilityEnum;
+	/** Labels of the node */
+	Labels?: Record<string, string>;
 	/** State of the node */
 	State?: NodeState;
 	/** For manager nodes, include the manager addr. */
@@ -5569,7 +5586,7 @@ export interface SwarmListItemInfo {
 	 * If there is an error reaching
 	 * Swarm, message will be given here.
 	 */
-	err?: string;
+	err?: _Serror;
 }
 
 export type SwarmListItem = ResourceListItem<SwarmListItemInfo>;
@@ -5777,13 +5794,6 @@ export type _PartialSwarmConfig = Partial<SwarmConfig>;
 export type _PartialTag = Partial<Tag>;
 
 export type _PartialUrlBuilderConfig = Partial<UrlBuilderConfig>;
-
-export interface __Serror {
-	error: string;
-	trace: string[];
-}
-
-export type _Serror = __Serror;
 
 /** **Admin only.** Add a user to a user group. Response: [UserGroup] */
 export interface AddUserToUserGroup {
@@ -10477,6 +10487,26 @@ export interface UpdateSwarm {
 	config: _PartialSwarmConfig;
 }
 
+/**
+ * `docker node update [OPTIONS] NODE`
+ * 
+ * https://docs.docker.com/reference/cli/docker/node/update/
+ */
+export interface UpdateSwarmNode {
+	/** Name or id */
+	swarm: string;
+	/** Node hostname or id */
+	node: string;
+	/** Update the node's availability: 'active', 'pause', or 'drain' */
+	availability?: NodeSpecAvailabilityEnum;
+	/** Add labels to node (`key=value`). */
+	label_add?: string[];
+	/** Add labels to node (`key=value`). (alias: `lr`) */
+	label_rm?: string[];
+	/** Update the node's role: 'worker' or 'manager' */
+	role?: NodeSpecRoleEnum;
+}
+
 /** Update color for tag. Response: [Tag]. */
 export interface UpdateTagColor {
 	/** The name or id of the tag to update. */
@@ -10666,6 +10696,7 @@ export type ExecuteRequest =
 	| { type: "PruneBuildx", params: PruneBuildx }
 	| { type: "PruneSystem", params: PruneSystem }
 	| { type: "RemoveSwarmNodes", params: RemoveSwarmNodes }
+	| { type: "UpdateSwarmNode", params: UpdateSwarmNode }
 	| { type: "RemoveSwarmStacks", params: RemoveSwarmStacks }
 	| { type: "RemoveSwarmServices", params: RemoveSwarmServices }
 	| { type: "CreateSwarmConfig", params: CreateSwarmConfig }

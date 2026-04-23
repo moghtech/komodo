@@ -375,6 +375,9 @@ pub fn core_config() -> &'static CoreConfig {
           .komodo_logging_location
           .unwrap_or(config.logging.location),
         ansi: env.komodo_logging_ansi.unwrap_or(config.logging.ansi),
+        timestamps: env
+          .komodo_logging_timestamps
+          .unwrap_or(config.logging.timestamps),
         otlp_endpoint: env
           .komodo_logging_otlp_endpoint
           .unwrap_or(config.logging.otlp_endpoint),

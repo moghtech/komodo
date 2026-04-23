@@ -163,12 +163,12 @@ pub async fn run_standard_command(
 fn shell() -> &'static str {
   static DEFAULT_SHELL: OnceLock<String> = OnceLock::new();
   DEFAULT_SHELL.get_or_init(|| {
-    if PathBuf::from("/bin/bash").exists()
-      || PathBuf::from("/usr/bin/bash").exists()
-    {
-      String::from("bash")
+    if PathBuf::from("/bin/bash").exists() {
+      String::from("/bin/bash")
+    } else if PathBuf::from("/usr/bin/bash").exists() {
+      String::from("/usr/bin/bash")
     } else {
-      String::from("sh")
+      String::from("/bin/sh")
     }
   })
 }

@@ -144,6 +144,9 @@ pub fn periphery_config() -> &'static PeripheryConfig {
         ansi: env
           .periphery_logging_ansi
           .unwrap_or(config.logging.ansi),
+        timestamps: env
+          .periphery_logging_timestamps
+          .unwrap_or(config.logging.timestamps),
         otlp_endpoint: env
           .periphery_logging_otlp_endpoint
           .unwrap_or(config.logging.otlp_endpoint),
