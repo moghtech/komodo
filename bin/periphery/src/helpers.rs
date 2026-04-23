@@ -276,37 +276,31 @@ pub fn registry_token(
 //  Public IP over DNS
 // ====================
 
-type OpenDNSResolver = hickory_resolver::Resolver<
-  hickory_resolver::name_server::TokioConnectionProvider,
->;
+type OpenDNSResolver = hickory_resolver::TokioResolver;
 
 fn opendns_resolver() -> &'static OpenDNSResolver {
   static OPENDNS_RESOLVER: OnceLock<OpenDNSResolver> =
     OnceLock::new();
   OPENDNS_RESOLVER.get_or_init(|| {
-    // OpenDNS resolver ipv4s
-    let ips = [
+    // OpenDNS resolver ipv4s.
+    let name_servers = [
       IpAddr::from_str("208.67.220.220").unwrap(),
       IpAddr::from_str("208.67.222.222").unwrap(),
-    ];
-
-    // trust_negative_responses=true means NXDOMAIN/empty NOERROR from an
-    // authoritative upstream won’t be retried on other servers.
-    let ns =
-      hickory_resolver::config::NameServerConfigGroup::from_ips_clear(
-        &ips, 53, true,
-      );
+    ]
+    .into_iter()
+    .map(hickory_resolver::config::NameServerConfig::udp_and_tcp)
+    .collect();
 
     hickory_resolver::Resolver::builder_with_config(
       hickory_resolver::config::ResolverConfig::from_parts(
         None,
         vec![],
-        ns,
+        name_servers,
       ),
-      hickory_resolver::name_server::TokioConnectionProvider::default(
-      ),
+      hickory_resolver::net::runtime::TokioRuntimeProvider::default(),
     )
     .build()
+    .expect("Failed to build OpenDNS resolver")
   })
 }
 
@@ -319,7 +313,7 @@ pub async fn resolve_host_public_ip() -> anyhow::Result<String> {
       .context(
         "Failed to query OpenDNS resolvers for host public IP",
       )?
-      .into_iter()
+      .iter()
       .map(|ip| ip.to_string())
       .next()
       .context("OpenDNS call for public IP didn't return anything")
