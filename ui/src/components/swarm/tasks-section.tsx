@@ -16,7 +16,7 @@ export interface SwarmTasksSectionProps extends SectionProps {
   tasks: Types.SwarmTaskListItem[];
   show?: boolean;
   setShow?: (show: boolean) => void;
-  _search: [string, (search: string) => void];
+  _search?: [string, (search: string) => void];
 }
 
 export default function SwarmTasksSection({
@@ -43,11 +43,13 @@ export default function SwarmTasksSection({
     };
   });
 
-  const filtered = filterMultitermBySplit(tasks, _search[0], (task) => [
-    task.ID,
-    task.node?.Hostname,
-    task.service?.Name,
-  ]);
+  const filtered = _search?.[0]
+    ? filterMultitermBySplit(tasks, _search[0], (task) => [
+        task.ID,
+        task.node?.Hostname,
+        task.service?.Name,
+      ])
+    : tasks;
 
   return (
     <Section

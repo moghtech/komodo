@@ -4,10 +4,7 @@ import { useServer } from "../server";
 import { useDeployment } from ".";
 import { Types } from "komodo_client";
 import { ReactNode, useMemo } from "react";
-import {
-  MobileFriendlyTabsSelector,
-  TabNoContent,
-} from "mogh_ui";
+import { MobileFriendlyTabsSelector, TabNoContent } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { Tabs } from "@mantine/core";
 import { deploymentStateIntention } from "@/lib/color";
@@ -16,6 +13,7 @@ import LogSection from "@/components/log-section";
 import TerminalSection from "@/components/terminal/section";
 import { MonacoEditor } from "mogh_ui";
 import { Section } from "mogh_ui";
+import DeploymentTasksSection from "./tasks";
 
 type DeploymentTabsView = "Config" | "Tasks" | "Log" | "Inspect" | "Terminals";
 
@@ -110,6 +108,7 @@ export default function DeploymentTabs({ id }: { id: string }) {
       View = <DeploymentConfig id={id} titleOther={Selector} />;
       break;
     case "Tasks":
+      View = <DeploymentTasksSection deploymentId={id} titleOther={Selector} />;
       break;
     case "Log":
       View = (
@@ -144,9 +143,15 @@ function InspectDeploymentContainer({
   id: string;
   titleOther: ReactNode;
 }) {
-  const inspect = useRead("InspectDeploymentContainer", {
-    deployment: id,
-  }).data;
+  const deployment = useDeployment(id);
+  const useSwarm = !!deployment?.info.swarm_id;
+  const inspect = useRead(
+    useSwarm ? "InspectDeploymentSwarmService" : "InspectDeploymentContainer",
+    {
+      deployment: id,
+    },
+    { enabled: !!deployment },
+  ).data;
   return (
     <Section titleOther={titleOther}>
       <MonacoEditor
