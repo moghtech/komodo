@@ -104,7 +104,7 @@ export default function UserDropdown() {
               onClick={() => {
                 setOpen(false);
                 nav(
-                  `/login?${new URLSearchParams({ backto: `${location.pathname}${location.search}` })}`,
+                  `/login?${new URLSearchParams({ backto: `${location.pathname}${location.search}`, disableAutoLogin: "true" })}`,
                 );
               }}
             >
