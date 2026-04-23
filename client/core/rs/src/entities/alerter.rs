@@ -184,18 +184,27 @@ pub struct CustomAlerterEndpoint {
   #[serde(default = "default_custom_url")]
   #[builder(default = "default_custom_url()")]
   pub url: String,
+
+  #[serde(default = "default_custom_data")]
+  #[builder(default = "default_custom_data()")]
+  pub custom_data: String,
 }
 
 impl Default for CustomAlerterEndpoint {
   fn default() -> Self {
     Self {
       url: default_custom_url(),
+      custom_data: default_custom_data(),
     }
   }
 }
 
 fn default_custom_url() -> String {
   String::from("http://localhost:7000")
+}
+
+fn default_custom_data() -> String {
+  String::from("{ %alert% }")
 }
 
 /// Configuration for a Slack alerter.

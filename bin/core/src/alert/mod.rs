@@ -106,8 +106,8 @@ pub async fn send_alert_to_alerter(
   }
 
   match &alerter.config.endpoint {
-    AlerterEndpoint::Custom(CustomAlerterEndpoint { url }) => {
-      send_custom_alert(url, alert).await.with_context(|| {
+    AlerterEndpoint::Custom(CustomAlerterEndpoint { url, custom_data }) => {
+      send_custom_alert(url, custom_data, alert).await.with_context(|| {
         format!(
           "Failed to send alert to Custom Alerter {}",
           alerter.name
@@ -153,6 +153,7 @@ pub async fn send_alert_to_alerter(
 
 async fn send_custom_alert(
   url: &str,
+  custom_data: &str,
   alert: &Alert,
 ) -> anyhow::Result<()> {
   let VariablesAndSecrets { variables, secrets } =
@@ -163,6 +164,10 @@ async fn send_custom_alert(
     Interpolator::new(Some(&variables), &secrets);
 
   interpolator.interpolate_string(&mut url_interpolated)?;
+
+  let alert_string = serde_json::to_string(&alert)?;
+  let json_alert_string = serde_json::to_string(&alert_string)?;
+  let interpolated_alert_string = custom_data.replace("%alert%", &json_alert_string);
 
   let res = reqwest::Client::new()
     .post(url_interpolated)
