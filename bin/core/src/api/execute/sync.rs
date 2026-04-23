@@ -283,6 +283,7 @@ impl Resolve<ExecuteArgs> for RunSync {
       Default::default()
     };
 
+    // New resource types need to be added here manually.
     if deploy_cache.is_empty()
       && resource_sync_deltas.no_changes()
       && server_deltas.no_changes()
@@ -339,10 +340,7 @@ impl Resolve<ExecuteArgs> for RunSync {
       )
       .await,
     );
-    maybe_extend(
-      &mut update.logs,
-      ResourceSync::execute_sync_updates(resource_sync_deltas).await,
-    );
+    
     maybe_extend(
       &mut update.logs,
       Server::execute_sync_updates(server_deltas).await,
@@ -356,38 +354,43 @@ impl Resolve<ExecuteArgs> for RunSync {
       Action::execute_sync_updates(action_deltas).await,
     );
 
-    // Dependent on server
+    // Depends on server
     maybe_extend(
       &mut update.logs,
       Swarm::execute_sync_updates(swarm_deltas).await,
     );
+    // Depends on server
     maybe_extend(
       &mut update.logs,
       Builder::execute_sync_updates(builder_deltas).await,
     );
+    // Depends on server / builder
     maybe_extend(
       &mut update.logs,
       Repo::execute_sync_updates(repo_deltas).await,
     );
 
-    // Dependant on builder
+    // Depends on builder / repo
     maybe_extend(
       &mut update.logs,
       Build::execute_sync_updates(build_deltas).await,
     );
-
-    // Dependant on server / build
-    maybe_extend(
-      &mut update.logs,
-      Deployment::execute_sync_updates(deployment_deltas).await,
-    );
-    // stack only depends on server, but maybe will depend on build later.
+    // Depends on server / repo
     maybe_extend(
       &mut update.logs,
       Stack::execute_sync_updates(stack_deltas).await,
     );
-
-    // Dependant on everything
+    // Depends on repo
+    maybe_extend(
+      &mut update.logs,
+      ResourceSync::execute_sync_updates(resource_sync_deltas).await,
+    );
+    // Depends on server / build
+    maybe_extend(
+      &mut update.logs,
+      Deployment::execute_sync_updates(deployment_deltas).await,
+    );
+    // Depends on everything
     maybe_extend(
       &mut update.logs,
       Procedure::execute_sync_updates(procedure_deltas).await,
