@@ -1,6 +1,6 @@
-import { languageFromPath, MonacoEditor } from "@/components/monaco";
+import { languageFromPath, MonacoEditor } from "mogh_ui";
 import { useExecute, useInvalidate, usePermissions } from "@/lib/hooks";
-import CreateModal from "@/ui/create-modal";
+import { CreateModal } from "mogh_ui";
 import { Stack, Text, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMemo, useState } from "react";

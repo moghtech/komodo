@@ -1,9 +1,9 @@
-import { procedureStateIntention, hexColorByIntention } from "@/lib/color";
+import { procedureStateIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import ProcedureTable from "./table";
 import NewResource from "@/resources/new";
 import ProcedureConfig from "./config";
@@ -14,6 +14,7 @@ import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
+import { hexColorByIntention } from "mogh_ui";
 
 export function useProcedure(id: string | undefined, useName?: boolean) {
   return useRead("ListProcedures", {}).data?.find((r) =>

@@ -267,6 +267,13 @@ oidc_use_full_email = false
 ## Default: empty
 oidc_additional_audiences = []
 
+## Automatically redirect unauthenticated users to the OIDC provider
+## instead of showing the login page.
+## Users can bypass the redirect by appending `?disableAutoLogin` to the login URL.
+## Env: KOMODO_OIDC_AUTO_REDIRECT
+## Default: false
+oidc_auto_redirect = false
+
 #########
 # OAUTH #
 #########

@@ -1,7 +1,6 @@
-import { hexColorByIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { getUpdateQuery, updateLogToHtml } from "@/lib/utils";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Box, Code, Group, Stack, Text } from "@mantine/core";
 
 export default function ActionLastRun({ id }: { id: string }) {
@@ -23,7 +22,7 @@ export default function ActionLastRun({ id }: { id: string }) {
   if (!log?.stdout && !log?.stderr) {
     return (
       <Section withBorder>
-        <Text c={hexColorByIntention("Neutral")}>Never run</Text>
+        <Text c="Neutral">Never run</Text>
       </Section>
     );
   }
@@ -32,14 +31,14 @@ export default function ActionLastRun({ id }: { id: string }) {
     <Stack>
       {!log?.stdout && !log?.stderr && (
         <Box className="bordered-light" p="lg" bdrs="md">
-          <Text c={hexColorByIntention("Neutral")}>Never run</Text>
+          <Text c="Neutral">Never run</Text>
         </Box>
       )}
       {log.stdout && (
         <Stack className="bordered-light" p="lg" bdrs="md">
           <Group gap="xs">
             <Text>Last run:</Text>
-            <Text c={hexColorByIntention("Good")}>Stdout</Text>
+            <Text c="Good">Stdout</Text>
           </Group>
           <Code
             component="pre"
@@ -56,7 +55,7 @@ export default function ActionLastRun({ id }: { id: string }) {
         <Stack className="bordered-light" p="lg" bdrs="md">
           <Group gap="xs">
             <Text>Last run:</Text>
-            <Text c={hexColorByIntention("Critical")}>Stderr</Text>
+            <Text c="Critical">Stderr</Text>
           </Group>
           <Code
             component="pre"

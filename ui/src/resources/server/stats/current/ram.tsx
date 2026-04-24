@@ -1,5 +1,5 @@
-import { ICONS } from "@/theme/icons";
-import StatBar from "@/ui/stat-bar";
+import { ICONS } from "@/lib/icons";
+import { StatBar } from "mogh_ui";
 import { Types } from "komodo_client";
 import { useFullServer } from "@/resources/server";
 

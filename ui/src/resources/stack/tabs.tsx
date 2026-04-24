@@ -6,10 +6,10 @@ import { useMemo } from "react";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { Tabs } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
-import { colorByIntention, stackStateIntention } from "@/lib/color";
+import { ICONS } from "@/lib/icons";
+import { stackStateIntention } from "@/lib/color";
 import { useServer } from "@/resources/server";
 import StackConfig from "./config";
 import StackInfo from "./info";
@@ -143,12 +143,10 @@ export default function StackTabs({ id }: { id: string }) {
 
   return (
     <Tabs
-      color={colorByIntention(
-        stackStateIntention(
-          state,
-          info?.services &&
-            !info.services.every((service) => !service.update_available),
-        ),
+      color={stackStateIntention(
+        state,
+        info?.services &&
+          !info.services.every((service) => !service.update_available),
       )}
       value={view}
     >

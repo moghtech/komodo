@@ -5,21 +5,19 @@ import {
   useUser,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import Section from "@/ui/section";
+import { ICONS } from "@/lib/icons";
+import { Section } from "mogh_ui";
 import { Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import NewProviderAccount from "./new";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import DeleteProviderAccount from "./delete";
 import ProvidersFromConfig from "./from-config";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { Types } from "komodo_client";
-import SharedTextUpdate, {
-  useSharedTextUpdateData,
-} from "@/ui/shared-text-update";
-import SearchInput from "@/ui/search-input";
+import { SharedTextUpdate, useSharedTextUpdateData } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsProviders() {
   return (

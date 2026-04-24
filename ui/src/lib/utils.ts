@@ -2,21 +2,6 @@ import { UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
-import { notifications } from "@mantine/notifications";
-
-export function sanitizeQuery() {
-  sanitizeQueryInner(new URLSearchParams(location.search));
-}
-
-export function sanitizeQueryInner(search: URLSearchParams) {
-  search.delete("redeem_ready");
-  search.delete("totp");
-  search.delete("passkey");
-  const query = search.toString();
-  location.replace(
-    `${location.origin}${location.pathname}${query.length ? "?" + query : ""}`,
-  );
-}
 
 export function objectKeys<T extends object>(o: T): (keyof T)[] {
   return Object.keys(o) as (keyof T)[];
@@ -216,42 +201,6 @@ export function getUpdateQuery(
   }
 }
 
-export function filterBySplit<T>(
-  items: T[] | undefined,
-  search: string,
-  extract: (item: T) => string,
-) {
-  const split = search.toLowerCase().split(" ");
-  return (
-    (split.length
-      ? items?.filter((item) => {
-          const target = extract(item).toLowerCase();
-          return split.every((term) => target.includes(term));
-        })
-      : items) ?? []
-  );
-}
-
-export function filterMultitermBySplit<T>(
-  items: T[] | undefined,
-  search: string,
-  extract: (item: T) => (string | undefined)[],
-) {
-  const split = search.toLowerCase().split(" ");
-  return (
-    (split.length
-      ? items?.filter((item) => {
-          const target = extract(item)
-            .filter((str) => str)
-            .map((str) => str!.toLowerCase());
-          return split.every(
-            (term) => target.findIndex((t) => t.includes(term)) !== -1,
-          );
-        })
-      : items) ?? []
-  );
-}
-
 /** This does NOT include pending deploys, which are only for Execute direction. */
 export function resourceSyncNoChanges(sync: Types.ResourceSync) {
   return (
@@ -316,20 +265,6 @@ export function terminalLink({
   }
 }
 
-export function sendCopyNotification(label = "content") {
-  if (location.origin.startsWith("https")) {
-    notifications.show({
-      message: `Copied ${label} to clipboard.`,
-      color: "green",
-    });
-  } else {
-    notifications.show({
-      message: "Cannot copy to clipboard without HTTPS.",
-      color: "red",
-    });
-  }
-}
-
 export function listsEqual(a: string[], b: string[]) {
   for (const aa of a) {
     if (!b.includes(aa)) {
@@ -342,50 +277,4 @@ export function listsEqual(a: string[], b: string[]) {
     }
   }
   return true;
-}
-
-/**
- * Does deep compare of 2 items, returning `true` if equal.
- *
- * - Functions: Always `true`
- * - Primitives: Returns direct `a === b`
- * - Arrays: Returns same items and ordering (recursive)
- * - Objects: Returns same keys / values (recursive)
- *
- * @param a Item a
- * @param b Item b
- * @returns a === b
- */
-export function deepCompare(a: any, b: any) {
-  // Short path for falsy. Important to catch typeof null === "object" edge case.
-  if (!a || !b) {
-    return a === b;
-  }
-
-  const ta = typeof a;
-  const tb = typeof b;
-
-  if (ta !== tb) return false;
-
-  if (ta === "function") return true;
-
-  if (ta === "object") {
-    const ea = Object.entries(a);
-    const kb = Object.keys(b);
-
-    // Length not equal -> false
-    if (ea.length !== kb.length) return false;
-
-    for (const [key, va] of ea) {
-      const vb = b[key];
-
-      // Early return when any not equal
-      if (!deepCompare(va, vb)) return false;
-    }
-
-    // If it gets through all, it's equal
-    return true;
-  }
-
-  return a === b;
 }

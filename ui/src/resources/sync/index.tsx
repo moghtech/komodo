@@ -1,20 +1,20 @@
-import { resourceSyncStateIntention, hexColorByIntention } from "@/lib/color";
+import { resourceSyncStateIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { fmtDate, StatusBadge } from "mogh_ui";
 import ResourceSyncTable from "./table";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
 import { CommitSync, ExecuteSync, RefreshSync } from "./executions";
 import FileSource from "@/components/file-source";
 import { Clock } from "lucide-react";
-import { fmtDate } from "@/lib/formatting";
 import { Box, Group } from "@mantine/core";
 import HashCompare from "@/components/hash-compare";
 import ResourceSyncTabs from "./tabs";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
+import { hexColorByIntention } from "mogh_ui";
 
 export function useResourceSync(id: string | undefined, useName?: boolean) {
   return useRead("ListResourceSyncs", {}).data?.find((r) =>

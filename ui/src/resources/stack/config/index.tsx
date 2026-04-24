@@ -5,9 +5,15 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
-import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
+import { ICONS } from "@/lib/icons";
+import {
+  Config,
+  ConfigGroupArgs,
+  ConfigProps,
+  ConfigItem,
+  ConfigList,
+  ConfigSwitch,
+} from "mogh_ui";
 import {
   ActionIcon,
   Button,
@@ -22,15 +28,15 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import SecretsSearch from "@/components/config/secrets-search";
-import { MonacoEditor } from "@/components/monaco";
-import EnableSwitch from "@/ui/enable-switch";
+import { MonacoEditor } from "mogh_ui";
+import { EnableSwitch } from "mogh_ui";
 import StackConfigFiles from "./config-files";
 import SystemCommand from "@/components/config/system-command";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
-import InputList from "@/ui/input-list";
+import { InputList } from "mogh_ui";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";

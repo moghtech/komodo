@@ -1,8 +1,8 @@
-import { stackStateIntention, hexColorByIntention } from "@/lib/color";
+import { stackStateIntention } from "@/lib/color";
 import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import { RequiredResourceComponents } from "@/resources";
 import StackTable from "./table";
 import StackTabs from "./tabs";
@@ -34,6 +34,7 @@ import StackUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
+import { hexColorByIntention } from "mogh_ui";
 
 export function useStack(id: string | undefined, useName?: boolean) {
   return useRead("ListStacks", {}).data?.find((r) =>

@@ -1,6 +1,6 @@
-import { ICONS } from "@/theme/icons";
-import Section from "@/ui/section";
-import StatBar from "@/ui/stat-bar";
+import { ICONS } from "@/lib/icons";
+import { Section } from "mogh_ui";
+import { StatBar } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useFullServer } from "@/resources/server";

@@ -1,14 +1,14 @@
 import ExportToml from "@/components/export-toml";
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
-import { DataTable } from "@/ui/data-table";
-import Section from "@/ui/section";
+import { filterBySplit } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { DataTable } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Box, Group } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import DeleteUserGroup from "../../../components/user/delete-group";
 import NewUserGroup from "./new-group";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsUserGroups({
   search,

@@ -1,9 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import ThemeProvider from "@/theme";
 import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
+import { setAuthUrl, ThemeProvider } from "mogh_ui";
+import { themeAdditionalColors } from "@/lib/color";
+import { Notifications } from "@mantine/notifications";
+import initMonaco from "@/monaco";
 
 import "@mantine/core/styles.css";
 // ‼️ import extra package styles after core package styles
@@ -11,11 +14,8 @@ import "@mantine/notifications/styles.css";
 import "@mantine/spotlight/styles.css";
 // Import local css after to avoid mantine default body color flash.
 import "./index.scss";
-
-// Run monaco setup
-import "@/monaco";
-import { Notifications } from "@mantine/notifications";
-import initMonaco from "@/monaco/init";
+// Import mogh_ui scss
+import "mogh_ui/index.scss";
 
 initMonaco();
 
@@ -27,11 +27,13 @@ const client = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
+setAuthUrl(KOMODO_BASE_URL + "/auth");
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={client}>
       <WebsocketProvider>
-        <ThemeProvider>
+        <ThemeProvider additionalColors={themeAdditionalColors()}>
           <Router />
           <Notifications />
         </ThemeProvider>

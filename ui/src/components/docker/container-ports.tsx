@@ -9,12 +9,11 @@ import {
   Text,
 } from "@mantine/core";
 import { Types } from "komodo_client";
+import { DividedChildren, hexColorByIntention } from "mogh_ui";
 import { EthernetPort } from "lucide-react";
-import { colorByIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { fmtPortMount } from "@/lib/formatting";
 import { useServerAddress } from "@/resources/server/hooks";
-import DividedChildren from "@/ui/divided-children";
 
 export interface ContainerPortsProps extends GroupProps {
   ports: Types.Port[];
@@ -131,7 +130,7 @@ export function ContainerPort({
           gap="sm"
           wrap="nowrap"
         >
-          <EthernetPort size="1rem" color={colorByIntention("Good")} />
+          <EthernetPort size="1rem" color={hexColorByIntention("Good")} />
           {displayText}
         </Group>
       </HoverCard.Target>
@@ -149,7 +148,7 @@ export function ContainerPort({
           >
             {link ? (
               <>
-                <ICONS.Link size="1rem" color={colorByIntention("Good")} />
+                <ICONS.Link size="1rem" color={hexColorByIntention("Good")} />
                 {link}
               </>
             ) : (

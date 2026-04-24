@@ -170,6 +170,8 @@ pub struct Env {
   pub komodo_oidc_additional_audiences: Option<Vec<String>>,
   /// Override `oidc_additional_audiences` from file
   pub komodo_oidc_additional_audiences_file: Option<PathBuf>,
+  /// Override `oidc_auto_redirect`
+  pub komodo_oidc_auto_redirect: Option<bool>,
 
   /// Override `google_oauth.enabled`
   pub komodo_google_oauth_enabled: Option<bool>,
@@ -525,6 +527,12 @@ pub struct CoreConfig {
   #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub oidc_additional_audiences: Vec<String>,
 
+  /// Automatically redirect unauthenticated users to the OIDC provider
+  /// instead of showing the login page.
+  /// Users can bypass the redirect by appending `?disableAutoLogin` to the login URL.
+  #[serde(default)]
+  pub oidc_auto_redirect: bool,
+
   // =========
   // = Oauth =
   // =========
@@ -837,6 +845,7 @@ impl Default for CoreConfig {
       oidc_client_secret: Default::default(),
       oidc_use_full_email: Default::default(),
       oidc_additional_audiences: Default::default(),
+      oidc_auto_redirect: Default::default(),
       google_oauth: Default::default(),
       github_oauth: Default::default(),
       auth_rate_limit_disabled: Default::default(),
@@ -932,6 +941,7 @@ impl CoreConfig {
         .iter()
         .map(|aud| empty_or_redacted(aud))
         .collect(),
+      oidc_auto_redirect: config.oidc_auto_redirect,
       google_oauth: NamedOauthConfig {
         enabled: config.google_oauth.enabled,
         client_id: empty_or_redacted(&config.google_oauth.client_id),

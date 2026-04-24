@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { ActionIcon, Box, Center, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import AlertList from "@/components/alerts/list";

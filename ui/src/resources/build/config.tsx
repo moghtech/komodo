@@ -5,22 +5,28 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
-import { ConfigInput, ConfigItem, ConfigList } from "@/ui/config/item";
+import {
+  Config,
+  ConfigGroupArgs,
+  ConfigProps,
+  ConfigInput,
+  ConfigItem,
+  ConfigList,
+} from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceSelector from "@/resources/selector";
 import ResourceLink from "@/resources/link";
 import { Button, Group, Select, Stack, Text } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ImageRegistryConfig from "@/components/config/image-registry-config";
 import SystemCommand from "@/components/config/system-command";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_ui";
 import SecretsSearch from "@/components/config/secrets-search";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
-import InputList from "@/ui/input-list";
-import ShowHideButton from "@/ui/show-hide-button";
+import { InputList } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import LinkedRepo from "@/components/config/linked-repo";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";

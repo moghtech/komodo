@@ -1,6 +1,6 @@
 import { Stack, TextInput } from "@mantine/core";
 import { Types } from "komodo_client";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_ui";
 
 export interface SystemCommandProps {
   value?: Types.SystemCommand;

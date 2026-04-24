@@ -1,19 +1,19 @@
-import { serverStateIntention, hexColorByIntention } from "@/lib/color";
+import { serverStateIntention } from "@/lib/color";
 import { useExecute, useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import ServerTable from "./table";
 import NewResource from "@/resources/new";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton, hexColorByIntention } from "mogh_ui";
 import { Prune } from "./executions";
 import ServerVersion from "./version";
 import { Box, Group, HoverCard } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import ConfirmServerPubkey from "./confirm-pubkey";
 import ServerTabs from "./tabs";
-import { fmtUpperCamelcase } from "@/lib/formatting";
+import { fmtUpperCamelcase } from "mogh_ui";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import ResourceHeader from "../header";
 import { useIsServerAvailable } from "./hooks";
@@ -22,7 +22,7 @@ import { ServerLoadAverage } from "./stats/current/load-average";
 import { ServerRamUsage } from "./stats/current/ram";
 import ServerDiskUsage from "./diskUsage";
 import ServerCpuUsage from "./stats/current/cpu";
-import HoverError from "@/ui/hover-error";
+import { HoverError } from "mogh_ui";
 
 export function useServer(id: string | undefined, useName?: boolean) {
   return useRead("ListServers", {}).data?.find((r) =>

@@ -1,9 +1,9 @@
-import { DataTable } from "@/ui/data-table";
-import Section from "@/ui/section";
+import { DataTable } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
 import { useIsServerAvailable } from "../hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export default function ServerSystemInfo({
   id,

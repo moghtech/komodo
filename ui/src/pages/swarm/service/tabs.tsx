@@ -1,7 +1,6 @@
-import { colorByIntention, ColorIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { MobileFriendlyTabsSelector } from "@/ui/mobile-friendly-tabs";
+import { ICONS } from "@/lib/icons";
+import { ColorIntention, MobileFriendlyTabsSelector } from "mogh_ui";
 import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
@@ -104,7 +103,7 @@ export default function SwarmServiceTabs({
   }
 
   return (
-    <Tabs color={colorByIntention(intent)} value={view}>
+    <Tabs color={intent} value={view}>
       {View}
     </Tabs>
   );

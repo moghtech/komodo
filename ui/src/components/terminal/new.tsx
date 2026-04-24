@@ -1,6 +1,6 @@
-import { useSearchCombobox, useWrite } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { useWrite } from "@/lib/hooks";
+import { filterBySplit } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 import {
   Button,
   ButtonProps,
@@ -14,6 +14,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { useState } from "react";
+import { useSearchCombobox } from "mogh_ui";
 
 export interface NewTerminalProps extends ComboboxProps {
   target: Types.TerminalTarget;

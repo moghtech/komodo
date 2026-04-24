@@ -1,19 +1,18 @@
 import ResourceTypeSelector from "@/components/resource-type-selector";
 import { useUpdateDetails } from "@/components/updates/details";
 import UserAvatar from "@/components/user-avatar";
-import {
-  fmtDateWithMinutes,
-  fmtOperation,
-  fmtUpperCamelcase,
-} from "@/lib/formatting";
 import { useRead, useSetTitle } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
-import { ICONS } from "@/theme/icons";
-import { DataTable } from "@/ui/data-table";
-import Page from "@/ui/page";
-import StatusBadge from "@/ui/status-badge";
+import { ICONS } from "@/lib/icons";
+import {
+  StatusBadge,
+  fmtDateWithMinutes,
+  DataTable,
+  Page,
+  fmtUpperCamelcase,
+} from "mogh_ui";
 import {
   ActionIcon,
   Group,
@@ -176,7 +175,7 @@ export default function Updates() {
                       : undefined;
                 return (
                   <Group gap="xs" wrap="nowrap">
-                    <Text>{fmtOperation(row.original.operation)}</Text>
+                    <Text>{fmtUpperCamelcase(row.original.operation)}</Text>
                     {more && <Text c="dimmed">{more}</Text>}
                   </Group>
                 );

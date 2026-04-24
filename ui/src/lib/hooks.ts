@@ -12,7 +12,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { atomWithHash } from "jotai-location";
@@ -21,12 +21,8 @@ import { UsableResource, RESOURCE_TARGETS } from "@/resources";
 import {
   hasMinimumPermissions,
   resourceTargetFromTerminalTarget,
-  sanitizeQueryInner,
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
-import { useWindowEvent } from "@mantine/hooks";
-import { PermissionLevelAndSpecifics } from "komodo_client/dist/types";
-import { useCombobox } from "@mantine/core";
 
 export function komodo_client() {
   return KomodoClient(KOMODO_BASE_URL, {
@@ -36,134 +32,6 @@ export function komodo_client() {
 }
 
 // ============== RESOLVER ==============
-
-export function useLoginOptions() {
-  return useQuery({
-    queryKey: ["GetLoginOptions"],
-    queryFn: () => komodo_client().auth.login("GetLoginOptions", {}),
-  });
-}
-
-export function useLogin<
-  T extends MoghAuth.Types.LoginRequest["type"],
-  R extends Extract<MoghAuth.Types.LoginRequest, { type: T }>,
-  P extends R["params"],
-  C extends Omit<
-    UseMutationOptions<MoghAuth.LoginResponses[T], unknown, P, unknown>,
-    "mutationKey" | "mutationFn"
-  >,
->(type: T, config?: C) {
-  return useMutation({
-    mutationKey: [type],
-    mutationFn: (params: P) => komodo_client().auth.login<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, ...args) => {
-      console.log("Login error:", e);
-      const msg = e.result.error ?? "Unknown error. See console.";
-      const detail = e.result?.trace
-        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
-        .join(" | ");
-      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
-      if (detail) {
-        msg_log += detail + " | ";
-      }
-      notifications.show({
-        title: `Login request ${type} failed`,
-        message: `${msg_log}See console for details`,
-        color: "red",
-      });
-      config?.onError && config.onError(e, ...args);
-    },
-    ...config,
-  });
-}
-
-export function useManageAuth<
-  T extends MoghAuth.Types.ManageRequest["type"],
-  R extends Extract<MoghAuth.Types.ManageRequest, { type: T }>,
-  P extends R["params"],
-  C extends Omit<
-    UseMutationOptions<MoghAuth.ManageResponses[T], unknown, P, unknown>,
-    "mutationKey" | "mutationFn"
-  >,
->(type: T, config?: C) {
-  return useMutation({
-    mutationKey: [type],
-    mutationFn: (params: P) => komodo_client().auth.manage<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, ...args) => {
-      console.log("Manage auth error:", e);
-      const msg = e.result.error ?? "Unknown error. See console.";
-      const detail = e.result?.trace
-        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
-        .join(" | ");
-      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
-      if (detail) {
-        msg_log += detail + " | ";
-      }
-      notifications.show({
-        title: `Manage auth request ${type} failed`,
-        message: `${msg_log}See console for details`,
-        color: "red",
-      });
-      config?.onError && config.onError(e, ...args);
-    },
-    ...config,
-  });
-}
-
-let jwt_redeem_sent = false;
-let passkey_sent = false;
-
-/// returns whether to show login / loading screen depending on state of exchange token loop
-export function useAuthState() {
-  const onSuccess = ({ jwt }: MoghAuth.Types.JwtResponse) => {
-    MoghAuth.LOGIN_TOKENS.add_and_change(jwt);
-    sanitizeQueryInner(search);
-  };
-  const { mutate: redeemJwt } = useLogin("ExchangeForJwt", {
-    onSuccess,
-  });
-  const { mutate: completePasskeyLogin } = useLogin("CompletePasskeyLogin", {
-    onSuccess,
-  });
-  const search = new URLSearchParams(location.search);
-
-  const _passkey = search.get("passkey");
-  const passkey = _passkey
-    ? JSON.parse(MoghAuth.Passkey.base64UrlDecode(_passkey))
-    : null;
-
-  // guard against multiple reqs sent
-  // maybe isPending would do this but not sure about with render loop, this for sure will.
-  if (passkey && !passkey_sent) {
-    navigator.credentials
-      .get(MoghAuth.Passkey.prepareRequestChallengeResponse(passkey))
-      .then((credential) => completePasskeyLogin({ credential }))
-      .catch((e) => {
-        console.error(e);
-        notifications.show({
-          title: "Failed to select passkey",
-          message: "See console for details",
-          color: "red",
-        });
-      });
-    passkey_sent = true;
-  }
-
-  const jwt_redeem_ready = search.get("redeem_ready") === "true";
-
-  // guard against multiple reqs sent
-  // maybe isPending would do this but not sure about with render loop, this for sure will.
-  if (jwt_redeem_ready && !jwt_redeem_sent) {
-    redeemJwt({});
-    jwt_redeem_sent = true;
-  }
-
-  return {
-    jwt_redeem_ready,
-    passkey_pending: !!passkey,
-    totp: search.get("totp") === "true",
-  };
-}
 
 export function useUser() {
   const userReset = useUserReset();
@@ -450,46 +318,6 @@ export function useTagsFilter() {
   return tags;
 }
 
-export function useKeyListener(
-  listenKey: string,
-  onPress: () => void,
-  extra?: "shift" | "ctrl",
-) {
-  useWindowEvent("keydown", (e) => {
-    // This will ignore Shift + listenKey if it is sent from input / textarea / monaco
-    const target = e.target as HTMLElement | null;
-    if (
-      target?.matches("input") ||
-      target?.matches("textarea") ||
-      target?.matches("select") ||
-      target?.role === "textbox"
-    ) {
-      return;
-    }
-
-    if (
-      e.key === listenKey &&
-      (extra === "shift"
-        ? e.shiftKey
-        : extra === "ctrl"
-          ? e.ctrlKey || e.metaKey
-          : true)
-    ) {
-      e.preventDefault();
-      onPress();
-    }
-  });
-}
-
-export function useShiftKeyListener(listenKey: string, onPress: () => void) {
-  useKeyListener(listenKey, onPress, "shift");
-}
-
-/** Listens for ctrl (or CMD on mac) + the listenKey */
-export function useCtrlKeyListener(listenKey: string, onPress: () => void) {
-  useKeyListener(listenKey, onPress, "ctrl");
-}
-
 export type WebhookIntegration = "Github" | "Gitlab";
 export type WebhookIntegrations = {
   [key: string]: WebhookIntegration;
@@ -532,28 +360,6 @@ export function useWebhookIdOrName() {
   return useAtom<WebhookIdOrName>(WEBHOOK_ID_OR_NAME_ATOM);
 }
 
-export type Dimensions = { width: number; height: number };
-export function useWindowDimensions() {
-  const [dimensions, setDimensions] = useState<Dimensions>({
-    width: 0,
-    height: 0,
-  });
-  useEffect(() => {
-    const callback = () => {
-      setDimensions({
-        width: window.screen.availWidth,
-        height: window.screen.availHeight,
-      });
-    };
-    callback();
-    window.addEventListener("resize", callback);
-    return () => {
-      window.removeEventListener("resize", callback);
-    };
-  }, []);
-  return dimensions;
-}
-
 const selectedResources = atomFamily((_: UsableResource) => atom<string[]>([]));
 export function useSelectedResources(type: UsableResource) {
   return useAtom(selectedResources(type));
@@ -581,12 +387,13 @@ export function usePermissions({ type, id }: Types.ResourceTarget) {
   const level =
     (perms && typeof perms === "string"
       ? perms
-      : (perms as PermissionLevelAndSpecifics | undefined)?.level) ??
+      : (perms as Types.PermissionLevelAndSpecifics | undefined)?.level) ??
     Types.PermissionLevel.None;
   const specific =
     (perms && typeof perms === "string"
       ? []
-      : (perms as PermissionLevelAndSpecifics | undefined)?.specific) ?? [];
+      : (perms as Types.PermissionLevelAndSpecifics | undefined)?.specific) ??
+    [];
 
   const canWrite = !ui_write_disabled && level === Types.PermissionLevel.Write;
   const canExecute = hasMinimumPermissions(
@@ -688,27 +495,6 @@ export function useContainerPortsMap(ports: Types.Port[]) {
   }, [ports]);
 }
 
-/**
- * A custom React hook that debounces a value, delaying its update until after
- * a specified period of inactivity. This is useful for performance optimization
- * in scenarios like search inputs, form validation, or API calls.
- */
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
 interface DashboardPreferences {
   showServerStats: boolean;
   showTables: boolean;
@@ -787,36 +573,4 @@ function addUserTargetPermissions<I>(
       });
     }
   });
-}
-
-export function useSearchCombobox(props?: {
-  onOpen?: () => void;
-  onClose?: () => void;
-  onSearch?: (search: string) => void;
-  disableSelectFirst?: boolean;
-}) {
-  const [search, setSearch] = useState("");
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-      props?.onOpen?.();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-      props?.onClose?.();
-    },
-  });
-  useEffect(() => {
-    if (!props?.disableSelectFirst) {
-      combobox.selectFirstOption();
-    }
-    props?.onSearch?.(search);
-  }, [search]);
-  return {
-    search,
-    setSearch,
-    combobox,
-  };
 }

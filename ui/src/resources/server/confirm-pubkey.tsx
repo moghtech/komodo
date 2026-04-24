@@ -2,7 +2,7 @@ import { Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { CircleOff } from "lucide-react";
 import { usePermissions, useWrite } from "@/lib/hooks";
-import ConfirmModal from "@/ui/confirm-modal";
+import { ConfirmModal } from "mogh_ui";
 import { useServer } from ".";
 
 export default function ConfirmServerPubkey({ id }: { id: string }) {
