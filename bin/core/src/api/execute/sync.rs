@@ -340,7 +340,7 @@ impl Resolve<ExecuteArgs> for RunSync {
       )
       .await,
     );
-    
+
     maybe_extend(
       &mut update.logs,
       Server::execute_sync_updates(server_deltas).await,
