@@ -203,7 +203,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
                   dangerouslySetInnerHTML={{
                     __html: updateLogToHtml(log.stdout),
                   }}
-                  style={{ overflowY: "auto" }}
+                  style={{ overflowY: "auto", whiteSpace: "pre-wrap" }}
                 />
               </Stack>
             )}
@@ -217,7 +217,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
                   dangerouslySetInnerHTML={{
                     __html: updateLogToHtml(log.stderr),
                   }}
-                  style={{ overflowY: "auto" }}
+                  style={{ overflowY: "auto", whiteSpace: "pre-wrap" }}
                 />
               </Stack>
             )}
