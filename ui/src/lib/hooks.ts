@@ -490,7 +490,7 @@ export function useCtrlKeyListener(listenKey: string, onPress: () => void) {
   useKeyListener(listenKey, onPress, "ctrl");
 }
 
-export type WebhookIntegration = "Github" | "Gitlab";
+export type WebhookIntegration = "Github" | "Gitlab" | "Query";
 export type WebhookIntegrations = {
   [key: string]: WebhookIntegration;
 };

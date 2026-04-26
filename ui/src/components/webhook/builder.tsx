@@ -30,7 +30,7 @@ export default function WebhookBuilder({
             integration &&
             setIntegration(gitProvider, integration as WebhookIntegration)
           }
-          data={["Github", "Gitlab"]}
+          data={["Github", "Gitlab", "Query"]}
           w={{ base: "100%", sm: 200 }}
         />
         <Select

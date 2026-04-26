@@ -12,6 +12,7 @@ pub struct Gitlab;
 impl VerifySecret for Gitlab {
   #[instrument("VerifyGitlabSecret", skip_all)]
   fn verify_secret(
+    _query: &std::collections::HashMap<String, String>,
     headers: &HeaderMap,
     _body: &str,
     custom_secret: &str,
@@ -41,7 +42,7 @@ struct GitlabWebhookBody {
 }
 
 impl ExtractBranch for Gitlab {
-  fn extract_branch(body: &str) -> anyhow::Result<String> {
+  fn extract_branch(_query: &std::collections::HashMap<String, String>, body: &str) -> anyhow::Result<String> {
     let branch = serde_json::from_str::<GitlabWebhookBody>(body)
       .context("Failed to parse gitlab request body")?
       .branch

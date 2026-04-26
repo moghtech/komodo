@@ -51,14 +51,14 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
   .route(
     "/build/{id}",
     post(
-      |Path(Id { id }), RequestIp(ip), headers: HeaderMap, body: String| async move {
+      |Path(Id { id }), axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>, RequestIp(ip), headers: HeaderMap, body: String| async move {
         let build =
-          auth_webhook::<P, Build>(&id, &headers, ip, &body).await?;
+          auth_webhook::<P, Build>(&id, &query, &headers, ip, &body).await?;
         tokio::spawn(async move {
           let span = info_span!("BuildWebhook", id);
           async {
             let res = handle_build_webhook::<P>(
-              build, body,
+              &query, build, body,
             )
             .await;
             if let Err(e) = res {
@@ -77,14 +77,14 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
   .route(
     "/repo/{id}/{option}",
     post(
-      |Path(IdAndOption::<RepoWebhookOption> { id, option }), RequestIp(ip), headers: HeaderMap, body: String| async move {
+      |Path(IdAndOption::<RepoWebhookOption> { id, option }), axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>, RequestIp(ip), headers: HeaderMap, body: String| async move {
         let repo =
-          auth_webhook::<P, Repo>(&id, &headers, ip, &body).await?;
+          auth_webhook::<P, Repo>(&id, &query, &headers, ip, &body).await?;
         tokio::spawn(async move {
           let span = info_span!("RepoWebhook", id);
           async {
             let res = handle_repo_webhook::<P>(
-              option, repo, body,
+              &query, option, repo, body,
             )
             .await;
             if let Err(e) = res {
@@ -103,14 +103,14 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
   .route(
     "/stack/{id}/{option}",
     post(
-      |Path(IdAndOption::<StackWebhookOption> { id, option }), RequestIp(ip), headers: HeaderMap, body: String| async move {
+      |Path(IdAndOption::<StackWebhookOption> { id, option }), axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>, RequestIp(ip), headers: HeaderMap, body: String| async move {
         let stack =
-          auth_webhook::<P, Stack>(&id, &headers, ip, &body).await?;
+          auth_webhook::<P, Stack>(&id, &query, &headers, ip, &body).await?;
         tokio::spawn(async move {
           let span = info_span!("StackWebhook", id);
           async {
             let res = handle_stack_webhook::<P>(
-              option, stack, body,
+              &query, option, stack, body,
             )
             .await;
             if let Err(e) = res {
@@ -129,14 +129,14 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
   .route(
     "/sync/{id}/{option}",
     post(
-      |Path(IdAndOption::<SyncWebhookOption> { id, option }), RequestIp(ip), headers: HeaderMap, body: String| async move {
+      |Path(IdAndOption::<SyncWebhookOption> { id, option }), axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>, RequestIp(ip), headers: HeaderMap, body: String| async move {
         let sync =
-          auth_webhook::<P, ResourceSync>(&id, &headers, ip, &body).await?;
+          auth_webhook::<P, ResourceSync>(&id, &query, &headers, ip, &body).await?;
         tokio::spawn(async move {
           let span = info_span!("ResourceSyncWebhook", id);
           async {
             let res = handle_sync_webhook::<P>(
-              option, sync, body,
+              &query, option, sync, body,
             )
             .await;
             if let Err(e) = res {
@@ -155,14 +155,14 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
   .route(
     "/procedure/{id}/{branch}",
     post(
-      |Path(IdAndBranch { id, branch }), RequestIp(ip), headers: HeaderMap, body: String| async move {
+      |Path(IdAndBranch { id, branch }), axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>, RequestIp(ip), headers: HeaderMap, body: String| async move {
         let procedure =
-          auth_webhook::<P, Procedure>(&id, &headers, ip, &body).await?;
+          auth_webhook::<P, Procedure>(&id, &query, &headers, ip, &body).await?;
         tokio::spawn(async move {
           let span = info_span!("ProcedureWebhook", id);
           async {
             let res = handle_procedure_webhook::<P>(
-              procedure, &branch, body,
+              &query, procedure, &branch, body,
             )
             .await;
             if let Err(e) = res {
@@ -181,14 +181,14 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
   .route(
     "/action/{id}/{branch}",
     post(
-      |Path(IdAndBranch { id, branch }), RequestIp(ip), headers: HeaderMap, body: String| async move {
+      |Path(IdAndBranch { id, branch }), axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>, RequestIp(ip), headers: HeaderMap, body: String| async move {
         let action =
-          auth_webhook::<P, Action>(&id, &headers, ip, &body).await?;
+          auth_webhook::<P, Action>(&id, &query, &headers, ip, &body).await?;
         tokio::spawn(async move {
           let span = info_span!("ActionWebhook", id);
           async {
             let res = handle_action_webhook::<P>(
-              action, &branch, body,
+              &query, action, &branch, body,
             )
             .await;
             if let Err(e) = res {
@@ -208,6 +208,7 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
 
 async fn auth_webhook<P, R>(
   id: &str,
+  query: &std::collections::HashMap<String, String>,
   headers: &HeaderMap,
   ip: IpAddr,
   body: &str,
@@ -220,7 +221,7 @@ where
     let resource = crate::resource::get::<R>(id)
       .await
       .status_code(StatusCode::BAD_REQUEST)?;
-    P::verify_secret(headers, body, R::custom_secret(&resource))
+    P::verify_secret(query, headers, body, R::custom_secret(&resource))
       .status_code(StatusCode::UNAUTHORIZED)?;
 
     info!(

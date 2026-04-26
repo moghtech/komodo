@@ -43,6 +43,7 @@ fn build_locks() -> &'static ListenerLockCache {
 }
 
 pub async fn handle_build_webhook<B: super::ExtractBranch>(
+  query: &std::collections::HashMap<String, String>,
   build: Build,
   body: String,
 ) -> anyhow::Result<()> {
@@ -67,7 +68,7 @@ pub async fn handle_build_webhook<B: super::ExtractBranch>(
       .branch
   };
 
-  B::verify_branch(&body, &branch)?;
+  B::verify_branch(query, &body, &branch)?;
 
   let user = git_webhook_user().to_owned();
   let req = ExecuteRequest::RunBuild(RunBuild { build: build.id });
@@ -186,19 +187,20 @@ pub enum RepoWebhookOption {
 }
 
 pub async fn handle_repo_webhook<B: super::ExtractBranch>(
+  query: &std::collections::HashMap<String, String>,
   option: RepoWebhookOption,
   repo: Repo,
   body: String,
 ) -> anyhow::Result<()> {
   match option {
     RepoWebhookOption::Clone => {
-      handle_repo_webhook_inner::<B, CloneRepo>(repo, body).await
+      handle_repo_webhook_inner::<B, CloneRepo>(query, repo, body).await
     }
     RepoWebhookOption::Pull => {
-      handle_repo_webhook_inner::<B, PullRepo>(repo, body).await
+      handle_repo_webhook_inner::<B, PullRepo>(query, repo, body).await
     }
     RepoWebhookOption::Build => {
-      handle_repo_webhook_inner::<B, BuildRepo>(repo, body).await
+      handle_repo_webhook_inner::<B, BuildRepo>(query, repo, body).await
     }
   }
 }
@@ -207,6 +209,7 @@ async fn handle_repo_webhook_inner<
   B: super::ExtractBranch,
   E: RepoExecution,
 >(
+  query: &std::collections::HashMap<String, String>,
   repo: Repo,
   body: String,
 ) -> anyhow::Result<()> {
@@ -220,7 +223,7 @@ async fn handle_repo_webhook_inner<
   let lock = repo_locks().get_or_insert_default(&repo.id).await;
   let _lock = lock.lock().await;
 
-  B::verify_branch(&body, &repo.config.branch)?;
+  B::verify_branch(query, &body, &repo.config.branch)?;
 
   E::resolve(repo).await
 }
@@ -308,17 +311,18 @@ pub enum StackWebhookOption {
 }
 
 pub async fn handle_stack_webhook<B: super::ExtractBranch>(
+  query: &std::collections::HashMap<String, String>,
   option: StackWebhookOption,
   stack: Stack,
   body: String,
 ) -> anyhow::Result<()> {
   match option {
     StackWebhookOption::Refresh => {
-      handle_stack_webhook_inner::<B, RefreshStackCache>(stack, body)
+      handle_stack_webhook_inner::<B, RefreshStackCache>(query, stack, body)
         .await
     }
     StackWebhookOption::Deploy => {
-      handle_stack_webhook_inner::<B, DeployStack>(stack, body).await
+      handle_stack_webhook_inner::<B, DeployStack>(query, stack, body).await
     }
   }
 }
@@ -327,6 +331,7 @@ pub async fn handle_stack_webhook_inner<
   B: super::ExtractBranch,
   E: StackExecution,
 >(
+  query: &std::collections::HashMap<String, String>,
   stack: Stack,
   body: String,
 ) -> anyhow::Result<()> {
@@ -351,7 +356,7 @@ pub async fn handle_stack_webhook_inner<
       .branch
   };
 
-  B::verify_branch(&body, &branch)?;
+  B::verify_branch(query, &body, &branch)?;
 
   E::resolve(stack).await.map_err(|e| e.error)
 }
@@ -419,6 +424,7 @@ pub enum SyncWebhookOption {
 }
 
 pub async fn handle_sync_webhook<B: super::ExtractBranch>(
+  query: &std::collections::HashMap<String, String>,
   option: SyncWebhookOption,
   sync: ResourceSync,
   body: String,
@@ -426,12 +432,12 @@ pub async fn handle_sync_webhook<B: super::ExtractBranch>(
   match option {
     SyncWebhookOption::Refresh => {
       handle_sync_webhook_inner::<B, RefreshResourceSyncPending>(
-        sync, body,
+        query, sync, body,
       )
       .await
     }
     SyncWebhookOption::Sync => {
-      handle_sync_webhook_inner::<B, RunSync>(sync, body).await
+      handle_sync_webhook_inner::<B, RunSync>(query, sync, body).await
     }
   }
 }
@@ -440,6 +446,7 @@ async fn handle_sync_webhook_inner<
   B: super::ExtractBranch,
   E: SyncExecution,
 >(
+  query: &std::collections::HashMap<String, String>,
   sync: ResourceSync,
   body: String,
 ) -> anyhow::Result<()> {
@@ -464,7 +471,7 @@ async fn handle_sync_webhook_inner<
       .branch
   };
 
-  B::verify_branch(&body, &branch)?;
+  B::verify_branch(query, &body, &branch)?;
 
   E::resolve(sync).await
 }
@@ -486,6 +493,7 @@ fn procedure_locks() -> &'static ListenerLockCache {
 }
 
 pub async fn handle_procedure_webhook<B: super::ExtractBranch>(
+  query: &std::collections::HashMap<String, String>,
   procedure: Procedure,
   target_branch: &str,
   body: String,
@@ -502,7 +510,7 @@ pub async fn handle_procedure_webhook<B: super::ExtractBranch>(
   let _lock = lock.lock().await;
 
   if target_branch != ANY_BRANCH {
-    B::verify_branch(&body, target_branch)?;
+    B::verify_branch(query, &body, target_branch)?;
   }
 
   let user = git_webhook_user().to_owned();
@@ -540,6 +548,7 @@ fn action_locks() -> &'static ListenerLockCache {
 }
 
 pub async fn handle_action_webhook<B: super::ExtractBranch>(
+  query: &std::collections::HashMap<String, String>,
   action: Action,
   target_branch: &str,
   body: String,
@@ -554,7 +563,7 @@ pub async fn handle_action_webhook<B: super::ExtractBranch>(
   let lock = action_locks().get_or_insert_default(&action.id).await;
   let _lock = lock.lock().await;
 
-  let branch = B::extract_branch(&body)?;
+  let branch = B::extract_branch(query, &body)?;
 
   if target_branch != ANY_BRANCH && branch != target_branch {
     return Err(anyhow!("request branch does not match expected"));
@@ -562,8 +571,12 @@ pub async fn handle_action_webhook<B: super::ExtractBranch>(
 
   let user = git_webhook_user().to_owned();
 
-  let body = serde_json::Value::from_str(&body)
-    .context("Failed to deserialize webhook body")?;
+  let body = if body.trim().is_empty() {
+    serde_json::Value::Null
+  } else {
+    serde_json::Value::from_str(&body)
+      .context("Failed to deserialize webhook body")?
+  };
   let serde_json::Value::Object(args) = json!({
     "WEBHOOK_BRANCH": branch,
     "WEBHOOK_BODY": body,

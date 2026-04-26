@@ -18,6 +18,7 @@ pub fn router() -> Router {
   Router::new()
     .nest("/github", router::router::<github::Github>())
     .nest("/gitlab", router::router::<gitlab::Gitlab>())
+    .nest("/query", router::router::<query::QueryAuth>())
 }
 
 type ListenerLockCache = CloneCache<String, Arc<Mutex<()>>>;
@@ -32,6 +33,7 @@ trait CustomSecret: KomodoResource {
 /// Implemented on the integration struct, eg [integrations::github::Github]
 trait VerifySecret {
   fn verify_secret(
+    query: &std::collections::HashMap<String, String>,
     headers: &HeaderMap,
     body: &str,
     custom_secret: &str,
@@ -40,9 +42,9 @@ trait VerifySecret {
 
 /// Implemented on the integration struct, eg [integrations::github::Github]
 trait ExtractBranch {
-  fn extract_branch(body: &str) -> anyhow::Result<String>;
-  fn verify_branch(body: &str, expected: &str) -> anyhow::Result<()> {
-    let branch = Self::extract_branch(body)?;
+  fn extract_branch(query: &std::collections::HashMap<String, String>, body: &str) -> anyhow::Result<String>;
+  fn verify_branch(query: &std::collections::HashMap<String, String>, body: &str, expected: &str) -> anyhow::Result<()> {
+    let branch = Self::extract_branch(query, body)?;
     if branch == expected {
       Ok(())
     } else {

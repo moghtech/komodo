@@ -17,6 +17,7 @@ pub struct Github;
 impl VerifySecret for Github {
   #[instrument("VerifyGithubSecret", skip_all)]
   fn verify_secret(
+    _query: &std::collections::HashMap<String, String>,
     headers: &HeaderMap,
     body: &str,
     custom_secret: &str,
@@ -53,7 +54,7 @@ struct GithubWebhookBody {
 }
 
 impl ExtractBranch for Github {
-  fn extract_branch(body: &str) -> anyhow::Result<String> {
+  fn extract_branch(_query: &std::collections::HashMap<String, String>, body: &str) -> anyhow::Result<String> {
     let branch = serde_json::from_str::<GithubWebhookBody>(body)
       .context("Failed to parse github request body")?
       .branch
