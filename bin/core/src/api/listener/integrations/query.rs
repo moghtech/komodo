@@ -13,7 +13,6 @@ impl VerifySecret for QueryAuth {
     _body: &str,
     custom_secret: &str,
   ) -> anyhow::Result<()> {
-    // Check if '?secret=' matches our expected custom_secret
     if query.get("secret").map(|s| s.as_str()) == Some(custom_secret) {
       Ok(())
     } else {
@@ -24,8 +23,6 @@ impl VerifySecret for QueryAuth {
 
 impl ExtractBranch for QueryAuth {
   fn extract_branch(query: &std::collections::HashMap<String, String>, _body: &str) -> anyhow::Result<String> {
-    // If your generic webhook payloads don't contain branch details,
-    // you can extract it from a query param here too.
     if let Some(branch) = query.get("branch") {
       Ok(branch.to_string())
     } else {
