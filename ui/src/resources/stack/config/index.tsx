@@ -31,8 +31,12 @@ import SystemCommand from "@/components/config/system-command";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
 import InputList from "@/ui/input-list";
-import { ProviderSelectorConfig } from "@/components/config/provider-selector";
-import { AccountSelectorConfig } from "@/components/config/account-selector";
+import ProviderSelector, {
+  ProviderSelectorConfig,
+} from "@/components/config/provider-selector";
+import AccountSelector, {
+  AccountSelectorConfig,
+} from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
 import { DEFAULT_STACK_FILE_CONTENTS, useFullStack } from "..";
 import { ReactNode } from "react";
@@ -604,34 +608,108 @@ export default function StackConfig({
       label: "Pull Images",
       labelHidden: true,
       fields: {
-        registry_provider: (provider, set) => {
-          return (
-            <ProviderSelectorConfig
-              description="Login to a registry for private image access."
-              accountType="docker"
-              selected={provider}
-              disabled={disabled}
-              onSelect={(registry_provider) => set({ registry_provider })}
-            />
-          );
-        },
-        registry_account: (value, set) => {
+        image_registry: (image_registries, set) => {
+          const legacyProvider =
+            update.registry_provider ?? config.registry_provider;
+          const legacyAccount =
+            update.registry_account ?? config.registry_account;
+          const registries = image_registries?.length
+            ? image_registries
+            : legacyProvider
+              ? [
+                  {
+                    domain: legacyProvider,
+                    account: legacyAccount ?? "",
+                    organization: "",
+                  },
+                ]
+              : [];
           const server_id = update.server_id || config.server_id;
-          const provider = update.registry_provider ?? config.registry_provider;
-          if (!provider) {
-            return null;
-          }
+          const setRegistries = (
+            image_registry: Types.ImageRegistryConfig[],
+          ) => {
+            set({
+              image_registry,
+              registry_provider: "",
+              registry_account: "",
+            });
+          };
+
           return (
-            <AccountSelectorConfig
-              id={server_id}
-              type={server_id ? "Server" : "None"}
-              accountType="docker"
-              provider={provider}
-              selected={value}
-              onSelect={(registry_account) => set({ registry_account })}
-              disabled={disabled}
-              placeholder="None"
-            />
+            <ConfigItem
+              label="Image Registries"
+              description="Login to registries for private image access."
+              gap="xl"
+            >
+              {!disabled && (
+                <Button
+                  onClick={() =>
+                    setRegistries([
+                      ...registries,
+                      { domain: "", organization: "", account: "" },
+                    ])
+                  }
+                  w={200}
+                >
+                  <ICONS.Create size="1rem" />
+                  Add Registry
+                </Button>
+              )}
+
+              {registries.map((registry, index) => (
+                <ConfigItem key={index} label={`Registry ${index + 1}`}>
+                  <Group>
+                    <ProviderSelector
+                      disabled={disabled}
+                      accountType="docker"
+                      selected={registry.domain}
+                      onSelect={(domain) =>
+                        setRegistries(
+                          registries.map((r, i) =>
+                            i === index
+                              ? { ...r, domain, account: "" }
+                              : r,
+                          ),
+                        )
+                      }
+                      showCustom={false}
+                      showLabel
+                    />
+                    <AccountSelector
+                      id={server_id}
+                      type={server_id ? "Server" : "None"}
+                      accountType="docker"
+                      provider={registry.domain ?? ""}
+                      selected={registry.account}
+                      onSelect={(account) =>
+                        setRegistries(
+                          registries.map((r, i) =>
+                            i === index ? { ...r, account } : r,
+                          ),
+                        )
+                      }
+                      disabled={!registry.domain || disabled}
+                      placeholder="None"
+                      showLabel
+                    />
+                    {!disabled && (
+                      <ActionIcon
+                        color="red"
+                        onClick={() =>
+                          setRegistries(
+                            registries.filter((_, i) => i !== index),
+                          )
+                        }
+                        style={{ alignSelf: "flex-end" }}
+                        mb={4}
+                      >
+                        <ICONS.Remove size="1rem" />
+                      </ActionIcon>
+                    )}
+                  </Group>
+                </ConfigItem>
+              ))}
+            </ConfigItem>
           );
         },
         auto_pull: {
