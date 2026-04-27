@@ -16,12 +16,14 @@ use typeshare::typeshare;
 use crate::{
   deserializers::{
     env_vars_deserializer, file_contents_deserializer,
-    option_env_vars_deserializer, option_file_contents_deserializer,
+    item_or_vec_deserializer, option_env_vars_deserializer,
+    option_file_contents_deserializer,
+    option_item_or_vec_deserializer,
     option_maybe_string_i64_deserializer,
     option_string_list_deserializer, string_list_deserializer,
   },
   entities::{
-    EnvironmentVar, ImageDigest,
+    EnvironmentVar, ImageDigest, build::ImageRegistryConfig,
     docker::service::SwarmServiceListItem, environment_vars_from_str,
   },
 };
@@ -526,6 +528,15 @@ pub struct StackConfig {
   #[builder(default)]
   pub registry_account: String,
 
+  /// Configuration for the registry/s to login to before docker compose up.
+  #[serde(default, deserialize_with = "item_or_vec_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_item_or_vec_deserializer"
+  ))]
+  #[builder(default)]
+  pub image_registry: Vec<ImageRegistryConfig>,
+
   /// The optional command to run before the Stack is deployed.
   #[serde(default)]
   #[builder(default)]
@@ -683,6 +694,7 @@ impl Default for StackConfig {
       files_on_host: Default::default(),
       registry_provider: Default::default(),
       registry_account: Default::default(),
+      image_registry: Default::default(),
       file_contents: Default::default(),
       auto_pull: default_auto_pull(),
       poll_for_updates: Default::default(),
