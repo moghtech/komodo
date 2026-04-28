@@ -8,6 +8,7 @@ use komodo_client::{
   entities::{komodo_timestamp, update::Log},
   parsers::parse_multiline_command,
 };
+use tokio::io::AsyncWriteExt;
 
 mod output;
 
@@ -23,6 +24,43 @@ pub async fn run_komodo_standard_command(
   let command = command.into();
   let start_ts = komodo_timestamp();
   let output = run_standard_command(&command, path).await;
+  output_into_log(stage, command, start_ts, output)
+}
+
+/// Commands are run directly with args passed separately.
+pub async fn run_komodo_command_args(
+  stage: &str,
+  path: impl Into<Option<&Path>>,
+  program: &str,
+  args: impl IntoIterator<Item = impl AsRef<str>>,
+) -> Log {
+  let args = args
+    .into_iter()
+    .map(|arg| arg.as_ref().to_string())
+    .collect::<Vec<_>>();
+  let command = command_string(program, &args);
+  let start_ts = komodo_timestamp();
+  let output = run_command_args(program, &args, path, None).await;
+  output_into_log(stage, command, start_ts, output)
+}
+
+/// Commands are run directly with args passed separately, and stdin piped.
+pub async fn run_komodo_command_args_with_stdin(
+  stage: &str,
+  path: impl Into<Option<&Path>>,
+  program: &str,
+  args: impl IntoIterator<Item = impl AsRef<str>>,
+  stdin: impl AsRef<[u8]>,
+) -> Log {
+  let args = args
+    .into_iter()
+    .map(|arg| arg.as_ref().to_string())
+    .collect::<Vec<_>>();
+  let command = command_string(program, &args);
+  let start_ts = komodo_timestamp();
+  let output =
+    run_command_args(program, &args, path, Some(stdin.as_ref()))
+      .await;
   output_into_log(stage, command, start_ts, output)
 }
 
@@ -158,6 +196,69 @@ pub async fn run_standard_command(
   }
 
   CommandOutput::from(cmd.output().await)
+}
+
+/// Commands are run directly with args passed separately.
+pub async fn run_command_args(
+  program: &str,
+  args: &[String],
+  path: impl Into<Option<&Path>>,
+  stdin: Option<&[u8]>,
+) -> CommandOutput {
+  let mut cmd = Command::new(program);
+
+  cmd
+    .args(args)
+    .kill_on_drop(true)
+    .stdin(if stdin.is_some() {
+      Stdio::piped()
+    } else {
+      Stdio::null()
+    })
+    .stdout(Stdio::piped())
+    .stderr(Stdio::piped());
+
+  if let Some(path) = path.into() {
+    match path.canonicalize() {
+      Ok(path) => {
+        cmd.current_dir(path);
+      }
+      Err(e) => return CommandOutput::from_err(e),
+    }
+  }
+
+  let mut child = match cmd.spawn() {
+    Ok(child) => child,
+    Err(e) => return CommandOutput::from_err(e),
+  };
+
+  if let Some(stdin) = stdin {
+    match child.stdin.take() {
+      Some(mut child_stdin) => {
+        if let Err(e) = child_stdin.write_all(stdin).await {
+          return CommandOutput::from_err(e);
+        }
+      }
+      None => {
+        return CommandOutput::from_err(std::io::Error::other(
+          "Failed to open command stdin",
+        ));
+      }
+    }
+  }
+
+  CommandOutput::from(child.wait_with_output().await)
+}
+
+pub fn command_string(program: &str, args: &[String]) -> String {
+  std::iter::once(program.to_string())
+    .chain(args.iter().map(|arg| {
+      shlex::try_quote(arg)
+        .map(|arg| arg.into_owned())
+        .unwrap_or_else(|_| arg.clone())
+    }))
+    .collect::<Vec<_>>()
+    .join(" ")
 }
 
 fn shell() -> &'static str {

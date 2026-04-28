@@ -307,7 +307,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
     write!(&mut command, " {project_name}")?;
 
     // Apply compose cmd wrapper if configured
-    let (command, _) = match maybe_wrap_command(
+    let (command, wrapped) = match maybe_wrap_command(
       command,
       &compose_cmd_wrapper,
       wrapper_include,
@@ -320,12 +320,17 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       }
     };
 
+    let mode = if wrapped || !env_file_args.is_empty() {
+      KomodoCommandMode::Shell
+    } else {
+      KomodoCommandMode::Standard
+    };
     let span = info_span!("ExecuteStackDeploy");
     let Some(log) = run_komodo_command_with_sanitization(
       "Deploy Swarm Stack",
       run_directory.as_path(),
       command,
-      KomodoCommandMode::Shell,
+      mode,
       &replacers,
     )
     .instrument(span)

@@ -1,14 +1,11 @@
-use std::process::Stdio;
-
 use anyhow::{Context, anyhow};
 use bollard::Docker;
-use command::{CommandOutput, run_komodo_standard_command};
+use command::{run_command_args, run_komodo_standard_command};
 use komodo_client::entities::{
   TerminationSignal,
   docker::{task::*, *},
   update::Log,
 };
-use tokio::{io::AsyncWriteExt, process::Command};
 
 pub mod compose;
 pub mod config;
@@ -79,32 +76,22 @@ async fn docker_login_command(
   domain: &str,
   account: &str,
   registry_token: &str,
-) -> anyhow::Result<CommandOutput> {
-  let mut child = Command::new("docker")
-    .args([
-      "login",
-      domain,
-      "--username",
-      account,
-      "--password-stdin",
-    ])
-    .kill_on_drop(true)
-    .stdin(Stdio::piped())
-    .stdout(Stdio::piped())
-    .stderr(Stdio::piped())
-    .spawn()
-    .context("Failed to spawn docker login")?;
-
-  let mut stdin = child
-    .stdin
-    .take()
-    .context("Failed to open docker login stdin")?;
-  stdin.write_all(registry_token.as_bytes()).await.context(
-    "Failed to write registry token to docker login stdin",
-  )?;
-  drop(stdin);
-
-  Ok(CommandOutput::from(child.wait_with_output().await))
+) -> anyhow::Result<command::CommandOutput> {
+  Ok(
+    run_command_args(
+      "docker",
+      &[
+        "login".to_string(),
+        domain.to_string(),
+        "--username".to_string(),
+        account.to_string(),
+        "--password-stdin".to_string(),
+      ],
+      None,
+      Some(registry_token.as_bytes()),
+    )
+    .await,
+  )
 }
 
 #[instrument("PullImage")]

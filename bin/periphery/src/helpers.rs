@@ -5,7 +5,8 @@ use std::{
 
 use anyhow::Context;
 use command::{
-  KomodoCommandMode, run_komodo_command_with_sanitization,
+  KomodoCommandMode, command_string, output_into_log,
+  run_command_args, run_komodo_command_with_sanitization,
   run_standard_command,
 };
 use environment::write_env_file;
@@ -14,7 +15,7 @@ use komodo_client::{
   entities::{
     EnvironmentVar, RepoExecutionArgs, RepoExecutionResponse,
     SearchCombinator, SystemCommand, all_logs_success,
-    deployment::Conversion,
+    deployment::Conversion, komodo_timestamp, update::Log,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -113,23 +114,56 @@ pub fn push_environment(
   Ok(())
 }
 
-pub fn format_log_grep(
+pub async fn run_log_search(
+  stage: &str,
+  path: impl Into<Option<&std::path::Path>>,
+  program: &str,
+  args: Vec<String>,
   terms: &[String],
   combinator: SearchCombinator,
   invert: bool,
-) -> String {
-  let maybe_invert = if invert { " -v" } else { Default::default() };
+) -> Log {
+  let grep_args = log_grep_args(terms, combinator, invert);
+  let command = format!(
+    "{} 2>&1 | {}",
+    command_string(program, &args),
+    command_string("grep", &grep_args)
+  );
+  let start_ts = komodo_timestamp();
+
+  let output = run_command_args(program, &args, path, None).await;
+  let input = format!("{}{}", output.stdout, output.stderr);
+  let grep_output = run_command_args(
+    "grep",
+    &grep_args,
+    None,
+    Some(input.as_bytes()),
+  )
+  .await;
+
+  output_into_log(stage, command, start_ts, grep_output)
+}
+
+fn log_grep_args(
+  terms: &[String],
+  combinator: SearchCombinator,
+  invert: bool,
+) -> Vec<String> {
+  let mut args = Vec::new();
+  if invert {
+    args.push("-v".to_string());
+  }
   match combinator {
     SearchCombinator::Or => {
-      format!("grep{maybe_invert} -E '{}'", terms.join("|"))
+      args.push("-E".to_string());
+      args.push(terms.join("|"));
     }
     SearchCombinator::And => {
-      format!(
-        "grep{maybe_invert} -P '^(?=.*{})'",
-        terms.join(")(?=.*")
-      )
+      args.push("-P".to_string());
+      args.push(format!("^(?=.*{})", terms.join(")(?=.*")));
     }
   }
+  args
 }
 
 // =====

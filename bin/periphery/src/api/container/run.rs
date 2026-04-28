@@ -109,7 +109,7 @@ impl Resolve<crate::api::Args> for RunContainer {
       "Docker Run",
       None,
       command,
-      KomodoCommandMode::Shell,
+      KomodoCommandMode::Standard,
       &replacers,
     )
     .instrument(span)
