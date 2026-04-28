@@ -259,9 +259,10 @@ async fn set_default_gateway(
     ));
   }
 
-  // Remove existing default routes
-  let remove_default = Command::new("sh")
-    .args(["-c", "ip route del default 2>/dev/null || true"])
+  // Remove existing default routes. Failure is ignored because the route may
+  // not exist yet.
+  let remove_default = Command::new("ip")
+    .args(["route", "del", "default"])
     .output()
     .await;
 
@@ -272,13 +273,21 @@ async fn set_default_gateway(
   }
 
   // Add new default route
-  let add_default_cmd = format!(
-    "ip route add default via {gateway} dev {interface_name}"
+  trace!(
+    "Adding default route: ip route add default via {} dev {}",
+    gateway, interface_name
   );
-  trace!("Adding default route: {}", add_default_cmd);
 
-  let add_default = Command::new("sh")
-    .args(["-c", &add_default_cmd])
+  let add_default = Command::new("ip")
+    .args([
+      "route",
+      "add",
+      "default",
+      "via",
+      gateway,
+      "dev",
+      interface_name,
+    ])
     .output()
     .await
     .context("Failed to add default route")?;
@@ -302,10 +311,23 @@ async fn set_default_gateway(
 /// Check if we have sufficient network privileges
 async fn check_network_privileges() -> bool {
   // Try to test NET_ADMIN capability with a harmless route operation
-  let capability_test = Command::new("sh")
-        .args(["-c", "ip route add 198.51.100.1/32 dev lo 2>/dev/null && ip route del 198.51.100.1/32 dev lo 2>/dev/null"])
-        .output()
-        .await;
+  let add_test = Command::new("ip")
+    .args(["route", "add", "198.51.100.1/32", "dev", "lo"])
+    .output()
+    .await;
 
-  matches!(capability_test, Ok(output) if output.status.success())
+  let Ok(output) = add_test else {
+    return false;
+  };
+
+  if !output.status.success() {
+    return false;
+  }
+
+  let del_test = Command::new("ip")
+    .args(["route", "del", "198.51.100.1/32", "dev", "lo"])
+    .output()
+    .await;
+
+  matches!(del_test, Ok(output) if output.status.success())
 }

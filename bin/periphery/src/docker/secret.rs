@@ -3,7 +3,7 @@ use std::fmt::Write;
 use anyhow::Context;
 use bollard::query_parameters::ListSecretsOptions;
 use command::{
-  run_komodo_shell_command, run_komodo_standard_command,
+  run_komodo_command_args_with_stdin, run_komodo_standard_command,
 };
 use futures_util::{TryStreamExt as _, stream::FuturesUnordered};
 use komodo_client::entities::{
@@ -118,41 +118,34 @@ pub async fn create_swarm_secret(
     template_driver,
   }: &CreateSwarmSecret,
 ) -> anyhow::Result<Log> {
-  let mut command = String::from("docker secret create");
+  let mut args = vec!["secret".to_string(), "create".to_string()];
 
   if let Some(driver) = driver {
-    write!(&mut command, " --driver {driver}")?;
+    args.push("--driver".to_string());
+    args.push(driver.to_string());
   }
 
   for label in labels {
-    write!(&mut command, " --label {label}")?;
+    args.push("--label".to_string());
+    args.push(label.to_string());
   }
 
   if let Some(driver) = template_driver {
-    write!(&mut command, " --template-driver {driver}")?;
+    args.push("--template-driver".to_string());
+    args.push(driver.to_string());
   }
 
-  let mut sanitized_command = command.clone();
+  args.push(name.to_string());
+  args.push("-".to_string());
 
-  write!(
-    &mut command,
-    r#" {name} - <<'EOF'
-{}
-EOF"#,
-    data.trim()
-  )?;
-
-  write!(
-    &mut sanitized_command,
-    r#" {name} - <<'EOF'
-<secret-data>
-EOF"#
-  )?;
-
-  let mut log =
-    run_komodo_shell_command("Create Secret", None, command).await;
-
-  log.command = sanitized_command;
+  let log = run_komodo_command_args_with_stdin(
+    "Create Secret",
+    None,
+    "docker",
+    args,
+    data.trim(),
+  )
+  .await;
 
   Ok(log)
 }

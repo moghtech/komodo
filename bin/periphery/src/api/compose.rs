@@ -3,7 +3,7 @@ use std::{borrow::Cow, fmt::Write, path::PathBuf};
 use anyhow::{Context, anyhow};
 use command::{
   KomodoCommandMode, run_komodo_command_with_sanitization,
-  run_komodo_shell_command, run_komodo_standard_command,
+  run_komodo_standard_command,
 };
 use formatting::format_serror;
 use git::write_commit_file;
@@ -29,7 +29,7 @@ use tracing::Instrument;
 use crate::{
   config::periphery_config,
   docker::compose::docker_compose,
-  helpers::{format_extra_args, format_log_grep},
+  helpers::{format_extra_args, run_log_search},
   stack::{
     maybe_login_registry, pull_or_clone_stack, validate_files,
     write::write_stack,
@@ -78,19 +78,35 @@ impl Resolve<crate::api::Args> for GetComposeLogSearch {
       timestamps,
     } = self;
     let docker_compose = docker_compose();
-    let grep = format_log_grep(&terms, combinator, invert);
-    let timestamps = if timestamps {
-      " --timestamps"
+    let mut args = vec![
+      "-p".to_string(),
+      project,
+      "logs".to_string(),
+      "--tail".to_string(),
+      "5000".to_string(),
+    ];
+    if timestamps {
+      args.push("--timestamps".to_string());
+    }
+    args.extend(services);
+    let (program, args) = if docker_compose == "docker compose" {
+      let mut prefixed = vec!["compose".to_string()];
+      prefixed.extend(args);
+      ("docker", prefixed)
     } else {
-      Default::default()
+      (docker_compose, args)
     };
-    let command = format!(
-      "{docker_compose} -p {project} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
-      services.join(" ")
-    );
     Ok(
-      run_komodo_shell_command("Search Stack Log", None, command)
-        .await,
+      run_log_search(
+        "Search Stack Log",
+        None,
+        program,
+        args,
+        &terms,
+        combinator,
+        invert,
+      )
+      .await,
     )
   }
 }
@@ -722,7 +738,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
     let command = format!(
       "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{service_args}",
     );
-    let (command, _) = match maybe_wrap_command(
+    let (command, wrapped) = match maybe_wrap_command(
       command,
       &compose_cmd_wrapper,
       wrapper_include,
@@ -735,12 +751,17 @@ impl Resolve<crate::api::Args> for ComposeUp {
       }
     };
 
+    let mode = if wrapped {
+      KomodoCommandMode::Shell
+    } else {
+      KomodoCommandMode::Standard
+    };
     let span = info_span!("ExecuteComposeUp");
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Up",
       run_directory.as_path(),
       command,
-      KomodoCommandMode::Shell,
+      mode,
       &replacers,
     )
     .instrument(span)
@@ -981,7 +1002,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
     let run_command = format!(
       "{docker_compose} -p {project_name} -f {file_args}{env_file_args} run{run_flags} {service}{command_args}",
     );
-    let (run_command, _) = match maybe_wrap_command(
+    let (run_command, wrapped) = match maybe_wrap_command(
       run_command,
       &compose_cmd_wrapper,
       wrapper_include,
@@ -991,12 +1012,17 @@ impl Resolve<crate::api::Args> for ComposeRun {
       Err(log) => return Ok(log),
     };
 
+    let mode = if wrapped {
+      KomodoCommandMode::Shell
+    } else {
+      KomodoCommandMode::Standard
+    };
     let span = info_span!("RunComposeRun", run_command);
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Run",
       run_directory.as_path(),
       run_command,
-      KomodoCommandMode::Shell,
+      mode,
       &replacers,
     )
     .instrument(span)

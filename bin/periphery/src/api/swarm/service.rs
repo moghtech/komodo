@@ -3,7 +3,7 @@ use std::fmt::Write;
 use anyhow::Context as _;
 use command::{
   KomodoCommandMode, run_komodo_command_with_sanitization,
-  run_komodo_shell_command, run_komodo_standard_command,
+  run_komodo_standard_command,
 };
 use formatting::format_serror;
 use interpolate::Interpolator;
@@ -28,8 +28,8 @@ use crate::{
   config::periphery_config,
   docker::docker_login,
   helpers::{
-    format_log_grep, push_conversions, push_environment,
-    push_extra_args, push_labels,
+    push_conversions, push_environment, push_extra_args, push_labels,
+    run_log_search,
   },
   state::docker_client,
 };
@@ -110,35 +110,34 @@ impl Resolve<crate::api::Args> for GetSwarmServiceLogSearch {
       no_resolve,
       details,
     } = self;
-    let timestamps = if timestamps {
-      " --timestamps"
-    } else {
-      Default::default()
-    };
-    let no_task_ids = if no_task_ids {
-      " --no-task-ids"
-    } else {
-      Default::default()
-    };
-    let no_resolve = if no_resolve {
-      " --no-resolve"
-    } else {
-      Default::default()
-    };
-    let details = if details {
-      " --details"
-    } else {
-      Default::default()
-    };
-    let grep = format_log_grep(&terms, combinator, invert);
-    let command = format!(
-      "docker service logs --tail 5000{timestamps}{no_task_ids}{no_resolve}{details} {service} 2>&1 | {grep}",
-    );
+    let mut args = vec![
+      "service".to_string(),
+      "logs".to_string(),
+      "--tail".to_string(),
+      "5000".to_string(),
+    ];
+    if timestamps {
+      args.push("--timestamps".to_string());
+    }
+    if no_task_ids {
+      args.push("--no-task-ids".to_string());
+    }
+    if no_resolve {
+      args.push("--no-resolve".to_string());
+    }
+    if details {
+      args.push("--details".to_string());
+    }
+    args.push(service);
     Ok(
-      run_komodo_shell_command(
+      run_log_search(
         "Search Swarm Service Log",
         None,
-        command,
+        "docker",
+        args,
+        &terms,
+        combinator,
+        invert,
       )
       .await,
     )
@@ -295,7 +294,7 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
       "Docker Service Create",
       None,
       command,
-      KomodoCommandMode::Shell,
+      KomodoCommandMode::Standard,
       &replacers,
     )
     .instrument(span)

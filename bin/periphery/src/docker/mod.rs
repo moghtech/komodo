@@ -1,6 +1,6 @@
 use anyhow::{Context, anyhow};
 use bollard::Docker;
-use command::{run_komodo_standard_command, run_shell_command};
+use command::{run_command_args, run_komodo_standard_command};
 use komodo_client::entities::{
   TerminationSignal,
   docker::{task::*, *},
@@ -51,10 +51,8 @@ pub async fn docker_login(
     None => crate::helpers::registry_token(domain, account)?,
   };
 
-  let log = run_shell_command(&format!(
-    "echo {registry_token} | docker login {domain} --username '{account}' --password-stdin",
-  ), None)
-  .await;
+  let log =
+    docker_login_command(domain, account, registry_token).await?;
 
   if log.success() {
     return Ok(true);
@@ -72,6 +70,28 @@ pub async fn docker_login(
     e = e.context(line.to_string());
   }
   Err(e.context(format!("Registry {domain} login error")))
+}
+
+async fn docker_login_command(
+  domain: &str,
+  account: &str,
+  registry_token: &str,
+) -> anyhow::Result<command::CommandOutput> {
+  Ok(
+    run_command_args(
+      "docker",
+      &[
+        "login".to_string(),
+        domain.to_string(),
+        "--username".to_string(),
+        account.to_string(),
+        "--password-stdin".to_string(),
+      ],
+      None,
+      Some(registry_token.as_bytes()),
+    )
+    .await,
+  )
 }
 
 #[instrument("PullImage")]

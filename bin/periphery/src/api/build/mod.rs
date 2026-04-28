@@ -327,7 +327,7 @@ impl Resolve<crate::api::Args> for build::Build {
       "Docker Build",
       build_path.as_ref(),
       command,
-      KomodoCommandMode::Shell,
+      KomodoCommandMode::Standard,
       &replacers,
     )
     .instrument(span)

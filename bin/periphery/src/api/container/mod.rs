@@ -1,6 +1,6 @@
 use anyhow::Context;
 use command::{
-  run_komodo_shell_command, run_komodo_standard_command,
+  command_string, run_command_args, run_komodo_standard_command,
 };
 use futures_util::future::join_all;
 use komodo_client::entities::{
@@ -8,6 +8,7 @@ use komodo_client::entities::{
     container::{Container, ContainerListItem, ContainerStats},
     stats::FullContainerStats,
   },
+  komodo_timestamp,
   update::Log,
 };
 use mogh_resolver::Resolve;
@@ -15,7 +16,7 @@ use periphery_client::api::container::*;
 
 use crate::{
   docker::{stats::get_container_stats, stop_container_command},
-  helpers::format_log_grep,
+  helpers::run_log_search,
   state::docker_client,
 };
 
@@ -81,20 +82,24 @@ impl Resolve<crate::api::Args> for GetContainerLogSearch {
       invert,
       timestamps,
     } = self;
-    let grep = format_log_grep(&terms, combinator, invert);
-    let timestamps = if timestamps {
-      " --timestamps"
-    } else {
-      Default::default()
-    };
-    let command = format!(
-      "docker logs {name} --tail 5000{timestamps} 2>&1 | {grep}"
-    );
+    let mut args = vec![
+      "logs".to_string(),
+      name,
+      "--tail".to_string(),
+      "5000".to_string(),
+    ];
+    if timestamps {
+      args.push("--timestamps".to_string());
+    }
     Ok(
-      run_komodo_shell_command(
+      run_log_search(
         "Get container log grep",
         None,
-        command,
+        "docker",
+        args,
+        &terms,
+        combinator,
+        invert,
       )
       .await,
     )
@@ -307,25 +312,10 @@ impl Resolve<crate::api::Args> for RemoveContainer {
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
     let RemoveContainer { name, signal, time } = self;
-    let stop_command = stop_container_command(&name, signal, time);
-    let command =
-      format!("{stop_command} && docker container rm {name}");
-    let log = run_komodo_shell_command(
-      "Docker Stop and Remove",
-      None,
-      command,
-    )
-    .await;
+    let log = stop_and_remove_container(&name, signal, time).await;
     if log.stderr.contains("unknown flag: --signal") {
-      let stop_command = stop_container_command(&name, None, time);
-      let command =
-        format!("{stop_command} && docker container rm {name}");
-      let mut log = run_komodo_shell_command(
-        "Docker Stop and Remove",
-        None,
-        command,
-      )
-      .await;
+      let mut log =
+        stop_and_remove_container(&name, None, time).await;
       log.stderr = format!(
         "Old docker version: unable to use --signal flag{}",
         if !log.stderr.is_empty() {
@@ -339,6 +329,66 @@ impl Resolve<crate::api::Args> for RemoveContainer {
       Ok(log)
     }
   }
+}
+
+async fn stop_and_remove_container(
+  name: &str,
+  signal: Option<komodo_client::entities::TerminationSignal>,
+  time: Option<i32>,
+) -> Log {
+  let stop_args = stop_container_args(name, signal, time);
+  let rm_args =
+    vec!["container".to_string(), "rm".to_string(), name.to_string()];
+  let command = format!(
+    "{} && {}",
+    command_string("docker", &stop_args),
+    command_string("docker", &rm_args)
+  );
+  let start_ts = komodo_timestamp();
+
+  let stop_output =
+    run_command_args("docker", &stop_args, None, None).await;
+  if !stop_output.success() {
+    return Log {
+      stage: "Docker Stop and Remove".to_string(),
+      stdout: stop_output.stdout,
+      stderr: stop_output.stderr,
+      command,
+      success: false,
+      start_ts,
+      end_ts: komodo_timestamp(),
+    };
+  }
+
+  let rm_output =
+    run_command_args("docker", &rm_args, None, None).await;
+  Log {
+    stage: "Docker Stop and Remove".to_string(),
+    stdout: format!("{}{}", stop_output.stdout, rm_output.stdout),
+    stderr: format!("{}{}", stop_output.stderr, rm_output.stderr),
+    command,
+    success: rm_output.success(),
+    start_ts,
+    end_ts: komodo_timestamp(),
+  }
+}
+
+fn stop_container_args(
+  name: &str,
+  signal: Option<komodo_client::entities::TerminationSignal>,
+  time: Option<i32>,
+) -> Vec<String> {
+  let mut args = vec!["stop".to_string()];
+  if let Some(signal) = signal {
+    args.push("--signal".to_string());
+    args.push(signal.to_string());
+  }
+  if let Some(time) = time {
+    args.push("--time".to_string());
+    args.push(time.to_string());
+  }
+  args.push(name.to_string());
+  args
 }
 
 //
