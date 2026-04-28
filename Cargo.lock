@@ -1674,9 +1674,9 @@ dependencies = [
 
 [[package]]
 name = "data-encoding"
-version = "2.10.0"
+version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7a1e2f27636f116493b8b860f5546edb47c8d8f8ea73e1d2a20be88e28d1fea"
+checksum = "a4ae5f15dda3c708c0ade84bfee31ccab44a3da4f88015ed22f63732abe300c8"
 
 [[package]]
 name = "database"
@@ -3990,9 +3990,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_server"
-version = "1.4.5"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66ab833484ee2242003819a2b948421dc3469e7d153db71bd7579d5de2660b81"
+checksum = "a2d675edcde163e151710b8448538f88b50990bbd404afa81491bdb83eb82fac"
 dependencies = [
  "anyhow",
  "axum",
