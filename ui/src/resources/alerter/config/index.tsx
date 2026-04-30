@@ -7,6 +7,7 @@ import AlerterConfigAlertTypes from "./alert-types";
 import AlerterConfigResources from "./resources";
 import ConfigMaintenanceWindows from "@/components/maintenance-windows";
 import { useFullAlerter } from "..";
+import { useState } from "react";
 
 export default function AlerterConfig({ id }: { id: string }) {
   const { canWrite } = usePermissions({ type: "Alerter", id });
@@ -14,6 +15,7 @@ export default function AlerterConfig({ id }: { id: string }) {
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const { mutateAsync } = useWrite("UpdateAlerter");
+  const [endpointError, setEndpointError] = useState<string | undefined>();
   const [update, setUpdate] = useLocalStorage<Partial<Types.AlerterConfig>>({
     key: `alerter-${id}-update-v1`,
     defaultValue: {},
@@ -25,6 +27,7 @@ export default function AlerterConfig({ id }: { id: string }) {
   return (
     <Config
       disabled={disabled}
+      saveDisabled={!!endpointError}
       original={config}
       update={update}
       setUpdate={setUpdate}
@@ -49,6 +52,7 @@ export default function AlerterConfig({ id }: { id: string }) {
                   endpoint={endpoint!}
                   set={(endpoint) => set({ endpoint })}
                   disabled={disabled}
+                  onValidationChange={setEndpointError}
                 />
               ),
             },

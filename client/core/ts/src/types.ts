@@ -1113,6 +1113,7 @@ export type UserConfig =
 	description: string;
 }};
 
+
 export type LinkedLoginsMap = Record<UserConfig["type"], UserConfig>;
 
 export interface UserTotpConfig {
@@ -7006,6 +7007,8 @@ export interface CreateVariable {
 export interface CustomAlerterEndpoint {
 	/** The http/s endpoint to send the POST to */
 	url: string;
+	/** Additional headers to include on the request. */
+	headers: Record<string, string>;
 }
 
 /**
@@ -11117,4 +11120,3 @@ export type WsLoginMessage =
 	key: string;
 	secret: string;
 }};
-
