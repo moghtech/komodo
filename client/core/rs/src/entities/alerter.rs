@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
@@ -184,12 +186,18 @@ pub struct CustomAlerterEndpoint {
   #[serde(default = "default_custom_url")]
   #[builder(default = "default_custom_url()")]
   pub url: String,
+
+  /// Additional headers to include on the request.
+  #[serde(default)]
+  #[builder(default)]
+  pub headers: HashMap<String, String>,
 }
 
 impl Default for CustomAlerterEndpoint {
   fn default() -> Self {
     Self {
       url: default_custom_url(),
+      headers: Default::default(),
     }
   }
 }

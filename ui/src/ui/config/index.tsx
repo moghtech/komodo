@@ -50,6 +50,7 @@ export interface ConfigProps<T> {
   update: Partial<T>;
   setUpdate: React.Dispatch<SetStateAction<Partial<T>>>;
   disabled: boolean;
+  saveDisabled?: boolean;
   onSave: () => Promise<unknown>;
   titleOther?: ReactNode;
   disableSidebar?: boolean;
@@ -65,6 +66,7 @@ export default function Config<T>({
   update,
   setUpdate,
   disabled,
+  saveDisabled,
   onSave,
   titleOther,
   disableSidebar,
@@ -175,7 +177,7 @@ export default function Config<T>({
           original={original}
           update={update}
           onConfirm={onConfirm}
-          disabled={disabled}
+          disabled={disabled || !!saveDisabled}
           fileContentsLanguage={fileContentsLanguage}
           fullWidth={fullWidth}
         />
