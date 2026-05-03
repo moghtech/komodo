@@ -1,13 +1,13 @@
 import {
   useInvalidate,
   useRead,
-  useSearchCombobox,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { filterBySplit } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 import { Button, Combobox, ComboboxProps, Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { useSearchCombobox } from "mogh_ui";
 
 export interface UserAddUserGroupProps extends ComboboxProps {
   userId: string;

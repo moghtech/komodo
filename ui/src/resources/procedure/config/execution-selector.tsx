@@ -1,11 +1,11 @@
 import { Types } from "komodo_client";
 import { PROCEDURE_EXECUTIONS } from "./executions";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { Button, ButtonProps, Combobox, ComboboxProps } from "@mantine/core";
 import { ChevronsUpDown } from "lucide-react";
-import { fmtUpperCamelcase } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
-import { useSearchCombobox } from "@/lib/hooks";
+import { fmtUpperCamelcase } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { useSearchCombobox } from "mogh_ui";
 
 export interface ProcedureExecutionSelectorProps extends ComboboxProps {
   type: Types.Execution["type"];

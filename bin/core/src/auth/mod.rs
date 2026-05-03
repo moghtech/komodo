@@ -348,6 +348,7 @@ impl AuthImpl for KomodoAuthImpl {
         additional_audiences: config
           .oidc_additional_audiences
           .clone(),
+        auto_redirect: config.oidc_auto_redirect,
       }
     });
     Some(&OIDC_CONFIG)

@@ -1,12 +1,12 @@
 import ContainerSelector from "@/components/docker/container-selector";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_ui";
 import StackServiceSelector from "@/components/stack-service-selector";
 import { useRead } from "@/lib/hooks";
 import { textToEnv } from "@/lib/utils";
 import ResourceSelector from "@/resources/selector";
-import { ICONS } from "@/theme/icons";
-import EnableSwitch from "@/ui/enable-switch";
-import TextUpdateModal from "@/ui/text-update-modal";
+import { ICONS } from "@/lib/icons";
+import { EnableSwitch } from "mogh_ui";
+import { TextUpdateModal } from "mogh_ui";
 import {
   Button,
   Group,

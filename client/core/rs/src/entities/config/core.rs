@@ -170,6 +170,8 @@ pub struct Env {
   pub komodo_oidc_additional_audiences: Option<Vec<String>>,
   /// Override `oidc_additional_audiences` from file
   pub komodo_oidc_additional_audiences_file: Option<PathBuf>,
+  /// Override `oidc_auto_redirect`
+  pub komodo_oidc_auto_redirect: Option<bool>,
 
   /// Override `google_oauth.enabled`
   pub komodo_google_oauth_enabled: Option<bool>,
@@ -206,6 +208,17 @@ pub struct Env {
   pub komodo_cors_allow_credentials: Option<bool>,
   /// Override `session_allow_cross_site`
   pub komodo_session_allow_cross_site: Option<bool>,
+
+  /// Override `x_content_type_options`
+  pub komodo_x_content_type_options: Option<String>,
+  /// Override `x_frame_options`
+  pub komodo_x_frame_options: Option<String>,
+  /// Override `x_xss_protection`
+  pub komodo_x_xss_protection: Option<String>,
+  /// Override `x_referrer_policy`
+  pub komodo_referrer_policy: Option<String>,
+  /// Override `content_security_policy`
+  pub komodo_content_security_policy: Option<String>,
 
   /// Override `database.uri`
   #[serde(alias = "komodo_mongo_uri")]
@@ -525,6 +538,12 @@ pub struct CoreConfig {
   #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub oidc_additional_audiences: Vec<String>,
 
+  /// Automatically redirect unauthenticated users to the OIDC provider
+  /// instead of showing the login page.
+  /// Users can bypass the redirect by appending `?disableAutoLogin` to the login URL.
+  #[serde(default)]
+  pub oidc_auto_redirect: bool,
+
   // =========
   // = Oauth =
   // =========
@@ -570,6 +589,37 @@ pub struct CoreConfig {
   /// as the session cookie will be lost on redirect with auth provider.
   #[serde(default)]
   pub session_allow_cross_site: bool,
+
+  // ====================
+  // = Security Headers =
+  // ====================
+  /// `X-Content-Type-Options` header value.
+  /// Default is `nosniff`. Set as empty string
+  /// to omit the header.
+  #[serde(default = "default_x_content_type_options")]
+  pub x_content_type_options: String,
+  /// `X-Frame-Options` header value. Return an empty string to
+  /// omit the header entirely and allow iframe on any origin. Use `"SAMEORIGIN"` to allow
+  /// same-origin embedding only. Defaults to `"DENY"`.
+  #[serde(default = "default_x_frame_options")]
+  pub x_frame_options: String,
+  /// `X-XSS-PROTECTION` header value. Return an empty string to
+  /// omit the header entirely. Default: `1; mode=block`
+  #[serde(default = "default_x_xss_protection")]
+  pub x_xss_protection: String,
+  /// Apply Referrer Policy directives.
+  /// If empty string, no header is applied.
+  /// Default: `strict-origin-when-cross-origin`
+  #[serde(default = "default_referrer_policy")]
+  pub referrer_policy: String,
+  /// Apply Content Security Policy directives.
+  /// If empty string, no header is applied.
+  /// Default: None
+  ///
+  /// Example:
+  /// `default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'`
+  #[serde(default)]
+  pub content_security_policy: String,
 
   // ============
   // = Webhooks =
@@ -767,6 +817,22 @@ fn default_auth_rate_limit_window_seconds() -> u64 {
   15
 }
 
+fn default_x_content_type_options() -> String {
+  String::from("nosniff")
+}
+
+fn default_x_frame_options() -> String {
+  String::from("DENY")
+}
+
+fn default_x_xss_protection() -> String {
+  String::from("1; mode=block")
+}
+
+fn default_referrer_policy() -> String {
+  String::from("strict-origin-when-cross-origin")
+}
+
 fn default_sync_directory() -> PathBuf {
   PathBuf::from("/syncs")
 }
@@ -837,6 +903,7 @@ impl Default for CoreConfig {
       oidc_client_secret: Default::default(),
       oidc_use_full_email: Default::default(),
       oidc_additional_audiences: Default::default(),
+      oidc_auto_redirect: Default::default(),
       google_oauth: Default::default(),
       github_oauth: Default::default(),
       auth_rate_limit_disabled: Default::default(),
@@ -847,6 +914,11 @@ impl Default for CoreConfig {
       cors_allowed_origins: Default::default(),
       cors_allow_credentials: Default::default(),
       session_allow_cross_site: Default::default(),
+      x_content_type_options: default_x_content_type_options(),
+      x_frame_options: default_x_frame_options(),
+      x_xss_protection: default_x_xss_protection(),
+      referrer_policy: default_referrer_policy(),
+      content_security_policy: Default::default(),
       webhook_secret: Default::default(),
       webhook_base_url: Default::default(),
       logging: Default::default(),
@@ -932,6 +1004,7 @@ impl CoreConfig {
         .iter()
         .map(|aud| empty_or_redacted(aud))
         .collect(),
+      oidc_auto_redirect: config.oidc_auto_redirect,
       google_oauth: NamedOauthConfig {
         enabled: config.google_oauth.enabled,
         client_id: empty_or_redacted(&config.google_oauth.client_id),
@@ -954,6 +1027,11 @@ impl CoreConfig {
       cors_allowed_origins: config.cors_allowed_origins,
       cors_allow_credentials: config.cors_allow_credentials,
       session_allow_cross_site: config.session_allow_cross_site,
+      x_content_type_options: config.x_content_type_options,
+      x_frame_options: config.x_frame_options,
+      x_xss_protection: config.x_xss_protection,
+      referrer_policy: config.referrer_policy,
+      content_security_policy: config.content_security_policy,
       webhook_secret: empty_or_redacted(&config.webhook_secret),
       webhook_base_url: config.webhook_base_url,
       database: config.database.sanitized(),
@@ -1031,6 +1109,21 @@ impl mogh_server::ServerConfig for &CoreConfig {
   }
   fn ssl_cert_file(&self) -> &str {
     &self.ssl_cert_file
+  }
+  fn x_content_type_options(&self) -> &str {
+    &self.x_content_type_options
+  }
+  fn x_frame_options(&self) -> &str {
+    &self.x_frame_options
+  }
+  fn x_xss_protection(&self) -> &str {
+    &self.x_xss_protection
+  }
+  fn referrer_policy(&self) -> &str {
+    &self.referrer_policy
+  }
+  fn content_security_policy(&self) -> &str {
+    &self.content_security_policy
   }
 }
 

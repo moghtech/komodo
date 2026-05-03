@@ -1,7 +1,7 @@
 import { useServerStats } from "@/resources/server/hooks";
 import { useFullServer } from "@/resources/server";
-import { ICONS } from "@/theme/icons";
-import StatBar from "@/ui/stat-bar";
+import { ICONS } from "@/lib/icons";
+import { StatBar } from "mogh_ui";
 
 export default function ServerCpuUsage({ id }: { id: string }) {
   const server = useFullServer(id);

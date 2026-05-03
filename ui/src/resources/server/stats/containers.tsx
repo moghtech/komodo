@@ -1,15 +1,15 @@
 import { useRead } from "@/lib/hooks";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Section } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import DockerResourceLink from "@/components/docker/link";
 import { useIsServerAvailable } from "../hooks";
-import SearchInput from "@/ui/search-input";
-import { ICONS } from "@/theme/icons";
+import { SearchInput } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 
 export default function ServerContainerStats({ id }: { id: string }) {
   const [search, setSearch] = useState("");

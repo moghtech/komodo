@@ -1,11 +1,11 @@
-import Section from "@/ui/section";
+import { fmtSizeBytes, Section } from "mogh_ui";
 import { useStatsGranularity } from "../hooks";
 import { ReactNode, useMemo } from "react";
 import { Types } from "komodo_client";
-import { hexColorByIntention } from "@/lib/color";
+import { hexColorByIntention } from "mogh_ui";
 import { useRead } from "@/lib/hooks";
 import { ChartLine, Download, Upload } from "lucide-react";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import {
   Center,
   Group,
@@ -25,8 +25,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { fmtSizeBytes } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { useLocalStorage } from "@mantine/hooks";
 
 type StatType =

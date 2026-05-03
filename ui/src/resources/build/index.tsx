@@ -1,9 +1,9 @@
-import { buildStateIntention, hexColorByIntention } from "@/lib/color";
+import { buildStateIntention } from "@/lib/color";
 import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
 import { ActionIcon, Box, Group, Text } from "@mantine/core";
@@ -18,6 +18,7 @@ import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import { useState } from "react";
 import ResourceSelector from "../selector";
+import { hexColorByIntention } from "mogh_ui";
 
 export function useBuild(id: string | undefined, useName?: boolean) {
   return useRead("ListBuilds", {}).data?.find((r) =>

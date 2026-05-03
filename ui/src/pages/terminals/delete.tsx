@@ -1,6 +1,6 @@
 import { useTerminalTargetPermissions, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import ConfirmButton from "@/ui/confirm-button";
+import { ICONS } from "@/lib/icons";
+import { ConfirmButton } from "mogh_ui";
 import { ButtonProps } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";

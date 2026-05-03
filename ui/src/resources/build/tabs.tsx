@@ -1,18 +1,18 @@
-import { buildStateIntention, colorByIntention } from "@/lib/color";
+import { buildStateIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useMemo } from "react";
 import { useBuild } from ".";
 import BuildConfig from "./config";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import DeploymentTable from "../deployment/table";
 import BuildInfo from "./info";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { ResourceComponents } from "..";
 
 type BuildTabsView = "Config" | "Info" | "Resources";
@@ -86,10 +86,7 @@ export default function BuildTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs
-      color={colorByIntention(buildStateIntention(info?.state))}
-      value={view}
-    >
+    <Tabs color={buildStateIntention(info?.state)} value={view}>
       {View}
     </Tabs>
   );

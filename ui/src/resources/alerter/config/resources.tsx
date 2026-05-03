@@ -1,11 +1,11 @@
 import { useAllResources } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
-import { ICONS } from "@/theme/icons";
-import { ConfigItem } from "@/ui/config/item";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import SearchInput from "@/ui/search-input";
+import { ICONS } from "@/lib/icons";
+import { ConfigItem } from "mogh_ui";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
 import { Button, Group, Modal, Stack, Switch, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";

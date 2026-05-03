@@ -4,8 +4,8 @@ import { useExecute, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { parseKeyValue } from "@/lib/utils";
 import { useDeployment } from ".";
-import { ICONS } from "@/theme/icons";
-import ConfirmButton from "@/ui/confirm-button";
+import { ICONS } from "@/lib/icons";
+import { ConfirmButton } from "mogh_ui";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 interface DeploymentId {

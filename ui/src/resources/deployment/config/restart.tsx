@@ -1,5 +1,5 @@
-import { fmtUpperCamelcase } from "@/lib/formatting";
-import { ConfigItem } from "@/ui/config/item";
+import { fmtUpperCamelcase } from "mogh_ui";
+import { ConfigItem } from "mogh_ui";
 import { Select } from "@mantine/core";
 import { Types } from "komodo_client";
 

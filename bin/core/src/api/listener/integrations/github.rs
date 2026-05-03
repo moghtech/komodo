@@ -1,7 +1,7 @@
 use anyhow::{Context, anyhow};
 use axum::http::HeaderMap;
 use hex::ToHex;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit as _, Mac};
 use serde::Deserialize;
 use sha2::Sha256;
 

@@ -1,21 +1,21 @@
-import {
-  fmtDateWithMinutes,
-  fmtDuration,
-  fmtOperation,
-  fmtVersion,
-} from "@/lib/formatting";
+import { fmtVersion } from "@/lib/formatting";
 import { useRead } from "@/lib/hooks";
 import { useWebsocketMessages } from "@/lib/socket";
 import { updateLogToHtml, versionIsNone } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { ActionIcon, Code, Drawer, Group, Stack, Text } from "@mantine/core";
 import UserAvatar from "@/components/user-avatar";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Clock, Link2, SquarePen } from "lucide-react";
-import CopyButton from "@/ui/copy-button";
-import Section from "@/ui/section";
-import { MonacoDiffEditor } from "@/components/monaco";
-import LoadingScreen from "@/ui/loading-screen";
+import {
+  CopyButton,
+  fmtDateWithMinutes,
+  fmtDuration,
+  fmtUpperCamelcase,
+} from "mogh_ui";
+import { Section } from "mogh_ui";
+import { MonacoDiffEditor } from "mogh_ui";
+import { LoadingScreen } from "mogh_ui";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
 import { To, useLocation, useNavigate } from "react-router-dom";
@@ -69,6 +69,8 @@ export function UpdateDetailsContent({ id }: { id: string }) {
     if (update.id === id) refetch();
   });
 
+  const enableFancyToml = useRead("GetCoreInfo", {}).data?.enable_fancy_toml;
+
   if (!update) {
     return <LoadingScreen mt="0" h="50vh" />;
   }
@@ -83,7 +85,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
       {/** HEADER */}
       <Group justify="space-between">
         <Text fz="h2">
-          {fmtOperation(update.operation)}{" "}
+          {fmtUpperCamelcase(update.operation)}{" "}
           {!versionIsNone(update.version) && fmtVersion(update.version)}
         </Text>
         <ActionIcon size="lg" variant="filled" color="red" onClick={close}>
@@ -152,6 +154,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
               original={update.prev_toml}
               modified={update.current_toml}
               language="fancy_toml"
+              enableFancyToml={enableFancyToml}
               readOnly
             />
           </Section>

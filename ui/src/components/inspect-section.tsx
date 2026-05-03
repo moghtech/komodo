@@ -1,11 +1,11 @@
-import { ICONS } from "@/theme/icons";
-import Section, { SectionProps } from "@/ui/section";
+import { ICONS } from "@/lib/icons";
+import { Section, SectionProps } from "mogh_ui";
 import { useState } from "react";
-import { MonacoEditor } from "./monaco";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { Box } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
+import { MonacoEditor } from "mogh_ui";
 
 export interface InspectSectionProps extends Omit<SectionProps, "children"> {
   /* Inspect a read response */

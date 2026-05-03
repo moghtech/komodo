@@ -1,6 +1,6 @@
 {
   "name": "komodo_client",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "Komodo client package",
   "homepage": "https://komo.do",
   "main": "dist/lib.js",
@@ -13,7 +13,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "mogh_auth_client": "^1.2.1"
+    "mogh_auth_client": "^1.3.0"
   },
   "devDependencies": {
     "typescript": "^6.0.2"

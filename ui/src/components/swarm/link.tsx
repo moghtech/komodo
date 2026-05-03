@@ -1,12 +1,12 @@
 import {
-  hexColorByIntention,
   swarmNodeStateIntention,
   swarmStateIntention,
   swarmTaskStateIntention,
 } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Box, Group, Text } from "@mantine/core";
+import { hexColorByIntention } from "mogh_ui";
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 

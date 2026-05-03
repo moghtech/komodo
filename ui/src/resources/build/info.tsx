@@ -3,18 +3,17 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
 import { useFullBuild } from ".";
-import Section from "@/ui/section";
+import { fmtDuration, Section } from "mogh_ui";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { Clock, FilePlus } from "lucide-react";
 import { DEFAULT_BUILD_DOCKERFILE_CONTENTS } from "./config";
 import { updateLogToHtml } from "@/lib/utils";
-import CopyButton from "@/ui/copy-button";
-import { ICONS } from "@/theme/icons";
-import ConfirmUpdate from "@/ui/config/confirm";
-import ShowHideButton from "@/ui/show-hide-button";
-import { MonacoEditor } from "@/components/monaco";
-import { fmtDuration } from "@/lib/formatting";
+import { CopyButton } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { ConfirmUpdate } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
+import { MonacoEditor } from "mogh_ui";
 
 export default function BuildInfo({
   id,
@@ -168,7 +167,10 @@ export default function BuildInfo({
                   />
                 </>
               )}
-              <ShowHideButton show={show} setShow={() => setShow((show) => !show)} />
+              <ShowHideButton
+                show={show}
+                setShow={() => setShow((show) => !show)}
+              />
             </Group>
           </Group>
 

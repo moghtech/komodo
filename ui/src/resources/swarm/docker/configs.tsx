@@ -1,12 +1,12 @@
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ReactNode } from "react";
 import { useSwarmDockerSearch } from ".";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Badge, Group } from "@mantine/core";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import SwarmResourceLink from "@/components/swarm/link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import NewSwarmConfig from "@/resources/swarm/new/config";
 
 export default function SwarmConfigs({

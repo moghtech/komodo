@@ -16,7 +16,6 @@ import {
 } from "@/resources";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardSummary from "@/components/dashboard-summary";
-import FancyCard from "@/ui/fancy-card";
 import { TemplateMarker } from "@/components/template-marker";
 import Tags from "@/components/tags";
 import ResourceName from "@/resources/name";
@@ -24,6 +23,7 @@ import DeploymentUpdateAvailable from "@/resources/deployment/update-available";
 import StackUpdateAvailable from "@/resources/stack/update-available";
 import DashboardNoResources from "./no-resources";
 import ServerStatsCard from "@/resources/server/stats-card";
+import { FancyCard } from "mogh_ui";
 
 export default function DashboardRecents() {
   return (

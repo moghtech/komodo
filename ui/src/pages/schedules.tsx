@@ -7,13 +7,13 @@ import {
   useTags,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
-import { ICONS } from "@/theme/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Page from "@/ui/page";
-import SearchInput from "@/ui/search-input";
+import { ICONS } from "@/lib/icons";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Page } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
 import { Group, Stack, Switch } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";

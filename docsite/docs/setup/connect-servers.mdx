@@ -141,7 +141,7 @@ Core and Periphery authenticate using automatically generated public/private key
 
 ### How it works
 
-1. When you create an **onboarding key** in the UI or API, Komodo Core generates a key pair, and the private key is returned once the the user as the "onboarding key".
+1. When you create an **onboarding key** in the UI or API, Komodo Core generates a key pair, and the private key is returned once to the user as the "onboarding key".
 2. When Periphery first connects using the onboarding key, it generates its own key pair, and sends just the public key to Core.
    Core stores this public key for each Server.
 3. All subsequent communication is authenticated by performing a
@@ -163,7 +163,7 @@ Keys can also be specified inline in config instead of as file paths.
 ### Automatic key rotation
 
 Komodo supports automatic rotation of the Periphery key pairs.
-When triggered, already connected Periphery agents generate a new key pair and sends the new public key to Komodo Core,
+When triggered, already connected Periphery agents generate a new key pair and send the public key to Komodo Core,
 which updates its expected public key for that server.
 
 Each Server has an `auto_rotate_keys` setting (default: `true`) that controls whether it participates in the bulk `RotateAllServerKeys` operation.

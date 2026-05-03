@@ -235,6 +235,9 @@ pub fn core_config() -> &'static CoreConfig {
         env.komodo_oidc_additional_audiences,
       )
       .unwrap_or(config.oidc_additional_audiences),
+      oidc_auto_redirect: env
+        .komodo_oidc_auto_redirect
+        .unwrap_or(config.oidc_auto_redirect),
       google_oauth: NamedOauthConfig {
         enabled: env
           .komodo_google_oauth_enabled
@@ -312,6 +315,21 @@ pub fn core_config() -> &'static CoreConfig {
       session_allow_cross_site: env
         .komodo_session_allow_cross_site
         .unwrap_or(config.session_allow_cross_site),
+      x_content_type_options: env
+        .komodo_x_content_type_options
+        .unwrap_or(config.x_content_type_options),
+      x_frame_options: env
+        .komodo_x_frame_options
+        .unwrap_or(config.x_frame_options),
+      x_xss_protection: env
+        .komodo_x_xss_protection
+        .unwrap_or(config.x_xss_protection),
+      referrer_policy: env
+        .komodo_referrer_policy
+        .unwrap_or(config.referrer_policy),
+      content_security_policy: env
+        .komodo_content_security_policy
+        .unwrap_or(config.content_security_policy),
       resource_poll_interval: env
         .komodo_resource_poll_interval
         .unwrap_or(config.resource_poll_interval),

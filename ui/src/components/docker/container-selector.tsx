@@ -10,10 +10,11 @@ import {
   Text,
 } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useRead, useSearchCombobox } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { filterBySplit } from "@/lib/utils";
+import { useRead } from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
+import { filterBySplit } from "mogh_ui";
 import { DOCKER_LINK_ICONS } from "@/components/docker/link";
+import { useSearchCombobox } from "mogh_ui";
 
 export interface ContainerSelectorProps extends ComboboxProps {
   serverId: string;

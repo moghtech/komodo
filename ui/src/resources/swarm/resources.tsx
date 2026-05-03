@@ -1,6 +1,6 @@
 import { useRead, useUser } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import Section, { SectionProps } from "@/ui/section";
+import { ICONS } from "@/lib/icons";
+import { Section, SectionProps } from "mogh_ui";
 import { Types } from "komodo_client";
 import StackTable from "@/resources/stack/table";
 import DeploymentTable from "@/resources/deployment/table";

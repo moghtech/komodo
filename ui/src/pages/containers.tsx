@@ -1,17 +1,17 @@
 import ContainerPorts from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
 import { containerStateIntention } from "@/lib/color";
-import { useDebounce, useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { filterBySplit } from "@/lib/utils";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Page from "@/ui/page";
-import StatusBadge from "@/ui/status-badge";
+import { useRead } from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
+import { filterBySplit } from "mogh_ui";
+import { DataTable, SortableHeader, useDebounce } from "mogh_ui";
+import { Page } from "mogh_ui";
+import { StatusBadge } from "mogh_ui";
 import { Group, MultiSelect, Stack } from "@mantine/core";
 import { useCallback, useMemo, useState } from "react";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import ResourceLink from "@/resources/link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function Containers() {
   const [search, setSearch] = useState("");
