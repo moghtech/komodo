@@ -141,7 +141,7 @@ Core and Periphery authenticate using automatically generated public/private key
 
 ### How it works
 
-1. When you create an **onboarding key** in the UI or API, Komodo Core generates a key pair, and the private key is returned once the the user as the "onboarding key".
+1. When you create an **onboarding key** in the UI or API, Komodo Core generates a key pair, and the private key is returned once to the user as the "onboarding key".
 2. When Periphery first connects using the onboarding key, it generates its own key pair, and sends just the public key to Core.
    Core stores this public key for each Server.
 3. All subsequent communication is authenticated by performing a
