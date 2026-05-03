@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.9.2">
 <title data-rh="true">Connect More Servers | Komodo</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://komo.do/img/monitor-lizard.png"><meta data-rh="true" name="twitter:image" content="https://komo.do/img/monitor-lizard.png"><meta data-rh="true" property="og:url" content="https://komo.do/docs/setup/connect-servers"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Connect More Servers | Komodo"><meta data-rh="true" name="description" content="Every server you want to manage with Komodo needs the Periphery agent installed."><meta data-rh="true" property="og:description" content="Every server you want to manage with Komodo needs the Periphery agent installed."><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://komo.do/docs/setup/connect-servers"><link data-rh="true" rel="alternate" href="https://komo.do/docs/setup/connect-servers" hreflang="en"><link data-rh="true" rel="alternate" href="https://komo.do/docs/setup/connect-servers" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Setup","item":"https://komo.do/docs/setup/"},{"@type":"ListItem","position":2,"name":"Connect More Servers","item":"https://komo.do/docs/setup/connect-servers"}]}</script><link rel="stylesheet" href="/assets/css/styles.1906ceb0.css">
-<script src="/assets/js/runtime~main.b8476fe6.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.b2930497.js" defer="defer"></script>
 <script src="/assets/js/main.0eb432bc.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -86,7 +86,7 @@ for more information on configuring periphery.</p></div></div>
 <p>Core and Periphery authenticate using automatically generated public/private key pairs. No manual key management is required.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="how-it-works">How it works<a href="#how-it-works" class="hash-link" aria-label="Direct link to How it works" title="Direct link to How it works" translate="no">​</a></h3>
 <ol>
-<li class="">When you create an <strong>onboarding key</strong> in the UI or API, Komodo Core generates a key pair, and the private key is returned once the the user as the &quot;onboarding key&quot;.</li>
+<li class="">When you create an <strong>onboarding key</strong> in the UI or API, Komodo Core generates a key pair, and the private key is returned once to the user as the &quot;onboarding key&quot;.</li>
 <li class="">When Periphery first connects using the onboarding key, it generates its own key pair, and sends just the public key to Core.
 Core stores this public key for each Server.</li>
 <li class="">All subsequent communication is authenticated by performing a
@@ -99,7 +99,7 @@ and validating the transfered public key matches.</li>
 <p>Keys can also be specified inline in config instead of as file paths.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="automatic-key-rotation">Automatic key rotation<a href="#automatic-key-rotation" class="hash-link" aria-label="Direct link to Automatic key rotation" title="Direct link to Automatic key rotation" translate="no">​</a></h3>
 <p>Komodo supports automatic rotation of the Periphery key pairs.
-When triggered, already connected Periphery agents generate a new key pair and sends the new public key to Komodo Core,
+When triggered, already connected Periphery agents generate a new key pair and send the public key to Komodo Core,
 which updates its expected public key for that server.</p>
 <p>Each Server has an <code>auto_rotate_keys</code> setting (default: <code>true</code>) that controls whether it participates in the bulk <code>RotateAllServerKeys</code> operation.
 You can also rotate keys for individual servers at any time through the API or UI.</p>
