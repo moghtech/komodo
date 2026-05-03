@@ -163,7 +163,7 @@ Keys can also be specified inline in config instead of as file paths.
 ### Automatic key rotation
 
 Komodo supports automatic rotation of the Periphery key pairs.
-When triggered, already connected Periphery agents generate a new key pair and sends the new public key to Komodo Core,
+When triggered, already connected Periphery agents generate a new key pair and send the public key to Komodo Core,
 which updates its expected public key for that server.
 
 Each Server has an `auto_rotate_keys` setting (default: `true`) that controls whether it participates in the bulk `RotateAllServerKeys` operation.
