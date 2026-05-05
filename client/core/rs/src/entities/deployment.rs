@@ -450,6 +450,8 @@ pub enum DeploymentState {
   Created,
   /// Server mode only. Container is in restart loop
   Restarting,
+  /// Server mode only. Container is in the process of stopping
+  Stopping,
   /// Server mode only. Container is being removed
   Removing,
   /// Server mode only. Container is paused
@@ -477,6 +479,7 @@ impl From<ContainerStateStatusEnum> for DeploymentState {
       ContainerStateStatusEnum::Restarting => {
         DeploymentState::Restarting
       }
+      ContainerStateStatusEnum::Stopping => DeploymentState::Stopping,
       ContainerStateStatusEnum::Removing => DeploymentState::Removing,
       ContainerStateStatusEnum::Exited => DeploymentState::Exited,
       ContainerStateStatusEnum::Dead => DeploymentState::Dead,
