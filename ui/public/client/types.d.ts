@@ -1569,6 +1569,8 @@ export declare enum DeploymentState {
     Created = "created",
     /** Server mode only. Container is in restart loop */
     Restarting = "restarting",
+    /** Server mode only. Container is in the process of stopping */
+    Stopping = "stopping",
     /** Server mode only. Container is being removed */
     Removing = "removing",
     /** Server mode only. Container is paused */
@@ -3074,6 +3076,7 @@ export declare enum ContainerStateStatusEnum {
     Paused = "paused",
     Restarting = "restarting",
     Exited = "exited",
+    Stopping = "stopping",
     Removing = "removing",
     Dead = "dead",
     Empty = ""
@@ -3190,8 +3193,7 @@ export interface RestartPolicy {
     /** If `on-failure` is used, the number of times to retry before giving up. */
     MaximumRetryCount?: I64;
 }
-export declare enum MountTypeEnum {
-    Empty = "",
+export declare enum MountType {
     Bind = "bind",
     Volume = "volume",
     Image = "image",
@@ -3257,7 +3259,7 @@ export interface Mount {
      * - `tmpfs` Create a tmpfs with the given options. The mount source cannot be specified for tmpfs. - `npipe` Mounts a named pipe from the host into the container. Must exist prior to creating the container.
      * - `cluster` a Swarm cluster volume
      */
-    Type?: MountTypeEnum;
+    Type?: MountType;
     /** Whether the mount should be read-only. */
     ReadOnly?: boolean;
     /** The consistency requirement for the mount: `default`, `consistent`, `cached`, or `delegated`. */
@@ -3425,7 +3427,7 @@ export interface GraphDriverData {
 /** MountPoint represents a mount point configuration inside the container. This is used for reporting the mountpoints in use by a container. */
 export interface MountPoint {
     /** The mount type:  - `bind` a mount of a file or directory from the host into the container. - `volume` a docker volume with the given `Name`. - `tmpfs` a `tmpfs`. - `npipe` a named pipe from the host into the container. - `cluster` a Swarm cluster volume */
-    Type?: MountTypeEnum;
+    Type?: string;
     /** Name is the name reference to the underlying data defined by `Source` e.g., the volume name. */
     Name?: string;
     /** Source location of the mount.  For volumes, this contains the storage location of the volume (within `/var/lib/docker/volumes/`). For bind-mounts, and `npipe`, this contains the source (host) part of the bind-mount. For `tmpfs` mount points, this field is empty. */
@@ -4299,7 +4301,10 @@ export interface ClusterVolumeSpecAccessModeSecrets {
     /** Secret is the swarm Secret object from which to read data. This can be a Secret name or ID. The Secret data is retrieved by swarm and used as the value of the key-value pair passed to the plugin. */
     Secret?: string;
 }
-export type Topology = Record<string, PortBinding[]>;
+/** A map of topological domains to topological segments. For in depth details, see documentation for the Topology object in the CSI specification. */
+export interface Topology {
+    Segments?: Record<string, string>;
+}
 /** Requirements for the accessible topology of the volume. These fields are optional. For an in-depth description of what these fields mean, see the CSI specification. */
 export interface ClusterVolumeSpecAccessModeAccessibilityRequirements {
     /** A list of required topologies, at least one of which the volume must be accessible from. */
@@ -7410,7 +7415,7 @@ export interface GetCoreInfoResponse {
     enable_fancy_toml: boolean;
     /** TZ identifier Core is using, if manually set. */
     timezone: string;
-    /** Default public key allowing this Core to authenticate to Periphery agents. */
+    /** Public key for Core / Periphery authentication. */
     public_key: string;
 }
 /** Get a specific deployment by name or id. Response: [Deployment]. */
