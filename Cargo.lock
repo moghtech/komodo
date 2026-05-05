@@ -224,9 +224,9 @@ dependencies = [
 
 [[package]]
 name = "async-compression"
-version = "0.4.41"
+version = "0.4.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0f9ee0f6e02ffd7ad5816e9464499fba7b3effd01123b515c41d1697c43dad1"
+checksum = "e79b3f8a79cccc2898f31920fc69f304859b3bd567490f75ebf51ae1c792a9ac"
 dependencies = [
  "compression-codecs",
  "compression-core",
@@ -1180,7 +1180,7 @@ dependencies = [
  "mogh_error",
  "mogh_pki",
  "mogh_resolver",
- "reqwest 0.13.2",
+ "reqwest 0.13.3",
  "serde",
  "serde_json",
  "strum 0.28.0",
@@ -1307,7 +1307,7 @@ dependencies = [
 
 [[package]]
 name = "command"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "komodo_client",
  "shlex",
@@ -1317,9 +1317,9 @@ dependencies = [
 
 [[package]]
 name = "compression-codecs"
-version = "0.4.37"
+version = "0.4.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb7b51a7d9c967fc26773061ba86150f19c50c0d65c887cb1fbe295fd16619b7"
+checksum = "ce2548391e9c1929c21bf6aa2680af86fe4c1b33e6cea9ac1cfeec0bd11218cf"
 dependencies = [
  "compression-core",
  "flate2",
@@ -1328,9 +1328,9 @@ dependencies = [
 
 [[package]]
 name = "compression-core"
-version = "0.4.31"
+version = "0.4.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75984efb6ed102a0d42db99afb6c1948f0380d1d91808d5529916e6c08b49d8d"
+checksum = "cc14f565cf027a105f7a44ccf9e5b424348421a1d8952a8fc9d499d313107789"
 
 [[package]]
 name = "const-oid"
@@ -1680,7 +1680,7 @@ checksum = "a4ae5f15dda3c708c0ade84bfee31ccab44a3da4f88015ed22f63732abe300c8"
 
 [[package]]
 name = "database"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "async-compression",
@@ -1972,7 +1972,7 @@ dependencies = [
 
 [[package]]
 name = "encoding"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "bytes",
@@ -2014,7 +2014,7 @@ dependencies = [
 
 [[package]]
 name = "environment"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "formatting",
@@ -2166,7 +2166,7 @@ dependencies = [
 
 [[package]]
 name = "formatting"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "mogh_error",
 ]
@@ -2416,7 +2416,7 @@ dependencies = [
 
 [[package]]
 name = "git"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "command",
@@ -3228,7 +3228,7 @@ dependencies = [
 
 [[package]]
 name = "interpolate"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "komodo_client",
@@ -3430,7 +3430,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_cli"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "bcrypt",
@@ -3460,7 +3460,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_client"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -3482,7 +3482,7 @@ dependencies = [
  "mongo_indexed",
  "partial_derive2",
  "rand 0.10.1",
- "reqwest 0.13.2",
+ "reqwest 0.13.3",
  "serde",
  "serde_json",
  "serde_qs",
@@ -3499,7 +3499,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_core"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -3545,7 +3545,7 @@ dependencies = [
  "partial_derive2",
  "periphery_client",
  "regex",
- "reqwest 0.13.2",
+ "reqwest 0.13.3",
  "rustls 0.23.40",
  "serde",
  "serde_json",
@@ -3572,7 +3572,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_periphery"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -3810,7 +3810,7 @@ dependencies = [
  "anyhow",
  "mogh_error",
  "mogh_resolver",
- "reqwest 0.13.2",
+ "reqwest 0.13.3",
  "serde",
  "serde_json",
  "strum 0.28.0",
@@ -3840,7 +3840,7 @@ dependencies = [
  "mogh_validations",
  "openidconnect",
  "rand 0.10.1",
- "reqwest 0.13.2",
+ "reqwest 0.13.3",
  "serde",
  "serde_json",
  "strum 0.28.0",
@@ -4650,7 +4650,7 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
 name = "periphery_client"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "encoding",
@@ -5244,9 +5244,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.13.2"
+version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab3f43e3283ab1488b624b44b0e988d0acea0b3214e694730a055cb6b2efa801"
+checksum = "62e0021ea2c22aed41653bc7e1419abb2c97e038ff2c33d0e1309e49a97deec0"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -6977,7 +6977,7 @@ dependencies = [
 
 [[package]]
 name = "transport"
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 dependencies = [
  "anyhow",
  "axum",

@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "2.2.0-dev-6"
+version = "2.2.0-dev-7"
 edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -54,7 +54,7 @@ mungos = "3.2.2"
 svi = "1.2.0"
 
 # ASYNC
-reqwest = { version = "0.13.2", default-features = false, features = ["json", "stream", "form", "query", "rustls"] }
+reqwest = { version = "0.13.3", default-features = false, features = ["json", "stream", "form", "query", "rustls"] }
 tokio = { version = "1.52.2", features = ["full"] }
 tokio-util = { version = "0.7.18", features = ["io", "codec"] }
 tokio-stream = { version = "0.1.18", features = ["sync"] }
@@ -128,7 +128,7 @@ chrono = "0.4.44"
 croner = "3.0.1"
 
 # MISC
-async-compression = { version = "0.4.41", features = ["tokio", "gzip"] }
+async-compression = { version = "0.4.42", features = ["tokio", "gzip"] }
 derive_builder = "0.20.2"
 comfy-table = "7.2.2"
 typeshare = "1.0.5"
