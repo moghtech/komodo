@@ -215,6 +215,8 @@ pub struct SystemCommand {
   pub path: String,
   #[serde(default, deserialize_with = "file_contents_deserializer")]
   pub command: String,
+  #[serde(default)]
+  pub shell_mode: bool,
 }
 
 impl SystemCommand {
