@@ -345,9 +345,9 @@ auth_rate_limit_max_attempts = 5
 ## Default: 15
 auth_rate_limit_window_seconds = 15
 
-##################
-# CORS / SESSION #
-##################
+############################
+# CORS / SESSION / HEADERS #
+############################
 
 ## Specifically set list of CORS allowed origins.
 ## If empty, allows all origins (`*`).
@@ -364,7 +364,43 @@ cors_allow_credentials = false
 
 ## Enabling this sets 'SameSite=None', which allows externally
 ## hosted UIs to use the login flows.
+## Env: KOMODO_SESSION_ALLOW_CROSS_SITE
+## Default: false
 session_allow_cross_site = false
+
+## `X-Content-Type-Options` header value.
+## Set as empty string to omit the header.
+## Env: KOMODO_X_CONTENT_TYPE_OPTIONS
+## Default: "nosniff"
+x_content_type_options = "nosniff"
+
+## `X-Content-Type-Options` header value.
+## Set as empty string to omit the header.
+## Use "SAMEORIGIN" to allow same-origin embedding only.
+## Env: KOMODO_X_FRAME_OPTIONS
+## Default: "DENY"
+x_frame_options = "DENY"
+
+## `X-Xss-Protection` header value.
+## Set as empty string to omit the header.
+## Env: KOMODO_X_XSS_PROTECTION
+## Default: "1; mode=block"
+x_xss_protection = "1; mode=block"
+
+## Apply Referrer Policy directives.
+## If empty string, no header is applied.
+## Env: KOMODO_REFERRER_POLICY
+## Default: "strict-origin-when-cross-origin"
+referrer_policy = "strict-origin-when-cross-origin"
+
+## Apply Content Security Policy directives.
+## If empty string, no header is applied.
+## Env: KOMODO_CONTENT_SECURITY_POLICY
+## Default: ""
+##
+## Example:
+## `default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'`
+content_security_policy = ""
 
 ##################
 # POLL INTERVALS #
