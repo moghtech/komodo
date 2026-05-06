@@ -8,7 +8,7 @@ use std::fs;
 use std::path::PathBuf;
 
 #[derive(Debug, Args)]
-pub struct ResourceJsonSchema {
+pub struct ResourceSchema {
   #[clap(long)]
   pretty: bool,
   #[clap(flatten)]
@@ -25,7 +25,7 @@ struct Output {
   file: Option<PathBuf>,
 }
 
-impl XTask for ResourceJsonSchema {
+impl XTask for ResourceSchema {
   fn run(self) -> Result<()> {
     let schema = schema_for!(ResourcesToml);
 
