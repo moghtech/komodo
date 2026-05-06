@@ -29,6 +29,7 @@ use super::{
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[cfg_attr(feature = "schemars", schemars(rename = "Resources"))]
 pub struct ResourcesToml {
+  /// Declare a swarm
   #[serde(
     default,
     alias = "swarm",
@@ -37,6 +38,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "swarm"))]
   pub swarms: Vec<ResourceToml<_PartialSwarmConfig>>,
 
+  /// Declare a server
   #[serde(
     default,
     alias = "server",
@@ -45,14 +47,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "server"))]
   pub servers: Vec<ResourceToml<_PartialServerConfig>>,
 
-  #[serde(
-    default,
-    alias = "deployment",
-    skip_serializing_if = "Vec::is_empty"
-  )]
-  #[cfg_attr(feature = "schemars", schemars(rename = "deployment"))]
-  pub deployments: Vec<ResourceToml<_PartialDeploymentConfig>>,
-
+  /// Declare a stack
   #[serde(
     default,
     alias = "stack",
@@ -61,6 +56,16 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "stack"))]
   pub stacks: Vec<ResourceToml<_PartialStackConfig>>,
 
+  /// Declare a deployment
+  #[serde(
+    default,
+    alias = "deployment",
+    skip_serializing_if = "Vec::is_empty"
+  )]
+  #[cfg_attr(feature = "schemars", schemars(rename = "deployment"))]
+  pub deployments: Vec<ResourceToml<_PartialDeploymentConfig>>,
+
+  /// Declare a build
   #[serde(
     default,
     alias = "build",
@@ -69,6 +74,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "build"))]
   pub builds: Vec<ResourceToml<_PartialBuildConfig>>,
 
+  /// Declare a repo
   #[serde(
     default,
     alias = "repo",
@@ -77,6 +83,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "repo"))]
   pub repos: Vec<ResourceToml<_PartialRepoConfig>>,
 
+  /// Declare a procedure
   #[serde(
     default,
     alias = "procedure",
@@ -85,6 +92,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "procedure"))]
   pub procedures: Vec<ResourceToml<_PartialProcedureConfig>>,
 
+  /// Declare an action
   #[serde(
     default,
     alias = "action",
@@ -93,6 +101,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "action"))]
   pub actions: Vec<ResourceToml<_PartialActionConfig>>,
 
+  /// Declare an alerter
   #[serde(
     default,
     alias = "alerter",
@@ -101,6 +110,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "alerter"))]
   pub alerters: Vec<ResourceToml<_PartialAlerterConfig>>,
 
+  /// Declare a builder
   #[serde(
     default,
     alias = "builder",
@@ -109,6 +119,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "builder"))]
   pub builders: Vec<ResourceToml<_PartialBuilderConfig>>,
 
+  /// Declare a resource sync
   #[serde(
     default,
     alias = "resource_sync",
@@ -120,6 +131,7 @@ pub struct ResourcesToml {
   )]
   pub resource_syncs: Vec<ResourceToml<_PartialResourceSyncConfig>>,
 
+  /// Declare a user group
   #[serde(
     default,
     alias = "user_group",
@@ -128,6 +140,7 @@ pub struct ResourcesToml {
   #[cfg_attr(feature = "schemars", schemars(rename = "user_group"))]
   pub user_groups: Vec<UserGroupToml>,
 
+  /// Declare a variable
   #[serde(
     default,
     alias = "variable",

@@ -5,78 +5,91 @@
   "type": "object",
   "properties": {
     "swarm": {
+      "description": "Declare a swarm",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml"
       }
     },
     "server": {
+      "description": "Declare a server",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml2"
       }
     },
-    "deployment": {
+    "stack": {
+      "description": "Declare a stack",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml3"
       }
     },
-    "stack": {
+    "deployment": {
+      "description": "Declare a deployment",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml4"
       }
     },
     "build": {
+      "description": "Declare a build",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml5"
       }
     },
     "repo": {
+      "description": "Declare a repo",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml6"
       }
     },
     "procedure": {
+      "description": "Declare a procedure",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml7"
       }
     },
     "action": {
+      "description": "Declare an action",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml8"
       }
     },
     "alerter": {
+      "description": "Declare an alerter",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml9"
       }
     },
     "builder": {
+      "description": "Declare a builder",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml10"
       }
     },
     "resource_sync": {
+      "description": "Declare a resource sync",
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceToml11"
       }
     },
     "user_group": {
+      "description": "Declare a user group",
       "type": "array",
       "items": {
         "$ref": "#/$defs/UserGroupToml"
       }
     },
     "variable": {
+      "description": "Declare a variable",
       "type": "array",
       "items": {
         "$ref": "#/$defs/Variable"
@@ -478,328 +491,6 @@
       }
     },
     "ResourceToml3": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "description": "The resource name. Required",
-          "type": "string"
-        },
-        "description": {
-          "description": "The resource description. Optional.",
-          "type": "string"
-        },
-        "template": {
-          "description": "Mark resource as a template",
-          "type": "boolean"
-        },
-        "tags": {
-          "description": "Tag ids or names. Optional",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "deploy": {
-          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
-          "type": "boolean"
-        },
-        "after": {
-          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "config": {
-          "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialDeploymentConfig"
-        }
-      },
-      "required": [
-        "name"
-      ]
-    },
-    "PartialDeploymentConfig": {
-      "type": "object",
-      "properties": {
-        "swarm": {
-          "description": "The Swarm to deploy the Deployment on (as a Swarm Service), setting the Deployment into Swarm mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Deployment will be in Swarm mode.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "server": {
-          "description": "The Server to deploy the Deployment on, setting the Deployment into Container mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Deployment will be in Swarm mode.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "image": {
-          "description": "The image which the deployment deploys.\nCan either be a user inputted image, or a Komodo Build.",
-          "anyOf": [
-            {
-              "$ref": "#/$defs/DeploymentImage"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "image_registry_account": {
-          "description": "Configure the account used to pull the image from the registry.\nUsed with `docker login`.\n\n - If the field is empty string, will use the same account config as the build, or none at all if using image.\n - If the field contains an account, a token for the account must be available.\n - Will get the registry domain from the build / image",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "skip_secret_interp": {
-          "description": "Whether to skip secret interpolation into the deployment environment variables.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "redeploy_on_build": {
-          "description": "Whether to redeploy the deployment whenever the attached build finishes.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "poll_for_updates": {
-          "description": "Whether to poll for any updates to the image.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "auto_update": {
-          "description": "Whether to automatically redeploy when\nnewer a image is found. Will implicitly\nenable `poll_for_updates`, you don't need to\nenable both.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "send_alerts": {
-          "description": "Whether to send ContainerStateChange alerts for this deployment.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "links": {
-          "description": "Configure quick links that are displayed in the resource header",
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
-        "network": {
-          "description": "The network attached to the container.\nDefault is `host`.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "restart": {
-          "description": "The restart mode given to the container.",
-          "anyOf": [
-            {
-              "$ref": "#/$defs/RestartMode"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "command": {
-          "description": "This is interpolated at the end of the `docker run` command,\nwhich means they are either passed to the containers inner process,\nor replaces the container command, depending on use of ENTRYPOINT or CMD in dockerfile.\nEmpty is no command.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "replicas": {
-          "description": "The number of replicas for the Service.\n\nNote. Only used in Swarm mode.",
-          "type": [
-            "integer",
-            "null"
-          ],
-          "format": "int32"
-        },
-        "termination_signal": {
-          "description": "The default termination signal to use to stop the deployment. Defaults to SigTerm (default docker signal).",
-          "anyOf": [
-            {
-              "$ref": "#/$defs/TerminationSignal"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "termination_timeout": {
-          "description": "The termination timeout.",
-          "type": [
-            "integer",
-            "null"
-          ],
-          "format": "int32"
-        },
-        "extra_args": {
-          "description": "Extra args which are interpolated into the\n`docker run` / `docker service create` command,\nand affect the container configuration.\n\n- Container ref: https://docs.docker.com/reference/cli/docker/container/run/#options\n- Swarm Service ref: https://docs.docker.com/reference/cli/docker/service/create/#options",
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
-        "term_signal_labels": {
-          "description": "Labels attached to various termination signal options.\nUsed to specify different shutdown functionality depending\non the termination signal.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "ports": {
-          "description": "The container port mapping.\nIrrelevant if container network is `host`.\nMaps ports on host to ports on container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "volumes": {
-          "description": "The container volume mapping.\nMaps files / folders on host to files / folders in container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "environment": {
-          "description": "The environment variables passed to the container / service.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "labels": {
-          "description": "The docker labels given to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      }
-    },
-    "DeploymentImage": {
-      "oneOf": [
-        {
-          "description": "Deploy any external image.",
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "const": "Image"
-            },
-            "params": {
-              "type": "object",
-              "properties": {
-                "image": {
-                  "description": "The docker image, can be from any registry that works with docker and that the host server can reach.",
-                  "type": "string",
-                  "default": ""
-                }
-              }
-            }
-          },
-          "required": [
-            "type",
-            "params"
-          ]
-        },
-        {
-          "description": "Deploy a Komodo Build.",
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "const": "Build"
-            },
-            "params": {
-              "type": "object",
-              "properties": {
-                "build": {
-                  "description": "The id of the Build",
-                  "type": "string",
-                  "default": ""
-                },
-                "version": {
-                  "description": "Use a custom / older version of the image produced by the build.\nif version is 0.0.0, this means `latest` image.",
-                  "$ref": "#/$defs/Version",
-                  "default": {
-                    "major": 0,
-                    "minor": 0,
-                    "patch": 0
-                  }
-                }
-              }
-            }
-          },
-          "required": [
-            "type",
-            "params"
-          ]
-        }
-      ]
-    },
-    "Version": {
-      "type": "object",
-      "properties": {
-        "major": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "minor": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "patch": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "required": [
-        "major",
-        "minor",
-        "patch"
-      ]
-    },
-    "RestartMode": {
-      "type": "string",
-      "enum": [
-        "no",
-        "on-failure",
-        "always",
-        "unless-stopped"
-      ]
-    },
-    "TerminationSignal": {
-      "type": "string",
-      "enum": [
-        "SIGHUP",
-        "SIGINT",
-        "SIGQUIT",
-        "SIGTERM"
-      ]
-    },
-    "ResourceToml4": {
       "type": "object",
       "properties": {
         "name": {
@@ -1242,6 +933,328 @@
           "default": false
         }
       }
+    },
+    "ResourceToml4": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "$ref": "#/$defs/PartialDeploymentConfig"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialDeploymentConfig": {
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "The Swarm to deploy the Deployment on (as a Swarm Service), setting the Deployment into Swarm mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Deployment will be in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "server": {
+          "description": "The Server to deploy the Deployment on, setting the Deployment into Container mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Deployment will be in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "description": "The image which the deployment deploys.\nCan either be a user inputted image, or a Komodo Build.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeploymentImage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "image_registry_account": {
+          "description": "Configure the account used to pull the image from the registry.\nUsed with `docker login`.\n\n - If the field is empty string, will use the same account config as the build, or none at all if using image.\n - If the field contains an account, a token for the account must be available.\n - Will get the registry domain from the build / image",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "skip_secret_interp": {
+          "description": "Whether to skip secret interpolation into the deployment environment variables.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "redeploy_on_build": {
+          "description": "Whether to redeploy the deployment whenever the attached build finishes.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "poll_for_updates": {
+          "description": "Whether to poll for any updates to the image.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "auto_update": {
+          "description": "Whether to automatically redeploy when\nnewer a image is found. Will implicitly\nenable `poll_for_updates`, you don't need to\nenable both.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "send_alerts": {
+          "description": "Whether to send ContainerStateChange alerts for this deployment.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "links": {
+          "description": "Configure quick links that are displayed in the resource header",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "network": {
+          "description": "The network attached to the container.\nDefault is `host`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "restart": {
+          "description": "The restart mode given to the container.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RestartMode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "command": {
+          "description": "This is interpolated at the end of the `docker run` command,\nwhich means they are either passed to the containers inner process,\nor replaces the container command, depending on use of ENTRYPOINT or CMD in dockerfile.\nEmpty is no command.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "replicas": {
+          "description": "The number of replicas for the Service.\n\nNote. Only used in Swarm mode.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "termination_signal": {
+          "description": "The default termination signal to use to stop the deployment. Defaults to SigTerm (default docker signal).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TerminationSignal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "termination_timeout": {
+          "description": "The termination timeout.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "extra_args": {
+          "description": "Extra args which are interpolated into the\n`docker run` / `docker service create` command,\nand affect the container configuration.\n\n- Container ref: https://docs.docker.com/reference/cli/docker/container/run/#options\n- Swarm Service ref: https://docs.docker.com/reference/cli/docker/service/create/#options",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "term_signal_labels": {
+          "description": "Labels attached to various termination signal options.\nUsed to specify different shutdown functionality depending\non the termination signal.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ports": {
+          "description": "The container port mapping.\nIrrelevant if container network is `host`.\nMaps ports on host to ports on container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "volumes": {
+          "description": "The container volume mapping.\nMaps files / folders on host to files / folders in container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment": {
+          "description": "The environment variables passed to the container / service.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "labels": {
+          "description": "The docker labels given to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "DeploymentImage": {
+      "oneOf": [
+        {
+          "description": "Deploy any external image.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Image"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "image": {
+                  "description": "The docker image, can be from any registry that works with docker and that the host server can reach.",
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Deploy a Komodo Build.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Build"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "build": {
+                  "description": "The id of the Build",
+                  "type": "string",
+                  "default": ""
+                },
+                "version": {
+                  "description": "Use a custom / older version of the image produced by the build.\nif version is 0.0.0, this means `latest` image.",
+                  "$ref": "#/$defs/Version",
+                  "default": {
+                    "major": 0,
+                    "minor": 0,
+                    "patch": 0
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        }
+      ]
+    },
+    "Version": {
+      "type": "object",
+      "properties": {
+        "major": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "minor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "patch": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "major",
+        "minor",
+        "patch"
+      ]
+    },
+    "RestartMode": {
+      "type": "string",
+      "enum": [
+        "no",
+        "on-failure",
+        "always",
+        "unless-stopped"
+      ]
+    },
+    "TerminationSignal": {
+      "type": "string",
+      "enum": [
+        "SIGHUP",
+        "SIGINT",
+        "SIGQUIT",
+        "SIGTERM"
+      ]
     },
     "ResourceToml5": {
       "type": "object",
