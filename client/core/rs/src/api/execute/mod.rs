@@ -78,6 +78,7 @@ pub trait KomodoExecuteRequest: HasResponse {}
     utoipa::ToSchema
   ))
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(tag = "type", content = "params")]
 pub enum Execution {
   /// The "null" execution. Does nothing.
@@ -215,6 +216,7 @@ pub enum Execution {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Parser)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Sleep {
   #[serde(default)]
   pub duration_ms: I64,

@@ -27,6 +27,7 @@ pub fn deploy_stack() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -64,6 +65,7 @@ pub fn batch_deploy_stack() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(mogh_error::Error)]
@@ -103,6 +105,7 @@ pub fn deploy_stack_if_changed() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -134,6 +137,7 @@ pub fn batch_deploy_stack_if_changed() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(mogh_error::Error)]
@@ -171,6 +175,7 @@ pub fn pull_stack() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -203,6 +208,7 @@ pub fn batch_pull_stack() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(mogh_error::Error)]
@@ -240,6 +246,7 @@ pub fn start_stack() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -272,6 +279,7 @@ pub fn restart_stack() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -304,6 +312,7 @@ pub fn pause_stack() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -338,6 +347,7 @@ pub fn unpause_stack() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -370,6 +380,7 @@ pub fn stop_stack() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -404,6 +415,7 @@ pub fn destroy_stack() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -441,6 +453,7 @@ pub fn run_stack_service() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -505,6 +518,7 @@ pub fn batch_destroy_stack() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(mogh_error::Error)]

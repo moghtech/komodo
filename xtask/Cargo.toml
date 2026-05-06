@@ -1,0 +1,15 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+clap = { workspace = true }
+anyhow = { workspace = true }
+
+schemars = { workspace = true }
+komodo_client = { workspace = true, features = ["schemars"] }

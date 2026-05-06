@@ -260,12 +260,20 @@ pub type _PartialBuildConfig = PartialBuildConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct BuildConfig {
   /// Which builder is used to build the image.
   #[serde(default, alias = "builder")]
   #[partial_attr(serde(alias = "builder"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "builder"))
+  )]
   #[builder(default)]
   pub builder_id: String,
 
@@ -577,6 +585,7 @@ impl utoipa::ToSchema for PartialBuildConfig {}
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ImageRegistryConfig {
   /// Specify the registry provider domain, eg `docker.io`.
   /// If not provided, will not push to any registry.
