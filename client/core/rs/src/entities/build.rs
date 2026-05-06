@@ -280,6 +280,10 @@ pub struct BuildConfig {
   /// The current version of the build.
   #[serde(default)]
   #[builder(default)]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(default, schema_with = "version_schema"))
+  )]
   pub version: Version,
 
   /// Whether to automatically increment the patch on every build.
@@ -529,6 +533,26 @@ fn default_dockerfile_path() -> String {
 
 fn default_webhook_enabled() -> bool {
   true
+}
+
+#[cfg(feature = "schemars")]
+fn version_schema(
+  _: &mut schemars::SchemaGenerator,
+) -> schemars::Schema {
+  schemars::json_schema!({
+    "description": "The current version of the build.",
+    "anyOf": [
+      {
+        "$ref": "#/$defs/Version"
+      },
+      {
+        "type": "string"
+      },
+      {
+        "type": "null"
+      }
+    ]
+  })
 }
 
 impl Default for BuildConfig {

@@ -1302,6 +1302,9 @@
               "$ref": "#/$defs/Version"
             },
             {
+              "type": "string"
+            },
+            {
               "type": "null"
             }
           ]
