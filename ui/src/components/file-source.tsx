@@ -27,7 +27,7 @@ export default function FileSource({ info }: FileSourceProps) {
     return (
       <Group gap="xs" wrap="nowrap">
         <ICONS.Server size="1rem" />
-        <Text>Files on Server</Text>
+        <Text fz={{ base: "sm", lg: "md" }}>Files on Server</Text>
       </Group>
     );
   } else if (info.linked_repo) {
@@ -38,7 +38,7 @@ export default function FileSource({ info }: FileSourceProps) {
     return (
       <Group gap="xs" wrap="nowrap">
         <NotepadText size="1rem" />
-        <Text>UI Defined</Text>
+        <Text fz={{ base: "sm", lg: "md" }}>UI Defined</Text>
       </Group>
     );
   }
