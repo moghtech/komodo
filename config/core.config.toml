@@ -374,7 +374,7 @@ session_allow_cross_site = false
 ## Default: "nosniff"
 x_content_type_options = "nosniff"
 
-## `X-Content-Type-Options` header value.
+## `X-Frame-Options` header value.
 ## Set as empty string to omit the header.
 ## Use "SAMEORIGIN" to allow same-origin embedding only.
 ## Env: KOMODO_X_FRAME_OPTIONS
