@@ -101,7 +101,9 @@ export default function StackConfig({
   const disabled = global_disabled || !canWrite;
 
   const runBuild = update.run_build ?? config.run_build;
-  const poll_for_updates = update.poll_for_updates ?? config.poll_for_updates;
+  const autoOrPollUpdates =
+    (update.auto_update ?? config.auto_update) ||
+    (update.poll_for_updates ?? config.poll_for_updates);
 
   const mode = getStackMode(update, config);
 
@@ -398,14 +400,16 @@ export default function StackConfig({
           );
         },
         auto_update_skip_services: (values, set) =>
-          poll_for_updates && (
+          autoOrPollUpdates && (
             <ConfigItem
-              label="Ignore Services During Polling"
+              label="Ignore Services During Auto Update"
               description="Services listed here are skipped only during Global Auto Update checks. Manual checks still include all services."
             >
               <MultiSelect
                 leftSection={<ICONS.Service size="1rem" />}
-                placeholder={values?.length ? "Add services" : "Select services"}
+                placeholder={
+                  values?.length ? "Add services" : "Select services"
+                }
                 value={values}
                 data={allServices}
                 onChange={(auto_update_skip_services) =>

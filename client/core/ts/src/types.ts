@@ -7451,18 +7451,31 @@ export interface UserGroupToml {
 
 /** Specifies resources to sync on Komodo */
 export interface ResourcesToml {
+	/** Declare a swarm */
 	swarms?: ResourceToml<_PartialSwarmConfig>[];
+	/** Declare a server */
 	servers?: ResourceToml<_PartialServerConfig>[];
-	deployments?: ResourceToml<_PartialDeploymentConfig>[];
+	/** Declare a stack */
 	stacks?: ResourceToml<_PartialStackConfig>[];
+	/** Declare a deployment */
+	deployments?: ResourceToml<_PartialDeploymentConfig>[];
+	/** Declare a build */
 	builds?: ResourceToml<_PartialBuildConfig>[];
+	/** Declare a repo */
 	repos?: ResourceToml<_PartialRepoConfig>[];
+	/** Declare a procedure */
 	procedures?: ResourceToml<_PartialProcedureConfig>[];
+	/** Declare an action */
 	actions?: ResourceToml<_PartialActionConfig>[];
+	/** Declare an alerter */
 	alerters?: ResourceToml<_PartialAlerterConfig>[];
+	/** Declare a builder */
 	builders?: ResourceToml<_PartialBuilderConfig>[];
+	/** Declare a resource sync */
 	resource_syncs?: ResourceToml<_PartialResourceSyncConfig>[];
+	/** Declare a user group */
 	user_groups?: UserGroupToml[];
+	/** Declare a variable */
 	variables?: Variable[];
 }
 
