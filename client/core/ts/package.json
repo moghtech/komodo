@@ -13,7 +13,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "mogh_auth_client": "^1.3.0"
+    "mogh_auth_client": "^1.5.0"
   },
   "devDependencies": {
     "typescript": "^6.0.2"

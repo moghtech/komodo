@@ -904,10 +904,10 @@ marked@14.0.0:
   resolved "https://registry.yarnpkg.com/marked/-/marked-14.0.0.tgz#79a1477358a59e0660276f8fec76de2c33f35d83"
   integrity sha512-uIj4+faQ+MgHgwUW1l2PsPglZLOLOT1uErt06dAPtx2kjteLAkbsd/0FiYg/MGS+i7ZKLb7w2WClxHkzOOuryQ==
 
-mogh_auth_client@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/mogh_auth_client/-/mogh_auth_client-1.3.0.tgz#0effd785ccff7a69ab7c900ccffba5a1d5b42015"
-  integrity sha512-96vCjtx+hP3sFNpfXjbs/eQfz/c6GBYA+MGOgj/9n2B2xJwtm7UDt/9p8OA2JqPXL/9zml5sH6oXIakiRoFsJg==
+mogh_auth_client@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/mogh_auth_client/-/mogh_auth_client-1.5.0.tgz#f54b8ae35648d5bf1e60d7b67fcdcef45b0ccd7a"
+  integrity sha512-eUQmx682AzJRaY4QJSALtIGxXzg2r2Tr8exnDeFMrNe0Ibn4Oqm3h9SkOzYiqqZjKQ13wvHm0RoxT2QKo+908g==
   dependencies:
     jwt-decode "^4.0.0"
 
