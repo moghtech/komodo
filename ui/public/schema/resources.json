@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Resources",
   "description": "Specifies resources to sync on Komodo",
   "type": "object",
@@ -8,95 +8,95 @@
       "description": "Declare a swarm",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml"
+        "$ref": "#/definitions/ResourceToml"
       }
     },
     "server": {
       "description": "Declare a server",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml2"
+        "$ref": "#/definitions/ResourceToml2"
       }
     },
     "stack": {
       "description": "Declare a stack",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml3"
+        "$ref": "#/definitions/ResourceToml3"
       }
     },
     "deployment": {
       "description": "Declare a deployment",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml4"
+        "$ref": "#/definitions/ResourceToml4"
       }
     },
     "build": {
       "description": "Declare a build",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml5"
+        "$ref": "#/definitions/ResourceToml5"
       }
     },
     "repo": {
       "description": "Declare a repo",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml6"
+        "$ref": "#/definitions/ResourceToml6"
       }
     },
     "procedure": {
       "description": "Declare a procedure",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml7"
+        "$ref": "#/definitions/ResourceToml7"
       }
     },
     "action": {
       "description": "Declare an action",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml8"
+        "$ref": "#/definitions/ResourceToml8"
       }
     },
     "alerter": {
       "description": "Declare an alerter",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml9"
+        "$ref": "#/definitions/ResourceToml9"
       }
     },
     "builder": {
       "description": "Declare a builder",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml10"
+        "$ref": "#/definitions/ResourceToml10"
       }
     },
     "resource_sync": {
       "description": "Declare a resource sync",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/ResourceToml11"
+        "$ref": "#/definitions/ResourceToml11"
       }
     },
     "user_group": {
       "description": "Declare a user group",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/UserGroupToml"
+        "$ref": "#/definitions/UserGroupToml"
       }
     },
     "variable": {
       "description": "Declare a variable",
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Variable"
+        "$ref": "#/definitions/Variable"
       }
     }
   },
-  "$defs": {
+  "definitions": {
     "ResourceToml": {
       "type": "object",
       "properties": {
@@ -132,7 +132,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialSwarmConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialSwarmConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -176,7 +180,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/MaintenanceWindow"
+            "$ref": "#/definitions/MaintenanceWindow"
           }
         }
       }
@@ -196,8 +200,12 @@
         },
         "schedule_type": {
           "description": "The type of maintenance schedule:\n  - Daily (default)\n  - Weekly\n  - OneTime",
-          "$ref": "#/$defs/MaintenanceScheduleType",
-          "default": "Daily"
+          "default": "Daily",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MaintenanceScheduleType"
+            }
+          ]
         },
         "day_of_week": {
           "description": "For Weekly schedules: Specify the day of the week (Monday, Tuesday, etc.)",
@@ -302,7 +310,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialServerConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialServerConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -485,7 +497,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/MaintenanceWindow"
+            "$ref": "#/definitions/MaintenanceWindow"
           }
         }
       }
@@ -525,7 +537,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialStackConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialStackConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -737,7 +753,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/AdditionalEnvFile"
+            "$ref": "#/definitions/AdditionalEnvFile"
           }
         },
         "config_files": {
@@ -747,7 +763,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/StackFileDependency"
+            "$ref": "#/definitions/StackFileDependency"
           }
         },
         "send_alerts": {
@@ -775,7 +791,7 @@
           "description": "The optional command to run before the Stack is deployed.",
           "anyOf": [
             {
-              "$ref": "#/$defs/SystemCommand"
+              "$ref": "#/definitions/SystemCommand"
             },
             {
               "type": "null"
@@ -786,7 +802,7 @@
           "description": "The optional command to run after the Stack is deployed.",
           "anyOf": [
             {
-              "$ref": "#/$defs/SystemCommand"
+              "$ref": "#/definitions/SystemCommand"
             },
             {
               "type": "null"
@@ -891,7 +907,11 @@
         },
         "requires": {
           "description": "Specify",
-          "$ref": "#/$defs/StackFileRequires"
+          "allOf": [
+            {
+              "$ref": "#/definitions/StackFileRequires"
+            }
+          ]
         }
       },
       "required": [
@@ -969,7 +989,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialDeploymentConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialDeploymentConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -997,7 +1021,7 @@
           "description": "The image which the deployment deploys.\nCan either be a user inputted image, or a Komodo Build.",
           "anyOf": [
             {
-              "$ref": "#/$defs/DeploymentImage"
+              "$ref": "#/definitions/DeploymentImage"
             },
             {
               "type": "null"
@@ -1067,7 +1091,7 @@
           "description": "The restart mode given to the container.",
           "anyOf": [
             {
-              "$ref": "#/$defs/RestartMode"
+              "$ref": "#/definitions/RestartMode"
             },
             {
               "type": "null"
@@ -1093,7 +1117,7 @@
           "description": "The default termination signal to use to stop the deployment. Defaults to SigTerm (default docker signal).",
           "anyOf": [
             {
-              "$ref": "#/$defs/TerminationSignal"
+              "$ref": "#/definitions/TerminationSignal"
             },
             {
               "type": "null"
@@ -1199,12 +1223,16 @@
                 },
                 "version": {
                   "description": "Use a custom / older version of the image produced by the build.\nif version is 0.0.0, this means `latest` image.",
-                  "$ref": "#/$defs/Version",
                   "default": {
                     "major": 0,
                     "minor": 0,
                     "patch": 0
-                  }
+                  },
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Version"
+                    }
+                  ]
                 }
               }
             }
@@ -1291,7 +1319,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialBuildConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialBuildConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -1465,7 +1497,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/ImageRegistryConfig"
+            "$ref": "#/definitions/ImageRegistryConfig"
           }
         },
         "skip_secret_interp": {
@@ -1496,7 +1528,7 @@
           "description": "The optional command run after repo clone and before docker build.",
           "anyOf": [
             {
-              "$ref": "#/$defs/SystemCommand"
+              "$ref": "#/definitions/SystemCommand"
             },
             {
               "type": "null"
@@ -1589,7 +1621,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialRepoConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialRepoConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -1680,7 +1716,7 @@
           "description": "Command to be run after the repo is cloned.\nThe path is relative to the root of the repo.",
           "anyOf": [
             {
-              "$ref": "#/$defs/SystemCommand"
+              "$ref": "#/definitions/SystemCommand"
             },
             {
               "type": "null"
@@ -1691,7 +1727,7 @@
           "description": "Command to be run after the repo is pulled.\nThe path is relative to the root of the repo.",
           "anyOf": [
             {
-              "$ref": "#/$defs/SystemCommand"
+              "$ref": "#/definitions/SystemCommand"
             },
             {
               "type": "null"
@@ -1766,7 +1802,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialProcedureConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialProcedureConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -1783,14 +1823,14 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/ProcedureStage"
+            "$ref": "#/definitions/ProcedureStage"
           }
         },
         "schedule_format": {
           "description": "Choose whether to specify schedule as regular CRON, or using the english to CRON parser.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ScheduleFormat"
+              "$ref": "#/definitions/ScheduleFormat"
             },
             {
               "type": "null"
@@ -1865,7 +1905,7 @@
           "description": "The executions in the stage",
           "type": "array",
           "items": {
-            "$ref": "#/$defs/EnabledExecution"
+            "$ref": "#/definitions/EnabledExecution"
           },
           "default": []
         }
@@ -1880,7 +1920,11 @@
       "properties": {
         "execution": {
           "description": "The execution request to run.",
-          "$ref": "#/$defs/Execution"
+          "allOf": [
+            {
+              "$ref": "#/definitions/Execution"
+            }
+          ]
         },
         "enabled": {
           "description": "Whether the execution is enabled to run in the procedure.",
@@ -1904,7 +1948,7 @@
               "const": "None"
             },
             "params": {
-              "$ref": "#/$defs/NoData"
+              "$ref": "#/definitions/NoData"
             }
           },
           "required": [
@@ -1921,7 +1965,7 @@
               "const": "DeployStack"
             },
             "params": {
-              "$ref": "#/$defs/DeployStack"
+              "$ref": "#/definitions/DeployStack"
             }
           },
           "required": [
@@ -1937,7 +1981,7 @@
               "const": "BatchDeployStack"
             },
             "params": {
-              "$ref": "#/$defs/BatchDeployStack"
+              "$ref": "#/definitions/BatchDeployStack"
             }
           },
           "required": [
@@ -1953,7 +1997,7 @@
               "const": "DeployStackIfChanged"
             },
             "params": {
-              "$ref": "#/$defs/DeployStackIfChanged"
+              "$ref": "#/definitions/DeployStackIfChanged"
             }
           },
           "required": [
@@ -1969,7 +2013,7 @@
               "const": "BatchDeployStackIfChanged"
             },
             "params": {
-              "$ref": "#/$defs/BatchDeployStackIfChanged"
+              "$ref": "#/definitions/BatchDeployStackIfChanged"
             }
           },
           "required": [
@@ -1985,7 +2029,7 @@
               "const": "PullStack"
             },
             "params": {
-              "$ref": "#/$defs/PullStack"
+              "$ref": "#/definitions/PullStack"
             }
           },
           "required": [
@@ -2001,7 +2045,7 @@
               "const": "BatchPullStack"
             },
             "params": {
-              "$ref": "#/$defs/BatchPullStack"
+              "$ref": "#/definitions/BatchPullStack"
             }
           },
           "required": [
@@ -2017,7 +2061,7 @@
               "const": "StartStack"
             },
             "params": {
-              "$ref": "#/$defs/StartStack"
+              "$ref": "#/definitions/StartStack"
             }
           },
           "required": [
@@ -2033,7 +2077,7 @@
               "const": "RestartStack"
             },
             "params": {
-              "$ref": "#/$defs/RestartStack"
+              "$ref": "#/definitions/RestartStack"
             }
           },
           "required": [
@@ -2049,7 +2093,7 @@
               "const": "PauseStack"
             },
             "params": {
-              "$ref": "#/$defs/PauseStack"
+              "$ref": "#/definitions/PauseStack"
             }
           },
           "required": [
@@ -2065,7 +2109,7 @@
               "const": "UnpauseStack"
             },
             "params": {
-              "$ref": "#/$defs/UnpauseStack"
+              "$ref": "#/definitions/UnpauseStack"
             }
           },
           "required": [
@@ -2081,7 +2125,7 @@
               "const": "StopStack"
             },
             "params": {
-              "$ref": "#/$defs/StopStack"
+              "$ref": "#/definitions/StopStack"
             }
           },
           "required": [
@@ -2097,7 +2141,7 @@
               "const": "DestroyStack"
             },
             "params": {
-              "$ref": "#/$defs/DestroyStack"
+              "$ref": "#/definitions/DestroyStack"
             }
           },
           "required": [
@@ -2113,7 +2157,7 @@
               "const": "BatchDestroyStack"
             },
             "params": {
-              "$ref": "#/$defs/BatchDestroyStack"
+              "$ref": "#/definitions/BatchDestroyStack"
             }
           },
           "required": [
@@ -2129,7 +2173,7 @@
               "const": "RunStackService"
             },
             "params": {
-              "$ref": "#/$defs/RunStackService"
+              "$ref": "#/definitions/RunStackService"
             }
           },
           "required": [
@@ -2146,7 +2190,7 @@
               "const": "Deploy"
             },
             "params": {
-              "$ref": "#/$defs/Deploy"
+              "$ref": "#/definitions/Deploy"
             }
           },
           "required": [
@@ -2162,7 +2206,7 @@
               "const": "BatchDeploy"
             },
             "params": {
-              "$ref": "#/$defs/BatchDeploy"
+              "$ref": "#/definitions/BatchDeploy"
             }
           },
           "required": [
@@ -2178,7 +2222,7 @@
               "const": "PullDeployment"
             },
             "params": {
-              "$ref": "#/$defs/PullDeployment"
+              "$ref": "#/definitions/PullDeployment"
             }
           },
           "required": [
@@ -2194,7 +2238,7 @@
               "const": "StartDeployment"
             },
             "params": {
-              "$ref": "#/$defs/StartDeployment"
+              "$ref": "#/definitions/StartDeployment"
             }
           },
           "required": [
@@ -2210,7 +2254,7 @@
               "const": "RestartDeployment"
             },
             "params": {
-              "$ref": "#/$defs/RestartDeployment"
+              "$ref": "#/definitions/RestartDeployment"
             }
           },
           "required": [
@@ -2226,7 +2270,7 @@
               "const": "PauseDeployment"
             },
             "params": {
-              "$ref": "#/$defs/PauseDeployment"
+              "$ref": "#/definitions/PauseDeployment"
             }
           },
           "required": [
@@ -2242,7 +2286,7 @@
               "const": "UnpauseDeployment"
             },
             "params": {
-              "$ref": "#/$defs/UnpauseDeployment"
+              "$ref": "#/definitions/UnpauseDeployment"
             }
           },
           "required": [
@@ -2258,7 +2302,7 @@
               "const": "StopDeployment"
             },
             "params": {
-              "$ref": "#/$defs/StopDeployment"
+              "$ref": "#/definitions/StopDeployment"
             }
           },
           "required": [
@@ -2274,7 +2318,7 @@
               "const": "DestroyDeployment"
             },
             "params": {
-              "$ref": "#/$defs/DestroyDeployment"
+              "$ref": "#/definitions/DestroyDeployment"
             }
           },
           "required": [
@@ -2290,7 +2334,7 @@
               "const": "BatchDestroyDeployment"
             },
             "params": {
-              "$ref": "#/$defs/BatchDestroyDeployment"
+              "$ref": "#/definitions/BatchDestroyDeployment"
             }
           },
           "required": [
@@ -2307,7 +2351,7 @@
               "const": "RunBuild"
             },
             "params": {
-              "$ref": "#/$defs/RunBuild"
+              "$ref": "#/definitions/RunBuild"
             }
           },
           "required": [
@@ -2323,7 +2367,7 @@
               "const": "BatchRunBuild"
             },
             "params": {
-              "$ref": "#/$defs/BatchRunBuild"
+              "$ref": "#/definitions/BatchRunBuild"
             }
           },
           "required": [
@@ -2339,7 +2383,7 @@
               "const": "CancelBuild"
             },
             "params": {
-              "$ref": "#/$defs/CancelBuild"
+              "$ref": "#/definitions/CancelBuild"
             }
           },
           "required": [
@@ -2356,7 +2400,7 @@
               "const": "CloneRepo"
             },
             "params": {
-              "$ref": "#/$defs/CloneRepo"
+              "$ref": "#/definitions/CloneRepo"
             }
           },
           "required": [
@@ -2372,7 +2416,7 @@
               "const": "BatchCloneRepo"
             },
             "params": {
-              "$ref": "#/$defs/BatchCloneRepo"
+              "$ref": "#/definitions/BatchCloneRepo"
             }
           },
           "required": [
@@ -2388,7 +2432,7 @@
               "const": "PullRepo"
             },
             "params": {
-              "$ref": "#/$defs/PullRepo"
+              "$ref": "#/definitions/PullRepo"
             }
           },
           "required": [
@@ -2404,7 +2448,7 @@
               "const": "BatchPullRepo"
             },
             "params": {
-              "$ref": "#/$defs/BatchPullRepo"
+              "$ref": "#/definitions/BatchPullRepo"
             }
           },
           "required": [
@@ -2420,7 +2464,7 @@
               "const": "BuildRepo"
             },
             "params": {
-              "$ref": "#/$defs/BuildRepo"
+              "$ref": "#/definitions/BuildRepo"
             }
           },
           "required": [
@@ -2436,7 +2480,7 @@
               "const": "BatchBuildRepo"
             },
             "params": {
-              "$ref": "#/$defs/BatchBuildRepo"
+              "$ref": "#/definitions/BatchBuildRepo"
             }
           },
           "required": [
@@ -2452,7 +2496,7 @@
               "const": "CancelRepoBuild"
             },
             "params": {
-              "$ref": "#/$defs/CancelRepoBuild"
+              "$ref": "#/definitions/CancelRepoBuild"
             }
           },
           "required": [
@@ -2469,7 +2513,7 @@
               "const": "RunProcedure"
             },
             "params": {
-              "$ref": "#/$defs/RunProcedure"
+              "$ref": "#/definitions/RunProcedure"
             }
           },
           "required": [
@@ -2485,7 +2529,7 @@
               "const": "BatchRunProcedure"
             },
             "params": {
-              "$ref": "#/$defs/BatchRunProcedure"
+              "$ref": "#/definitions/BatchRunProcedure"
             }
           },
           "required": [
@@ -2502,7 +2546,7 @@
               "const": "RunAction"
             },
             "params": {
-              "$ref": "#/$defs/RunAction"
+              "$ref": "#/definitions/RunAction"
             }
           },
           "required": [
@@ -2518,7 +2562,7 @@
               "const": "BatchRunAction"
             },
             "params": {
-              "$ref": "#/$defs/BatchRunAction"
+              "$ref": "#/definitions/BatchRunAction"
             }
           },
           "required": [
@@ -2535,7 +2579,7 @@
               "const": "RunSync"
             },
             "params": {
-              "$ref": "#/$defs/RunSync"
+              "$ref": "#/definitions/RunSync"
             }
           },
           "required": [
@@ -2552,7 +2596,7 @@
               "const": "CommitSync"
             },
             "params": {
-              "$ref": "#/$defs/CommitSync"
+              "$ref": "#/definitions/CommitSync"
             }
           },
           "required": [
@@ -2568,7 +2612,7 @@
               "const": "TestAlerter"
             },
             "params": {
-              "$ref": "#/$defs/TestAlerter"
+              "$ref": "#/definitions/TestAlerter"
             }
           },
           "required": [
@@ -2584,7 +2628,7 @@
               "const": "SendAlert"
             },
             "params": {
-              "$ref": "#/$defs/SendAlert"
+              "$ref": "#/definitions/SendAlert"
             }
           },
           "required": [
@@ -2600,7 +2644,7 @@
               "const": "StartContainer"
             },
             "params": {
-              "$ref": "#/$defs/StartContainer"
+              "$ref": "#/definitions/StartContainer"
             }
           },
           "required": [
@@ -2616,7 +2660,7 @@
               "const": "RestartContainer"
             },
             "params": {
-              "$ref": "#/$defs/RestartContainer"
+              "$ref": "#/definitions/RestartContainer"
             }
           },
           "required": [
@@ -2632,7 +2676,7 @@
               "const": "PauseContainer"
             },
             "params": {
-              "$ref": "#/$defs/PauseContainer"
+              "$ref": "#/definitions/PauseContainer"
             }
           },
           "required": [
@@ -2648,7 +2692,7 @@
               "const": "UnpauseContainer"
             },
             "params": {
-              "$ref": "#/$defs/UnpauseContainer"
+              "$ref": "#/definitions/UnpauseContainer"
             }
           },
           "required": [
@@ -2664,7 +2708,7 @@
               "const": "StopContainer"
             },
             "params": {
-              "$ref": "#/$defs/StopContainer"
+              "$ref": "#/definitions/StopContainer"
             }
           },
           "required": [
@@ -2680,7 +2724,7 @@
               "const": "DestroyContainer"
             },
             "params": {
-              "$ref": "#/$defs/DestroyContainer"
+              "$ref": "#/definitions/DestroyContainer"
             }
           },
           "required": [
@@ -2696,7 +2740,7 @@
               "const": "StartAllContainers"
             },
             "params": {
-              "$ref": "#/$defs/StartAllContainers"
+              "$ref": "#/definitions/StartAllContainers"
             }
           },
           "required": [
@@ -2712,7 +2756,7 @@
               "const": "RestartAllContainers"
             },
             "params": {
-              "$ref": "#/$defs/RestartAllContainers"
+              "$ref": "#/definitions/RestartAllContainers"
             }
           },
           "required": [
@@ -2728,7 +2772,7 @@
               "const": "PauseAllContainers"
             },
             "params": {
-              "$ref": "#/$defs/PauseAllContainers"
+              "$ref": "#/definitions/PauseAllContainers"
             }
           },
           "required": [
@@ -2744,7 +2788,7 @@
               "const": "UnpauseAllContainers"
             },
             "params": {
-              "$ref": "#/$defs/UnpauseAllContainers"
+              "$ref": "#/definitions/UnpauseAllContainers"
             }
           },
           "required": [
@@ -2760,7 +2804,7 @@
               "const": "StopAllContainers"
             },
             "params": {
-              "$ref": "#/$defs/StopAllContainers"
+              "$ref": "#/definitions/StopAllContainers"
             }
           },
           "required": [
@@ -2776,7 +2820,7 @@
               "const": "PruneContainers"
             },
             "params": {
-              "$ref": "#/$defs/PruneContainers"
+              "$ref": "#/definitions/PruneContainers"
             }
           },
           "required": [
@@ -2792,7 +2836,7 @@
               "const": "DeleteNetwork"
             },
             "params": {
-              "$ref": "#/$defs/DeleteNetwork"
+              "$ref": "#/definitions/DeleteNetwork"
             }
           },
           "required": [
@@ -2808,7 +2852,7 @@
               "const": "PruneNetworks"
             },
             "params": {
-              "$ref": "#/$defs/PruneNetworks"
+              "$ref": "#/definitions/PruneNetworks"
             }
           },
           "required": [
@@ -2824,7 +2868,7 @@
               "const": "DeleteImage"
             },
             "params": {
-              "$ref": "#/$defs/DeleteImage"
+              "$ref": "#/definitions/DeleteImage"
             }
           },
           "required": [
@@ -2840,7 +2884,7 @@
               "const": "PruneImages"
             },
             "params": {
-              "$ref": "#/$defs/PruneImages"
+              "$ref": "#/definitions/PruneImages"
             }
           },
           "required": [
@@ -2856,7 +2900,7 @@
               "const": "DeleteVolume"
             },
             "params": {
-              "$ref": "#/$defs/DeleteVolume"
+              "$ref": "#/definitions/DeleteVolume"
             }
           },
           "required": [
@@ -2872,7 +2916,7 @@
               "const": "PruneVolumes"
             },
             "params": {
-              "$ref": "#/$defs/PruneVolumes"
+              "$ref": "#/definitions/PruneVolumes"
             }
           },
           "required": [
@@ -2888,7 +2932,7 @@
               "const": "PruneDockerBuilders"
             },
             "params": {
-              "$ref": "#/$defs/PruneDockerBuilders"
+              "$ref": "#/definitions/PruneDockerBuilders"
             }
           },
           "required": [
@@ -2904,7 +2948,7 @@
               "const": "PruneBuildx"
             },
             "params": {
-              "$ref": "#/$defs/PruneBuildx"
+              "$ref": "#/definitions/PruneBuildx"
             }
           },
           "required": [
@@ -2920,7 +2964,7 @@
               "const": "PruneSystem"
             },
             "params": {
-              "$ref": "#/$defs/PruneSystem"
+              "$ref": "#/definitions/PruneSystem"
             }
           },
           "required": [
@@ -2936,7 +2980,7 @@
               "const": "RemoveSwarmNodes"
             },
             "params": {
-              "$ref": "#/$defs/RemoveSwarmNodes"
+              "$ref": "#/definitions/RemoveSwarmNodes"
             }
           },
           "required": [
@@ -2952,7 +2996,7 @@
               "const": "UpdateSwarmNode"
             },
             "params": {
-              "$ref": "#/$defs/UpdateSwarmNode"
+              "$ref": "#/definitions/UpdateSwarmNode"
             }
           },
           "required": [
@@ -2968,7 +3012,7 @@
               "const": "RemoveSwarmStacks"
             },
             "params": {
-              "$ref": "#/$defs/RemoveSwarmStacks"
+              "$ref": "#/definitions/RemoveSwarmStacks"
             }
           },
           "required": [
@@ -2984,7 +3028,7 @@
               "const": "RemoveSwarmServices"
             },
             "params": {
-              "$ref": "#/$defs/RemoveSwarmServices"
+              "$ref": "#/definitions/RemoveSwarmServices"
             }
           },
           "required": [
@@ -3000,7 +3044,7 @@
               "const": "CreateSwarmConfig"
             },
             "params": {
-              "$ref": "#/$defs/CreateSwarmConfig"
+              "$ref": "#/definitions/CreateSwarmConfig"
             }
           },
           "required": [
@@ -3016,7 +3060,7 @@
               "const": "RotateSwarmConfig"
             },
             "params": {
-              "$ref": "#/$defs/RotateSwarmConfig"
+              "$ref": "#/definitions/RotateSwarmConfig"
             }
           },
           "required": [
@@ -3032,7 +3076,7 @@
               "const": "RemoveSwarmConfigs"
             },
             "params": {
-              "$ref": "#/$defs/RemoveSwarmConfigs"
+              "$ref": "#/definitions/RemoveSwarmConfigs"
             }
           },
           "required": [
@@ -3048,7 +3092,7 @@
               "const": "CreateSwarmSecret"
             },
             "params": {
-              "$ref": "#/$defs/CreateSwarmSecret"
+              "$ref": "#/definitions/CreateSwarmSecret"
             }
           },
           "required": [
@@ -3064,7 +3108,7 @@
               "const": "RotateSwarmSecret"
             },
             "params": {
-              "$ref": "#/$defs/RotateSwarmSecret"
+              "$ref": "#/definitions/RotateSwarmSecret"
             }
           },
           "required": [
@@ -3080,7 +3124,7 @@
               "const": "RemoveSwarmSecrets"
             },
             "params": {
-              "$ref": "#/$defs/RemoveSwarmSecrets"
+              "$ref": "#/definitions/RemoveSwarmSecrets"
             }
           },
           "required": [
@@ -3096,7 +3140,7 @@
               "const": "ClearRepoCache"
             },
             "params": {
-              "$ref": "#/$defs/ClearRepoCache"
+              "$ref": "#/definitions/ClearRepoCache"
             }
           },
           "required": [
@@ -3112,7 +3156,7 @@
               "const": "BackupCoreDatabase"
             },
             "params": {
-              "$ref": "#/$defs/BackupCoreDatabase"
+              "$ref": "#/definitions/BackupCoreDatabase"
             }
           },
           "required": [
@@ -3128,7 +3172,7 @@
               "const": "GlobalAutoUpdate"
             },
             "params": {
-              "$ref": "#/$defs/GlobalAutoUpdate"
+              "$ref": "#/definitions/GlobalAutoUpdate"
             }
           },
           "required": [
@@ -3144,7 +3188,7 @@
               "const": "RotateAllServerKeys"
             },
             "params": {
-              "$ref": "#/$defs/RotateAllServerKeys"
+              "$ref": "#/definitions/RotateAllServerKeys"
             }
           },
           "required": [
@@ -3160,7 +3204,7 @@
               "const": "RotateCoreKeys"
             },
             "params": {
-              "$ref": "#/$defs/RotateCoreKeys"
+              "$ref": "#/definitions/RotateCoreKeys"
             }
           },
           "required": [
@@ -3176,7 +3220,7 @@
               "const": "Sleep"
             },
             "params": {
-              "$ref": "#/$defs/Sleep"
+              "$ref": "#/definitions/Sleep"
             }
           },
           "required": [
@@ -3566,7 +3610,7 @@
           "description": "Override the default termination signal specified in the deployment.\nOnly used when deployment needs to be taken down before redeploy.",
           "anyOf": [
             {
-              "$ref": "#/$defs/TerminationSignal"
+              "$ref": "#/definitions/TerminationSignal"
             },
             {
               "type": "null"
@@ -3676,7 +3720,7 @@
           "description": "Override the default termination signal specified in the deployment.",
           "anyOf": [
             {
-              "$ref": "#/$defs/TerminationSignal"
+              "$ref": "#/definitions/TerminationSignal"
             },
             {
               "type": "null"
@@ -3708,7 +3752,7 @@
           "description": "Override the default termination signal specified in the deployment.",
           "anyOf": [
             {
-              "$ref": "#/$defs/TerminationSignal"
+              "$ref": "#/definitions/TerminationSignal"
             },
             {
               "type": "null"
@@ -3943,7 +3987,7 @@
           "description": "Only execute sync on a specific resource type.\nCombine with `resource_id` to specify resource.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ResourceTargetVariant"
+              "$ref": "#/definitions/ResourceTargetVariant"
             },
             {
               "type": "null"
@@ -4015,8 +4059,12 @@
       "properties": {
         "level": {
           "description": "The alert level.",
-          "$ref": "#/$defs/SeverityLevel",
-          "default": "OK"
+          "default": "OK",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SeverityLevel"
+            }
+          ]
         },
         "message": {
           "description": "The alert message. Required.",
@@ -4148,7 +4196,7 @@
           "description": "Override the default termination signal.",
           "anyOf": [
             {
-              "$ref": "#/$defs/TerminationSignal"
+              "$ref": "#/definitions/TerminationSignal"
             },
             {
               "type": "null"
@@ -4185,7 +4233,7 @@
           "description": "Override the default termination signal.",
           "anyOf": [
             {
-              "$ref": "#/$defs/TerminationSignal"
+              "$ref": "#/definitions/TerminationSignal"
             },
             {
               "type": "null"
@@ -4458,7 +4506,7 @@
           "description": "Update the node's availability: 'active', 'pause', or 'drain'",
           "anyOf": [
             {
-              "$ref": "#/$defs/NodeSpecAvailabilityEnum"
+              "$ref": "#/definitions/NodeSpecAvailabilityEnum"
             },
             {
               "type": "null"
@@ -4489,7 +4537,7 @@
           "description": "Update the node's role: 'worker' or 'manager'",
           "anyOf": [
             {
-              "$ref": "#/$defs/NodeSpecRoleEnum"
+              "$ref": "#/definitions/NodeSpecRoleEnum"
             },
             {
               "type": "null"
@@ -4824,7 +4872,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialActionConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialActionConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -4845,7 +4897,7 @@
           "description": "Choose whether to specify schedule as regular CRON, or using the english to CRON parser.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ScheduleFormat"
+              "$ref": "#/definitions/ScheduleFormat"
             },
             {
               "type": "null"
@@ -4919,7 +4971,7 @@
           "description": "Specify the format in which the arguments are defined.\nDefault: `key_value` (like environment)",
           "anyOf": [
             {
-              "$ref": "#/$defs/FileFormat"
+              "$ref": "#/definitions/FileFormat"
             },
             {
               "type": "null"
@@ -4979,7 +5031,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialAlerterConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialAlerterConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -5000,7 +5056,7 @@
           "description": "Where to route the alert messages.\n\nDefault: Custom endpoint `http://localhost:7000`",
           "anyOf": [
             {
-              "$ref": "#/$defs/AlerterEndpoint"
+              "$ref": "#/definitions/AlerterEndpoint"
             },
             {
               "type": "null"
@@ -5014,7 +5070,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/AlertDataVariant"
+            "$ref": "#/definitions/AlertDataVariant"
           }
         },
         "resources": {
@@ -5024,7 +5080,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/ResourceTarget"
+            "$ref": "#/definitions/ResourceTarget"
           }
         },
         "except_resources": {
@@ -5034,7 +5090,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/ResourceTarget"
+            "$ref": "#/definitions/ResourceTarget"
           }
         },
         "maintenance_windows": {
@@ -5044,7 +5100,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/MaintenanceWindow"
+            "$ref": "#/definitions/MaintenanceWindow"
           }
         }
       }
@@ -5060,7 +5116,7 @@
               "const": "Custom"
             },
             "params": {
-              "$ref": "#/$defs/CustomAlerterEndpoint"
+              "$ref": "#/definitions/CustomAlerterEndpoint"
             }
           },
           "required": [
@@ -5077,7 +5133,7 @@
               "const": "Slack"
             },
             "params": {
-              "$ref": "#/$defs/SlackAlerterEndpoint"
+              "$ref": "#/definitions/SlackAlerterEndpoint"
             }
           },
           "required": [
@@ -5094,7 +5150,7 @@
               "const": "Discord"
             },
             "params": {
-              "$ref": "#/$defs/DiscordAlerterEndpoint"
+              "$ref": "#/definitions/DiscordAlerterEndpoint"
             }
           },
           "required": [
@@ -5111,7 +5167,7 @@
               "const": "Ntfy"
             },
             "params": {
-              "$ref": "#/$defs/NtfyAlerterEndpoint"
+              "$ref": "#/definitions/NtfyAlerterEndpoint"
             }
           },
           "required": [
@@ -5128,7 +5184,7 @@
               "const": "Pushover"
             },
             "params": {
-              "$ref": "#/$defs/PushoverAlerterEndpoint"
+              "$ref": "#/definitions/PushoverAlerterEndpoint"
             }
           },
           "required": [
@@ -5547,7 +5603,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialBuilderConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialBuilderConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -5565,7 +5625,7 @@
               "const": "Url"
             },
             "params": {
-              "$ref": "#/$defs/PartialUrlBuilderConfig"
+              "$ref": "#/definitions/PartialUrlBuilderConfig"
             }
           },
           "required": [
@@ -5581,7 +5641,7 @@
               "const": "Server"
             },
             "params": {
-              "$ref": "#/$defs/PartialServerBuilderConfig"
+              "$ref": "#/definitions/PartialServerBuilderConfig"
             }
           },
           "required": [
@@ -5597,7 +5657,7 @@
               "const": "Aws"
             },
             "params": {
-              "$ref": "#/$defs/PartialAwsBuilderConfig"
+              "$ref": "#/definitions/PartialAwsBuilderConfig"
             }
           },
           "required": [
@@ -5764,7 +5824,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/GitProvider"
+            "$ref": "#/definitions/GitProvider"
           }
         },
         "docker_registries": {
@@ -5774,7 +5834,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/DockerRegistry"
+            "$ref": "#/definitions/DockerRegistry"
           }
         },
         "secrets": {
@@ -5806,7 +5866,7 @@
           "description": "The accounts on the git provider. Required.",
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ProviderAccount"
+            "$ref": "#/definitions/ProviderAccount"
           }
         }
       },
@@ -5843,7 +5903,7 @@
           "description": "The accounts on the registry. Required.",
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ProviderAccount"
+            "$ref": "#/definitions/ProviderAccount"
           }
         },
         "organizations": {
@@ -5894,7 +5954,11 @@
         },
         "config": {
           "description": "Resource specific configuration.",
-          "$ref": "#/$defs/PartialResourceSyncConfig"
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialResourceSyncConfig"
+            }
+          ]
         }
       },
       "required": [
@@ -6070,40 +6134,40 @@
           "type": "object",
           "properties": {
             "Action": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Alerter": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Build": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Builder": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Deployment": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Procedure": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Repo": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "ResourceSync": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Server": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Stack": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "Swarm": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             },
             "System": {
-              "$ref": "#/$defs/PermissionLevelAndSpecifics"
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
             }
           },
           "additionalProperties": false,
@@ -6113,7 +6177,7 @@
           "description": "Permissions given to the group",
           "type": "array",
           "items": {
-            "$ref": "#/$defs/PermissionToml"
+            "$ref": "#/definitions/PermissionToml"
           },
           "default": []
         }
@@ -6126,13 +6190,13 @@
       "type": "object",
       "properties": {
         "level": {
-          "$ref": "#/$defs/PermissionLevel"
+          "$ref": "#/definitions/PermissionLevel"
         },
         "specific": {
           "type": "array",
           "uniqueItems": true,
           "items": {
-            "$ref": "#/$defs/SpecificPermission"
+            "$ref": "#/definitions/SpecificPermission"
           }
         }
       },
@@ -6201,19 +6265,27 @@
       "properties": {
         "target": {
           "description": "Id can be:\n  - resource name. `id = \"abcd-build\"`\n  - regex matching resource names. `id = \"\\^(.+)-build-([0-9]+)$\\\"`",
-          "$ref": "#/$defs/ResourceTarget"
+          "allOf": [
+            {
+              "$ref": "#/definitions/ResourceTarget"
+            }
+          ]
         },
         "level": {
           "description": "The permission level:\n  - None\n  - Read\n  - Execute\n  - Write",
-          "$ref": "#/$defs/PermissionLevel",
-          "default": "None"
+          "default": "None",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PermissionLevel"
+            }
+          ]
         },
         "specific": {
           "description": "Any [SpecificPermissions](SpecificPermission) on the resource",
           "type": "array",
           "uniqueItems": true,
           "items": {
-            "$ref": "#/$defs/SpecificPermission"
+            "$ref": "#/definitions/SpecificPermission"
           }
         }
       },

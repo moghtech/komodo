@@ -1,11 +1,11 @@
-use crate::XTask;
+use std::{fs, path::PathBuf};
+
 use anyhow::Result;
 use clap::Args;
 use komodo_client::entities::toml::ResourcesToml;
-use schemars::_private::serde_json;
-use schemars::schema_for;
-use std::fs;
-use std::path::PathBuf;
+use schemars::{_private::serde_json, generate::SchemaSettings};
+
+use crate::XTask;
 
 #[derive(Debug, Args)]
 pub struct ResourceSchema {
@@ -27,7 +27,9 @@ struct Output {
 
 impl XTask for ResourceSchema {
   fn run(self) -> Result<()> {
-    let schema = schema_for!(ResourcesToml);
+    let schema = SchemaSettings::draft07()
+      .into_generator()
+      .into_root_schema_for::<ResourcesToml>();
 
     let schema_data = if self.pretty {
       serde_json::to_string_pretty(&schema)?
