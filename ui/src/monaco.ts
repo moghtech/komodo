@@ -1,10 +1,24 @@
 import * as monaco from "monaco-editor";
+import { configureMonacoYaml } from "monaco-yaml";
 
 /**
  * Don't need to await to continue app render,
  * will apply in background when ready.
  */
 export default async function initMonaco() {
+  configureMonacoYaml(monaco, {
+    enableSchemaRequest: true,
+    schemas: [
+      {
+        fileMatch: ["**/*compose.yml", "**/*compose.yaml"],
+        uri: new URL(
+          "/schema/compose-spec.json",
+          window.location.href,
+        ).toString(),
+      },
+    ],
+  });
+  
   const promises = ["lib", "responses", "types", "terminal"].map((file) =>
     Promise.all(
       [".js", ".d.ts"].map((extension) =>

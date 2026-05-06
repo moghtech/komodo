@@ -28,7 +28,7 @@ cd ../client/core/ts && yarn
 alias = "grs"
 description = "generates resource toml definitions for edition autosuggest"
 cmd = """
-cargo xtask generate resource-schema --pretty --file=./ui/public/resource-schema.json
+cargo xtask generate resource-schema --pretty --file=./ui/public/schema/resources.json
 """
 
 [gen-client]
