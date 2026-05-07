@@ -543,7 +543,12 @@ export default function BuildConfig({
           label: "Files",
           fields: {
             build_path: {
-              description: `The directory to run 'docker build', relative to the root of the repo.`,
+              description: (
+                <>
+                  The directory to run 'docker build',{" "}
+                  <b>relative to the root of the repo.</b>
+                </>
+              ),
               placeholder: "path/to/folder",
             },
             dockerfile_path: {

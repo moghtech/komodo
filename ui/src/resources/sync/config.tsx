@@ -390,7 +390,12 @@ export default function ResourceSyncConfig({
               <ConfigList
                 label="Resource Paths"
                 addLabel="Add Path"
-                description="Add '.toml' files or folders to the sync. Relative to the root of the repo."
+                description={
+                  <>
+                    Add '.toml' files or folders to the sync,{" "}
+                    <b>relative to the root of the repo.</b>
+                  </>
+                }
                 field="resource_path"
                 values={values ?? []}
                 set={set}

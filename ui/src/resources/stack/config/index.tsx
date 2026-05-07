@@ -859,8 +859,12 @@ export default function StackConfig({
           labelHidden: true,
           fields: {
             run_directory: {
-              description:
-                "Set the working directory when running the compose up command, relative to the root of the repo.",
+              description: (
+                <>
+                  Set the working directory when running the compose up command,
+                  <b>relative to the root of the repo.</b>
+                </>
+              ),
               placeholder: "path/to/folder",
             },
             file_paths: (value, set) => (
