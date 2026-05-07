@@ -126,7 +126,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       mut stack,
       repo,
       git_token,
-      registry_token,
+      registry_tokens,
       mut replacers,
     } = self;
 
@@ -172,7 +172,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
     }
 
     let use_with_registry_auth =
-      maybe_login_registry(&stack, registry_token, &mut res.logs)
+      maybe_login_registry(&stack, &registry_tokens, &mut res.logs)
         .await;
     if !all_logs_success(&res.logs) {
       return Ok(res);

@@ -142,8 +142,9 @@ pub struct ComposePull {
   pub repo: Option<Repo>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
   pub git_token: Option<String>,
-  /// If provided, use it to login in. Otherwise check periphery local registry providers.
-  pub registry_token: Option<String>,
+  /// If provided, use these to login. Otherwise check periphery local registry providers.
+  #[serde(default)]
+  pub registry_tokens: Vec<(String, String, String)>,
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
@@ -175,10 +176,11 @@ pub struct ComposeUp {
   pub services: Vec<String>,
   /// The linked repo, if it exists.
   pub repo: Option<Repo>,
-  /// If provided, use it to login in. Otherwise check periphery local registries.
-  pub git_token: Option<String>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
-  pub registry_token: Option<String>,
+  pub git_token: Option<String>,
+  /// If provided, use these to login. Otherwise check periphery local registry providers.
+  #[serde(default)]
+  pub registry_tokens: Vec<(String, String, String)>,
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
@@ -217,10 +219,11 @@ pub struct ComposeRun {
   pub stack: Stack,
   /// The linked repo, if it exists.
   pub repo: Option<Repo>,
-  /// If provided, use it to login in. Otherwise check periphery local registries.
-  pub git_token: Option<String>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
-  pub registry_token: Option<String>,
+  pub git_token: Option<String>,
+  /// If provided, use these to login. Otherwise check periphery local registry providers.
+  #[serde(default)]
+  pub registry_tokens: Vec<(String, String, String)>,
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,

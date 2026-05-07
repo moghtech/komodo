@@ -272,7 +272,7 @@ impl Resolve<crate::api::Args> for ComposePull {
       repo,
       services,
       git_token,
-      registry_token,
+      registry_tokens,
       mut replacers,
     } = self;
 
@@ -330,7 +330,8 @@ impl Resolve<crate::api::Args> for ComposePull {
       }
     }
 
-    maybe_login_registry(&stack, registry_token, &mut res.logs).await;
+    maybe_login_registry(&stack, &registry_tokens, &mut res.logs)
+      .await;
     if !all_logs_success(&res.logs) {
       return Ok(res);
     }
@@ -432,7 +433,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
       repo,
       services,
       git_token,
-      registry_token,
+      registry_tokens,
       mut replacers,
     } = self;
 
@@ -476,7 +477,8 @@ impl Resolve<crate::api::Args> for ComposeUp {
       return Ok(res);
     }
 
-    maybe_login_registry(&stack, registry_token, &mut res.logs).await;
+    maybe_login_registry(&stack, &registry_tokens, &mut res.logs)
+      .await;
     if !all_logs_success(&res.logs) {
       return Ok(res);
     }
@@ -825,7 +827,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
       mut stack,
       repo,
       git_token,
-      registry_token,
+      registry_tokens,
       mut replacers,
       service,
       command,
@@ -871,7 +873,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
       format!("Failed to validate run directory on host after stack write (canonicalize error), path={}", run_directory.to_string_lossy())
     )?;
 
-    maybe_login_registry(&stack, registry_token, &mut Vec::new())
+    maybe_login_registry(&stack, &registry_tokens, &mut Vec::new())
       .await;
 
     let docker_compose = docker_compose();

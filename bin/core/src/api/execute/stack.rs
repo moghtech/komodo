@@ -1,4 +1,7 @@
-use std::{collections::HashSet, str::FromStr};
+use std::{
+  collections::{HashMap, HashSet},
+  str::FromStr,
+};
 
 use anyhow::{Context, anyhow};
 use database::mungos::mongodb::bson::{
@@ -85,6 +88,60 @@ impl Resolve<ExecuteArgs> for BatchDeployStack {
   }
 }
 
+/// Extract all configured stack registry credentials and resolve any tokens
+/// available in core. Periphery can still fall back to its local config.
+async fn registry_tokens(
+  stack: &Stack,
+) -> anyhow::Result<Vec<(String, String, String)>> {
+  let mut res = HashMap::with_capacity(
+    stack.config.image_registry.len().saturating_add(1),
+  );
+
+  for (domain, account) in stack
+    .config
+    .image_registry
+    .iter()
+    .map(|registry| {
+      (registry.domain.as_str(), registry.account.as_str())
+    })
+    .chain(
+      [(
+        stack.config.registry_provider.as_str(),
+        stack.config.registry_account.as_str(),
+      )]
+      .into_iter(),
+    )
+    .filter(|(domain, account)| {
+      !domain.is_empty() && !account.is_empty()
+    })
+    .collect::<HashSet<_>>()
+  {
+    let Some(registry_token) =
+      crate::helpers::registry_token(domain, account)
+        .await
+        .with_context(|| {
+          format!(
+            "Failed to get registry token in call to db. Stopping run. | {domain} | {account}"
+          )
+        })?
+    else {
+      continue;
+    };
+
+    res.insert(
+      (domain.to_string(), account.to_string()),
+      registry_token,
+    );
+  }
+
+  Ok(
+    res
+      .into_iter()
+      .map(|((domain, account), token)| (domain, account, token))
+      .collect(),
+  )
+}
+
 impl Resolve<ExecuteArgs> for DeployStack {
   #[instrument(
     "DeployStack",
@@ -151,12 +208,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
     let git_token =
       stack_git_token(&mut stack, repo.as_mut()).await?;
 
-    let registry_token = crate::helpers::registry_token(
-      &stack.config.registry_provider,
-      &stack.config.registry_account,
-    ).await.with_context(
-      || format!("Failed to get registry token in call to db. Stopping run. | {} | {}", stack.config.registry_provider, stack.config.registry_account),
-    )?;
+    let registry_tokens = registry_tokens(&stack).await?;
 
     // interpolate variables / secrets, returning the sanitizing replacers to send to
     // periphery so it may sanitize the final command for safe logging (avoids exposing secret values)
@@ -199,7 +251,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
             stack: stack.clone(),
             repo,
             git_token,
-            registry_token,
+            registry_tokens,
             replacers: secret_replacers.into_iter().collect(),
           },
         )
@@ -213,7 +265,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
             services: self.services,
             repo,
             git_token,
-            registry_token,
+            registry_tokens,
             replacers: secret_replacers.into_iter().collect(),
           })
           .await?
@@ -844,12 +896,7 @@ pub async fn pull_stack_inner(
 
   let git_token = stack_git_token(&mut stack, repo.as_mut()).await?;
 
-  let registry_token = crate::helpers::registry_token(
-      &stack.config.registry_provider,
-      &stack.config.registry_account,
-    ).await.with_context(
-      || format!("Failed to get registry token in call to db. Stopping run. | {} | {}", stack.config.registry_provider, stack.config.registry_account),
-    )?;
+  let registry_tokens = registry_tokens(&stack).await?;
 
   // interpolate variables / secrets
   let secret_replacers = if !stack.config.skip_secret_interp {
@@ -880,7 +927,7 @@ pub async fn pull_stack_inner(
       services,
       repo,
       git_token,
-      registry_token,
+      registry_tokens,
       replacers: secret_replacers.into_iter().collect(),
     })
     .await?;
@@ -1323,12 +1370,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
     let git_token =
       stack_git_token(&mut stack, repo.as_mut()).await?;
 
-    let registry_token = crate::helpers::registry_token(
-      &stack.config.registry_provider,
-      &stack.config.registry_account,
-    ).await.with_context(
-      || format!("Failed to get registry token in call to db. Stopping run. | {} | {}", stack.config.registry_provider, stack.config.registry_account),
-    )?;
+    let registry_tokens = registry_tokens(&stack).await?;
 
     let secret_replacers = if !stack.config.skip_secret_interp {
       let VariablesAndSecrets { variables, secrets } =
@@ -1356,7 +1398,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
         stack,
         repo,
         git_token,
-        registry_token,
+        registry_tokens,
         replacers: secret_replacers.into_iter().collect(),
         service: self.service,
         command: self.command,
