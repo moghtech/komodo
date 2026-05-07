@@ -1,7 +1,9 @@
 import { MonacoEditor } from "@/components/monaco";
+import { recordToText, textToRecord } from "@/lib/utils";
 import { ConfigInput, ConfigItem } from "@/ui/config/item";
-import { Select } from "@mantine/core";
+import { Select, Text } from "@mantine/core";
 import { Types } from "komodo_client";
+import { useEffect, useState } from "react";
 
 const ENDPOINT_TYPES: Types.AlerterEndpoint["type"][] = [
   "Custom",
@@ -15,11 +17,26 @@ export default function AlerterConfigEndpoint({
   endpoint,
   set,
   disabled,
+  onValidationChange,
 }: {
   endpoint: Types.AlerterEndpoint;
   set: (endpoint: Types.AlerterEndpoint) => void;
   disabled: boolean;
+  onValidationChange: (error: string | undefined) => void;
 }) {
+  const headersValue =
+    endpoint.type === "Custom"
+      ? recordToText(endpoint.params.headers)
+      : "";
+  const [headersText, setHeadersText] = useState(headersValue);
+  const [headersError, setHeadersError] = useState<string | undefined>();
+
+  useEffect(() => {
+    setHeadersText(headersValue);
+    setHeadersError(undefined);
+    onValidationChange(undefined);
+  }, [endpoint, headersValue, onValidationChange]);
+
   return (
     <>
       <ConfigItem
@@ -34,6 +51,7 @@ export default function AlerterConfigEndpoint({
               type: type as Types.AlerterEndpoint["type"],
               params: {
                 url: defaultUrl(type as Types.AlerterEndpoint["type"]),
+                ...(type === "Custom" ? { headers: {} } : {}),
               },
             })
           }
@@ -50,6 +68,42 @@ export default function AlerterConfigEndpoint({
           readOnly={disabled}
         />
       </ConfigItem>
+      {endpoint.type === "Custom" && (
+        <ConfigItem
+          label="Headers"
+          description="Additional request headers to include when posting the JSON alert payload. Use one `Header: value` pair per line."
+        >
+          <MonacoEditor
+            value={headersText}
+            language="key_value"
+            onValueChange={(headersText) => {
+              setHeadersText(headersText);
+              try {
+                const headers = textToRecord(headersText);
+                setHeadersError(undefined);
+                onValidationChange(undefined);
+                set({
+                  ...endpoint,
+                  params: { ...endpoint.params, headers },
+                });
+              } catch (error) {
+                const message =
+                  error instanceof Error
+                    ? error.message
+                    : "Invalid header format.";
+                setHeadersError(message);
+                onValidationChange(message);
+              }
+            }}
+            readOnly={disabled}
+          />
+          {headersError && (
+            <Text c="red" size="sm" mt="xs">
+              {headersError}
+            </Text>
+          )}
+        </ConfigItem>
+      )}
       {endpoint.type === "Ntfy" && (
         <ConfigInput
           label="Email"

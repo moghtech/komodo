@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::{Context, anyhow};
 use database::mungos::{find::find_collect, mongodb::bson::doc};
 use futures_util::future::join_all;
@@ -106,14 +108,17 @@ pub async fn send_alert_to_alerter(
   }
 
   match &alerter.config.endpoint {
-    AlerterEndpoint::Custom(CustomAlerterEndpoint { url }) => {
-      send_custom_alert(url, alert).await.with_context(|| {
+    AlerterEndpoint::Custom(CustomAlerterEndpoint {
+      url,
+      headers,
+    }) => send_custom_alert(url, headers, alert).await.with_context(
+      || {
         format!(
           "Failed to send alert to Custom Alerter {}",
           alerter.name
         )
-      })
-    }
+      },
+    ),
     AlerterEndpoint::Slack(SlackAlerterEndpoint { url }) => {
       slack::send_alert(url, alert).await.with_context(|| {
         format!(
@@ -153,33 +158,40 @@ pub async fn send_alert_to_alerter(
 
 async fn send_custom_alert(
   url: &str,
+  headers: &HashMap<String, String>,
   alert: &Alert,
 ) -> anyhow::Result<()> {
   let VariablesAndSecrets { variables, secrets } =
     get_variables_and_secrets().await?;
-  let mut url_interpolated = url.to_string();
+  send_custom_alert_inner(url, headers, alert, &variables, &secrets)
+    .await
+}
 
-  let mut interpolator =
-    Interpolator::new(Some(&variables), &secrets);
+async fn send_custom_alert_inner(
+  url: &str,
+  headers: &HashMap<String, String>,
+  alert: &Alert,
+  variables: &HashMap<String, String>,
+  secrets: &HashMap<String, String>,
+) -> anyhow::Result<()> {
+  let mut interpolator = Interpolator::new(Some(variables), secrets);
+  let (url_interpolated, headers) = interpolate_custom_request_parts(
+    url,
+    headers,
+    &mut interpolator,
+  )?;
 
-  interpolator.interpolate_string(&mut url_interpolated)?;
+  let mut request =
+    reqwest::Client::new().post(url_interpolated).json(alert);
 
-  let res = reqwest::Client::new()
-    .post(url_interpolated)
-    .json(alert)
+  for (header, value) in headers {
+    request = request.header(&header, &value);
+  }
+
+  let res = request
     .send()
     .await
-    .map_err(|e| {
-      let replacers = interpolator
-        .secret_replacers
-        .into_iter()
-        .collect::<Vec<_>>();
-      let sanitized_error =
-        svi::replace_in_string(&format!("{e:?}"), &replacers);
-      anyhow::Error::msg(format!(
-        "Error with request: {sanitized_error}"
-      ))
-    })
+    .map_err(|e| sanitize_request_error(&interpolator, &e))
     .context("failed at post request to alerter")?;
   let status = res.status();
   if !status.is_success() {
@@ -187,11 +199,57 @@ async fn send_custom_alert(
       .text()
       .await
       .context("failed to get response text on alerter response")?;
+    let text = sanitize_interpolated_text(&interpolator, &text);
     return Err(anyhow!(
       "post to alerter failed | {status} | {text}"
     ));
   }
   Ok(())
+}
+
+fn interpolate_custom_request_parts(
+  url: &str,
+  headers: &HashMap<String, String>,
+  interpolator: &mut Interpolator,
+) -> anyhow::Result<(String, Vec<(String, String)>)> {
+  let mut url_interpolated = url.to_string();
+  interpolator.interpolate_string(&mut url_interpolated)?;
+
+  let headers = headers
+    .iter()
+    .map(|(header, value)| {
+      let mut header = header.to_string();
+      let mut value = value.to_string();
+      interpolator.interpolate_string(&mut header)?;
+      interpolator.interpolate_string(&mut value)?;
+      anyhow::Ok((header, value))
+    })
+    .collect::<anyhow::Result<Vec<_>>>()?;
+  let mut headers = headers;
+  headers.sort_by(|left, right| left.0.cmp(&right.0));
+
+  Ok((url_interpolated, headers))
+}
+
+fn sanitize_request_error(
+  interpolator: &Interpolator,
+  error: &impl std::fmt::Debug,
+) -> anyhow::Error {
+  let sanitized_error =
+    sanitize_interpolated_text(interpolator, &format!("{error:?}"));
+  anyhow::Error::msg(format!("Error with request: {sanitized_error}"))
+}
+
+fn sanitize_interpolated_text(
+  interpolator: &Interpolator,
+  text: &str,
+) -> String {
+  let replacers = interpolator
+    .secret_replacers
+    .iter()
+    .cloned()
+    .collect::<Vec<_>>();
+  svi::replace_in_string(text, &replacers)
 }
 
 fn fmt_region(region: &Option<String>) -> String {
@@ -218,6 +276,105 @@ fn fmt_stack_state(state: &StackState) -> String {
     StackState::Restarting => String::from("Restarting 🔄"),
     StackState::Down => String::from("Down ⬇️"),
     _ => state.to_string(),
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn custom_alert_interpolates_headers_and_url() {
+    let mut headers = HashMap::new();
+    headers.insert(
+      String::from("authorization"),
+      String::from("Bearer [[TOKEN]]"),
+    );
+    headers
+      .insert(String::from("x-komodo-env"), String::from("[[ENV]]"));
+
+    let mut variables = HashMap::new();
+    variables.insert(String::from("ENV"), String::from("dev"));
+
+    let mut secrets = HashMap::new();
+    secrets
+      .insert(String::from("TOKEN"), String::from("super-secret"));
+
+    let mut interpolator =
+      Interpolator::new(Some(&variables), &secrets);
+    let (url, headers) = interpolate_custom_request_parts(
+      "https://example.com/[[ENV]]",
+      &headers,
+      &mut interpolator,
+    )
+    .unwrap();
+
+    assert_eq!(url, "https://example.com/dev");
+    assert_eq!(
+      headers,
+      vec![
+        (
+          String::from("authorization"),
+          String::from("Bearer super-secret"),
+        ),
+        (String::from("x-komodo-env"), String::from("dev")),
+      ]
+    );
+  }
+
+  #[test]
+  fn custom_alert_sanitizes_secret_on_request_error() {
+    let mut headers = HashMap::new();
+    headers.insert(
+      String::from("authorization"),
+      String::from("Bearer [[TOKEN]]"),
+    );
+
+    let variables = HashMap::new();
+    let secrets = HashMap::from([(
+      String::from("TOKEN"),
+      String::from("super-secret"),
+    )]);
+    let mut interpolator =
+      Interpolator::new(Some(&variables), &secrets);
+
+    interpolate_custom_request_parts(
+      "https://example.com",
+      &headers,
+      &mut interpolator,
+    )
+    .unwrap();
+
+    let err = sanitize_request_error(
+      &interpolator,
+      &"authorization: Bearer super-secret",
+    )
+    .to_string();
+
+    assert!(err.contains("Error with request:"));
+    assert!(!err.contains("super-secret"));
+  }
+
+  #[test]
+  fn custom_alert_sanitizes_secret_in_response_body() {
+    let variables = HashMap::new();
+    let secrets = HashMap::from([(
+      String::from("TOKEN"),
+      String::from("super-secret"),
+    )]);
+    let interpolator =
+      Interpolator::new(Some(&variables), &secrets);
+    let mut interpolator = interpolator;
+    let mut token = String::from("[[TOKEN]]");
+
+    interpolator.interpolate_string(&mut token).unwrap();
+
+    let sanitized = sanitize_interpolated_text(
+      &interpolator,
+      "authorization: Bearer super-secret",
+    );
+
+    assert!(!sanitized.contains("super-secret"));
   }
 }
 

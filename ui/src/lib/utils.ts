@@ -30,6 +30,13 @@ export function envToText(envVars: Types.EnvironmentVar[] | undefined) {
   );
 }
 
+export function recordToText(record: Record<string, string> | undefined) {
+  return Object.entries(record ?? {})
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}: ${value}`)
+    .join("\n");
+}
+
 export function textToEnv(env: string): Types.EnvironmentVar[] {
   return env
     .split("\n")
@@ -39,6 +46,39 @@ export function textToEnv(env: string): Types.EnvironmentVar[] {
       return [first, rest.join("=")];
     })
     .map(([variable, value]) => ({ variable, value }));
+}
+
+export function textToRecord(text: string): Record<string, string> {
+  const record: Record<string, string> = {};
+
+  for (const rawLine of text.split("\n")) {
+    if (!keepLine(rawLine)) continue;
+
+    const line = rawLine
+      .split(" #", 1)[0]
+      .trim()
+      .replace(/^-/, "")
+      .trim();
+    const separator = line.search(/[:=]/);
+
+    if (separator === -1) {
+      throw new Error("Each header line must contain ':' or '='.");
+    }
+
+    const key = line.slice(0, separator).trim().replace(/^["']|["']$/g, "");
+    const value = line
+      .slice(separator + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
+
+    if (!key) {
+      throw new Error("Header names cannot be empty.");
+    }
+
+    record[key] = value;
+  }
+
+  return record;
 }
 
 function keepLine(line: string) {

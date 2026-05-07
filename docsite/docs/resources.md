@@ -70,4 +70,5 @@ All resources which depend on git repos / docker registries are able to use thes
 ## Alerter
 
 - Route alerts to various endpoints.
+- `Custom` alerters can post the raw JSON alert payload to any HTTP endpoint and include custom request headers.
 - Can configure rules on each Alerter, such as resource whitelist, blacklist, or alert type filter.

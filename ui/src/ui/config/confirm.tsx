@@ -35,6 +35,9 @@ export default function ConfirmUpdate<T>({
   const [opened, { open, close }] = useDisclosure();
 
   const handleConfirm = async () => {
+    if (disabled) {
+      return;
+    }
     await onConfirm();
     close();
   };
@@ -47,7 +50,7 @@ export default function ConfirmUpdate<T>({
   });
 
   useCtrlKeyListener("Enter", () => {
-    if (opened || !openKeyListener) {
+    if (opened || disabled || !openKeyListener) {
       return;
     }
     open();
@@ -100,6 +103,7 @@ export default function ConfirmUpdate<T>({
               }}
               w={{ base: "100%", xs: 200 }}
               loading={loading}
+              disabled={disabled}
             >
               Save
             </Button>
