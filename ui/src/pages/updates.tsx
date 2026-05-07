@@ -113,8 +113,8 @@ export default function Updates() {
           {/* RESET */}
           <ActionIcon
             onClick={() => setParams({})}
-            variant="filled"
-            color="red"
+            variant="subtle"
+            color="dimmed"
             disabled={!params.size}
           >
             <ICONS.Clear size="1rem" />

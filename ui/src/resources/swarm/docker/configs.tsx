@@ -54,7 +54,7 @@ export default function SwarmConfigs({
                 name={row.original.Name}
                 extra={
                   !row.original.InUse && (
-                    <Badge variant="filled" color="red">
+                    <Badge variant="filled" color="blue">
                       Unused
                     </Badge>
                   )

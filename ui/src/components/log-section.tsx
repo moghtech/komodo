@@ -135,8 +135,8 @@ export function LogSectionInner({
           {terms.map((term, index) => (
             <Button
               key={term}
-              variant="filled"
-              color="red"
+              variant="outline"
+              color="dimmed"
               rightSection={<ICONS.Remove size="1rem" />}
               onClick={() => setTerms(terms.filter((_, i) => i !== index))}
             >
@@ -157,7 +157,7 @@ export function LogSectionInner({
             rightSection={
               <ActionIcon
                 onClick={clearSearch}
-                color="red"
+                color="dimmed"
                 disabled={!terms.length}
               >
                 <ICONS.Delete size="1rem" />

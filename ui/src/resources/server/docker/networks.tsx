@@ -68,7 +68,7 @@ export default function ServerNetworks({
                     ) ? (
                       <Badge>System</Badge>
                     ) : (
-                      !row.original.in_use && <Badge color="red">Unused</Badge>
+                      !row.original.in_use && <Badge color="blue">Unused</Badge>
                     )
                   }
                 />

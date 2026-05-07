@@ -86,7 +86,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
           {fmtOperation(update.operation)}{" "}
           {!versionIsNone(update.version) && fmtVersion(update.version)}
         </Text>
-        <ActionIcon size="lg" variant="filled" color="red" onClick={close}>
+        <ActionIcon size="lg" variant="subtle" color="dimmed" onClick={close}>
           <ICONS.Clear size="1.3rem" />
         </ActionIcon>
       </Group>
