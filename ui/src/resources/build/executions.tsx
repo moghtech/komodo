@@ -2,8 +2,8 @@ import { Types } from "komodo_client";
 import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { useBuilder } from "../builder";
 import { useBuild } from ".";
-import ConfirmButton from "@/ui/confirm-button";
-import { ICONS } from "@/theme/icons";
+import { ConfirmButton } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 
 export function RunBuild({ id }: { id: string }) {
   const { canExecute } = usePermissions({ type: "Build", id });
@@ -46,6 +46,7 @@ export function RunBuild({ id }: { id: string }) {
   if (building && canCancel) {
     return (
       <ConfirmButton
+        variant="filled"
         color="red"
         icon={<ICONS.Cancel size="1rem" />}
         onClick={() => cancelBuild({ build: id })}

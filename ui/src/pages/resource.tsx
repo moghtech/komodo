@@ -7,19 +7,19 @@ import {
   useResourceParamType,
   useSetTitle,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   ResourceComponents,
   SETTINGS_RESOURCES,
   UsableResource,
 } from "@/resources";
 import { AddResourceTags, ResourceTags } from "@/resources/tags";
-import DividedChildren from "@/ui/divided-children";
-import Section from "@/ui/section";
+import { DividedChildren } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Link, useParams } from "react-router-dom";
-import EntityPage from "@/ui/entity-page";
+import { EntityPage } from "mogh_ui";
 import { usableResourcePath } from "@/lib/utils";
 import ResourceDescription from "@/resources/description";
 import ResourceNotFound from "@/resources/not-found";

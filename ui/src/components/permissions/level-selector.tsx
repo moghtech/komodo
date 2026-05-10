@@ -1,4 +1,4 @@
-import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
+import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
 import { Select, SelectProps } from "@mantine/core";
 import { Types } from "komodo_client";
 

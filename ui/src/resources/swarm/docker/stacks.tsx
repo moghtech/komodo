@@ -1,13 +1,13 @@
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ReactNode } from "react";
 import { useSwarmDockerSearch } from ".";
-import Section from "@/ui/section";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { Section } from "mogh_ui";
+import { DataTable, SortableHeader } from "mogh_ui";
 import SwarmResourceLink from "@/components/swarm/link";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import { swarmStateIntention } from "@/lib/color";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function SwarmStacks({
   id,

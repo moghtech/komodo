@@ -30,7 +30,7 @@ export default function Tag({
       tt="none"
       fz={{ base: "xs", lg: "sm" }}
       styles={{
-        label: { width: "fit-content", height: "fit-content" },
+        label: { minWidth: "fit-content", minHeight: "fit-content" },
       }}
       {...badgeProps}
     >

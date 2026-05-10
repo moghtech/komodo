@@ -3,11 +3,10 @@ import { ReactNode } from "react";
 import { useFullSwarm } from ".";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import Config from "@/ui/config";
-import { ConfigItem, ConfigList } from "@/ui/config/item";
+import { Config, ConfigItem, ConfigList } from "mogh_ui";
 import { ActionIcon, Button, Group } from "@mantine/core";
 import ResourceSelector from "@/resources/selector";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfigMaintenanceWindows from "@/components/maintenance-windows";
 
 export default function SwarmConfig({

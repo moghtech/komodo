@@ -35,6 +35,7 @@ pub fn remove_swarm_nodes() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -69,6 +70,7 @@ pub fn update_swarm_node() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -115,6 +117,7 @@ pub fn remove_swarm_stacks() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -157,6 +160,7 @@ pub fn remove_swarm_services() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -191,6 +195,7 @@ pub fn create_swarm_config() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -240,6 +245,7 @@ pub fn rotate_swarm_config() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -274,6 +280,7 @@ pub fn remove_swarm_configs() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -308,6 +315,7 @@ pub fn create_swarm_secret() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -359,6 +367,7 @@ pub fn rotate_swarm_secret() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -393,6 +402,7 @@ pub fn remove_swarm_secrets() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]

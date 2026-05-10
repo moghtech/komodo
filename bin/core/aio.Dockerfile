@@ -1,7 +1,7 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
 # Build Core
-FROM rust:1.94.1-trixie AS core-builder
+FROM rust:1.95.0-trixie AS core-builder
 RUN cargo install cargo-strip
 
 WORKDIR /builder
@@ -11,6 +11,7 @@ COPY ./client/core/rs ./client/core/rs
 COPY ./client/periphery ./client/periphery
 COPY ./bin/core ./bin/core
 COPY ./bin/cli ./bin/cli
+COPY ./xtask ./xtask
 
 # Compile app
 RUN cargo build -p komodo_core --release && \
@@ -58,7 +59,8 @@ ENV KOMODO_CLI_CONFIG_PATHS="/config"
 # This ensures any `komodo.cli.*` takes precedence over the Core `/config/*config.*`
 ENV KOMODO_CLI_CONFIG_KEYWORDS="*config.*,*komodo.cli*.*"
 
-CMD [ "/bin/bash", "-c", "update-ca-certificates && core" ]
+ENTRYPOINT [ "entrypoint.sh" ]
+CMD [ "core" ]
 
 # Label to prevent Komodo from stopping with StopAllContainers
 LABEL komodo.skip="true"

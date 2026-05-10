@@ -1,17 +1,21 @@
 import TerminalTargetLink from "@/pages/terminals/target-link";
-import { fmtDateWithMinutes } from "@/lib/formatting";
 import { useRead, useSetTitle } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { filterBySplit, terminalLink } from "@/lib/utils";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Page from "@/ui/page";
+import { ICONS } from "@/lib/icons";
+import { terminalLink } from "@/lib/utils";
+import {
+  DataTable,
+  fmtDateWithMinutes,
+  SortableHeader,
+  filterBySplit,
+} from "mogh_ui";
+import { Page } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import DeleteTerminal from "./delete";
 import BatchDeleteAllTerminals from "./batch-delete";
 import NewTerminal from "./new";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function Terminals() {
   useSetTitle("Terminals");

@@ -293,6 +293,10 @@ pub type _PartialStackConfig = PartialStackConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct StackConfig {
@@ -302,6 +306,10 @@ pub struct StackConfig {
   /// swarm_id overrides server_id and the Stack will be in Swarm mode.
   #[serde(default, alias = "swarm")]
   #[partial_attr(serde(alias = "swarm"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "swarm"))
+  )]
   #[builder(default)]
   pub swarm_id: String,
 
@@ -311,6 +319,10 @@ pub struct StackConfig {
   /// swarm_id overrides server_id and the Stack will be in Swarm mode.
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "server"))
+  )]
   #[builder(default)]
   pub server_id: String,
 
@@ -370,6 +382,17 @@ pub struct StackConfig {
   #[serde(default)]
   #[builder(default)]
   pub auto_update_all_services: bool,
+
+  /// Ignore certain services during Global Auto Update polling.
+  /// Services listed here are skipped only in the global auto-update flow.
+  /// Manual checks still include all services.
+  #[serde(default, deserialize_with = "string_list_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default)]
+  pub auto_update_skip_services: Vec<String>,
 
   /// Whether to run `docker compose down` before `compose up`.
   #[serde(default)]
@@ -688,6 +711,7 @@ impl Default for StackConfig {
       poll_for_updates: Default::default(),
       auto_update: Default::default(),
       auto_update_all_services: Default::default(),
+      auto_update_skip_services: Default::default(),
       ignore_services: Default::default(),
       pre_deploy: Default::default(),
       post_deploy: Default::default(),
@@ -915,6 +939,7 @@ pub struct StackRemoteFileContents {
   Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum StackFileRequires {
   /// Diff requires service redeploy.
   #[serde(alias = "redeploy")]
@@ -933,6 +958,7 @@ pub enum StackFileRequires {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AdditionalEnvFile {
   /// File path relative to run directory
   pub path: String,
@@ -1012,6 +1038,7 @@ impl<'de> Deserialize<'de> for AdditionalEnvFile {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StackFileDependency {
   /// Specify the file
   pub path: String,

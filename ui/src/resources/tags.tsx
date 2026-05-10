@@ -1,14 +1,8 @@
 import Tags from "@/components/tags";
 import { tagColor } from "@/lib/color";
-import {
-  useInvalidate,
-  useRead,
-  useSearchCombobox,
-  useShiftKeyListener,
-  useWrite,
-} from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { filterBySplit } from "@/lib/utils";
+import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
+import { filterBySplit } from "mogh_ui";
 import {
   ActionIcon,
   Box,
@@ -21,6 +15,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { MinusCircle } from "lucide-react";
 import { ResourceComponents, UsableResourceTarget } from ".";
+import { useSearchCombobox, useShiftKeyListener } from "mogh_ui";
 
 export const ResourceTags = ({
   target,

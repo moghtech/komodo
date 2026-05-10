@@ -24,6 +24,13 @@ cd ../docsite && yarn && \
 cd ../client/core/ts && yarn
 """
 
+[gen-resource-schema]
+alias = "grs"
+description = "generates resource toml definitions for edition autosuggest"
+cmd = """
+cargo xtask generate resource-schema --pretty --file=./ui/public/schema/resources.json
+"""
+
 [gen-client]
 alias = "gc"
 description = "generates typescript types and build the ts client"

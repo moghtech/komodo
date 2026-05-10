@@ -1,22 +1,22 @@
-import { filterMultitermBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section, { SectionProps } from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
+import { filterMultitermBySplit } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Section, SectionProps } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import SwarmResourceLink from "./link";
 import { useRead } from "@/lib/hooks";
 import { swarmTaskStateIntention } from "@/lib/color";
-import StatusBadge from "@/ui/status-badge";
-import SearchInput from "@/ui/search-input";
+import { StatusBadge } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
 
 export interface SwarmTasksSectionProps extends SectionProps {
   id: string;
   tasks: Types.SwarmTaskListItem[];
   show?: boolean;
   setShow?: (show: boolean) => void;
-  _search: [string, (search: string) => void];
+  _search?: [string, (search: string) => void];
 }
 
 export default function SwarmTasksSection({
@@ -43,11 +43,13 @@ export default function SwarmTasksSection({
     };
   });
 
-  const filtered = filterMultitermBySplit(tasks, _search[0], (task) => [
-    task.ID,
-    task.node?.Hostname,
-    task.service?.Name,
-  ]);
+  const filtered = _search?.[0]
+    ? filterMultitermBySplit(tasks, _search[0], (task) => [
+        task.ID,
+        task.node?.Hostname,
+        task.service?.Name,
+      ])
+    : tasks;
 
   return (
     <Section

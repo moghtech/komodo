@@ -45,6 +45,10 @@ pub type _PartialAlerterConfig = PartialAlerterConfig;
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct AlerterConfig {
@@ -149,6 +153,7 @@ impl utoipa::ToSchema for PartialAlerterConfig {}
     utoipa::ToSchema
   ))
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(tag = "type", content = "params")]
 pub enum AlerterEndpoint {
   /// Send alert serialized to JSON to an http endpoint.
@@ -179,6 +184,7 @@ impl Default for AlerterEndpoint {
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct CustomAlerterEndpoint {
   /// The http/s endpoint to send the POST to
   #[serde(default = "default_custom_url")]
@@ -213,6 +219,7 @@ fn default_custom_data() -> String {
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SlackAlerterEndpoint {
   /// The Slack app webhook url
   #[serde(default = "default_slack_url")]
@@ -240,6 +247,7 @@ fn default_slack_url() -> String {
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DiscordAlerterEndpoint {
   /// The Discord webhook url
   #[serde(default = "default_discord_url")]
@@ -267,6 +275,7 @@ fn default_discord_url() -> String {
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct NtfyAlerterEndpoint {
   /// The ntfy topic URL
   #[serde(default = "default_ntfy_url")]
@@ -297,6 +306,7 @@ fn default_ntfy_url() -> String {
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PushoverAlerterEndpoint {
   /// The pushover URL including application and user tokens in parameters.
   #[serde(default = "default_pushover_url")]

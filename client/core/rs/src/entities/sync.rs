@@ -186,6 +186,10 @@ pub type _PartialResourceSyncConfig = PartialResourceSyncConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ResourceSyncConfig {

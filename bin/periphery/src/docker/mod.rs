@@ -150,17 +150,14 @@ fn convert_mount(mount: bollard::models::Mount) -> Mount {
   }
 }
 
-fn convert_mount_type(
-  typ: bollard::config::MountTypeEnum,
-) -> MountTypeEnum {
+fn convert_mount_type(typ: bollard::config::MountType) -> MountType {
   match typ {
-    bollard::config::MountTypeEnum::EMPTY => MountTypeEnum::Empty,
-    bollard::config::MountTypeEnum::BIND => MountTypeEnum::Bind,
-    bollard::config::MountTypeEnum::VOLUME => MountTypeEnum::Volume,
-    bollard::config::MountTypeEnum::IMAGE => MountTypeEnum::Image,
-    bollard::config::MountTypeEnum::TMPFS => MountTypeEnum::Tmpfs,
-    bollard::config::MountTypeEnum::NPIPE => MountTypeEnum::Npipe,
-    bollard::config::MountTypeEnum::CLUSTER => MountTypeEnum::Cluster,
+    bollard::config::MountType::BIND => MountType::Bind,
+    bollard::config::MountType::VOLUME => MountType::Volume,
+    bollard::config::MountType::IMAGE => MountType::Image,
+    bollard::config::MountType::TMPFS => MountType::Tmpfs,
+    bollard::config::MountType::NPIPE => MountType::Npipe,
+    bollard::config::MountType::CLUSTER => MountType::Cluster,
   }
 }
 
@@ -188,32 +185,6 @@ fn convert_mount_propogation(
     }
     bollard::config::MountBindOptionsPropagationEnum::RSLAVE => {
       MountBindOptionsPropagationEnum::Rslave
-    }
-  }
-}
-
-fn convert_mount_point_type(
-  typ: bollard::config::MountPointTypeEnum,
-) -> MountTypeEnum {
-  match typ {
-    bollard::config::MountPointTypeEnum::EMPTY => {
-      MountTypeEnum::Empty
-    }
-    bollard::config::MountPointTypeEnum::BIND => MountTypeEnum::Bind,
-    bollard::config::MountPointTypeEnum::VOLUME => {
-      MountTypeEnum::Volume
-    }
-    bollard::config::MountPointTypeEnum::IMAGE => {
-      MountTypeEnum::Image
-    }
-    bollard::config::MountPointTypeEnum::TMPFS => {
-      MountTypeEnum::Tmpfs
-    }
-    bollard::config::MountPointTypeEnum::NPIPE => {
-      MountTypeEnum::Npipe
-    }
-    bollard::config::MountPointTypeEnum::CLUSTER => {
-      MountTypeEnum::Cluster
     }
   }
 }

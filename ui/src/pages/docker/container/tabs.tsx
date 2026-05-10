@@ -1,15 +1,12 @@
-import { colorByIntention, containerStateIntention } from "@/lib/color";
+import { containerStateIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
 import { useServer } from "@/resources/server";
-import {
-  MobileFriendlyTabsSelector,
-  TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+import { MobileFriendlyTabsSelector, TabNoContent } from "mogh_ui";
 import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import TerminalSection from "@/components/terminal/section";
 import LogSection from "@/components/log-section";
 import InspectSection from "@/components/inspect-section";
@@ -123,7 +120,7 @@ export default function ContainerTabs({
   }
 
   return (
-    <Tabs color={colorByIntention(containerStateIntention(state))} value={view}>
+    <Tabs color={containerStateIntention(state)} value={view}>
       {View}
     </Tabs>
   );

@@ -1,11 +1,11 @@
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import SearchInput from "@/ui/search-input";
-import Section from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
-import TableSkeleton from "@/ui/table-skeleton";
+import { filterBySplit } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
+import { Section } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
+import { TableSkeleton } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { useState } from "react";
 

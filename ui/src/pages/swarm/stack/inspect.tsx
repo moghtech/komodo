@@ -1,6 +1,6 @@
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_ui";
 import { useRead } from "@/lib/hooks";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 
 export interface SwarmStackInspectSectionProps extends SectionProps {
   swarm: string;

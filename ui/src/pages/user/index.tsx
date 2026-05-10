@@ -1,9 +1,9 @@
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
-import ConfirmButton from "@/ui/confirm-button";
-import EntityPage from "@/ui/entity-page";
-import LabelledSwitch from "@/ui/labelled-switch";
-import PageGuard from "@/ui/page-guard";
-import Section from "@/ui/section";
+import { ConfirmButton } from "mogh_ui";
+import { EntityPage } from "mogh_ui";
+import { LabelledSwitch } from "mogh_ui";
+import { PageGuard } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { UserCheck, UserMinus } from "lucide-react";

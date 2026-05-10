@@ -6,25 +6,16 @@ import {
   useUser,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import CopyButton from "@/ui/copy-button";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import {
-  Badge,
-  Button,
-  Group,
-  Stack,
-  Switch,
-  Text,
-} from "@mantine/core";
+import { filterBySplit } from "mogh_ui";
+import { CopyButton } from "mogh_ui";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Badge, Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import DeleteVariable from "./delete";
-import SharedTextUpdate, {
-  useSharedTextUpdateData,
-} from "@/ui/shared-text-update";
-import CopyText from "@/ui/copy-text";
-import SearchInput from "@/ui/search-input";
+import { SharedTextUpdate, useSharedTextUpdateData } from "mogh_ui";
+import { CopyText } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsVariables() {
   const user = useUser().data;

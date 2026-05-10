@@ -1,7 +1,7 @@
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
-import { hexColorByIntention } from "@/lib/color";
-import InfoCard from "@/ui/info-card";
+import { hexColorByIntention } from "mogh_ui";
+import { InfoCard } from "mogh_ui";
 import { Group, Progress, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useIsServerAvailable } from "@/resources/server/hooks";
 

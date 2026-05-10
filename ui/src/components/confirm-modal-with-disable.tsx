@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import ConfirmModal, { ConfirmModalProps } from "@/ui/confirm-modal";
+import { ConfirmModal, ConfirmModalProps } from "mogh_ui";
 
 export interface ConfirmModalWithDisableProps extends Omit<
   ConfirmModalProps,

@@ -9,13 +9,13 @@ import {
 } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
 import { useServer } from "@/resources/server";
-import { ICONS } from "@/theme/icons";
-import Section from "@/ui/section";
+import { ICONS } from "@/lib/icons";
+import { Section } from "mogh_ui";
 import { Center, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useParams } from "react-router-dom";
 import { ContainerExecutions } from "./executions";
-import { DataTable } from "@/ui/data-table";
+import { DataTable } from "mogh_ui";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import ContainerTabs from "./tabs";
 import ResourceLink from "@/resources/link";

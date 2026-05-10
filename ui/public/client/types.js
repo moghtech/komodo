@@ -253,6 +253,8 @@ export var DeploymentState;
     DeploymentState["Created"] = "created";
     /** Server mode only. Container is in restart loop */
     DeploymentState["Restarting"] = "restarting";
+    /** Server mode only. Container is in the process of stopping */
+    DeploymentState["Stopping"] = "stopping";
     /** Server mode only. Container is being removed */
     DeploymentState["Removing"] = "removing";
     /** Server mode only. Container is paused */
@@ -418,6 +420,7 @@ export var ContainerStateStatusEnum;
     ContainerStateStatusEnum["Paused"] = "paused";
     ContainerStateStatusEnum["Restarting"] = "restarting";
     ContainerStateStatusEnum["Exited"] = "exited";
+    ContainerStateStatusEnum["Stopping"] = "stopping";
     ContainerStateStatusEnum["Removing"] = "removing";
     ContainerStateStatusEnum["Dead"] = "dead";
     ContainerStateStatusEnum["Empty"] = "";
@@ -438,16 +441,15 @@ export var RestartPolicyNameEnum;
     RestartPolicyNameEnum["UnlessStopped"] = "unless-stopped";
     RestartPolicyNameEnum["OnFailure"] = "on-failure";
 })(RestartPolicyNameEnum || (RestartPolicyNameEnum = {}));
-export var MountTypeEnum;
-(function (MountTypeEnum) {
-    MountTypeEnum["Empty"] = "";
-    MountTypeEnum["Bind"] = "bind";
-    MountTypeEnum["Volume"] = "volume";
-    MountTypeEnum["Image"] = "image";
-    MountTypeEnum["Tmpfs"] = "tmpfs";
-    MountTypeEnum["Npipe"] = "npipe";
-    MountTypeEnum["Cluster"] = "cluster";
-})(MountTypeEnum || (MountTypeEnum = {}));
+export var MountType;
+(function (MountType) {
+    MountType["Bind"] = "bind";
+    MountType["Volume"] = "volume";
+    MountType["Image"] = "image";
+    MountType["Tmpfs"] = "tmpfs";
+    MountType["Npipe"] = "npipe";
+    MountType["Cluster"] = "cluster";
+})(MountType || (MountType = {}));
 export var MountBindOptionsPropagationEnum;
 (function (MountBindOptionsPropagationEnum) {
     MountBindOptionsPropagationEnum["Empty"] = "";

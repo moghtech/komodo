@@ -1,11 +1,11 @@
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Box, Button, Modal } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { MonacoEditor } from "@/components/monaco";
-import CopyButton from "@/ui/copy-button";
-import LoadingScreen from "@/ui/loading-screen";
+import { MonacoEditor } from "mogh_ui";
+import { CopyButton } from "mogh_ui";
+import { LoadingScreen } from "mogh_ui";
 
 export interface ExportTomlProps {
   targets?: Types.ResourceTarget[];
@@ -68,6 +68,8 @@ function ExportTomlInner({
     ? [allData, allPending]
     : [resourcesData, resourcesPending];
 
+  const enableFancyToml = useRead("GetCoreInfo", {}).data?.enable_fancy_toml;
+
   return (
     <Box
       pos="relative"
@@ -79,7 +81,12 @@ function ExportTomlInner({
       maw={1200}
     >
       {loading && <LoadingScreen mt="0" h="30vh" />}
-      <MonacoEditor value={data?.toml} language="fancy_toml" readOnly />
+      <MonacoEditor
+        value={data?.toml}
+        language="fancy_toml"
+        enableFancyToml={enableFancyToml}
+        readOnly
+      />
       <Box pos="absolute" top={18} right={18} style={{ zIndex: 10 }}>
         <CopyButton content={data?.toml ?? ""} />
       </Box>

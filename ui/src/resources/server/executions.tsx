@@ -1,7 +1,7 @@
 import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { useServer } from ".";
-import ConfirmButton from "@/ui/confirm-button";
-import { ICONS } from "@/theme/icons";
+import { ConfirmButton } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export const Prune = ({

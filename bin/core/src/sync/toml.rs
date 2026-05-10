@@ -458,6 +458,41 @@ impl ToToml for Builder {
       toml.push_str("\nparams = {}");
     }
   }
+
+  fn edit_config_object(
+    _resource: &ResourceToml<Self::PartialConfig>,
+    config: IndexMap<String, serde_json::Value>,
+  ) -> anyhow::Result<IndexMap<String, serde_json::Value>> {
+    config
+      .into_iter()
+      .map(|(key, value)| {
+        #[allow(clippy::single_match)]
+        match key.as_str() {
+          "params" => match value {
+            serde_json::Value::Object(obj) => Ok((
+              key,
+              serde_json::Value::Object(
+                obj
+                  .into_iter()
+                  .map(|(key, value)| {
+                    match key.as_str() {
+                      "server_id" => {
+                        return (String::from("server"), value);
+                      }
+                      _ => {}
+                    }
+                    (key, value)
+                  })
+                  .collect(),
+              ),
+            )),
+            value => Ok((key, value)),
+          },
+          _ => Ok((key, value)),
+        }
+      })
+      .collect()
+  }
 }
 
 impl ToToml for Procedure {

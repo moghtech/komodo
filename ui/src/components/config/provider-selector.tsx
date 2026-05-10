@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { Button, Group, Select, SelectProps, TextInput } from "@mantine/core";
 import { useState } from "react";
 

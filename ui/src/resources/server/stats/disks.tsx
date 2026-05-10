@@ -1,7 +1,7 @@
-import { ICONS } from "@/theme/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ICONS } from "@/lib/icons";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Section } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";

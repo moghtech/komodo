@@ -1,11 +1,11 @@
 import { useRead } from "@/lib/hooks";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { ActionIcon, Badge, Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import ProviderSelector from "./provider-selector";
 import AccountSelector from "./account-selector";
 import OrganizationSelector from "./organization-selector";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export interface ImageRegistryConfig {
   registry: Types.ImageRegistryConfig | undefined;

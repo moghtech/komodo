@@ -1,11 +1,11 @@
 import DockerResourceLink from "@/components/docker/link";
 import TargetTerminal from "@/components/terminal/target";
 import { useSetTitle } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { useDeployment } from "@/resources/deployment";
 import { useServer } from "@/resources/server";
 import { useStack } from "@/resources/stack";
-import Page from "@/ui/page";
+import { Page } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { ReactNode, useMemo } from "react";

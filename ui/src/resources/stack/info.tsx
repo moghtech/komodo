@@ -4,16 +4,16 @@ import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
 import { DEFAULT_STACK_FILE_CONTENTS, useFullStack, useStack } from ".";
 import { Types } from "komodo_client";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
-import CopyButton from "@/ui/copy-button";
-import { ICONS } from "@/theme/icons";
-import ConfirmUpdate from "@/ui/config/confirm";
-import ShowHideButton from "@/ui/show-hide-button";
-import { languageFromPath, MonacoEditor } from "@/components/monaco";
+import { CopyButton } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { ConfirmUpdate } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
+import { languageFromPath, MonacoEditor } from "mogh_ui";
 
 export default function StackInfo({
   id,

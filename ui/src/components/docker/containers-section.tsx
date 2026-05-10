@@ -1,18 +1,18 @@
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { Prune } from "@/resources/server/executions";
-import { ICONS } from "@/theme/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section, { SectionProps } from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ICONS } from "@/lib/icons";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Section, SectionProps } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import DockerResourceLink from "./link";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import { containerStateIntention } from "@/lib/color";
-import DividedChildren from "@/ui/divided-children";
 import ContainerPorts from "@/components/docker/container-ports";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
+import { DividedChildren } from "mogh_ui";
 
 export interface ContainersSectionProps extends SectionProps {
   serverId: string;

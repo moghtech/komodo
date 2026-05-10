@@ -509,10 +509,10 @@ pub async fn validate_cancel_build(
     )?;
 
     match (latest_build, latest_cancel) {
-      (Some(build), Some(cancel)) => {
-        if cancel.start_ts > build.start_ts {
-          return Err(anyhow!("Build has already been cancelled"));
-        }
+      (Some(build), Some(cancel))
+        if cancel.start_ts > build.start_ts =>
+      {
+        return Err(anyhow!("Build has already been cancelled"));
       }
       (None, _) => return Err(anyhow!("No build in progress")),
       _ => {}

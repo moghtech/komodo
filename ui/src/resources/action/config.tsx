@@ -9,15 +9,14 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
-import { MonacoEditor } from "@/components/monaco";
-import Config from "@/ui/config";
+import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
+import { MonacoEditor } from "mogh_ui";
+import { Config, ConfigItem, ConfigSwitch } from "mogh_ui";
 import ActionLastRun from "./last-run";
-import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 import TimezoneSelector from "@/components/timezone-selector";
 import SecretsSearch from "@/components/config/secrets-search";
 import WebhookBuilder from "@/components/webhook/builder";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
 import { useFullAction } from ".";
 

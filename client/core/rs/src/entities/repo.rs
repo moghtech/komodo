@@ -113,18 +113,30 @@ pub type _PartialRepoConfig = PartialRepoConfig;
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct RepoConfig {
   /// The server to clone the repo on.
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "server"))
+  )]
   #[builder(default)]
   pub server_id: String,
 
   /// Attach a builder to 'build' the repo.
   #[serde(default, alias = "builder")]
   #[partial_attr(serde(alias = "builder"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "builder"))
+  )]
   #[builder(default)]
   pub builder_id: String,
 

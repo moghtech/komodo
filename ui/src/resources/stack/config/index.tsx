@@ -5,9 +5,15 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
-import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
+import { ICONS } from "@/lib/icons";
+import {
+  Config,
+  ConfigGroupArgs,
+  ConfigProps,
+  ConfigItem,
+  ConfigList,
+  ConfigSwitch,
+} from "mogh_ui";
 import {
   ActionIcon,
   Button,
@@ -22,15 +28,15 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import SecretsSearch from "@/components/config/secrets-search";
-import { MonacoEditor } from "@/components/monaco";
-import EnableSwitch from "@/ui/enable-switch";
+import { MonacoEditor } from "mogh_ui";
+import { EnableSwitch } from "mogh_ui";
 import StackConfigFiles from "./config-files";
 import SystemCommand from "@/components/config/system-command";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
-import InputList from "@/ui/input-list";
+import { InputList } from "mogh_ui";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
@@ -95,6 +101,10 @@ export default function StackConfig({
   const disabled = global_disabled || !canWrite;
 
   const runBuild = update.run_build ?? config.run_build;
+  const autoOrPollUpdates =
+    (update.auto_update ?? config.auto_update) ||
+    (update.poll_for_updates ?? config.poll_for_updates);
+
   const mode = getStackMode(update, config);
 
   const gitProvider = update.git_provider ?? config.git_provider;
@@ -389,6 +399,29 @@ export default function StackConfig({
             />
           );
         },
+        auto_update_skip_services: (values, set) =>
+          autoOrPollUpdates && (
+            <ConfigItem
+              label="Ignore Services During Auto Update"
+              description="Services listed here are skipped only during Global Auto Update checks. Manual checks still include all services."
+            >
+              <MultiSelect
+                leftSection={<ICONS.Service size="1rem" />}
+                placeholder={
+                  values?.length ? "Add services" : "Select services"
+                }
+                value={values}
+                data={allServices}
+                onChange={(auto_update_skip_services) =>
+                  set({ auto_update_skip_services })
+                }
+                disabled={disabled}
+                w="fit-content"
+                searchable
+                clearable
+              />
+            </ConfigItem>
+          ),
         auto_update: {
           description: "Trigger a redeploy if a newer image is found.",
         },
@@ -826,8 +859,12 @@ export default function StackConfig({
           labelHidden: true,
           fields: {
             run_directory: {
-              description:
-                "Set the working directory when running the compose up command, relative to the root of the repo.",
+              description: (
+                <>
+                  Set the working directory when running the compose up command,
+                  <b>relative to the root of the repo.</b>
+                </>
+              ),
               placeholder: "path/to/folder",
             },
             file_paths: (value, set) => (
