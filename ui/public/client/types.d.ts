@@ -6751,6 +6751,13 @@ export interface CreateVariable {
 export interface CustomAlerterEndpoint {
     /** The http/s endpoint to send the POST to */
     url: string;
+    custom_data: CustomAlertData;
+}
+
+/* Configuration for the Custom Alert Data. */
+export interface CustomAlertData {
+    data: Record<string, unknown>;
+    format: string;
 }
 /**
  * Deletes the action at the given id, and returns the deleted action.

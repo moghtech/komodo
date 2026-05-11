@@ -49,6 +49,29 @@ export default function AlerterConfigEndpoint({
           readOnly={disabled}
         />
       </ConfigItem>
+      {endpoint.type === "Custom" && (
+        <ConfigItem
+          label="Custom Alert Data"
+          description="Configure the custom data to send with the alert. Use %alert% to include the alert data. The format field is for your reference and is not used by Komodo."
+        >
+          <MonacoEditor
+            value={JSON.stringify(endpoint.params.custom_data.data, null, 2)}
+            language="json"
+            onValueChange={(customData) => {
+              try {
+                const parsed = JSON.parse(customData);
+                set({
+                  ...endpoint,
+                  params: { ...endpoint.params, custom_data: parsed },
+                });
+              } catch (e) {
+                // Ignore JSON parse errors
+              }
+            }}
+            readOnly={disabled}
+          />
+        </ConfigItem>
+      )}
       {endpoint.type === "Ntfy" && (
         <ConfigInput
           label="Email"

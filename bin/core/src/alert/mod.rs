@@ -153,7 +153,7 @@ pub async fn send_alert_to_alerter(
 
 async fn send_custom_alert(
   url: &str,
-  custom_data: &str,
+  custom_data: &serde_json::Value,
   alert: &Alert,
 ) -> anyhow::Result<()> {
   let VariablesAndSecrets { variables, secrets } =
@@ -166,8 +166,7 @@ async fn send_custom_alert(
   interpolator.interpolate_string(&mut url_interpolated)?;
 
   let alert_string = serde_json::to_string(&alert)?;
-  let json_alert_string = serde_json::to_string(&alert_string)?;
-  let interpolated_alert_string = custom_data.replace("%alert%", &json_alert_string);
+  let interpolated_alert_string = custom_data.get("data").and_then(|v| v.as_str()).unwrap_or("").replace("%alert%", &alert_string);
 
   let res = reqwest::Client::new()
     .post(url_interpolated)
