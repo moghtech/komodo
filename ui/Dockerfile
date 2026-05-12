@@ -9,9 +9,8 @@ COPY ./client/core/ts ./client
 ARG VITE_KOMODO_HOST=""
 ENV VITE_KOMODO_HOST=$VITE_KOMODO_HOST
 
-# Build and link the client
-RUN cd client && yarn && yarn build && yarn link
-RUN cd ui && yarn link komodo_client && yarn && yarn build
+# Build the client
+RUN yarn && yarn workspace komodo-ui build
 
 # Copy just the static ui to scratch image
 FROM scratch

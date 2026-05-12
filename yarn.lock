@@ -803,6 +803,13 @@ klona@^2.0.6:
   resolved "https://registry.yarnpkg.com/klona/-/klona-2.0.6.tgz#85bffbf819c03b2f53270412420a4555ef882e22"
   integrity sha512-dhG34DXATL5hSxJbIexCft8FChFXtmskoZYnoPWjXQuebWYCNkVeV3KkGegCK9CP1oswI/vQibS2GY7Em/sJJA==
 
+"komodo_client@workspace:*":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/komodo_client/-/komodo_client-2.1.1.tgz#9aa7751a873699dc22f915aea6297e12fe60c6ad"
+  integrity sha512-WvVd4eRyn080jddyPUBvlnrkrJh0D7bqJAIp6lfwslHqq/oh3/66NGRkgzFB8d0+9BCvpV/v2Q3YtHHVDHgb0g==
+  dependencies:
+    mogh_auth_client "^1.2.1"
+
 lightningcss-android-arm64@1.32.0:
   version "1.32.0"
   resolved "https://registry.yarnpkg.com/lightningcss-android-arm64/-/lightningcss-android-arm64-1.32.0.tgz#f033885116dfefd9c6f54787523e3514b61e1968"
@@ -894,7 +901,7 @@ marked@14.0.0:
   resolved "https://registry.yarnpkg.com/marked/-/marked-14.0.0.tgz#79a1477358a59e0660276f8fec76de2c33f35d83"
   integrity sha512-uIj4+faQ+MgHgwUW1l2PsPglZLOLOT1uErt06dAPtx2kjteLAkbsd/0FiYg/MGS+i7ZKLb7w2WClxHkzOOuryQ==
 
-mogh_auth_client@^1.5.0:
+mogh_auth_client@^1.2.1, mogh_auth_client@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/mogh_auth_client/-/mogh_auth_client-1.5.0.tgz#f54b8ae35648d5bf1e60d7b67fcdcef45b0ccd7a"
   integrity sha512-eUQmx682AzJRaY4QJSALtIGxXzg2r2Tr8exnDeFMrNe0Ibn4Oqm3h9SkOzYiqqZjKQ13wvHm0RoxT2QKo+908g==
@@ -1482,7 +1489,7 @@ type-fest@^5.6.0:
   dependencies:
     tagged-tag "^1.0.0"
 
-typescript@^6.0.3:
+typescript@^6.0.2, typescript@^6.0.3:
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-6.0.3.tgz#90251dc007916e972786cb94d74d15b185577d21"
   integrity sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==

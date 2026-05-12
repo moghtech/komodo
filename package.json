@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "workspaces": [
+    "ui",
+    "client/core/ts"
+  ]
+}
