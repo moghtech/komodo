@@ -10,6 +10,7 @@ use komodo_client::entities::{
 mod clone;
 mod commit;
 mod init;
+mod ls_remote;
 mod pull;
 mod pull_or_clone;
 
@@ -17,6 +18,7 @@ pub use crate::{
   clone::clone,
   commit::{commit_all, commit_file, write_commit_file},
   init::init_folder_as_repo,
+  ls_remote::{check_remote_state, RemoteState},
   pull::pull,
   pull_or_clone::pull_or_clone,
 };

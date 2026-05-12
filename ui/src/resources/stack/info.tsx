@@ -68,7 +68,7 @@ export default function StackInfo({
                 {error.path}
               </Group>
 
-              {canEdit && (
+              {canEdit && !error.path.startsWith("Failed at:") && (
                 <ConfirmButton
                   loading={isPending}
                   icon={<FilePlus size="1rem" />}
