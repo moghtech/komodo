@@ -20,7 +20,7 @@ import "mogh_ui/index.scss";
 initMonaco();
 
 export const KOMODO_BASE_URL =
-  import.meta.env.VITE_KOMODO_HOST ?? location.origin;
+  import.meta.env.VITE_KOMODO_HOST || location.origin;
 export const UPDATE_WS_URL =
   KOMODO_BASE_URL.replace("http", "ws") + "/ws/update";
 const client = new QueryClient({
