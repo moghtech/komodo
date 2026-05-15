@@ -2,12 +2,12 @@ import NewTag from "@/components/tags/new";
 import Tag from "@/components/tags/tag";
 import UserAvatar from "@/components/user-avatar";
 import { useRead, useSetTitle, useUser } from "@/lib/hooks";
-import { DataTable } from "@/ui/data-table";
+import { DataTable } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
 import { useState } from "react";
 import TagColorSelector from "./color-selector";
 import DeleteTag from "./delete";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsTags() {
   useSetTitle("Tags");

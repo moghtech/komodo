@@ -15,12 +15,27 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: [
+      "@mantine/core",
+      "@mantine/form",
+      "@mantine/hooks",
+      "@mantine/notifications",
+      "@monaco-editor/react",
+      "@tanstack/react-table",
+      "@tanstack/react-query",
+      "lucide-react",
+      "mogh_auth_client",
+      "monaco-editor",
+      "monaco-yaml",
+      "react",
+      "react-dom",
+      "react-router-dom",
+    ],
   },
   css: {
     preprocessorOptions: {
       scss: {
-        // api: "modern-compiler",
-        additionalData: `@use "${path.join(process.cwd(), "src/theme/index").replace(/\\/g, "/")}" as theme;`,
+        additionalData: '@use "mogh_ui/theme.scss" as theme;',
       },
     },
   },

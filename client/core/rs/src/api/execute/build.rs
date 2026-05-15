@@ -39,6 +39,7 @@ pub fn run_build() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
@@ -67,6 +68,7 @@ pub fn batch_run_build() {}
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(mogh_error::Error)]
@@ -106,6 +108,7 @@ pub fn cancel_build() {}
   Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]

@@ -1,12 +1,12 @@
-import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section, { SectionProps } from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
+import { filterBySplit } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Section, SectionProps } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import SwarmResourceLink from "./link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export interface SwarmServicesSectionProps extends SectionProps {
   id: string;

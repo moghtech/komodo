@@ -125,6 +125,7 @@ impl Default for BuilderConfig {
     utoipa::ToSchema
   ))
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::large_enum_variant)]
 pub enum PartialBuilderConfig {
@@ -370,13 +371,10 @@ pub type _PartialUrlBuilderConfig = PartialUrlBuilderConfig;
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[cfg_attr(
-  not(feature = "utoipa"),
-  partial_derive(Serialize, Deserialize, Debug, Clone, Default)
-)]
-#[cfg_attr(
-  feature = "utoipa",
-  partial_derive(Serialize, Deserialize, Debug, Clone, Default,)
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
 )]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
@@ -451,12 +449,20 @@ pub type _PartialServerBuilderConfig = PartialServerBuilderConfig;
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ServerBuilderConfig {
   /// The server id of the builder
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "server"))
+  )]
   pub server_id: String,
 }
 
@@ -485,6 +491,10 @@ pub type _PartialAwsBuilderConfig = PartialAwsBuilderConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct AwsBuilderConfig {

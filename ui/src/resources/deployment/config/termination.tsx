@@ -1,4 +1,4 @@
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { Group, Select, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";

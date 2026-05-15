@@ -96,6 +96,10 @@ pub type _PartialServerConfig = PartialServerConfig;
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ServerConfig {

@@ -1,5 +1,5 @@
-import { useRead, useSearchCombobox } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { useRead } from "@/lib/hooks";
+import { filterBySplit } from "mogh_ui";
 import {
   ActionIcon,
   Button,
@@ -13,14 +13,11 @@ import { Types } from "komodo_client";
 import { ChevronsUpDown } from "lucide-react";
 import { useEffect } from "react";
 import { DOCKER_LINK_ICONS } from "./docker/link";
-import { ICONS } from "@/theme/icons";
-import {
-  colorByIntention,
-  containerStateIntention,
-  swarmStateIntention,
-} from "@/lib/color";
+import { ICONS } from "@/lib/icons";
+import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 import { SWARM_LINK_ICONS } from "./swarm/link";
 import { useStack } from "@/resources/stack";
+import { hexColorByIntention, useSearchCombobox } from "mogh_ui";
 
 export interface StackServiceSelectorProps extends ComboboxProps {
   stackId: string;
@@ -125,7 +122,7 @@ export default function StackServiceSelector({
           {...targetProps}
         >
           <Group gap="xs" wrap="nowrap">
-            <ICONS.Service size="1rem" color={colorByIntention(intention)} />
+            <ICONS.Service size="1rem" color={hexColorByIntention(intention)} />
             <Text className="text-ellipsis">
               {name || (placeholder ?? "Select service")}
             </Text>

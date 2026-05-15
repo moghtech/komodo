@@ -21,7 +21,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MoghAuth } from "komodo_client";
 import { useRead, useUser, useUserInvalidate } from "@/lib/hooks";
-import { hexColorByIntention } from "@/lib/color";
+import { hexColorByIntention } from "mogh_ui";
 
 export default function UserDropdown() {
   const [_, setRerender] = useState(false);
@@ -104,7 +104,7 @@ export default function UserDropdown() {
               onClick={() => {
                 setOpen(false);
                 nav(
-                  `/login?${new URLSearchParams({ backto: `${location.pathname}${location.search}` })}`,
+                  `/login?${new URLSearchParams({ backto: `${location.pathname}${location.search}`, disableAutoLogin: "true" })}`,
                 );
               }}
             >

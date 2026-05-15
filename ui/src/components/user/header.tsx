@@ -1,6 +1,6 @@
-import { ICONS } from "@/theme/icons";
-import DividedChildren from "@/ui/divided-children";
-import EntityHeader from "@/ui/entity-header";
+import { ICONS } from "@/lib/icons";
+import { DividedChildren } from "mogh_ui";
+import { EntityHeader } from "mogh_ui";
 import { Box, Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import UserAvatar from "@/components/user-avatar";

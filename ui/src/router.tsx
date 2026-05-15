@@ -7,10 +7,10 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
-import { useAuthState, useUser } from "@/lib/hooks";
+import { LoadingScreen, useAuthState } from "mogh_ui";
+import { useUser } from "@/lib/hooks";
 import { MoghAuth } from "komodo_client";
 import App from "@/app";
-import LoadingScreen from "./ui/loading-screen";
 
 const Login = lazy(() => import("@/pages/login"));
 const UserDisabled = lazy(() => import("@/pages/user-disabled"));

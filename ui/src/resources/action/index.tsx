@@ -1,9 +1,9 @@
-import { actionStateIntention, hexColorByIntention } from "@/lib/color";
+import { actionStateIntention } from "@/lib/color";
 import { useExecute, useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { hexColorByIntention, StatusBadge } from "mogh_ui";
 import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";

@@ -3,14 +3,14 @@ import { ReactNode, useMemo } from "react";
 import { useSwarm } from "..";
 import { Types } from "komodo_client";
 import { useLocalStorage } from "@mantine/hooks";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Center, Stack, Tabs, Text } from "@mantine/core";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
-import { colorByIntention, swarmStateIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+} from "mogh_ui";
+import { swarmStateIntention } from "@/lib/color";
+import { ICONS } from "@/lib/icons";
 import SwarmNodes from "./nodes";
 import SwarmStacks from "./stacks";
 import SwarmConfigs from "./configs";
@@ -119,7 +119,7 @@ export default function SwarmDockerResources({
 
   return (
     <Section titleOther={titleOther}>
-      <Tabs color={colorByIntention(swarmStateIntention(state))} value={view}>
+      <Tabs color={swarmStateIntention(state)} value={view}>
         {View}
       </Tabs>
     </Section>

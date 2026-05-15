@@ -1,14 +1,14 @@
 import { useExecute, useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import NewResource from "@/resources/new";
 import AlerterTable from "./table";
 import ResourceHeader from "../header";
 import AlerterConfig from "./config";
-import { hexColorByIntention } from "@/lib/color";
+import { hexColorByIntention } from "mogh_ui";
 import BatchExecutions from "@/components/batch-executions";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 
 export function useAlerter(id: string | undefined, useName?: boolean) {
   return useRead("ListAlerters", {}).data?.find((r) =>

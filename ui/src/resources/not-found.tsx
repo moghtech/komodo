@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ResourceComponents, UsableResource } from ".";
 import { Button, Group, Stack, Text } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { usableResourcePath } from "@/lib/utils";
 
 export default function ResourceNotFound({

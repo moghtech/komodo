@@ -8,8 +8,8 @@ use typeshare::typeshare;
 use crate::entities::{I64, Usize};
 
 use super::{
-  ContainerConfig, GraphDriverData, Mount, MountTypeEnum,
-  PortBinding, ResourcesUlimits,
+  ContainerConfig, GraphDriverData, Mount, PortBinding,
+  ResourcesUlimits,
 };
 
 /// Container summary returned by container list apis.
@@ -294,6 +294,7 @@ pub enum ContainerStateStatusEnum {
   Paused,
   Restarting,
   Exited,
+  Stopping,
   Removing,
   Dead,
   #[default]
@@ -858,8 +859,8 @@ pub enum HostConfigCgroupnsModeEnum {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MountPoint {
   /// The mount type:  - `bind` a mount of a file or directory from the host into the container. - `volume` a docker volume with the given `Name`. - `tmpfs` a `tmpfs`. - `npipe` a named pipe from the host into the container. - `cluster` a Swarm cluster volume
-  #[serde(default, rename = "Type")]
-  pub typ: MountTypeEnum,
+  #[serde(rename = "Type")]
+  pub typ: Option<String>,
 
   /// Name is the name reference to the underlying data defined by `Source` e.g., the volume name.
   #[serde(rename = "Name")]

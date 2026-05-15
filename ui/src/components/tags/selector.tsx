@@ -1,12 +1,6 @@
-import {
-  useInvalidate,
-  useRead,
-  useSearchCombobox,
-  useShiftKeyListener,
-  useWrite,
-} from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { filterBySplit } from "@/lib/utils";
+import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
+import { filterBySplit } from "mogh_ui";
 import {
   Badge,
   Box,
@@ -20,6 +14,7 @@ import {
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { notifications } from "@mantine/notifications";
+import { useSearchCombobox, useShiftKeyListener } from "mogh_ui";
 
 export interface TagSelectorProps extends ComboboxProps {
   title: string;

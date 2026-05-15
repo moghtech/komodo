@@ -163,7 +163,7 @@ export const ICONS = {
   Alert: TriangleAlert,
   Update: Bell,
   Branch: GitBranch,
-  Check: Check,
+  Check,
   Execution: Zap,
   History,
   Version: Milestone,

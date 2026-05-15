@@ -4,9 +4,9 @@ import { useMemo } from "react";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
-import { ICONS } from "@/theme/icons";
-import { colorByIntention, repoStateIntention } from "@/lib/color";
+} from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { repoStateIntention } from "@/lib/color";
 import { Tabs } from "@mantine/core";
 import RepoConfig from "./config";
 import { useRead } from "@/lib/hooks";
@@ -79,10 +79,7 @@ export default function RepoTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs
-      color={colorByIntention(repoStateIntention(info?.state))}
-      value={view}
-    >
+    <Tabs color={repoStateIntention(info?.state)} value={view}>
       {View}
     </Tabs>
   );

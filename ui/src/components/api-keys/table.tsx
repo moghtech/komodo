@@ -1,7 +1,7 @@
-import { ICONS } from "@/theme/icons";
-import ConfirmButton from "@/ui/confirm-button";
-import CopyText from "@/ui/copy-text";
-import { DataTable } from "@/ui/data-table";
+import { ICONS } from "@/lib/icons";
+import { ConfirmButton } from "mogh_ui";
+import { CopyText } from "mogh_ui";
+import { DataTable } from "mogh_ui";
 import { Text } from "@mantine/core";
 import { Types } from "komodo_client";
 

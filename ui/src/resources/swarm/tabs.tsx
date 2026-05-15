@@ -1,15 +1,15 @@
 import { usePermissions, useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { useMemo } from "react";
 import { useSwarm } from ".";
 import SwarmConfig from "./config";
 import { Tabs } from "@mantine/core";
-import { colorByIntention, swarmStateIntention } from "@/lib/color";
+import { swarmStateIntention } from "@/lib/color";
 import SwarmDockerResources from "./docker";
 import InspectSection from "@/components/inspect-section";
 import SwarmHostedResourcesSection from "./resources";
@@ -102,10 +102,7 @@ export default function SwarmTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs
-      color={colorByIntention(swarmStateIntention(swarmInfo?.state))}
-      value={view}
-    >
+    <Tabs color={swarmStateIntention(swarmInfo?.state)} value={view}>
       {View}
     </Tabs>
   );

@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { usableResourcePath } from "@/lib/utils";
 import { SIDEBAR_RESOURCES } from "@/resources";
 import { Button, Divider, ScrollArea, Stack, Text } from "@mantine/core";

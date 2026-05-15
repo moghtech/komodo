@@ -1,6 +1,6 @@
-import { fmtUpperCamelcase } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
-import { ConfigItem } from "@/ui/config/item";
+import { fmtUpperCamelcase } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { ConfigItem } from "mogh_ui";
 import { Badge, Group, Select } from "@mantine/core";
 import { Types } from "komodo_client";
 

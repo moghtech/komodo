@@ -2,17 +2,17 @@ import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { ReactNode } from "react";
 import { useFullResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Code, Group, Stack, Text } from "@mantine/core";
 import { sanitizeOnlySpan } from "@/lib/utils";
 import { Types } from "komodo_client";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import ResourceLink from "@/resources/link";
 import { UsableResource } from "@/resources";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { SquarePlay } from "lucide-react";
-import { MonacoDiffEditor, MonacoEditor } from "@/components/monaco";
-import { colorByIntention, diffTypeIntention } from "@/lib/color";
+import { MonacoDiffEditor, MonacoEditor } from "mogh_ui";
+import { diffTypeIntention } from "@/lib/color";
 
 export default function ResourceSyncPending({
   id,
@@ -27,6 +27,7 @@ export default function ResourceSyncPending({
   const { view } = useResourceSyncTabsView(sync);
   const { canExecute } = usePermissions({ type: "ResourceSync", id });
   const { mutate: runSync, isPending } = useExecute("RunSync");
+  const enableFancyToml = useRead("GetCoreInfo", {}).data?.enable_fancy_toml;
   const loading = isPending || syncing;
 
   return (
@@ -143,9 +144,7 @@ export default function ResourceSyncPending({
               <DividedChildren>
                 <Text
                   ff="monospace"
-                  c={colorByIntention(
-                    diffTypeIntention(update.data.type, view === "Commit"),
-                  )}
+                  c={diffTypeIntention(update.data.type, view === "Commit")}
                 >
                   {view === "Commit"
                     ? reversePendingType(update.data.type)
@@ -187,6 +186,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={update.data.data.proposed}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -197,6 +197,7 @@ export default function ResourceSyncPending({
                     original={update.data.data.current}
                     modified={update.data.data.proposed}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -205,6 +206,7 @@ export default function ResourceSyncPending({
                     original={update.data.data.proposed}
                     modified={update.data.data.current}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -214,6 +216,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={update.data.data.current}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -227,9 +230,7 @@ export default function ResourceSyncPending({
           <Stack key={i} className="bordered-light" bdrs="md" p="xl">
             <Text
               ff="monospace"
-              c={colorByIntention(
-                diffTypeIntention(data.type, view === "Commit"),
-              )}
+              c={diffTypeIntention(data.type, view === "Commit")}
             >
               {view === "Commit" ? reversePendingType(data.type) : data.type}{" "}
               Variable
@@ -238,6 +239,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={data.data.proposed}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -248,6 +250,7 @@ export default function ResourceSyncPending({
                     original={data.data.current}
                     modified={data.data.proposed}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -256,6 +259,7 @@ export default function ResourceSyncPending({
                     original={data.data.proposed}
                     modified={data.data.current}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -265,6 +269,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={data.data.current}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -278,9 +283,7 @@ export default function ResourceSyncPending({
           <Stack key={i} className="bordered-light" bdrs="md" p="xl">
             <Text
               ff="monospace"
-              c={colorByIntention(
-                diffTypeIntention(data.type, view === "Commit"),
-              )}
+              c={diffTypeIntention(data.type, view === "Commit")}
             >
               {view === "Commit" ? reversePendingType(data.type) : data.type}{" "}
               User Group
@@ -289,6 +292,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={data.data.proposed}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -299,6 +303,7 @@ export default function ResourceSyncPending({
                     original={data.data.current}
                     modified={data.data.proposed}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -307,6 +312,7 @@ export default function ResourceSyncPending({
                     original={data.data.proposed}
                     modified={data.data.current}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -316,6 +322,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={data.data.current}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}

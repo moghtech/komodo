@@ -1,6 +1,6 @@
 use bollard::query_parameters::ListVolumesOptions;
 use komodo_client::entities::docker::{
-  PortBinding, container::ContainerListItem, volume::*,
+  Topology, container::ContainerListItem, volume::*,
 };
 
 use crate::docker::DockerClient;
@@ -108,8 +108,8 @@ impl DockerClient {
                 }).collect(),
                 accessibility_requirements: mode
                   .accessibility_requirements.map(|req| ClusterVolumeSpecAccessModeAccessibilityRequirements {
-                    requisite: req.requisite.unwrap_or_default().into_iter().map(|map| map.into_iter().map(|(k, v)| (k, v.unwrap_or_default().into_iter().map(|p| PortBinding { host_ip: p.host_ip, host_port: p.host_port }).collect())).collect()).collect(),
-                    preferred: req.preferred.unwrap_or_default().into_iter().map(|map| map.into_iter().map(|(k, v)| (k, v.unwrap_or_default().into_iter().map(|p| PortBinding { host_ip: p.host_ip, host_port: p.host_port }).collect())).collect()).collect(),
+                    requisite: req.requisite.map(|v| v.into_iter().map(|t| Topology { segments: t.segments }).collect()),
+                    preferred: req.preferred.map(|v| v.into_iter().map(|t| Topology { segments: t.segments }).collect()),
                 }),
                 capacity_range: mode.capacity_range.map(|range| ClusterVolumeSpecAccessModeCapacityRange {
                   required_bytes: range.required_bytes,
@@ -128,7 +128,7 @@ impl DockerClient {
             capacity_bytes: info.capacity_bytes,
             volume_context: info.volume_context.unwrap_or_default(),
             volume_id: info.volume_id,
-            accessible_topology: info.accessible_topology.unwrap_or_default().into_iter().map(|map| map.into_iter().map(|(k, v)| (k, v.unwrap_or_default().into_iter().map(|p| PortBinding { host_ip: p.host_ip, host_port: p.host_port }).collect())).collect()).collect(),
+            accessible_topology: info.accessible_topology.map(|v| v.into_iter().map(|t| Topology { segments: t.segments }).collect()),
           }),
           publish_status: volume
             .publish_status

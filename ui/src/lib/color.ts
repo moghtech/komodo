@@ -1,50 +1,15 @@
 import { Types } from "komodo_client";
+import { ColorIntention, opacityColorsTuple } from "mogh_ui";
 
-export type ColorIntention =
-  | "Good"
-  | "Neutral"
-  | "Warning"
-  | "Critical"
-  | "Unknown"
-  | "None";
+export function themeAdditionalColors() {
+  return Object.fromEntries(
+    Object.values(Types.TagColor).map((color) => {
+      return ["Tag" + color, opacityColorsTuple(tagColor(color))];
+    }),
+  );
+}
 
-export const colorByIntention = (intention: ColorIntention) => {
-  switch (intention) {
-    case "Good":
-      return "green";
-    case "Neutral":
-      return "blue";
-    case "Warning":
-      return "yellow";
-    case "Critical":
-      return "red";
-    case "Unknown":
-      return "purple";
-    case "None":
-      return undefined;
-  }
-};
-
-export const hexColorByIntention = (intention: ColorIntention) => {
-  switch (intention) {
-    case "Good":
-      return "#22C55E";
-    case "Neutral":
-      return "#3B82F6";
-    case "Warning":
-      return "#EAB308";
-    case "Critical":
-      return "#EF0044";
-    case "Unknown":
-      return "#A855F7";
-    case "None":
-      return undefined;
-  }
-};
-
-export const swarmStateIntention: (
-  state?: Types.SwarmState,
-) => ColorIntention = (state) => {
+export function swarmStateIntention(state?: Types.SwarmState): ColorIntention {
   switch (state) {
     case Types.SwarmState.Healthy:
       return "Good";
@@ -57,11 +22,11 @@ export const swarmStateIntention: (
     case undefined:
       return "None";
   }
-};
+}
 
-export const swarmNodeStateIntention: (
+export function swarmNodeStateIntention(
   state?: Types.NodeState,
-) => ColorIntention = (state) => {
+): ColorIntention {
   switch (state) {
     case Types.NodeState.READY:
       return "Good";
@@ -74,11 +39,11 @@ export const swarmNodeStateIntention: (
     case undefined:
       return "None";
   }
-};
+}
 
-export const swarmNodeAvailabilityIntention: (
+export function swarmNodeAvailabilityIntention(
   state?: Types.NodeSpecAvailabilityEnum,
-) => ColorIntention = (state) => {
+): ColorIntention {
   switch (state) {
     case Types.NodeSpecAvailabilityEnum.ACTIVE:
       return "Good";
@@ -91,11 +56,11 @@ export const swarmNodeAvailabilityIntention: (
     case undefined:
       return "None";
   }
-};
+}
 
-export const swarmNodeRoleIntention: (
+export function swarmNodeRoleIntention(
   state?: Types.NodeSpecRoleEnum,
-) => ColorIntention = (state) => {
+): ColorIntention {
   switch (state) {
     case Types.NodeSpecRoleEnum.MANAGER:
       return "Good";
@@ -106,12 +71,12 @@ export const swarmNodeRoleIntention: (
     case undefined:
       return "None";
   }
-};
+}
 
-export const swarmTaskStateIntention: (
+export function swarmTaskStateIntention(
   state?: Types.TaskState,
   desired?: Types.TaskState,
-) => ColorIntention = (state, desired) => {
+): ColorIntention {
   // Case when its desired running
   if (desired === Types.TaskState.RUNNING) {
     if (state === Types.TaskState.RUNNING) {
@@ -138,12 +103,12 @@ export const swarmTaskStateIntention: (
   } else {
     return "Critical";
   }
-};
+}
 
-export const serverStateIntention: (
+export function serverStateIntention(
   state: Types.ServerState | undefined,
   versionMismatch: boolean,
-) => ColorIntention = (state, versionMismatch) => {
+): ColorIntention {
   switch (state) {
     case Types.ServerState.Ok:
       // If there's a version mismatch and the server is "Ok", show warning instead
@@ -155,12 +120,12 @@ export const serverStateIntention: (
     case undefined:
       return "None";
   }
-};
+}
 
-export const stackStateIntention = (
+export function stackStateIntention(
   state: Types.StackState | undefined,
   updateAvailable: boolean | undefined,
-) => {
+) {
   switch (state) {
     case undefined:
       return "None";
@@ -177,19 +142,19 @@ export const stackStateIntention = (
     default:
       return "Critical";
   }
-};
+}
 
-export const deploymentStateIntention: (
+export function deploymentStateIntention(
   state: Types.DeploymentState | undefined,
   updateAvailable: boolean | undefined,
-) => ColorIntention = (state) => {
+): ColorIntention {
   switch (state) {
     case undefined:
       return "None";
     case Types.DeploymentState.Deploying:
       return "Warning";
     case Types.DeploymentState.Running:
-      return "Good";
+      return updateAvailable ? "Warning" : "Good";
     case Types.DeploymentState.NotDeployed:
       return "Neutral";
     case Types.DeploymentState.Unknown:
@@ -197,11 +162,11 @@ export const deploymentStateIntention: (
     default:
       return "Critical";
   }
-};
+}
 
-export const containerStateIntention: (
+export function containerStateIntention(
   state?: Types.ContainerStateStatusEnum,
-) => ColorIntention = (state) => {
+): ColorIntention {
   switch (state) {
     case undefined:
       return "None";
@@ -214,9 +179,9 @@ export const containerStateIntention: (
     default:
       return "Critical";
   }
-};
+}
 
-export const buildStateIntention = (status?: Types.BuildState) => {
+export function buildStateIntention(status?: Types.BuildState) {
   switch (status) {
     case undefined:
       return "None";
@@ -231,9 +196,9 @@ export const buildStateIntention = (status?: Types.BuildState) => {
     default:
       return "None";
   }
-};
+}
 
-export const repoStateIntention = (state?: Types.RepoState) => {
+export function repoStateIntention(state?: Types.RepoState) {
   switch (state) {
     case undefined:
       return "None";
@@ -252,9 +217,9 @@ export const repoStateIntention = (state?: Types.RepoState) => {
     default:
       return "None";
   }
-};
+}
 
-export const procedureStateIntention = (status?: Types.ProcedureState) => {
+export function procedureStateIntention(status?: Types.ProcedureState) {
   switch (status) {
     case undefined:
       return "None";
@@ -269,9 +234,9 @@ export const procedureStateIntention = (status?: Types.ProcedureState) => {
     default:
       return "None";
   }
-};
+}
 
-export const actionStateIntention = (status?: Types.ActionState) => {
+export function actionStateIntention(status?: Types.ActionState) {
   switch (status) {
     case undefined:
       return "None";
@@ -286,11 +251,9 @@ export const actionStateIntention = (status?: Types.ActionState) => {
     default:
       return "None";
   }
-};
+}
 
-export const resourceSyncStateIntention = (
-  status?: Types.ResourceSyncState,
-) => {
+export function resourceSyncStateIntention(status?: Types.ResourceSyncState) {
   switch (status) {
     case undefined:
       return "None";
@@ -307,11 +270,11 @@ export const resourceSyncStateIntention = (
     default:
       return "None";
   }
-};
+}
 
-export const alertLevelIntention: (
+export function alertLevelIntention(
   level: Types.SeverityLevel,
-) => ColorIntention = (level) => {
+): ColorIntention {
   switch (level) {
     case Types.SeverityLevel.Ok:
       return "Good";
@@ -320,12 +283,12 @@ export const alertLevelIntention: (
     case Types.SeverityLevel.Critical:
       return "Critical";
   }
-};
+}
 
-export const diffTypeIntention: (
+export function diffTypeIntention(
   level: Types.DiffData["type"],
   reverse: boolean,
-) => ColorIntention = (level, reverse) => {
+): ColorIntention {
   switch (level) {
     case "Create":
       return reverse ? "Critical" : "Good";
@@ -334,9 +297,9 @@ export const diffTypeIntention: (
     case "Delete":
       return reverse ? "Good" : "Critical";
   }
-};
+}
 
-export const tagColor = (color?: Types.TagColor) => {
+export function tagColor(color?: Types.TagColor) {
   switch (color) {
     case undefined:
       return "#475569"; // slate-600
@@ -466,7 +429,7 @@ export const tagColor = (color?: Types.TagColor) => {
     case Types.TagColor.DarkRose:
       return "#881337"; // rose-900
   }
-};
+}
 
 // ORIGINAL USING TAILWIND
 // export const tagColor = (color?: Types.TagColor) => {

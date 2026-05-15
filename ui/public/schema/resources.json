@@ -1,0 +1,6324 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Resources",
+  "description": "Specifies resources to sync on Komodo",
+  "type": "object",
+  "properties": {
+    "swarm": {
+      "description": "Declare a swarm",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml"
+      }
+    },
+    "server": {
+      "description": "Declare a server",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml2"
+      }
+    },
+    "stack": {
+      "description": "Declare a stack",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml3"
+      }
+    },
+    "deployment": {
+      "description": "Declare a deployment",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml4"
+      }
+    },
+    "build": {
+      "description": "Declare a build",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml5"
+      }
+    },
+    "repo": {
+      "description": "Declare a repo",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml6"
+      }
+    },
+    "procedure": {
+      "description": "Declare a procedure",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml7"
+      }
+    },
+    "action": {
+      "description": "Declare an action",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml8"
+      }
+    },
+    "alerter": {
+      "description": "Declare an alerter",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml9"
+      }
+    },
+    "builder": {
+      "description": "Declare a builder",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml10"
+      }
+    },
+    "resource_sync": {
+      "description": "Declare a resource sync",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceToml11"
+      }
+    },
+    "user_group": {
+      "description": "Declare a user group",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/UserGroupToml"
+      }
+    },
+    "variable": {
+      "description": "Declare a variable",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Variable"
+      }
+    }
+  },
+  "definitions": {
+    "ResourceToml": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialSwarmConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialSwarmConfig": {
+      "type": "object",
+      "properties": {
+        "servers": {
+          "description": "The Servers which are swarm manager nodes.\nIf a Server is not reachable or gives error,\ntries the next Server.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "description": "Configure quick links that are displayed in the resource header",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "send_unhealthy_alerts": {
+          "description": "Whether to send alerts about the swarm health.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "maintenance_windows": {
+          "description": "Scheduled maintenance windows during which alerts will be suppressed.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/MaintenanceWindow"
+          }
+        }
+      }
+    },
+    "MaintenanceWindow": {
+      "description": "Represents a scheduled maintenance window",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name for the maintenance window (required)",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description of what maintenance is performed (optional)",
+          "type": "string",
+          "default": ""
+        },
+        "schedule_type": {
+          "description": "The type of maintenance schedule:\n  - Daily (default)\n  - Weekly\n  - OneTime",
+          "default": "Daily",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MaintenanceScheduleType"
+            }
+          ]
+        },
+        "day_of_week": {
+          "description": "For Weekly schedules: Specify the day of the week (Monday, Tuesday, etc.)",
+          "type": "string",
+          "default": ""
+        },
+        "date": {
+          "description": "For OneTime window: ISO 8601 date format (YYYY-MM-DD)",
+          "type": "string",
+          "default": ""
+        },
+        "hour": {
+          "description": "Start hour in 24-hour format (0-23) (optional, defaults to 0)",
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255,
+          "default": 0
+        },
+        "minute": {
+          "description": "Start minute (0-59) (optional, defaults to 0)",
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255,
+          "default": 0
+        },
+        "duration_minutes": {
+          "description": "Duration of the maintenance window in minutes (required)",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "timezone": {
+          "description": "Timezone for maintenance window specificiation.\nIf empty, will use Core timezone.",
+          "type": "string",
+          "default": ""
+        },
+        "enabled": {
+          "description": "Whether this maintenance window is currently enabled",
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "name",
+        "duration_minutes"
+      ]
+    },
+    "MaintenanceScheduleType": {
+      "description": "Types of maintenance schedules",
+      "oneOf": [
+        {
+          "description": "Daily at the specified time",
+          "type": "string",
+          "const": "Daily"
+        },
+        {
+          "description": "Weekly on the specified day and time",
+          "type": "string",
+          "const": "Weekly"
+        },
+        {
+          "description": "One-time maintenance on a specific date and time",
+          "type": "string",
+          "const": "OneTime"
+        }
+      ]
+    },
+    "ResourceToml2": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialServerConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialServerConfig": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "description": "The ws/s address of the periphery client.\nIf unset, Server expects Periphery -> Core connection.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "insecure_tls": {
+          "description": "Only relevant for Core -> Periphery connections.\nWhether to skip Periphery tls certificate validation.\nThis defaults to true because Periphery generates self-signed certificates by default,\nbut if you use valid certs you can switch this to false.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "external_address": {
+          "description": "The address to use with links for containers on the server.\nIf empty, will use the 'address' for links.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "region": {
+          "description": "An optional region label",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "enabled": {
+          "description": "Whether a server is enabled.\nIf a server is disabled,\nyou won't be able to perform any actions on it or see deployment's status.\nDefault: false",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "auto_rotate_keys": {
+          "description": "Whether to automatically rotate Server keys when\nRotateAllServerKeys is called.\nDefault: true",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "passkey": {
+          "description": "Deprecated. Use private / public keys instead.\nAn optional override passkey to use\nto authenticate with periphery agent.\nIf this is empty, will use passkey in core config.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ignore_mounts": {
+          "description": "Sometimes the system stats reports a mount path that is not desired.\nUse this field to filter it out from the report.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "auto_prune": {
+          "description": "Whether to trigger 'docker image prune -a -f' every 24 hours.\ndefault: true",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "links": {
+          "description": "Configure quick links that are displayed in the resource header",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "stats_monitoring": {
+          "description": "Whether to monitor any server stats beyond passing health check.\ndefault: true",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "send_unreachable_alerts": {
+          "description": "Whether to send alerts about the servers reachability",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "send_cpu_alerts": {
+          "description": "Whether to send alerts about the servers CPU status",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "send_mem_alerts": {
+          "description": "Whether to send alerts about the servers MEM status",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "send_disk_alerts": {
+          "description": "Whether to send alerts about the servers DISK status",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "send_version_mismatch_alerts": {
+          "description": "Whether to send alerts about the servers version mismatch with core",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "cpu_warning": {
+          "description": "The percentage threshhold which triggers WARNING state for CPU.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "float"
+        },
+        "cpu_critical": {
+          "description": "The percentage threshhold which triggers CRITICAL state for CPU.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "float"
+        },
+        "mem_warning": {
+          "description": "The percentage threshhold which triggers WARNING state for MEM.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "mem_critical": {
+          "description": "The percentage threshhold which triggers CRITICAL state for MEM.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "disk_warning": {
+          "description": "The percentage threshhold which triggers WARNING state for DISK.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "disk_critical": {
+          "description": "The percentage threshhold which triggers CRITICAL state for DISK.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "maintenance_windows": {
+          "description": "Scheduled maintenance windows during which alerts will be suppressed.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/MaintenanceWindow"
+          }
+        }
+      }
+    },
+    "ResourceToml3": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialStackConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialStackConfig": {
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "The Swarm to deploy the Stack on, setting the Stack into Swarm mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Stack will be in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "server": {
+          "description": "The Server to deploy the Stack on, setting the Stack into Compose mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Stack will be in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "links": {
+          "description": "Configure quick links that are displayed in the resource header",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "project_name": {
+          "description": "Optionally specify a custom project name for the stack.\nIf this is empty string, it will default to the stack name.\nUsed with `docker compose -p {project_name}` / `docker stack deploy {project_name}`.\n\nNote. Can be used to import pre-existing stacks with names that do not match Stack name.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "auto_pull": {
+          "description": "Whether to automatically `compose pull` before redeploying stack.\nEnsured latest images are deployed.\nWill fail if the compose file specifies a locally build image.\n\nNote. Not used in Swarm mode.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "run_build": {
+          "description": "Whether to `docker compose build` before `compose down` / `compose up`.\nCombine with build_extra_args for custom behaviors.\n\nNote. Not used in Swarm mode.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "poll_for_updates": {
+          "description": "Whether to poll for any updates to the images.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "auto_update": {
+          "description": "Whether to automatically redeploy when\nnewer images are found. Will implicitly\nenable `poll_for_updates`, you don't need to\nenable both.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "auto_update_all_services": {
+          "description": "If auto update is enabled, Komodo will\nby default only update the specific services\nwith image updates. If this parameter is set to true,\nKomodo will redeploy the whole Stack (all services).",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "destroy_before_deploy": {
+          "description": "Whether to run `docker compose down` before `compose up`.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "skip_secret_interp": {
+          "description": "Whether to skip secret interpolation into the stack environment variables.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "linked_repo": {
+          "description": "Choose a Komodo Repo (Resource) to source the compose files.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_provider": {
+          "description": "The git provider domain. Default: github.com",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_https": {
+          "description": "Whether to use https to clone the repo (versus http). Default: true\n\nNote. Komodo does not currently support cloning repos via ssh.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "git_account": {
+          "description": "The git account used to access private repos.\nPassing empty string can only clone public repos.\n\nNote. A token for the account must be available in the core config or the builder server's periphery config\nfor the configured git provider.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "repo": {
+          "description": "The repo used as the source of the build.\n{namespace}/{repo_name}",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "description": "The branch of the repo.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commit": {
+          "description": "Optionally set a specific commit hash.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "clone_path": {
+          "description": "Optionally set a specific clone path",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reclone": {
+          "description": "By default, the Stack will `git pull` the repo after it is first cloned.\nIf this option is enabled, the repo folder will be deleted and recloned instead.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_enabled": {
+          "description": "Whether incoming webhooks actually trigger action.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_secret": {
+          "description": "Optionally provide an alternate webhook secret for this stack.\nIf its an empty string, use the default secret from the config.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "webhook_force_deploy": {
+          "description": "By default, the Stack will `DeployStackIfChanged`.\nIf this option is enabled, will always run `DeployStack` without diffing.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "files_on_host": {
+          "description": "If this is checked, the stack will source the files on the host.\nUse `run_directory` and `file_paths` to specify the path on the host.\nThis is useful for those who wish to setup their files on the host,\nrather than defining the contents in UI or in a git repo.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "run_directory": {
+          "description": "Directory to change to (`cd`) before running `docker compose up -d`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "file_paths": {
+          "description": "Add paths to compose files, relative to the run path.\nIf this is empty, will use file `compose.yaml`.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "env_file_path": {
+          "description": "The name of the written environment file before `docker compose up`.\nRelative to the run directory root.\nDefault: .env\n\nNote. Not used in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "additional_env_files": {
+          "description": "Add additional env files to attach with `--env-file`.\nRelative to the run directory root.\n\nNote. It is already included as an `additional_file`.\nDon't add it again there.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/AdditionalEnvFile"
+          }
+        },
+        "config_files": {
+          "description": "Add additional config files either in repo or on host to track.\nCan add any files associated with the stack to enable editing them in the UI.\nDoing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.\nRelative to the run directory.\n\nNote. If the config file is .env and should be included in compose command\nusing `--env-file`, add it to `additional_env_files` instead.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/StackFileDependency"
+          }
+        },
+        "send_alerts": {
+          "description": "Whether to send StackStateChange alerts for this stack.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "registry_provider": {
+          "description": "Used with `registry_account` to login to a registry before docker compose up.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "registry_account": {
+          "description": "Used with `registry_provider` to login to a registry before docker compose up.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pre_deploy": {
+          "description": "The optional command to run before the Stack is deployed.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SystemCommand"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "post_deploy": {
+          "description": "The optional command to run after the Stack is deployed.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SystemCommand"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extra_args": {
+          "description": "The extra arguments to pass to the deploy command.\n\n- For Compose stack, uses `docker compose up -d [EXTRA_ARGS]`.\n- For Swarm mode. `docker stack deploy [EXTRA_ARGS] STACK_NAME`\n\nIf empty, no extra arguments will be passed.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "build_extra_args": {
+          "description": "The extra arguments to pass after `docker compose build`.\nIf empty, no extra build arguments will be passed.\nOnly used if `run_build: true`\n\nNote. Not used in Swarm mode.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "compose_cmd_wrapper": {
+          "description": "Optional command wrapper for secrets management tools.\nWraps the docker compose up command with a prefix command.\nUse [[COMPOSE_COMMAND]] as placeholder for the full compose command.\n\nExamples:\n- \"op run -- [[COMPOSE_COMMAND]]\" (1password CLI)\n- \"sops exec-file --no-fifo /path/to/secret.env '[[COMPOSE_COMMAND]]'\" (sops)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "compose_cmd_wrapper_include": {
+          "description": "Which compose subcommands should use the wrapper.\nValid values for Compose: \"config\", \"build\", \"pull\", \"up\", \"run\"\nValid values for Swarm: \"config\", \"deploy\"\nDefault: [] (empty). If empty and wrapper is set, defaults to [\"up\"] (Compose) or [\"deploy\"] (Swarm).\nSet to [\"config\", \"build\", \"pull\", \"up\"] for sops exec-file with {} placeholder.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "ignore_services": {
+          "description": "Ignore certain services declared in the compose file when checking\nthe stack status. For example, an init service might be exited, but the\nstack should be healthy. This init service should be in `ignore_services`",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "file_contents": {
+          "description": "The contents of the file directly, for management in the UI.\nIf this is empty, it will fall back to checking git config for\nrepo based compose file.\nSupports variable / secret interpolation.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment": {
+          "description": "The environment variables passed to the compose file.\nThey will be written to path defined in env_file_path,\nwhich is given relative to the run directory.\n\nIf it is empty, no file will be written.\n\nNote. Not used in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "AdditionalEnvFile": {
+      "description": "Additional env file configuration for Stack.\nSupports backward compatibility with string-only format.",
+      "type": "object",
+      "properties": {
+        "path": {
+          "description": "File path relative to run directory",
+          "type": "string"
+        },
+        "track": {
+          "description": "Whether Komodo should track this file's contents.\nIf true (default), Komodo will read, display, diff, and validate.\nIf false, only passed to docker compose via --env-file.\nUseful for externally managed files (e.g., sops decrypted files).",
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "StackFileDependency": {
+      "description": "Configure additional file dependencies of the Stack.",
+      "type": "object",
+      "properties": {
+        "path": {
+          "description": "Specify the file",
+          "type": "string"
+        },
+        "services": {
+          "description": "Specify specific service/s",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requires": {
+          "description": "Specify",
+          "allOf": [
+            {
+              "$ref": "#/definitions/StackFileRequires"
+            }
+          ]
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "StackFileRequires": {
+      "oneOf": [
+        {
+          "description": "Diff requires service redeploy.",
+          "type": "string",
+          "const": "Redeploy"
+        },
+        {
+          "description": "Diff requires service restart",
+          "type": "string",
+          "const": "Restart"
+        },
+        {
+          "description": "Diff requires no action. Default.",
+          "type": "string",
+          "const": "None"
+        }
+      ]
+    },
+    "SystemCommand": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": ""
+        },
+        "command": {
+          "type": "string",
+          "default": ""
+        },
+        "shell_mode": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "ResourceToml4": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialDeploymentConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialDeploymentConfig": {
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "The Swarm to deploy the Deployment on (as a Swarm Service), setting the Deployment into Swarm mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Deployment will be in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "server": {
+          "description": "The Server to deploy the Deployment on, setting the Deployment into Container mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Deployment will be in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "description": "The image which the deployment deploys.\nCan either be a user inputted image, or a Komodo Build.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/DeploymentImage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "image_registry_account": {
+          "description": "Configure the account used to pull the image from the registry.\nUsed with `docker login`.\n\n - If the field is empty string, will use the same account config as the build, or none at all if using image.\n - If the field contains an account, a token for the account must be available.\n - Will get the registry domain from the build / image",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "skip_secret_interp": {
+          "description": "Whether to skip secret interpolation into the deployment environment variables.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "redeploy_on_build": {
+          "description": "Whether to redeploy the deployment whenever the attached build finishes.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "poll_for_updates": {
+          "description": "Whether to poll for any updates to the image.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "auto_update": {
+          "description": "Whether to automatically redeploy when\nnewer a image is found. Will implicitly\nenable `poll_for_updates`, you don't need to\nenable both.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "send_alerts": {
+          "description": "Whether to send ContainerStateChange alerts for this deployment.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "links": {
+          "description": "Configure quick links that are displayed in the resource header",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "network": {
+          "description": "The network attached to the container.\nDefault is `host`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "restart": {
+          "description": "The restart mode given to the container.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RestartMode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "command": {
+          "description": "This is interpolated at the end of the `docker run` command,\nwhich means they are either passed to the containers inner process,\nor replaces the container command, depending on use of ENTRYPOINT or CMD in dockerfile.\nEmpty is no command.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "replicas": {
+          "description": "The number of replicas for the Service.\n\nNote. Only used in Swarm mode.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "termination_signal": {
+          "description": "The default termination signal to use to stop the deployment. Defaults to SigTerm (default docker signal).",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TerminationSignal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "termination_timeout": {
+          "description": "The termination timeout.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "extra_args": {
+          "description": "Extra args which are interpolated into the\n`docker run` / `docker service create` command,\nand affect the container configuration.\n\n- Container ref: https://docs.docker.com/reference/cli/docker/container/run/#options\n- Swarm Service ref: https://docs.docker.com/reference/cli/docker/service/create/#options",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "term_signal_labels": {
+          "description": "Labels attached to various termination signal options.\nUsed to specify different shutdown functionality depending\non the termination signal.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ports": {
+          "description": "The container port mapping.\nIrrelevant if container network is `host`.\nMaps ports on host to ports on container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "volumes": {
+          "description": "The container volume mapping.\nMaps files / folders on host to files / folders in container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment": {
+          "description": "The environment variables passed to the container / service.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "labels": {
+          "description": "The docker labels given to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "DeploymentImage": {
+      "oneOf": [
+        {
+          "description": "Deploy any external image.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Image"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "image": {
+                  "description": "The docker image, can be from any registry that works with docker and that the host server can reach.",
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Deploy a Komodo Build.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Build"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "build": {
+                  "description": "The id of the Build",
+                  "type": "string",
+                  "default": ""
+                },
+                "version": {
+                  "description": "Use a custom / older version of the image produced by the build.\nif version is 0.0.0, this means `latest` image.",
+                  "default": {
+                    "major": 0,
+                    "minor": 0,
+                    "patch": 0
+                  },
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Version"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        }
+      ]
+    },
+    "Version": {
+      "type": "object",
+      "properties": {
+        "major": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "minor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "patch": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "major",
+        "minor",
+        "patch"
+      ]
+    },
+    "RestartMode": {
+      "type": "string",
+      "enum": [
+        "no",
+        "on-failure",
+        "always",
+        "unless-stopped"
+      ]
+    },
+    "TerminationSignal": {
+      "type": "string",
+      "enum": [
+        "SIGHUP",
+        "SIGINT",
+        "SIGQUIT",
+        "SIGTERM"
+      ]
+    },
+    "ResourceToml5": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialBuildConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialBuildConfig": {
+      "type": "object",
+      "properties": {
+        "builder": {
+          "description": "Which builder is used to build the image.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version": {
+          "description": "The current version of the build.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Version"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "auto_increment_version": {
+          "description": "Whether to automatically increment the patch on every build.\nDefault is `true`",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "image_name": {
+          "description": "An alternate name for the image pushed to the repository.\nIf this is empty, it will use the build name.\n\nCan be used in conjunction with `image_tag` to direct multiple builds\nwith different configs to push to the same image registry, under different,\nindependantly versioned tags.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image_tag": {
+          "description": "An extra tag put after the build version, for the image pushed to the repository.\nEg. in image tag of `aarch64` would push to moghtech/komodo-core:1.13.2-aarch64.\nIf this is empty, the image tag will just be the build version.\n\nCan be used in conjunction with `image_name` to direct multiple builds\nwith different configs to push to the same image registry, under different,\nindependantly versioned tags.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "include_latest_tag": {
+          "description": "Push `:latest` / `:latest-image_tag` tags.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "include_version_tags": {
+          "description": "Push build version semver `:1.19.5` + `1.19` / `:1.19.5-image_tag` tags.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "include_commit_tag": {
+          "description": "Push commit hash `:a6v8h83` / `:a6v8h83-image_tag` tags.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "links": {
+          "description": "Configure quick links that are displayed in the resource header",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "linked_repo": {
+          "description": "Choose a Komodo Repo (Resource) to source the build files.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_provider": {
+          "description": "The git provider domain. Default: github.com",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_https": {
+          "description": "Whether to use https to clone the repo (versus http). Default: true\n\nNote. Komodo does not currently support cloning repos via ssh.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "git_account": {
+          "description": "The git account used to access private repos.\nPassing empty string can only clone public repos.\n\nNote. A token for the account must be available in the core config or the builder server's periphery config\nfor the configured git provider.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "repo": {
+          "description": "The repo used as the source of the build.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "description": "The branch of the repo.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commit": {
+          "description": "Optionally set a specific commit hash.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "webhook_enabled": {
+          "description": "Whether incoming webhooks actually trigger action.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_secret": {
+          "description": "Optionally provide an alternate webhook secret for this build.\nIf its an empty string, use the default secret from the config.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "files_on_host": {
+          "description": "If this is checked, the build will source the files on the host.\nUse `build_path` and `dockerfile_path` to specify the path on the host.\nThis is useful for those who wish to setup their files on the host,\nrather than defining the contents in UI or in a git repo.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "build_path": {
+          "description": "The path of the docker build context relative to the root of the repo.\nDefault: \".\" (the root of the repo).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dockerfile_path": {
+          "description": "The path of the dockerfile relative to the build path.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image_registry": {
+          "description": "Configuration for the registry/s to push the built image to.\nThe first registry in this list will be used with attached Deployments.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ImageRegistryConfig"
+          }
+        },
+        "skip_secret_interp": {
+          "description": "Whether to skip secret interpolation in the build_args.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_buildx": {
+          "description": "Whether to use buildx to build (eg `docker buildx build ...`)",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "extra_args": {
+          "description": "Any extra docker cli arguments to be included in the build command",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "pre_build": {
+          "description": "The optional command run after repo clone and before docker build.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SystemCommand"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dockerfile": {
+          "description": "UI defined dockerfile contents.\nSupports variable / secret interpolation.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "build_args": {
+          "description": "Docker build arguments.\n\nThese values are visible in the final image by running `docker inspect`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "secret_args": {
+          "description": "Secret arguments.\n\nThese values remain hidden in the final image by using\ndocker secret mounts. See <https://docs.docker.com/build/building/secrets>.\n\nThe values can be used in RUN commands:\n```sh\nRUN --mount=type=secret,id=SECRET_KEY \\\n  SECRET_KEY=$(cat /run/secrets/SECRET_KEY) ...\n```",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "labels": {
+          "description": "Docker labels",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ImageRegistryConfig": {
+      "description": "Configuration for an image registry",
+      "type": "object",
+      "properties": {
+        "domain": {
+          "description": "Specify the registry provider domain, eg `docker.io`.\nIf not provided, will not push to any registry.",
+          "type": "string",
+          "default": ""
+        },
+        "account": {
+          "description": "Specify an account to use with the registry.",
+          "type": "string",
+          "default": ""
+        },
+        "organization": {
+          "description": "Optional. Specify an organization to push the image under.\nEmpty string means no organization.",
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "ResourceToml6": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialRepoConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialRepoConfig": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "The server to clone the repo on.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "builder": {
+          "description": "Attach a builder to 'build' the repo.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_provider": {
+          "description": "The git provider domain. Default: github.com",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_https": {
+          "description": "Whether to use https to clone the repo (versus http). Default: true\n\nNote. Komodo does not currently support cloning repos via ssh.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "git_account": {
+          "description": "The git account used to access private repos.\nPassing empty string can only clone public repos.\n\nNote. A token for the account must be available in the core config or the builder server's periphery config\nfor the configured git provider.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "repo": {
+          "description": "The github repo to clone.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "description": "The repo branch.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commit": {
+          "description": "Optionally set a specific commit hash.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "path": {
+          "description": "Explicitly specify the folder to clone the repo in.\n- If absolute (has leading '/')\n  - Used directly as the path\n- If relative\n  - Taken relative to Periphery `repo_dir` (ie `${root_directory}/repos`)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "webhook_enabled": {
+          "description": "Whether incoming webhooks actually trigger action.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_secret": {
+          "description": "Optionally provide an alternate webhook secret for this repo.\nIf its an empty string, use the default secret from the config.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "on_clone": {
+          "description": "Command to be run after the repo is cloned.\nThe path is relative to the root of the repo.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SystemCommand"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "on_pull": {
+          "description": "Command to be run after the repo is pulled.\nThe path is relative to the root of the repo.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SystemCommand"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "links": {
+          "description": "Configure quick links that are displayed in the resource header",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "environment": {
+          "description": "The environment variables passed to the compose file.\nThey will be written to path defined in env_file_path,\nwhich is given relative to the run directory.\n\nIf it is empty, no file will be written.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "env_file_path": {
+          "description": "The name of the written environment file before `docker compose up`.\nRelative to the repo root.\nDefault: .env",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "skip_secret_interp": {
+          "description": "Whether to skip secret interpolation into the repo environment variable file.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "ResourceToml7": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialProcedureConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialProcedureConfig": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "description": "The stages to be run by the procedure.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ProcedureStage"
+          }
+        },
+        "schedule_format": {
+          "description": "Choose whether to specify schedule as regular CRON, or using the english to CRON parser.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ScheduleFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schedule": {
+          "description": "Optionally provide a schedule for the procedure to run on.\n\nThere are 2 ways to specify a schedule:\n\n1. Regular CRON expression:\n\n(second, minute, hour, day, month, day-of-week)\n```text\n0 0 0 1,15 * ?\n```\n\n2. \"English\" expression via [english-to-cron](https://crates.io/crates/english-to-cron):\n\n```text\nat midnight on the 1st and 15th of the month\n```",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schedule_enabled": {
+          "description": "Whether schedule is enabled if one is provided.\nCan be used to temporarily disable the schedule.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "schedule_timezone": {
+          "description": "Optional. A TZ Identifier. If not provided, will use Core local timezone.\nhttps://en.wikipedia.org/wiki/List_of_tz_database_time_zones.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schedule_alert": {
+          "description": "Whether to send alerts when the schedule was run.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "failure_alert": {
+          "description": "Whether to send alerts when this procedure fails.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_enabled": {
+          "description": "Whether incoming webhooks actually trigger action.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_secret": {
+          "description": "Optionally provide an alternate webhook secret for this procedure.\nIf its an empty string, use the default secret from the config.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ProcedureStage": {
+      "description": "A single stage of a procedure. Runs a list of executions in parallel.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "A name for the procedure",
+          "type": "string"
+        },
+        "enabled": {
+          "description": "Whether the stage should be run as part of the procedure.",
+          "type": "boolean",
+          "default": true
+        },
+        "executions": {
+          "description": "The executions in the stage",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EnabledExecution"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "EnabledExecution": {
+      "description": "Allows to enable / disabled procedures in the sequence / parallel vec on the fly",
+      "type": "object",
+      "properties": {
+        "execution": {
+          "description": "The execution request to run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Execution"
+            }
+          ]
+        },
+        "enabled": {
+          "description": "Whether the execution is enabled to run in the procedure.",
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "execution"
+      ]
+    },
+    "Execution": {
+      "description": "A wrapper for all Komodo exections.",
+      "oneOf": [
+        {
+          "description": "The \"null\" execution. Does nothing.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "None"
+            },
+            "params": {
+              "$ref": "#/definitions/NoData"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Deploy the target stack. (alias: `stack`, `st`)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DeployStack"
+            },
+            "params": {
+              "$ref": "#/definitions/DeployStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchDeployStack"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchDeployStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DeployStackIfChanged"
+            },
+            "params": {
+              "$ref": "#/definitions/DeployStackIfChanged"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchDeployStackIfChanged"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchDeployStackIfChanged"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PullStack"
+            },
+            "params": {
+              "$ref": "#/definitions/PullStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchPullStack"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchPullStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "StartStack"
+            },
+            "params": {
+              "$ref": "#/definitions/StartStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RestartStack"
+            },
+            "params": {
+              "$ref": "#/definitions/RestartStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PauseStack"
+            },
+            "params": {
+              "$ref": "#/definitions/PauseStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UnpauseStack"
+            },
+            "params": {
+              "$ref": "#/definitions/UnpauseStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "StopStack"
+            },
+            "params": {
+              "$ref": "#/definitions/StopStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DestroyStack"
+            },
+            "params": {
+              "$ref": "#/definitions/DestroyStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchDestroyStack"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchDestroyStack"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RunStackService"
+            },
+            "params": {
+              "$ref": "#/definitions/RunStackService"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Deploy the target deployment. (alias: `dp`)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Deploy"
+            },
+            "params": {
+              "$ref": "#/definitions/Deploy"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchDeploy"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchDeploy"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PullDeployment"
+            },
+            "params": {
+              "$ref": "#/definitions/PullDeployment"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "StartDeployment"
+            },
+            "params": {
+              "$ref": "#/definitions/StartDeployment"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RestartDeployment"
+            },
+            "params": {
+              "$ref": "#/definitions/RestartDeployment"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PauseDeployment"
+            },
+            "params": {
+              "$ref": "#/definitions/PauseDeployment"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UnpauseDeployment"
+            },
+            "params": {
+              "$ref": "#/definitions/UnpauseDeployment"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "StopDeployment"
+            },
+            "params": {
+              "$ref": "#/definitions/StopDeployment"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DestroyDeployment"
+            },
+            "params": {
+              "$ref": "#/definitions/DestroyDeployment"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchDestroyDeployment"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchDestroyDeployment"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Run the target build. (alias: `build`, `bd`)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RunBuild"
+            },
+            "params": {
+              "$ref": "#/definitions/RunBuild"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchRunBuild"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchRunBuild"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CancelBuild"
+            },
+            "params": {
+              "$ref": "#/definitions/CancelBuild"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Clone the target repo",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CloneRepo"
+            },
+            "params": {
+              "$ref": "#/definitions/CloneRepo"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchCloneRepo"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchCloneRepo"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PullRepo"
+            },
+            "params": {
+              "$ref": "#/definitions/PullRepo"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchPullRepo"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchPullRepo"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BuildRepo"
+            },
+            "params": {
+              "$ref": "#/definitions/BuildRepo"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchBuildRepo"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchBuildRepo"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CancelRepoBuild"
+            },
+            "params": {
+              "$ref": "#/definitions/CancelRepoBuild"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Run the target procedure. (alias: `procedure`, `pr`)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RunProcedure"
+            },
+            "params": {
+              "$ref": "#/definitions/RunProcedure"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchRunProcedure"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchRunProcedure"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Run the target action. (alias: `action`, `ac`)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RunAction"
+            },
+            "params": {
+              "$ref": "#/definitions/RunAction"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BatchRunAction"
+            },
+            "params": {
+              "$ref": "#/definitions/BatchRunAction"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Execute a Resource Sync. (alias: `sync`)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RunSync"
+            },
+            "params": {
+              "$ref": "#/definitions/RunSync"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Commit a Resource Sync. (alias: `commit`)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CommitSync"
+            },
+            "params": {
+              "$ref": "#/definitions/CommitSync"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "TestAlerter"
+            },
+            "params": {
+              "$ref": "#/definitions/TestAlerter"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "SendAlert"
+            },
+            "params": {
+              "$ref": "#/definitions/SendAlert"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "StartContainer"
+            },
+            "params": {
+              "$ref": "#/definitions/StartContainer"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RestartContainer"
+            },
+            "params": {
+              "$ref": "#/definitions/RestartContainer"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PauseContainer"
+            },
+            "params": {
+              "$ref": "#/definitions/PauseContainer"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UnpauseContainer"
+            },
+            "params": {
+              "$ref": "#/definitions/UnpauseContainer"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "StopContainer"
+            },
+            "params": {
+              "$ref": "#/definitions/StopContainer"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DestroyContainer"
+            },
+            "params": {
+              "$ref": "#/definitions/DestroyContainer"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "StartAllContainers"
+            },
+            "params": {
+              "$ref": "#/definitions/StartAllContainers"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RestartAllContainers"
+            },
+            "params": {
+              "$ref": "#/definitions/RestartAllContainers"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PauseAllContainers"
+            },
+            "params": {
+              "$ref": "#/definitions/PauseAllContainers"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UnpauseAllContainers"
+            },
+            "params": {
+              "$ref": "#/definitions/UnpauseAllContainers"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "StopAllContainers"
+            },
+            "params": {
+              "$ref": "#/definitions/StopAllContainers"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PruneContainers"
+            },
+            "params": {
+              "$ref": "#/definitions/PruneContainers"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DeleteNetwork"
+            },
+            "params": {
+              "$ref": "#/definitions/DeleteNetwork"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PruneNetworks"
+            },
+            "params": {
+              "$ref": "#/definitions/PruneNetworks"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DeleteImage"
+            },
+            "params": {
+              "$ref": "#/definitions/DeleteImage"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PruneImages"
+            },
+            "params": {
+              "$ref": "#/definitions/PruneImages"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DeleteVolume"
+            },
+            "params": {
+              "$ref": "#/definitions/DeleteVolume"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PruneVolumes"
+            },
+            "params": {
+              "$ref": "#/definitions/PruneVolumes"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PruneDockerBuilders"
+            },
+            "params": {
+              "$ref": "#/definitions/PruneDockerBuilders"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PruneBuildx"
+            },
+            "params": {
+              "$ref": "#/definitions/PruneBuildx"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "PruneSystem"
+            },
+            "params": {
+              "$ref": "#/definitions/PruneSystem"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RemoveSwarmNodes"
+            },
+            "params": {
+              "$ref": "#/definitions/RemoveSwarmNodes"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UpdateSwarmNode"
+            },
+            "params": {
+              "$ref": "#/definitions/UpdateSwarmNode"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RemoveSwarmStacks"
+            },
+            "params": {
+              "$ref": "#/definitions/RemoveSwarmStacks"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RemoveSwarmServices"
+            },
+            "params": {
+              "$ref": "#/definitions/RemoveSwarmServices"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CreateSwarmConfig"
+            },
+            "params": {
+              "$ref": "#/definitions/CreateSwarmConfig"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RotateSwarmConfig"
+            },
+            "params": {
+              "$ref": "#/definitions/RotateSwarmConfig"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RemoveSwarmConfigs"
+            },
+            "params": {
+              "$ref": "#/definitions/RemoveSwarmConfigs"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CreateSwarmSecret"
+            },
+            "params": {
+              "$ref": "#/definitions/CreateSwarmSecret"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RotateSwarmSecret"
+            },
+            "params": {
+              "$ref": "#/definitions/RotateSwarmSecret"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RemoveSwarmSecrets"
+            },
+            "params": {
+              "$ref": "#/definitions/RemoveSwarmSecrets"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "ClearRepoCache"
+            },
+            "params": {
+              "$ref": "#/definitions/ClearRepoCache"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "BackupCoreDatabase"
+            },
+            "params": {
+              "$ref": "#/definitions/BackupCoreDatabase"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "GlobalAutoUpdate"
+            },
+            "params": {
+              "$ref": "#/definitions/GlobalAutoUpdate"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RotateAllServerKeys"
+            },
+            "params": {
+              "$ref": "#/definitions/RotateAllServerKeys"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "RotateCoreKeys"
+            },
+            "params": {
+              "$ref": "#/definitions/RotateCoreKeys"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Sleep"
+            },
+            "params": {
+              "$ref": "#/definitions/Sleep"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        }
+      ]
+    },
+    "NoData": {
+      "description": "Represents an empty json object: `{}`",
+      "type": "object"
+    },
+    "DeployStack": {
+      "description": "Deploys the target stack. `docker compose up`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "services": {
+          "description": "Filter to only deploy specific services.\nIf empty, will deploy all services.\n\nNote. For Swarm mode Stacks, this field is not supported and will be ignored.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "stop_time": {
+          "description": "Override the default termination max time.\nOnly used if the stack needs to be taken down first.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "BatchDeployStack": {
+      "description": "Deploys multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* stacks\nfoo-*\n# add some more\nextra-stack-1, extra-stack-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "DeployStackIfChanged": {
+      "description": "Checks deployed contents vs latest contents,\nand only if any changes found\nwill `docker compose up`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "stop_time": {
+          "description": "Override the default termination max time.\nOnly used if the stack needs to be taken down first.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "BatchDeployStackIfChanged": {
+      "description": "Deploys multiple Stacks if changed in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* stacks\nfoo-*\n# add some more\nextra-stack-1, extra-stack-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "PullStack": {
+      "description": "Pulls images for the target stack. `docker compose pull`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "services": {
+          "description": "Filter to only pull specific services.\nIf empty, will pull all services.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "BatchPullStack": {
+      "description": "Pulls multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* stacks\nfoo-*\n# add some more\nextra-stack-1, extra-stack-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "StartStack": {
+      "description": "Starts the target stack. `docker compose start`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "services": {
+          "description": "Filter to only start specific services.\nIf empty, will start all services.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "RestartStack": {
+      "description": "Restarts the target stack. `docker compose restart`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "services": {
+          "description": "Filter to only restart specific services.\nIf empty, will restart all services.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "PauseStack": {
+      "description": "Pauses the target stack. `docker compose pause`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "services": {
+          "description": "Filter to only pause specific services.\nIf empty, will pause all services.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "UnpauseStack": {
+      "description": "Unpauses the target stack. `docker compose unpause`. Response: [Update].\n\nNote. This is the only way to restart a paused container.",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "services": {
+          "description": "Filter to only unpause specific services.\nIf empty, will unpause all services.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "StopStack": {
+      "description": "Stops the target stack. `docker compose stop`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "stop_time": {
+          "description": "Override the default termination max time.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "services": {
+          "description": "Filter to only stop specific services.\nIf empty, will stop all services.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "DestroyStack": {
+      "description": "Destoys the target stack. `docker compose down`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "services": {
+          "description": "Filter to only destroy specific services.\nIf empty, will destroy all services.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "remove_orphans": {
+          "description": "Pass `--remove-orphans`",
+          "type": "boolean",
+          "default": false
+        },
+        "stop_time": {
+          "description": "Override the default termination max time.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      },
+      "required": [
+        "stack"
+      ]
+    },
+    "BatchDestroyStack": {
+      "description": "Destroys multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* stacks\nfoo-*\n# add some more\nextra-stack-1, extra-stack-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "RunStackService": {
+      "description": "Runs a one-time command against a service using `docker compose run`. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "service": {
+          "description": "Service to run",
+          "type": "string"
+        },
+        "command": {
+          "description": "Command and args to pass to the service container",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "no_tty": {
+          "description": "Do not allocate TTY",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "no_deps": {
+          "description": "Do not start linked services",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "detach": {
+          "description": "Detach container on run",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "service_ports": {
+          "description": "Map service ports to the host",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "env": {
+          "description": "Extra environment variables for the run",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "workdir": {
+          "description": "Working directory inside the container",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "User to run as inside the container",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entrypoint": {
+          "description": "Override the default entrypoint",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pull": {
+          "description": "Pull the image before running",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "stack",
+        "service"
+      ]
+    },
+    "Deploy": {
+      "description": "Deploys the container / swarm service for the target Deployment. Response: [Update].\n\nFor Server based Deployments (just a container):\n1. Pulls the image onto the target server.\n2. If the container is already running,\nit will be stopped and removed using `docker container rm ${container_name}`.\n3. The container will be run using `docker run {...params}`,\nwhere params are determined by the deployment's configuration.",
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "stop_signal": {
+          "description": "Override the default termination signal specified in the deployment.\nOnly used when deployment needs to be taken down before redeploy.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TerminationSignal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stop_time": {
+          "description": "Override the default termination max time.\nOnly used when deployment needs to be taken down before redeploy.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      },
+      "required": [
+        "deployment"
+      ]
+    },
+    "BatchDeploy": {
+      "description": "Deploys multiple Deployments in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* deployments\nfoo-*\n# add some more\nextra-deployment-1, extra-deployment-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "PullDeployment": {
+      "description": "Pulls the image for the target deployment. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "deployment"
+      ]
+    },
+    "StartDeployment": {
+      "description": "Starts the container for the target deployment. Response: [Update]\n\n1. Runs `docker start ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "deployment"
+      ]
+    },
+    "RestartDeployment": {
+      "description": "Restarts the container for the target deployment. Response: [Update]\n\n1. Runs `docker restart ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "deployment"
+      ]
+    },
+    "PauseDeployment": {
+      "description": "Pauses the container for the target deployment. Response: [Update]\n\n1. Runs `docker pause ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "deployment"
+      ]
+    },
+    "UnpauseDeployment": {
+      "description": "Unpauses the container for the target deployment. Response: [Update]\n\n1. Runs `docker unpause ${container_name}`.\n\nNote. This is the only way to restart a paused container.",
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "deployment"
+      ]
+    },
+    "StopDeployment": {
+      "description": "Stops the container for the target deployment. Response: [Update]\n\n1. Runs `docker stop ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "signal": {
+          "description": "Override the default termination signal specified in the deployment.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TerminationSignal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "time": {
+          "description": "Override the default termination max time.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      },
+      "required": [
+        "deployment"
+      ]
+    },
+    "DestroyDeployment": {
+      "description": "Stops and destroys the container for the target deployment.\nReponse: [Update].\n\n1. The container is stopped and removed using `docker container rm ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "description": "Name or id.",
+          "type": "string"
+        },
+        "signal": {
+          "description": "Override the default termination signal specified in the deployment.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TerminationSignal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "time": {
+          "description": "Override the default termination max time.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      },
+      "required": [
+        "deployment"
+      ]
+    },
+    "BatchDestroyDeployment": {
+      "description": "Destroys multiple Deployments in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* deployments\nfoo-*\n# add some more\nextra-deployment-1, extra-deployment-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "RunBuild": {
+      "description": "Runs the target build. Response: [Update].\n\n1. Get a handle to the builder. If using AWS builder, this means starting a builder ec2 instance.\n\n2. Clone the repo on the builder. If an `on_clone` commmand is given, it will be executed.\n\n3. Execute `docker build {...params}`, where params are determined using the builds configuration.\n\n4. If a docker registry is configured, the build will be pushed to the registry.\n\n5. If using AWS builder, destroy the builder ec2 instance.\n\n6. Deploy any Deployments with *Redeploy on Build* enabled.",
+      "type": "object",
+      "properties": {
+        "build": {
+          "description": "Can be build id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "build"
+      ]
+    },
+    "BatchRunBuild": {
+      "description": "Runs multiple builds in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* builds\nfoo-*\n# add some more\nextra-build-1, extra-build-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "CancelBuild": {
+      "description": "Cancels the target build.\nOnly does anything if the build is `building` when called.\nResponse: [Update]",
+      "type": "object",
+      "properties": {
+        "build": {
+          "description": "Can be id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "build"
+      ]
+    },
+    "CloneRepo": {
+      "description": "Clones the target repo. Response: [Update].\n\nNote. Repo must have server attached at `server_id`.\n\n1. Clones the repo on the target server using `git clone https://{$token?}@github.com/${repo} -b ${branch}`.\nThe token will only be used if a github account is specified,\nand must be declared in the periphery configuration on the target server.\n2. If `on_clone` and `on_pull` are specified, they will be executed.\n`on_clone` will be executed before `on_pull`.",
+      "type": "object",
+      "properties": {
+        "repo": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "BatchCloneRepo": {
+      "description": "Clones multiple Repos in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* repos\nfoo-*\n# add some more\nextra-repo-1, extra-repo-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "PullRepo": {
+      "description": "Pulls the target repo. Response: [Update].\n\nNote. Repo must have server attached at `server_id`.\n\n1. Pulls the repo on the target server using `git pull`.\n2. If `on_pull` is specified, it will be executed after the pull is complete.",
+      "type": "object",
+      "properties": {
+        "repo": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "BatchPullRepo": {
+      "description": "Pulls multiple Repos in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* repos\nfoo-*\n# add some more\nextra-repo-1, extra-repo-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "BuildRepo": {
+      "description": "Builds the target repo, using the attached builder. Response: [Update].\n\nNote. Repo must have builder attached at `builder_id`.\n\n1. Spawns the target builder instance (For AWS type. For Server type, just use CloneRepo).\n2. Clones the repo on the builder using `git clone https://{$token?}@github.com/${repo} -b ${branch}`.\nThe token will only be used if a github account is specified,\nand must be declared in the periphery configuration on the builder instance.\n3. If `on_clone` and `on_pull` are specified, they will be executed.\n`on_clone` will be executed before `on_pull`.",
+      "type": "object",
+      "properties": {
+        "repo": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "BatchBuildRepo": {
+      "description": "Builds multiple Repos in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* repos\nfoo-*\n# add some more\nextra-repo-1, extra-repo-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "CancelRepoBuild": {
+      "description": "Cancels the target repo build.\nOnly does anything if the repo build is `building` when called.\nResponse: [Update]",
+      "type": "object",
+      "properties": {
+        "repo": {
+          "description": "Can be id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo"
+      ]
+    },
+    "RunProcedure": {
+      "description": "Runs the target Procedure. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "procedure": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "procedure"
+      ]
+    },
+    "BatchRunProcedure": {
+      "description": "Runs multiple Procedures in parallel that match pattern. Response: [BatchExecutionResponse].",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* procedures\nfoo-*\n# add some more\nextra-procedure-1, extra-procedure-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "RunAction": {
+      "description": "Runs the target Action. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "args": {
+          "description": "Custom arguments which are merged on top of the default arguments.\nCLI Format: `\"VAR1=val1&VAR2=val2\"`\n\nWebhook-triggered actions use this to pass WEBHOOK_BRANCH and WEBHOOK_BODY.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "BatchRunAction": {
+      "description": "Runs multiple Actions in parallel that match pattern. Response: [BatchExecutionResponse]",
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* actions\nfoo-*\n# add some more\nextra-action-1, extra-action-2\n```",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "RunSync": {
+      "description": "Runs the target resource sync. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "sync": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "resource_type": {
+          "description": "Only execute sync on a specific resource type.\nCombine with `resource_id` to specify resource.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ResourceTargetVariant"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resources": {
+          "description": "Only execute sync on a specific resources.\nCombine with `resource_type` to specify resources.\nSupports name or id.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "sync"
+      ]
+    },
+    "ResourceTargetVariant": {
+      "description": "Auto-generated discriminant enum variants",
+      "type": "string",
+      "enum": [
+        "System",
+        "Swarm",
+        "Server",
+        "Stack",
+        "Deployment",
+        "Build",
+        "Repo",
+        "Procedure",
+        "Action",
+        "Builder",
+        "Alerter",
+        "ResourceSync"
+      ]
+    },
+    "CommitSync": {
+      "description": "Exports matching resources, and writes to the target sync's resource file. Response: [Update]\n\nNote. Will fail if the Sync is not `managed`.",
+      "type": "object",
+      "properties": {
+        "sync": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sync"
+      ]
+    },
+    "TestAlerter": {
+      "description": "Tests an Alerters ability to reach the configured endpoint. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "alerter": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "alerter"
+      ]
+    },
+    "SendAlert": {
+      "description": "Send a custom alert message to configured Alerters. Response: [Update].\nAlias: `alert`",
+      "type": "object",
+      "properties": {
+        "level": {
+          "description": "The alert level.",
+          "default": "OK",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SeverityLevel"
+            }
+          ]
+        },
+        "message": {
+          "description": "The alert message. Required.",
+          "type": "string"
+        },
+        "details": {
+          "description": "The alert details. Optional.",
+          "type": "string",
+          "default": ""
+        },
+        "alerters": {
+          "description": "Specific alerter names or ids.\nIf empty / not passed, sends to all configured alerters\nwith the `Custom` alert type whitelisted / not blacklisted.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "message"
+      ]
+    },
+    "SeverityLevel": {
+      "description": "Severity level of problem.",
+      "oneOf": [
+        {
+          "description": "No problem.\n\nAliases: ok, low, l",
+          "type": "string",
+          "const": "OK"
+        },
+        {
+          "description": "Problem is imminent.\n\nAliases: warning, w, medium, m",
+          "type": "string",
+          "const": "WARNING"
+        },
+        {
+          "description": "Problem fully realized.\n\nAliases: critical, c, high, h",
+          "type": "string",
+          "const": "CRITICAL"
+        }
+      ]
+    },
+    "StartContainer": {
+      "description": "Starts the container on the target server. Response: [Update]\n\n1. Runs `docker start ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "container": {
+          "description": "The container name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server",
+        "container"
+      ]
+    },
+    "RestartContainer": {
+      "description": "Restarts the container on the target server. Response: [Update]\n\n1. Runs `docker restart ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "container": {
+          "description": "The container name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server",
+        "container"
+      ]
+    },
+    "PauseContainer": {
+      "description": "Pauses the container on the target server. Response: [Update]\n\n1. Runs `docker pause ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "container": {
+          "description": "The container name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server",
+        "container"
+      ]
+    },
+    "UnpauseContainer": {
+      "description": "Unpauses the container on the target server. Response: [Update]\n\n1. Runs `docker unpause ${container_name}`.\n\nNote. This is the only way to restart a paused container.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "container": {
+          "description": "The container name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server",
+        "container"
+      ]
+    },
+    "StopContainer": {
+      "description": "Stops the container on the target server. Response: [Update]\n\n1. Runs `docker stop ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "container": {
+          "description": "The container name",
+          "type": "string"
+        },
+        "signal": {
+          "description": "Override the default termination signal.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TerminationSignal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "time": {
+          "description": "Override the default termination max time.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      },
+      "required": [
+        "server",
+        "container"
+      ]
+    },
+    "DestroyContainer": {
+      "description": "Stops and destroys the container on the target server.\nReponse: [Update].\n\n1. The container is stopped and removed using `docker container rm ${container_name}`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "container": {
+          "description": "The container name",
+          "type": "string"
+        },
+        "signal": {
+          "description": "Override the default termination signal.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TerminationSignal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "time": {
+          "description": "Override the default termination max time.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      },
+      "required": [
+        "server",
+        "container"
+      ]
+    },
+    "StartAllContainers": {
+      "description": "Starts all containers on the target server. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "RestartAllContainers": {
+      "description": "Restarts all containers on the target server. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "PauseAllContainers": {
+      "description": "Pauses all containers on the target server. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "UnpauseAllContainers": {
+      "description": "Unpauses all containers on the target server. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "StopAllContainers": {
+      "description": "Stops all containers on the target server. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Name or id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "PruneContainers": {
+      "description": "Prunes the docker containers on the target server. Response: [Update].\n\n1. Runs `docker container prune -f`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "DeleteNetwork": {
+      "description": "Delete a docker network.\nResponse: [Update]",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the network to delete.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server",
+        "name"
+      ]
+    },
+    "PruneNetworks": {
+      "description": "Prunes the docker networks on the target server. Response: [Update].\n\n1. Runs `docker network prune -f`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "DeleteImage": {
+      "description": "Delete a docker image.\nResponse: [Update]",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the image to delete.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server",
+        "name"
+      ]
+    },
+    "PruneImages": {
+      "description": "Prunes the docker images on the target server. Response: [Update].\n\n1. Runs `docker image prune -a -f`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "DeleteVolume": {
+      "description": "Delete a docker volume.\nResponse: [Update]",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the volume to delete.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server",
+        "name"
+      ]
+    },
+    "PruneVolumes": {
+      "description": "Prunes the docker volumes on the target server. Response: [Update].\n\n1. Runs `docker volume prune -a -f`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "PruneDockerBuilders": {
+      "description": "Prunes the docker builders on the target server. Response: [Update].\n\n1. Runs `docker builder prune -a -f`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "PruneBuildx": {
+      "description": "Prunes the docker buildx cache on the target server. Response: [Update].\n\n1. Runs `docker buildx prune -a -f`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "PruneSystem": {
+      "description": "Prunes the docker system on the target server, including volumes. Response: [Update].\n\n1. Runs `docker system prune -a -f --volumes`.",
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "Id or name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "server"
+      ]
+    },
+    "RemoveSwarmNodes": {
+      "description": "`docker node rm [OPTIONS] NODE [NODE...]`\n\nhttps://docs.docker.com/reference/cli/docker/node/rm/",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "nodes": {
+          "description": "Node names or ids to remove",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "force": {
+          "description": "Force remove a node from the swarm",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "swarm",
+        "nodes"
+      ]
+    },
+    "UpdateSwarmNode": {
+      "description": "`docker node update [OPTIONS] NODE`\n\nhttps://docs.docker.com/reference/cli/docker/node/update/",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "node": {
+          "description": "Node hostname or id",
+          "type": "string"
+        },
+        "availability": {
+          "description": "Update the node's availability: 'active', 'pause', or 'drain'",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NodeSpecAvailabilityEnum"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "label_add": {
+          "description": "Add labels to node (`key=value`).",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "label_rm": {
+          "description": "Add labels to node (`key=value`). (alias: `lr`)",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "role": {
+          "description": "Update the node's role: 'worker' or 'manager'",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NodeSpecRoleEnum"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "swarm",
+        "node"
+      ]
+    },
+    "NodeSpecAvailabilityEnum": {
+      "type": "string",
+      "enum": [
+        "",
+        "active",
+        "pause",
+        "drain"
+      ]
+    },
+    "NodeSpecRoleEnum": {
+      "type": "string",
+      "enum": [
+        "",
+        "worker",
+        "manager"
+      ]
+    },
+    "RemoveSwarmStacks": {
+      "description": "`docker stack rm [OPTIONS] STACK [STACK...]`\n\nhttps://docs.docker.com/reference/cli/docker/stack/rm/",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "stacks": {
+          "description": "Node names to remove",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "detach": {
+          "description": "Do not wait for stack removal",
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "swarm",
+        "stacks"
+      ]
+    },
+    "RemoveSwarmServices": {
+      "description": "`docker service rm SERVICE [SERVICE...]`\n\nhttps://docs.docker.com/reference/cli/docker/service/rm/",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "services": {
+          "description": "Service names or ids",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "swarm",
+        "services"
+      ]
+    },
+    "CreateSwarmConfig": {
+      "description": "`docker config create [OPTIONS] CONFIG file|-`\n\nhttps://docs.docker.com/reference/cli/docker/config/create/",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the config to create",
+          "type": "string"
+        },
+        "data": {
+          "description": "The data to store in the config",
+          "type": "string"
+        },
+        "labels": {
+          "description": "Docker labels to give the config",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "template_driver": {
+          "description": "Optional custom template driver",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "swarm",
+        "name",
+        "data"
+      ]
+    },
+    "RotateSwarmConfig": {
+      "description": "https://docs.docker.com/engine/swarm/configs/#example-rotate-a-config\n\nSwarm configs / secrets are immutable after creation.\nThis making updating values awkward when you have services actively using them.\nThe following steps allows for config rotation while minimizing downtime.\n\n1. Query for all services using the config\n   - If not in use by any services, can simply `remove` and `create` the config.\n   - Otherwise, continue with following steps\n2. `Create` config `{config}-tmp` using provided data\n3. `Update` services to use `tmp` config\n4. `Remove` and `create` the actual config. This is now possible because services are using the tmp config.\n5. `Update` services to use actual (not `tmp`) config again.",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "config": {
+          "description": "Config name",
+          "type": "string"
+        },
+        "data": {
+          "description": "The new config data as a string",
+          "type": "string"
+        }
+      },
+      "required": [
+        "swarm",
+        "config",
+        "data"
+      ]
+    },
+    "RemoveSwarmConfigs": {
+      "description": "`docker config rm CONFIG [CONFIG...]`\n\nhttps://docs.docker.com/reference/cli/docker/config/rm/",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "configs": {
+          "description": "Config names or ids",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "swarm",
+        "configs"
+      ]
+    },
+    "CreateSwarmSecret": {
+      "description": "`docker config create [OPTIONS] CONFIG file|-`\n\nhttps://docs.docker.com/reference/cli/docker/config/create/",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the secret to create",
+          "type": "string"
+        },
+        "data": {
+          "description": "The data to store in the secret",
+          "type": "string"
+        },
+        "driver": {
+          "description": "Optional custom secret driver",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "labels": {
+          "description": "Docker labels to give the secret",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "template_driver": {
+          "description": "Optional custom template driver",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "swarm",
+        "name",
+        "data"
+      ]
+    },
+    "RotateSwarmSecret": {
+      "description": "https://docs.docker.com/engine/swarm/secrets/#example-rotate-a-secret\n\nSwarm configs / secrets are immutable after creation.\nThis making updating values awkward when you have services actively using them.\nThe following steps allows for secret rotation while minimizing downtime.\n\n1. Query for all services using the secret\n   - If not in use by any services, can simply `remove` and `create` the secret.\n   - Otherwise, continue with following steps\n2. `Create` secret `{secret}-tmp` using provided data\n3. `Update` services to use `tmp` secret\n4. `Remove` and `create` the actual secret. This is now possible because services are using the tmp secret.\n5. `Update` services to use actual (not `tmp`) secret again.",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "secret": {
+          "description": "Secret name",
+          "type": "string"
+        },
+        "data": {
+          "description": "The new secret data as a string",
+          "type": "string"
+        }
+      },
+      "required": [
+        "swarm",
+        "secret",
+        "data"
+      ]
+    },
+    "RemoveSwarmSecrets": {
+      "description": "`docker secret rm SECRET [SECRET...]`\n\nhttps://docs.docker.com/reference/cli/docker/secret/rm/",
+      "type": "object",
+      "properties": {
+        "swarm": {
+          "description": "Name or id",
+          "type": "string"
+        },
+        "secrets": {
+          "description": "Secret names or ids",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "swarm",
+        "secrets"
+      ]
+    },
+    "ClearRepoCache": {
+      "description": "**Admin only.** Clears all repos from the Core repo cache.\nResponse: [Update]",
+      "type": "object"
+    },
+    "BackupCoreDatabase": {
+      "description": "**Admin only.** Backs up the Komodo Core database to compressed jsonl files.\nResponse: [Update]. Aliases: `backup-database`, `backup-db`, `backup`.\n\nMount a folder to `/backups`, and Core will use it to create\ntimestamped database dumps, which can be restored using\nthe Komodo CLI.\n\nhttps://komo.do/docs/setup/backup",
+      "type": "object"
+    },
+    "GlobalAutoUpdate": {
+      "description": "**Admin only.** Trigger a global poll for image updates on Stacks and Deployments\nwith `poll_for_updates` or `auto_update` enabled.\nResponse: [Update]. Alias: `auto-update`.\n\n1. Run CheckStackForUpdate / CheckDeploymentForUpdate any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled.\n   This will pick up any available updates.\n2. Redeploy Stacks / Deployments that have updates found and 'auto_update' enabled.\n     - Skip this using 'skip_auto_update', preferring to only alert even for 'auto_update' resources.",
+      "type": "object",
+      "properties": {
+        "skip_auto_update": {
+          "description": "Normally resources with 'auto_update' will be\nredeployed immediately if updates are found.\nWith this enabled, convert this into an UpdateAvailable alert.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "RotateAllServerKeys": {
+      "description": "**Admin only.** Rotates all connected Server keys.\nResponse: [Update]. Alias: `rotate-keys`.",
+      "type": "object"
+    },
+    "RotateCoreKeys": {
+      "description": "**Admin only.** Rotates the Core private key,\nand all Server public keys.\nResponse: [Update].\n\nIf any Server is `NotOk`, this will fail.\nTo proceed anyways, pass `force: true`.",
+      "type": "object",
+      "properties": {
+        "force": {
+          "description": "Force the rotation to proceed even if a Server is `NotOk`.\nThe Core Public Key in Periphery config may have to be updated manually.\n(alias: `f`)",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "Sleep": {
+      "description": "Sleeps for the specified time.",
+      "type": "object",
+      "properties": {
+        "duration_ms": {
+          "type": "integer",
+          "format": "int64",
+          "default": 0
+        }
+      }
+    },
+    "ScheduleFormat": {
+      "type": "string",
+      "enum": [
+        "English",
+        "Cron"
+      ]
+    },
+    "ResourceToml8": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialActionConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialActionConfig": {
+      "type": "object",
+      "properties": {
+        "run_at_startup": {
+          "description": "Whether this action should run at startup.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "schedule_format": {
+          "description": "Choose whether to specify schedule as regular CRON, or using the english to CRON parser.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ScheduleFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schedule": {
+          "description": "Optionally provide a schedule for the procedure to run on.\n\nThere are 2 ways to specify a schedule:\n\n1. Regular CRON expression:\n\n(second, minute, hour, day, month, day-of-week)\n```text\n0 0 0 1,15 * ?\n```\n\n2. \"English\" expression via [english-to-cron](https://crates.io/crates/english-to-cron):\n\n```text\nat midnight on the 1st and 15th of the month\n```",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schedule_enabled": {
+          "description": "Whether schedule is enabled if one is provided.\nCan be used to temporarily disable the schedule.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "schedule_timezone": {
+          "description": "Optional. A TZ Identifier. If not provided, will use Core local timezone.\nhttps://en.wikipedia.org/wiki/List_of_tz_database_time_zones.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schedule_alert": {
+          "description": "Whether to send alerts when the schedule was run.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "failure_alert": {
+          "description": "Whether to send alerts when this action fails.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_enabled": {
+          "description": "Whether incoming webhooks actually trigger action.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_secret": {
+          "description": "Optionally provide an alternate webhook secret for this procedure.\nIf its an empty string, use the default secret from the config.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reload_deno_deps": {
+          "description": "Whether deno will be instructed to reload all dependencies,\nthis can usually be kept false outside of development.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "file_contents": {
+          "description": "Typescript file contents using pre-initialized `komodo` client.\nSupports variable / secret interpolation.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "arguments_format": {
+          "description": "Specify the format in which the arguments are defined.\nDefault: `key_value` (like environment)",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "arguments": {
+          "description": "Default arguments to give to the Action for use in the script at `ARGS`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "FileFormat": {
+      "type": "string",
+      "enum": [
+        "key_value",
+        "toml",
+        "yaml",
+        "json"
+      ]
+    },
+    "ResourceToml9": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialAlerterConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialAlerterConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Whether the alerter is enabled",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "endpoint": {
+          "description": "Where to route the alert messages.\n\nDefault: Custom endpoint `http://localhost:7000`",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AlerterEndpoint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "alert_types": {
+          "description": "Only send specific alert types.\nIf empty, will send all alert types.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/AlertDataVariant"
+          }
+        },
+        "resources": {
+          "description": "Only send alerts on specific resources.\nIf empty, will send alerts for all resources.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ResourceTarget"
+          }
+        },
+        "except_resources": {
+          "description": "DON'T send alerts on these resources.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ResourceTarget"
+          }
+        },
+        "maintenance_windows": {
+          "description": "Scheduled maintenance windows during which alerts will be suppressed.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/MaintenanceWindow"
+          }
+        }
+      }
+    },
+    "AlerterEndpoint": {
+      "oneOf": [
+        {
+          "description": "Send alert serialized to JSON to an http endpoint.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Custom"
+            },
+            "params": {
+              "$ref": "#/definitions/CustomAlerterEndpoint"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Send alert to a Slack app",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Slack"
+            },
+            "params": {
+              "$ref": "#/definitions/SlackAlerterEndpoint"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Send alert to a Discord app",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Discord"
+            },
+            "params": {
+              "$ref": "#/definitions/DiscordAlerterEndpoint"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Send alert to Ntfy",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Ntfy"
+            },
+            "params": {
+              "$ref": "#/definitions/NtfyAlerterEndpoint"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Send alert to Pushover",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Pushover"
+            },
+            "params": {
+              "$ref": "#/definitions/PushoverAlerterEndpoint"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        }
+      ]
+    },
+    "CustomAlerterEndpoint": {
+      "description": "Configuration for a Custom alerter endpoint.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "The http/s endpoint to send the POST to",
+          "type": "string",
+          "default": "http://localhost:7000"
+        }
+      }
+    },
+    "SlackAlerterEndpoint": {
+      "description": "Configuration for a Slack alerter.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "The Slack app webhook url",
+          "type": "string",
+          "default": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+        }
+      }
+    },
+    "DiscordAlerterEndpoint": {
+      "description": "Configuration for a Discord alerter.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "The Discord webhook url",
+          "type": "string",
+          "default": "https://discord.com/api/webhooks/XXXXXXXXXXXX/XXXX-XXXXXXXXXX"
+        }
+      }
+    },
+    "NtfyAlerterEndpoint": {
+      "description": "Configuration for a Ntfy alerter.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "The ntfy topic URL",
+          "type": "string",
+          "default": "http://localhost:8080/komodo"
+        },
+        "email": {
+          "description": "Optional E-Mail Address to enable ntfy email notifications.\nSMTP must be configured on the ntfy server.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "PushoverAlerterEndpoint": {
+      "description": "Configuration for a Pushover alerter.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "The pushover URL including application and user tokens in parameters.",
+          "type": "string",
+          "default": "https://api.pushover.net/1/messages.json?token=XXXXXXXXXXXXX&user=XXXXXXXXXXXXX"
+        }
+      }
+    },
+    "AlertDataVariant": {
+      "description": "Auto-generated discriminant enum variants",
+      "oneOf": [
+        {
+          "description": "A null alert",
+          "type": "string",
+          "const": "None"
+        },
+        {
+          "description": "The user triggered a test of the\nAlerter configuration.",
+          "type": "string",
+          "const": "Test"
+        },
+        {
+          "description": "A server could not be reached.",
+          "type": "string",
+          "const": "SwarmUnhealthy"
+        },
+        {
+          "description": "A server could not be reached.",
+          "type": "string",
+          "const": "ServerUnreachable"
+        },
+        {
+          "description": "A server has high CPU usage.",
+          "type": "string",
+          "const": "ServerCpu"
+        },
+        {
+          "description": "A server has high memory usage.",
+          "type": "string",
+          "const": "ServerMem"
+        },
+        {
+          "description": "A server has high disk usage.",
+          "type": "string",
+          "const": "ServerDisk"
+        },
+        {
+          "description": "A server has a version mismatch with the core.",
+          "type": "string",
+          "const": "ServerVersionMismatch"
+        },
+        {
+          "description": "A container's state has changed unexpectedly.\nFor swarms, this refers to swarm service.",
+          "type": "string",
+          "const": "ContainerStateChange"
+        },
+        {
+          "description": "A Deployment has an image update available",
+          "type": "string",
+          "const": "DeploymentImageUpdateAvailable"
+        },
+        {
+          "description": "A Deployment has an image update available",
+          "type": "string",
+          "const": "DeploymentAutoUpdated"
+        },
+        {
+          "description": "A stack's state has changed unexpectedly.",
+          "type": "string",
+          "const": "StackStateChange"
+        },
+        {
+          "description": "A Stack has an image update available",
+          "type": "string",
+          "const": "StackImageUpdateAvailable"
+        },
+        {
+          "description": "A Stack was auto updated",
+          "type": "string",
+          "const": "StackAutoUpdated"
+        },
+        {
+          "description": "An AWS builder failed to terminate.",
+          "type": "string",
+          "const": "AwsBuilderTerminationFailed"
+        },
+        {
+          "description": "A resource sync has pending updates",
+          "type": "string",
+          "const": "ResourceSyncPendingUpdates"
+        },
+        {
+          "description": "A build has failed",
+          "type": "string",
+          "const": "BuildFailed"
+        },
+        {
+          "description": "A repo has failed",
+          "type": "string",
+          "const": "RepoBuildFailed"
+        },
+        {
+          "description": "A procedure has failed",
+          "type": "string",
+          "const": "ProcedureFailed"
+        },
+        {
+          "description": "An action has failed",
+          "type": "string",
+          "const": "ActionFailed"
+        },
+        {
+          "description": "A schedule was run",
+          "type": "string",
+          "const": "ScheduleRun"
+        },
+        {
+          "description": "Custom header / body.\nProduced using `/execute/SendAlert`",
+          "type": "string",
+          "const": "Custom"
+        }
+      ]
+    },
+    "ResourceTarget": {
+      "description": "Used to reference a specific resource across all resource types",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "System"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Swarm"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Server"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Stack"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Deployment"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Build"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Repo"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Procedure"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Action"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Builder"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Alerter"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "ResourceSync"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ]
+        }
+      ]
+    },
+    "ResourceToml10": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialBuilderConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialBuilderConfig": {
+      "description": "Partial representation of [BuilderConfig]",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Url"
+            },
+            "params": {
+              "$ref": "#/definitions/PartialUrlBuilderConfig"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Server"
+            },
+            "params": {
+              "$ref": "#/definitions/PartialServerBuilderConfig"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Aws"
+            },
+            "params": {
+              "$ref": "#/definitions/PartialAwsBuilderConfig"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        }
+      ]
+    },
+    "PartialUrlBuilderConfig": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "description": "The address of the Periphery agent",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "periphery_public_key": {
+          "description": "An expected public key associated with Periphery private key.\nIf empty, doesn't validate Periphery public key.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "insecure_tls": {
+          "description": "Whether to validate the Periphery tls certificates.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "passkey": {
+          "description": "Deprecated. Use private / public keys instead.\nAn optional override passkey to use\nto authenticate with periphery agent.\nIf this is empty, will use passkey in core config.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "PartialServerBuilderConfig": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "description": "The server id of the builder",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "PartialAwsBuilderConfig": {
+      "type": "object",
+      "properties": {
+        "region": {
+          "description": "The AWS region to create the instance in",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "instance_type": {
+          "description": "The instance type to create for the build",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "volume_gb": {
+          "description": "The size of the builder volume in gb",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "ami_id": {
+          "description": "The EC2 ami id to create.\nThe ami should have the periphery client configured to start on startup,\nand should have the necessary github / dockerhub accounts configured.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "subnet_id": {
+          "description": "The subnet id to create the instance in.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "key_pair_name": {
+          "description": "The key pair name to attach to the instance",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "assign_public_ip": {
+          "description": "Whether to assign the instance a public IP address.\nLikely needed for the instance to be able to reach the open internet.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_public_ip": {
+          "description": "Whether core should use the public IP address to communicate with periphery on the builder.\nIf false, core will communicate with the instance using the private IP.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "security_group_ids": {
+          "description": "The security group ids to attach to the instance.\nThis should include a security group to allow core inbound access to the periphery port.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "user_data": {
+          "description": "The user data to deploy the instance with.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "description": "The port periphery will be running on.\nDefault: `8120`",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "use_https": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "periphery_public_key": {
+          "description": "An expected public key associated with Periphery private key.\nIf empty, doesn't validate Periphery public key.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "insecure_tls": {
+          "description": "Whether to validate the Periphery tls certificates.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "git_providers": {
+          "description": "Which git providers are available on the AMI",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/GitProvider"
+          }
+        },
+        "docker_registries": {
+          "description": "Which docker registries are available on the AMI.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/DockerRegistry"
+          }
+        },
+        "secrets": {
+          "description": "Which secrets are available on the AMI.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "GitProvider": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "description": "The git provider domain. Default: `github.com`.",
+          "type": "string",
+          "default": "github.com"
+        },
+        "https": {
+          "description": "Whether to use https. Default: true.",
+          "type": "boolean",
+          "default": true
+        },
+        "accounts": {
+          "description": "The accounts on the git provider. Required.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProviderAccount"
+          }
+        }
+      },
+      "required": [
+        "accounts"
+      ]
+    },
+    "ProviderAccount": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "description": "The account username. Required.",
+          "type": "string"
+        },
+        "token": {
+          "description": "The account access token. Required.",
+          "type": "string",
+          "writeOnly": true
+        }
+      },
+      "required": [
+        "username"
+      ]
+    },
+    "DockerRegistry": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "description": "The docker provider domain. Default: `docker.io`.",
+          "type": "string",
+          "default": "docker.io"
+        },
+        "accounts": {
+          "description": "The accounts on the registry. Required.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProviderAccount"
+          }
+        },
+        "organizations": {
+          "description": "Available organizations on the registry provider.\nUsed to push an image under an organization's repo rather than an account's repo.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "accounts"
+      ]
+    },
+    "ResourceToml11": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The resource name. Required",
+          "type": "string"
+        },
+        "description": {
+          "description": "The resource description. Optional.",
+          "type": "string"
+        },
+        "template": {
+          "description": "Mark resource as a template",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Tag ids or names. Optional",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deploy": {
+          "description": "Optional. Only relevant for deployments / stacks.\n\nWill ensure deployment / stack is running with the latest configuration.\nDeploy actions to achieve this will be included in the sync.\nDefault is false.",
+          "type": "boolean"
+        },
+        "after": {
+          "description": "Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.\n\nSpecify other deployments / stacks by name as dependencies.\nThe sync will ensure the deployment / stack will only be deployed 'after' its dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Resource specific configuration.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PartialResourceSyncConfig"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PartialResourceSyncConfig": {
+      "type": "object",
+      "properties": {
+        "linked_repo": {
+          "description": "Choose a Komodo Repo (Resource) to source the sync files.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_provider": {
+          "description": "The git provider domain. Default: github.com",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_https": {
+          "description": "Whether to use https to clone the repo (versus http). Default: true\n\nNote. Komodo does not currently support cloning repos via ssh.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "repo": {
+          "description": "The Github repo used as the source of the build.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "description": "The branch of the repo.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commit": {
+          "description": "Optionally set a specific commit hash.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git_account": {
+          "description": "The git account used to access private repos.\nPassing empty string can only clone public repos.\n\nNote. A token for the account must be available in the core config or the builder server's periphery config\nfor the configured git provider.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "webhook_enabled": {
+          "description": "Whether incoming webhooks actually trigger action.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "webhook_secret": {
+          "description": "Optionally provide an alternate webhook secret for this sync.\nIf its an empty string, use the default secret from the config.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "files_on_host": {
+          "description": "Files are available on the Komodo Core host.\nSpecify the file / folder with [ResourceSyncConfig::resource_path].",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "resource_path": {
+          "description": "The path of the resource file(s) to sync.\n - If Files on Host, this is relative to the configured `sync_directory` in core config.\n - If Git Repo based, this is relative to the root of the repo.\nCan be a specific file, or a directory containing multiple files / folders.\nSee [https://komo.do/docs/sync-resources](https://komo.do/docs/sync-resources) for more information.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "managed": {
+          "description": "Enable \"pushes\" to the file,\nwhich exports resources matching tags to single file.\n - If using `files_on_host`, it is stored in the file_contents, which must point to a .toml file path (it will be created if it doesn't exist).\n - If using `file_contents`, it is stored in the database.\nWhen using this, \"delete\" mode is always enabled.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "delete": {
+          "description": "Whether sync should delete resources\nnot declared in the resource files",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "include_resources": {
+          "description": "Whether sync should include resources.\nDefault: true",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "match_tags": {
+          "description": "When using `managed` resource sync, will only export resources\nmatching all of the given tags. If none, will match all resources.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "include_variables": {
+          "description": "Whether sync should include variables.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "include_user_groups": {
+          "description": "Whether sync should include user groups.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "pending_alert": {
+          "description": "Whether sync should send alert when it enters Pending state.\nDefault: true",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "file_contents": {
+          "description": "Manage the file contents in the UI.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "UserGroupToml": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "User group name",
+          "type": "string"
+        },
+        "everyone": {
+          "description": "Whether all users will implicitly have the permissions in this group.",
+          "type": "boolean",
+          "default": false
+        },
+        "users": {
+          "description": "Users in the group",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "all": {
+          "description": "Give the user group elevated permissions on all resources of a certain type",
+          "type": "object",
+          "properties": {
+            "Action": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Alerter": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Build": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Builder": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Deployment": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Procedure": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Repo": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "ResourceSync": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Server": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Stack": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "Swarm": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            },
+            "System": {
+              "$ref": "#/definitions/PermissionLevelAndSpecifics"
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "permissions": {
+          "description": "Permissions given to the group",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PermissionToml"
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PermissionLevelAndSpecifics": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "$ref": "#/definitions/PermissionLevel"
+        },
+        "specific": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/SpecificPermission"
+          }
+        }
+      },
+      "required": [
+        "level",
+        "specific"
+      ]
+    },
+    "PermissionLevel": {
+      "description": "The levels of permission that a User or UserGroup can have on a resource.",
+      "oneOf": [
+        {
+          "description": "No permissions.",
+          "type": "string",
+          "const": "None"
+        },
+        {
+          "description": "Can read resource information and config",
+          "type": "string",
+          "const": "Read"
+        },
+        {
+          "description": "Can execute actions on the resource",
+          "type": "string",
+          "const": "Execute"
+        },
+        {
+          "description": "Can update the resource configuration",
+          "type": "string",
+          "const": "Write"
+        }
+      ]
+    },
+    "SpecificPermission": {
+      "description": "The specific types of permission that a User or UserGroup can have on a resource.",
+      "oneOf": [
+        {
+          "description": "On **Server**\n  - Access the terminal apis\nOn **Stack / Deployment**\n  - Access the container exec Apis",
+          "type": "string",
+          "const": "Terminal"
+        },
+        {
+          "description": "On **Server**\n  - Allowed to attach Stacks, Deployments, Repos, Builders to the Server\nOn **Builder**\n  - Allowed to attach Builds to the Builder\nOn **Build**\n  - Allowed to attach Deployments to the Build",
+          "type": "string",
+          "const": "Attach"
+        },
+        {
+          "description": "On **Server**\n  - Access the `container inspect` apis\nOn **Stack / Deployment**\n  - Access `container inspect` apis for associated containers",
+          "type": "string",
+          "const": "Inspect"
+        },
+        {
+          "description": "On **Server**\n  - Read all container logs on the server\nOn **Stack / Deployment**\n  - Read the container logs",
+          "type": "string",
+          "const": "Logs"
+        },
+        {
+          "description": "On **Server**\n  - Read all the processes on the host",
+          "type": "string",
+          "const": "Processes"
+        }
+      ]
+    },
+    "PermissionToml": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "description": "Id can be:\n  - resource name. `id = \"abcd-build\"`\n  - regex matching resource names. `id = \"\\^(.+)-build-([0-9]+)$\\\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ResourceTarget"
+            }
+          ]
+        },
+        "level": {
+          "description": "The permission level:\n  - None\n  - Read\n  - Execute\n  - Write",
+          "default": "None",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PermissionLevel"
+            }
+          ]
+        },
+        "specific": {
+          "description": "Any [SpecificPermissions](SpecificPermission) on the resource",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/SpecificPermission"
+          }
+        }
+      },
+      "required": [
+        "target"
+      ]
+    },
+    "Variable": {
+      "description": "A non-secret global variable which can be interpolated into deployment\nenvironment variable values and build argument values.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Unique name associated with the variable.\nInstances of '[[variable.name]]' in value will be replaced with 'variable.value'.",
+          "type": "string"
+        },
+        "description": {
+          "description": "A description for the variable.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value associated with the variable.",
+          "type": "string",
+          "default": ""
+        },
+        "is_secret": {
+          "description": "If marked as secret, the variable value will be hidden in updates / logs.\nAdditionally the value will not be served in read requests by non admin users.\n\nNote that the value is NOT encrypted in the database, and will likely show up in database logs.\nThe security of these variables comes down to the security\nof the database (system level encryption, network isolation, etc.)",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "name"
+      ]
+    }
+  }
+}

@@ -1,9 +1,9 @@
-import { repoStateIntention, hexColorByIntention } from "@/lib/color";
+import { repoStateIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "@/resources";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import RepoTable from "./table";
 import NewResource from "@/resources/new";
 import ResourceHeader from "@/resources/header";
@@ -15,6 +15,7 @@ import { useBuilder } from "../builder";
 import { Box, Group } from "@mantine/core";
 import ResourceLink from "../link";
 import RepoLink from "@/components/repo-link";
+import { hexColorByIntention } from "mogh_ui";
 
 export function useRepo(id: string | undefined, useName?: boolean) {
   return useRead("ListRepos", {}).data?.find((r) =>
