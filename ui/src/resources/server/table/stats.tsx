@@ -97,17 +97,11 @@ function TempCell({ id }: { id: string }) {
           ? "Warning"
           : "Critical";
   return (
-    <StatCell
-      value={temp}
-      intent={intent}
-      suffix="°C"
-      infoDisabled={temp === undefined}
-      info={
-        <Text size="sm">
-          CPU Temperature: <b>{temp?.toFixed(1)}°C</b>
-        </Text>
-      }
-    />
+    <Group gap="xs" justify="space-between" wrap="nowrap">
+      <Text w={48} c={temp === undefined ? "dimmed" : undefined}>
+        {temp === undefined ? "N/A" : temp.toFixed(1) + "°C"}
+      </Text>
+    </Group>
   );
 }
 

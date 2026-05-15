@@ -198,7 +198,7 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.Cpu size="1rem" />
+              <ICONS.Cpu size="1.1rem" />
               {coreCount
                 ? `${coreCount} Core${coreCount === 1 ? "" : "s"}`
                 : "N/A"}
@@ -227,12 +227,13 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.Temperature size="1rem" />
+              <ICONS.Temperature size="1.1rem" />
               {temp !== undefined ? `${temp.toFixed(1)}°C` : "N/A"}
             </Group>
           </HoverCard.Target>
           <HoverCard.Dropdown>
-            CPU Temperature: <b>{temp !== undefined ? `${temp.toFixed(1)}°C` : "N/A"}</b>
+            CPU Temperature:{" "}
+            <b>{temp !== undefined ? `${temp.toFixed(1)}°C` : "N/A"}</b>
           </HoverCard.Dropdown>
         </HoverCard>
       );
