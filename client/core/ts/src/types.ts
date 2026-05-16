@@ -612,6 +612,7 @@ export interface ImageRegistryConfig {
 export interface SystemCommand {
 	path?: string;
 	command?: string;
+	shell_mode?: boolean;
 }
 
 /** The build configuration. */
@@ -1427,6 +1428,8 @@ export enum DeploymentState {
 	Created = "created",
 	/** Server mode only. Container is in restart loop */
 	Restarting = "restarting",
+	/** Server mode only. Container is in the process of stopping */
+	Stopping = "stopping",
 	/** Server mode only. Container is being removed */
 	Removing = "removing",
 	/** Server mode only. Container is paused */
@@ -2470,6 +2473,12 @@ export interface StackConfig {
 	 * Komodo will redeploy the whole Stack (all services).
 	 */
 	auto_update_all_services?: boolean;
+	/**
+	 * Ignore certain services during Global Auto Update polling.
+	 * Services listed here are skipped only in the global auto-update flow.
+	 * Manual checks still include all services.
+	 */
+	auto_update_skip_services?: string[];
 	/** Whether to run `docker compose down` before `compose up`. */
 	destroy_before_deploy?: boolean;
 	/** Whether to skip secret interpolation into the stack environment variables. */
@@ -2958,6 +2967,7 @@ export enum ContainerStateStatusEnum {
 	Paused = "paused",
 	Restarting = "restarting",
 	Exited = "exited",
+	Stopping = "stopping",
 	Removing = "removing",
 	Dead = "dead",
 	Empty = "",
@@ -3089,8 +3099,7 @@ export interface RestartPolicy {
 	MaximumRetryCount?: I64;
 }
 
-export enum MountTypeEnum {
-	Empty = "",
+export enum MountType {
 	Bind = "bind",
 	Volume = "volume",
 	Image = "image",
@@ -3162,7 +3171,7 @@ export interface Mount {
 	 * - `tmpfs` Create a tmpfs with the given options. The mount source cannot be specified for tmpfs. - `npipe` Mounts a named pipe from the host into the container. Must exist prior to creating the container.
 	 * - `cluster` a Swarm cluster volume
 	 */
-	Type?: MountTypeEnum;
+	Type?: MountType;
 	/** Whether the mount should be read-only. */
 	ReadOnly?: boolean;
 	/** The consistency requirement for the mount: `default`, `consistent`, `cached`, or `delegated`. */
@@ -3335,7 +3344,7 @@ export interface GraphDriverData {
 /** MountPoint represents a mount point configuration inside the container. This is used for reporting the mountpoints in use by a container. */
 export interface MountPoint {
 	/** The mount type:  - `bind` a mount of a file or directory from the host into the container. - `volume` a docker volume with the given `Name`. - `tmpfs` a `tmpfs`. - `npipe` a named pipe from the host into the container. - `cluster` a Swarm cluster volume */
-	Type?: MountTypeEnum;
+	Type?: string;
 	/** Name is the name reference to the underlying data defined by `Source` e.g., the volume name. */
 	Name?: string;
 	/** Source location of the mount.  For volumes, this contains the storage location of the volume (within `/var/lib/docker/volumes/`). For bind-mounts, and `npipe`, this contains the source (host) part of the bind-mount. For `tmpfs` mount points, this field is empty. */
@@ -4295,7 +4304,10 @@ export interface ClusterVolumeSpecAccessModeSecrets {
 	Secret?: string;
 }
 
-export type Topology = Record<string, PortBinding[]>;
+/** A map of topological domains to topological segments. For in depth details, see documentation for the Topology object in the CSI specification. */
+export interface Topology {
+	Segments?: Record<string, string>;
+}
 
 /** Requirements for the accessible topology of the volume. These fields are optional. For an in-depth description of what these fields mean, see the CSI specification. */
 export interface ClusterVolumeSpecAccessModeAccessibilityRequirements {
@@ -6818,7 +6830,8 @@ export interface CreateOnboardingKey {
 	expires?: I64;
 	/**
 	 * Optionally specify an existing private key, otherwise
-	 * generate fresh key.
+	 * generate fresh key. This key is not stored directly,
+	 * only the public key.
 	 */
 	private_key?: string;
 	/** Default tags to apply to Servers created using this key. */
@@ -7440,18 +7453,31 @@ export interface UserGroupToml {
 
 /** Specifies resources to sync on Komodo */
 export interface ResourcesToml {
+	/** Declare a swarm */
 	swarms?: ResourceToml<_PartialSwarmConfig>[];
+	/** Declare a server */
 	servers?: ResourceToml<_PartialServerConfig>[];
-	deployments?: ResourceToml<_PartialDeploymentConfig>[];
+	/** Declare a stack */
 	stacks?: ResourceToml<_PartialStackConfig>[];
+	/** Declare a deployment */
+	deployments?: ResourceToml<_PartialDeploymentConfig>[];
+	/** Declare a build */
 	builds?: ResourceToml<_PartialBuildConfig>[];
+	/** Declare a repo */
 	repos?: ResourceToml<_PartialRepoConfig>[];
+	/** Declare a procedure */
 	procedures?: ResourceToml<_PartialProcedureConfig>[];
+	/** Declare an action */
 	actions?: ResourceToml<_PartialActionConfig>[];
+	/** Declare an alerter */
 	alerters?: ResourceToml<_PartialAlerterConfig>[];
+	/** Declare a builder */
 	builders?: ResourceToml<_PartialBuilderConfig>[];
+	/** Declare a resource sync */
 	resource_syncs?: ResourceToml<_PartialResourceSyncConfig>[];
+	/** Declare a user group */
 	user_groups?: UserGroupToml[];
+	/** Declare a variable */
 	variables?: Variable[];
 }
 
@@ -7740,7 +7766,7 @@ export interface GetCoreInfoResponse {
 	enable_fancy_toml: boolean;
 	/** TZ identifier Core is using, if manually set. */
 	timezone: string;
-	/** Default public key allowing this Core to authenticate to Periphery agents. */
+	/** Public key for Core / Periphery authentication. */
 	public_key: string;
 }
 

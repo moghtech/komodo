@@ -16,3 +16,63 @@ body[data-mantine-color-scheme="dark"] {
   width: 5px;
   border-radius: var(--mantine-radius-sm);
 }
+
+.mantine-Table-table {
+  th:first-child:has(.mantine-Checkbox-root),
+  td:first-child:has(.mantine-Checkbox-root) {
+    width: 45px !important;
+    min-width: 45px !important;
+    max-width: 45px !important;
+    padding: 0 !important;
+    text-align: center;
+    > * {
+      display: flex;
+      justify-content: center;
+    }
+  }
+}
+
+.monitoring-stats-table {
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 240px !important;
+    min-width: 240px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4),
+  th:nth-child(5), td:nth-child(5),
+  th:nth-child(6), td:nth-child(6) {
+    width: auto !important;
+  }
+
+  th:nth-child(7),
+  td:nth-child(7) {
+    width: 210px !important;
+    min-width: 210px !important;
+  }
+
+  th:nth-child(8),
+  td:nth-child(8) {
+    width: 120px !important;
+    min-width: 120px !important;
+  }
+
+  th:nth-child(9),
+  td:nth-child(9) {
+    width: 121px !important;
+    min-width: 121px !important;
+  }
+
+  .mantine-UnstyledButton-root > .mantine-Group-root > .mantine-Group-root {
+    min-width: 0 !important;
+  }
+}

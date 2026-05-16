@@ -1,23 +1,28 @@
 import { useSelectedResources } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { DataTable, fmtRateBytes, SortableHeader } from "mogh_ui";
-import { BoxProps, Group, Text } from "@mantine/core";
+import { BoxProps, Text, Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useServerStats, useServerThresholds } from "@/resources/server/hooks";
-import { StatCell } from "mogh_ui";
+import StatCell from "@/ui/stat-cell";
 import ServerVersion from "@/resources/server/version";
 import ServerDiskUsage from "../diskUsage";
+import { ICONS } from "@/lib/icons";
 
 export default function StatsServerTable({
   resources,
+  noBorder,
   ...boxProps
 }: {
   resources: Types.ServerListItem[];
+  noBorder?: boolean;
 } & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("Server");
   return (
     <DataTable
       {...boxProps}
+      noBorder={noBorder}
+      className={`monitoring-stats-table ${!noBorder ? "bordered-light" : ""} ${boxProps.className ?? ""}`}
       tableKey="monitoring-server-table"
       data={resources}
       selectOptions={{
@@ -26,48 +31,46 @@ export default function StatsServerTable({
       }}
       columns={[
         {
-          size: 200,
+          size: 240,
           accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
           ),
-          cell: ({ row }) => (
-            <ResourceLink type="Server" id={row.original.id} />
-          ),
+          cell: ({ row }) => <ResourceLink type="Server" id={row.original.id} />,
         },
         {
           header: "CPU",
-          size: 180,
+          size: 170,
           cell: ({ row }) => <CpuCell id={row.original.id} />,
         },
         {
           header: "Temp",
-          size: 80,
+          size: 170,
           cell: ({ row }) => <TempCell id={row.original.id} />,
         },
         {
           header: "Memory",
-          size: 180,
+          size: 170,
           cell: ({ row }) => <MemCell id={row.original.id} />,
         },
         {
           header: "Disk",
-          size: 180,
+          size: 170,
           cell: ({ row }) => <DiskCell id={row.original.id} />,
         },
         {
           header: "Load Avg",
-          size: 160,
+          size: 210,
           cell: ({ row }) => <LoadAvgCell id={row.original.id} />,
         },
         {
           header: "Net",
-          size: 100,
+          size: 120,
           cell: ({ row }) => <NetCell id={row.original.id} />,
         },
         {
           header: "Version",
-          size: 160,
+          size: 121,
           cell: ({ row }) => <ServerVersion id={row.original.id} />,
         },
       ]}
@@ -77,59 +80,74 @@ export default function StatsServerTable({
 
 function CpuCell({ id }: { id: string }) {
   const stats = useServerStats(id);
-  const cpu = stats?.cpu_perc ?? 0;
-  const { cpuWarning: warning, cpuCritical: critical } =
-    useServerThresholds(id);
+  const thresholds = useServerThresholds(id);
+  const value = stats?.cpu_perc ?? 0;
+
   const intent: "Good" | "Warning" | "Critical" =
-    cpu < warning ? "Good" : cpu < critical ? "Warning" : "Critical";
-  return <StatCell value={stats ? cpu : undefined} intent={intent} />;
+    value < thresholds.cpuWarning
+      ? "Good"
+      : value < thresholds.cpuCritical
+        ? "Warning"
+        : "Critical";
+
+  return <StatCell value={stats ? value : undefined} intent={intent} />;
 }
 
 function TempCell({ id }: { id: string }) {
   const stats = useServerStats(id);
-  const temp = stats?.cpu_temp;
+  const value = stats?.cpu_temp;
+
   const intent: "Good" | "Warning" | "Critical" =
-    temp === undefined
+    value === undefined
       ? "Good"
-      : temp < 65
+      : value < 65
         ? "Good"
-        : temp < 80
+        : value < 80
           ? "Warning"
           : "Critical";
+
   return (
-    <Group gap="xs" justify="space-between" wrap="nowrap">
-      <Text w={48} c={temp === undefined ? "dimmed" : undefined}>
-        {temp === undefined ? "N/A" : temp.toFixed(1) + "°C"}
-      </Text>
-    </Group>
+    <StatCell value={stats ? value : undefined} intent={intent} suffix="°C" />
   );
 }
 
 function MemCell({ id }: { id: string }) {
   const stats = useServerStats(id);
+  const thresholds = useServerThresholds(id);
+
   const used = stats?.mem_used_gb ?? 0;
   const total = stats?.mem_total_gb ?? 0;
-  const perc = total > 0 ? (used / total) * 100 : 0;
-  const { memWarning: warning, memCritical: critical } =
-    useServerThresholds(id);
+  const value = total > 0 ? (used / total) * 100 : 0;
+
   const intent: "Good" | "Warning" | "Critical" =
-    perc < warning ? "Good" : perc < critical ? "Warning" : "Critical";
-  return <StatCell value={stats ? perc : undefined} intent={intent} />;
+    value < thresholds.memWarning
+      ? "Good"
+      : value < thresholds.memCritical
+        ? "Warning"
+        : "Critical";
+
+  return <StatCell value={stats ? value : undefined} intent={intent} />;
 }
 
 function DiskCell({ id }: { id: string }) {
   const stats = useServerStats(id);
+  const thresholds = useServerThresholds(id);
+
   const used = stats?.disks?.reduce((acc, d) => acc + (d.used_gb || 0), 0) ?? 0;
   const total =
     stats?.disks?.reduce((acc, d) => acc + (d.total_gb || 0), 0) ?? 0;
-  const perc = total > 0 ? (used / total) * 100 : 0;
-  const { diskWarning: warning, diskCritical: critical } =
-    useServerThresholds(id);
+  const value = total > 0 ? (used / total) * 100 : 0;
+
   const intent: "Good" | "Warning" | "Critical" =
-    perc < warning ? "Good" : perc < critical ? "Warning" : "Critical";
+    value < thresholds.diskWarning
+      ? "Good"
+      : value < thresholds.diskCritical
+        ? "Warning"
+        : "Critical";
+
   return (
     <StatCell
-      value={stats ? perc : undefined}
+      value={stats ? value : undefined}
       intent={intent}
       infoDisabled={!stats}
       info={<ServerDiskUsage id={id} stats={stats} />}
@@ -143,30 +161,24 @@ function LoadAvgCell({ id }: { id: string }) {
   const five = stats?.load_average?.five;
   const fifteen = stats?.load_average?.fifteen;
   return (
-    <Group gap="xs" wrap="nowrap">
-      <Group gap="0.2rem" wrap="nowrap">
-        <Text c="dimmed" size="sm">
+    <Group gap="sm" wrap="nowrap">
+      <Group gap={4} wrap="nowrap">
+        <Text component="span" c="dimmed" style={{ fontSize: "11px" }}>
           1m
         </Text>
-        <Text c={one !== undefined ? undefined : "dimmed"}>
-          {one !== undefined ? one.toFixed(2) : "N/A"}
-        </Text>
+        <Text size="sm">{one !== undefined ? one.toFixed(2) : "N/A"}</Text>
       </Group>
-      <Group gap="0.2rem" wrap="nowrap">
-        <Text c="dimmed" size="sm">
+      <Group gap={4} wrap="nowrap">
+        <Text component="span" c="dimmed" style={{ fontSize: "11px" }}>
           5m
         </Text>
-        <Text c={five !== undefined ? undefined : "dimmed"}>
-          {five !== undefined ? five.toFixed(2) : "N/A"}
-        </Text>
+        <Text size="sm">{five !== undefined ? five.toFixed(2) : "N/A"}</Text>
       </Group>
-      <Group gap="0.2rem" wrap="nowrap">
-        <Text c="dimmed" size="sm">
+      <Group gap={4} wrap="nowrap">
+        <Text component="span" c="dimmed" style={{ fontSize: "11px" }}>
           15m
         </Text>
-        <Text c={fifteen !== undefined ? undefined : "dimmed"}>
-          {fifteen !== undefined ? fifteen.toFixed(2) : "N/A"}
-        </Text>
+        <Text size="sm">{fifteen !== undefined ? fifteen.toFixed(2) : "N/A"}</Text>
       </Group>
     </Group>
   );
@@ -177,7 +189,16 @@ function NetCell({ id }: { id: string }) {
   const ingress = stats?.network_ingress_bytes ?? 0;
   const egress = stats?.network_egress_bytes ?? 0;
   if (!stats) {
-    return <Text c="dimmed">N/A</Text>;
+    return (
+      <Text c="dimmed" size="sm">
+        N/A
+      </Text>
+    );
   }
-  return <Text>{fmtRateBytes(ingress + egress)}</Text>;
+  return (
+    <Group gap="xs" wrap="nowrap">
+      <ICONS.Network size="1.1rem" />
+      <Text size="sm">{fmtRateBytes(ingress + egress)}</Text>
+    </Group>
+  );
 }

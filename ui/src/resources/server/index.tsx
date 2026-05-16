@@ -175,7 +175,7 @@ export const ServerComponents: RequiredResourceComponents<
               }}
               style={{ cursor: "pointer" }}
             >
-              <ICONS.IP size="1rem" />
+              <ICONS.IP size="1.1rem" />
               {publicIp ?? "Unknown IP"}
             </Group>
           </HoverCard.Target>
@@ -255,7 +255,7 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.LoadAvg size="1rem" />
+              <ICONS.LoadAvg size="1.1rem" />
               {one?.toFixed(2) ?? "N/A"}
             </Group>
           </HoverCard.Target>
@@ -279,7 +279,7 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.Memory size="1rem" />
+              <ICONS.Memory size="1.1rem" />
               {stats?.mem_total_gb.toFixed(2).concat(" GB") ?? "N/A"}
             </Group>
           </HoverCard.Target>
@@ -307,7 +307,7 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.Disk size="1rem" />
+              <ICONS.Disk size="1.1rem" />
               {diskTotalGb?.toFixed(2).concat(" GB") ?? "N/A"}
             </Group>
           </HoverCard.Target>
