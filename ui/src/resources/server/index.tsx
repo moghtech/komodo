@@ -175,7 +175,7 @@ export const ServerComponents: RequiredResourceComponents<
               }}
               style={{ cursor: "pointer" }}
             >
-              <ICONS.IP size="1rem" />
+              <ICONS.IP size="1.1rem" />
               {publicIp ?? "Unknown IP"}
             </Group>
           </HoverCard.Target>
@@ -198,7 +198,7 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.Cpu size="1rem" />
+              <ICONS.Cpu size="1.1rem" />
               {coreCount
                 ? `${coreCount} Core${coreCount === 1 ? "" : "s"}`
                 : "N/A"}
@@ -206,6 +206,34 @@ export const ServerComponents: RequiredResourceComponents<
           </HoverCard.Target>
           <HoverCard.Dropdown>
             <ServerCpuUsage id={id} />
+          </HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+    Temperature: ({ id }) => {
+      const isServerAvailable = useIsServerAvailable(id);
+      const stats = useRead(
+        "GetSystemStats",
+        { server: id },
+        {
+          enabled: isServerAvailable,
+          refetchInterval: 5000,
+        },
+      ).data;
+
+      const temp = stats?.cpu_temp;
+
+      return (
+        <HoverCard position="bottom-start">
+          <HoverCard.Target>
+            <Group gap="xs">
+              <ICONS.Temperature size="1.1rem" />
+              {temp !== undefined ? `${temp.toFixed(1)}°C` : "N/A"}
+            </Group>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
+            CPU Temperature:{" "}
+            <b>{temp !== undefined ? `${temp.toFixed(1)}°C` : "N/A"}</b>
           </HoverCard.Dropdown>
         </HoverCard>
       );
@@ -227,7 +255,7 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.LoadAvg size="1rem" />
+              <ICONS.LoadAvg size="1.1rem" />
               {one?.toFixed(2) ?? "N/A"}
             </Group>
           </HoverCard.Target>
@@ -251,7 +279,7 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.Memory size="1rem" />
+              <ICONS.Memory size="1.1rem" />
               {stats?.mem_total_gb.toFixed(2).concat(" GB") ?? "N/A"}
             </Group>
           </HoverCard.Target>
@@ -279,7 +307,7 @@ export const ServerComponents: RequiredResourceComponents<
         <HoverCard position="bottom-start">
           <HoverCard.Target>
             <Group gap="xs">
-              <ICONS.Disk size="1rem" />
+              <ICONS.Disk size="1.1rem" />
               {diskTotalGb?.toFixed(2).concat(" GB") ?? "N/A"}
             </Group>
           </HoverCard.Target>

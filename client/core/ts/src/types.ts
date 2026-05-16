@@ -2825,6 +2825,8 @@ export interface SingleDiskUsage {
 export interface SystemStats {
 	/** Cpu usage percentage */
 	cpu_perc: number;
+	/** CPU temperature in Celsius */
+	cpu_temp?: number;
 	/** Load average (1m, 5m, 15m) */
 	load_average?: SystemLoadAverage;
 	/**
@@ -7916,6 +7918,8 @@ export interface SystemStatsRecord {
 	sid: string;
 	/** Cpu usage percentage */
 	cpu_perc: number;
+	/** CPU temperature in Celsius */
+	cpu_temp?: number;
 	/** Load average (1m, 5m, 15m) */
 	load_average?: SystemLoadAverage;
 	/** Memory used in GB */

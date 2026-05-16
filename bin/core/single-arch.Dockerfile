@@ -8,6 +8,7 @@ FROM ${BINARIES_IMAGE} AS binaries
 
 # Build UI
 FROM node:22.12-alpine AS ui-builder
+ARG CACHE_BUST=1
 WORKDIR /builder
 COPY ./ui ./ui
 COPY ./client/core/ts ./client
