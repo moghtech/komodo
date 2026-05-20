@@ -10,9 +10,7 @@ curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/doc
 chmod a+r /etc/apt/keyrings/docker.asc
 
 # Infisical setup
-curl -fsSL 'https://artifacts-cli.infisical.com/setup.deb.sh' -o setup.deb.sh
-chmod +x setup.deb.sh
-./setup.deb.sh
+curl -fsSL 'https://artifacts-cli.infisical.com/setup.deb.sh' | bash
 
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
