@@ -55,7 +55,14 @@ pub fn empty_or_only_spaces(word: &str) -> bool {
 
 /// First checks db for token, then checks core config.
 /// Only errors if db call errors.
-/// Returns (token, use_https)
+/// Returns the configured account credential prepared for HTTPS basic auth.
+///
+/// The returned value is formatted as `"<username>:<token>"` so that
+/// [`RepoExecutionArgs::remote_url`] produces
+/// `https://<username>:<token>@host/...`. If the stored token already
+/// contains a `:`, the user has manually combined the credentials
+/// (the v1.19.2 workaround for issue #387) and we pass it through
+/// unchanged for backwards compatibility.
 pub async fn git_token(
   provider_domain: &str,
   account_username: &str,
@@ -71,7 +78,10 @@ pub async fn git_token(
     .context("failed to query db for git provider accounts")?;
   if let Some(provider) = db_provider {
     on_https_found(provider.https);
-    return Ok(Some(provider.token));
+    return Ok(Some(combine_account_credential(
+      account_username,
+      &provider.token,
+    )));
   }
   Ok(
     core_config()
@@ -84,9 +94,30 @@ pub async fn git_token(
           .accounts
           .iter()
           .find(|account| account.username == account_username)
-          .map(|account| account.token.clone())
+          .map(|account| {
+            combine_account_credential(account_username, &account.token)
+          })
       }),
   )
+}
+
+/// Combine a configured git account `username` with its `token` into the
+/// `"<username>:<token>"` form that [`RepoExecutionArgs::remote_url`]
+/// splits back out for HTTPS basic auth.
+///
+/// Without this, [`RepoExecutionArgs::remote_url`] would fall back to its
+/// hardcoded `token:<token>@` default and clones against providers that
+/// validate the basic-auth username (GitLab deploy tokens, Bitbucket,
+/// fine-grained GitHub PATs) would fail with `HTTP Basic: Access denied`.
+///
+/// If the stored token already contains a `:` the user has manually
+/// combined the credentials (the v1.19.2 workaround for issue #387);
+/// return it unchanged so existing setups keep working.
+fn combine_account_credential(username: &str, token: &str) -> String {
+  if token.contains(':') {
+    return token.to_string();
+  }
+  format!("{username}:{token}")
 }
 
 pub async fn stack_git_token(

@@ -238,6 +238,13 @@ pub async fn handle_post_repo_execution(
 //  Token
 // =======
 
+/// Look up a raw access token in the Periphery git provider config.
+///
+/// Use this when you only need the secret (for example to redact it from
+/// log output). For building a clone URL prefer [`git_token`], which also
+/// combines the configured username with the token so the resulting URL
+/// authenticates correctly against providers that validate the basic-auth
+/// username (GitLab deploy tokens, Bitbucket, fine-grained GitHub PATs).
 pub fn git_token_simple(
   domain: &str,
   account_username: &str,
@@ -252,6 +259,19 @@ pub fn git_token_simple(
     .with_context(|| format!("Did not find token in config for git account {account_username} | domain {domain}"))
 }
 
+/// Resolve the credential to use when running `git clone` / `git fetch`
+/// on the Periphery host.
+///
+/// If Core sent a token for this execution, use it as-is — Core is
+/// responsible for formatting it as `"<username>:<token>"` (see
+/// `git_token` in the Core helpers). Otherwise fall back to the
+/// Periphery config and combine the configured account username with
+/// its token in the same form so [`RepoExecutionArgs::remote_url`]
+/// produces `https://<username>:<token>@host/...`.
+///
+/// Backwards-compatible: if the stored token already contains a `:`
+/// the caller used the v1.19.2 workaround for issue #387, so we pass
+/// it through unchanged.
 pub fn git_token(
   core_token: Option<String>,
   args: &RepoExecutionArgs,
@@ -263,7 +283,10 @@ pub fn git_token(
     return Ok(None);
   };
   let token = git_token_simple(&args.provider, account)?;
-  Ok(Some(token.to_string()))
+  if token.contains(':') {
+    return Ok(Some(token.to_string()));
+  }
+  Ok(Some(format!("{account}:{token}")))
 }
 
 pub fn registry_token(
