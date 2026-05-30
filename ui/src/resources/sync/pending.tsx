@@ -1,4 +1,4 @@
-import { useExecute, usePermissions, useRead } from "@/lib/hooks";
+import { useExecute, usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { ReactNode } from "react";
 import { useFullResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";
@@ -13,6 +13,7 @@ import { ConfirmButton } from "mogh_ui";
 import { SquarePlay } from "lucide-react";
 import { MonacoDiffEditor, MonacoEditor } from "mogh_ui";
 import { diffTypeIntention } from "@/lib/color";
+import { ICONS } from "@/theme/icons";
 
 export default function ResourceSyncPending({
   id,
@@ -25,9 +26,10 @@ export default function ResourceSyncPending({
     ?.syncing;
   const sync = useFullResourceSync(id);
   const { view } = useResourceSyncTabsView(sync);
-  const { canExecute } = usePermissions({ type: "ResourceSync", id });
+  const { canExecute, canWrite } = usePermissions({ type: "ResourceSync", id });
   const { mutate: runSync, isPending } = useExecute("RunSync");
   const enableFancyToml = useRead("GetCoreInfo", {}).data?.enable_fancy_toml;
+  const { mutate: commitHunk, isPending: committing } = useWrite("CommitSync");
   const loading = isPending || syncing;
 
   return (
@@ -177,6 +179,25 @@ export default function ResourceSyncPending({
                   loading={loading}
                 >
                   Execute Change
+                </ConfirmButton>
+              )}
+              {canWrite && view === "Commit" && (
+                <ConfirmButton
+                  icon={<ICONS.Commit size="1rem" />}
+                  onClick={() =>
+                    commitHunk({
+                      sync: id,
+                      resource_type: update.target.type,
+                      resources: [
+                        update.data.type === "Create"
+                          ? update.data.data.name!
+                          : update.target.id,
+                      ],
+                    })
+                  }
+                  loading={committing}
+                >
+                  Commit Change
                 </ConfirmButton>
               )}
             </Group>
