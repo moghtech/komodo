@@ -6290,6 +6290,16 @@ export interface CloseAlert {
 export interface CommitSync {
 	/** Id or name */
 	sync: string;
+	/**
+	 * Only commit a specific resource type.
+	 * Combine with `resources` to specify specific resources.
+	 */
+	resource_type?: ResourceTarget["type"];
+	/**
+	 * Only commit specific resources by id or name.
+	 * Combine with `resource_type` to specify resources.
+	 */
+	resources?: string[];
 }
 
 /**
