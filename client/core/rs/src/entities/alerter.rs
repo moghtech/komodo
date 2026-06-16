@@ -191,16 +191,25 @@ pub struct CustomAlerterEndpoint {
   #[builder(default = "default_custom_url()")]
   pub url: String,
 
-  #[serde(default = "default_custom_data")]
-  #[builder(default = "default_custom_data()")]
-  pub custom_data: serde_json::Value,
+  /// Optional custom body template with variable substitution.
+  /// Use {{variable}} syntax, eg. {{alert}}
+  /// If None, the full Alert struct is serialized as JSON (existing behaviour).
+  #[serde(default = "default_body_template")]
+  #[builder(default = "default_body_template()")]
+  pub body_template: Option<String>,
+
+  /// Content-Type header to send. Defaults to "application/json".
+  #[serde(default = "default_content_type")]
+  #[builder(default = "default_content_type()")]
+  pub content_type: String,
 }
 
 impl Default for CustomAlerterEndpoint {
   fn default() -> Self {
     Self {
       url: default_custom_url(),
-      custom_data: default_custom_data(),
+      body_template: default_body_template(),
+      content_type: default_content_type(),
     }
   }
 }
@@ -209,11 +218,12 @@ fn default_custom_url() -> String {
   String::from("http://localhost:7000")
 }
 
-fn default_custom_data() -> serde_json::Value {
-  serde_json::Value::String("{ 
-    data: \"%alert%\"
-    format: Data 
-  }".into())
+fn default_body_template() -> Option<String> {
+  Some(String::from("{{alert}}"))
+}
+
+fn default_content_type() -> String {
+  String::from("application/json")
 }
 
 /// Configuration for a Slack alerter.

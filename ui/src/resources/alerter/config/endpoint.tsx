@@ -10,6 +10,12 @@ const ENDPOINT_TYPES: Types.AlerterEndpoint["type"][] = [
   "Pushover",
 ] as const;
 
+const CONTENT_TYPES = [
+  { value: "application/json", label: "application/json" },
+  { value: "text/plain", label: "text/plain" },
+  { value: "text/plain; pretty", label: "text/plain (pretty printed)" },
+] as const;
+
 export default function AlerterConfigEndpoint({
   endpoint,
   set,
@@ -44,33 +50,53 @@ export default function AlerterConfigEndpoint({
           value={endpoint.params.url}
           language={undefined}
           onValueChange={(url) =>
-            set({ ...endpoint, params: { ...endpoint.params, url } })
+            set({
+              ...endpoint,
+              params: endpoint.type === "Custom"
+                ? { ...endpoint.params, url }
+                : { url },
+            })
           }
           readOnly={disabled}
         />
       </ConfigItem>
       {endpoint.type === "Custom" && (
+      <>
         <ConfigItem
-          label="Custom Alert Data"
-          description="Configure the custom data to send with the alert. Use %alert% to include the alert data. The format field is for your reference and is not used by Komodo."
-        >
-          <MonacoEditor
-            value={JSON.stringify(endpoint.params.custom_data.data, null, 2)}
-            language="json"
-            onValueChange={(customData) => {
-              try {
-                const parsed = JSON.parse(customData);
+            label="Content Type"
+            description="The Content-Type header sent with the request."
+          >
+            <Select
+              value={endpoint.params.content_type ?? "application/json"}
+              onChange={(content_type) =>
+                content_type &&
                 set({
                   ...endpoint,
-                  params: { ...endpoint.params, custom_data: parsed },
-                });
-              } catch (e) {
-                // Ignore JSON parse errors
+                  params: { ...endpoint.params, content_type },
+                })
               }
-            }}
-            readOnly={disabled}
-          />
-        </ConfigItem>
+              disabled={disabled}
+              data={[...CONTENT_TYPES]}
+              w={{ base: "85%", lg: 400 }}
+            />
+          </ConfigItem>
+          <ConfigItem
+            label="Body Template"
+            description='Optional. Use {{variable}} placeholders, eg. {{alert}}. Leave empty to send the full alert as JSON.'
+          >
+            <MonacoEditor
+              value={endpoint.params.body_template ?? ""}
+              language="json"
+              onValueChange={(body_template) =>
+                set({
+                  ...endpoint,
+                  params: { ...endpoint.params, body_template },
+                })
+              }
+              readOnly={disabled}
+            />
+          </ConfigItem>
+      </>
       )}
       {endpoint.type === "Ntfy" && (
         <ConfigInput

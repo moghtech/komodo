@@ -6751,7 +6751,8 @@ export interface CreateVariable {
 export interface CustomAlerterEndpoint {
     /** The http/s endpoint to send the POST to */
     url: string;
-    custom_data: CustomAlertData;
+    body_template?: string;
+    content_type?: string;
 }
 
 /* Configuration for the Custom Alert Data. */
