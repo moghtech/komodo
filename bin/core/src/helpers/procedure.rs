@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, anyhow};
 use database::mungos::by_id::find_one_by_id;
 use formatting::{Color, bold, colored, format_serror, muted};
-use futures_util::future::join_all;
+use futures_util::stream::{self, StreamExt};
 use komodo_client::{
   api::execute::*,
   entities::{
@@ -58,6 +58,7 @@ pub async fn execute_procedure(
         .filter(|item| item.enabled)
         .map(|item| item.execution.clone())
         .collect(),
+      stage.max_concurrent,
       &procedure.id,
       &procedure.name,
       update,
@@ -89,6 +90,8 @@ pub async fn execute_procedure(
 #[instrument("ExecuteProcedureStage", skip_all)]
 async fn execute_procedure_stage(
   _executions: Vec<Execution>,
+  // Max executions to run in parallel. `0` = no limit (all at once).
+  max_concurrent: i64,
   parent_id: &str,
   parent_name: &str,
   update: &Mutex<Update>,
@@ -210,7 +213,21 @@ async fn execute_procedure_stage(
     .await;
     res
   });
-  join_all(futures)
+  // Run the stage's executions concurrently. With `max_concurrent = 0` (the
+  // default), this runs them all at once — identical to the original
+  // `join_all`. With `max_concurrent = n > 0`, it acts as a worker pool of
+  // size `n`: only `n` executions run at a time, the rest are queued and
+  // started as running ones finish, so a stage that fans out to many
+  // executions can't saturate the host. All executions still complete before
+  // the stage returns, and the first error is propagated.
+  let limit = if max_concurrent > 0 {
+    max_concurrent as usize
+  } else {
+    usize::MAX
+  };
+  stream::iter(futures)
+    .buffer_unordered(limit)
+    .collect::<Vec<_>>()
     .await
     .into_iter()
     .collect::<anyhow::Result<Vec<_>>>()?;

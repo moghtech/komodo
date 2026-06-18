@@ -953,7 +953,10 @@ export interface EnabledExecution {
 	enabled: boolean;
 }
 
-/** A single stage of a procedure. Runs a list of executions in parallel. */
+/**
+ * A single stage of a procedure. Runs a list of executions in parallel,
+ * optionally capped to `max_concurrent` at a time.
+ */
 export interface ProcedureStage {
 	/** A name for the procedure */
 	name: string;
@@ -961,6 +964,16 @@ export interface ProcedureStage {
 	enabled: boolean;
 	/** The executions in the stage */
 	executions?: EnabledExecution[];
+	/**
+	 * Maximum number of executions to run in parallel within this stage.
+	 * 
+	 * `0` (the default) means no limit: every execution runs at once, the
+	 * original behavior. Set e.g. `10` to run the stage as a worker pool of
+	 * that size — the executions beyond the limit are queued and started as
+	 * running ones finish. Useful to avoid saturating the host (CPU / RAM /
+	 * network / disk) when a stage fans out to many executions.
+	 */
+	max_concurrent?: I64;
 }
 
 /** Config for the [Procedure] */

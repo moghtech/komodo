@@ -6,6 +6,8 @@ Komodo offers `Procedure` and `Action` resources for orchestrating multi-resourc
 
 A Procedure composes multiple executions (like `RunBuild`, `DeployStack`, `Deploy`) into a series of **Stages**. Executions within a stage run **in parallel**; stages run **sequentially**. The Procedure waits for all executions in a stage to complete before moving to the next.
 
+A stage can optionally cap how many of its executions run at once with `max_concurrent`. With the default `0` every execution runs in parallel (original behavior); set e.g. `max_concurrent = 10` to run the stage as a **worker pool** of that size — useful when a stage fans out to many executions (e.g. a `Batch*` deploy across hundreds of resources) and you don't want to saturate the host.
+
 ```toml
 [[procedure]]
 name = "build-and-deploy"
@@ -19,6 +21,7 @@ executions = [
 
 [[procedure.config.stage]]
 name = "Deploy"
+max_concurrent = 10   # run at most 10 of these deploys at a time (0 = no limit)
 executions = [
   { execution.type = "Deploy", execution.params.deployment = "my-app-01" },
   { execution.type = "Deploy", execution.params.deployment = "my-app-02" },
@@ -32,6 +35,7 @@ executions = [
 | `config.stage[].name` | Display name for the stage. | — |
 | `config.stage[].enabled` | Whether the stage is active. | `true` |
 | `config.stage[].executions` | List of executions to run in parallel within the stage. | `[]` |
+| `config.stage[].max_concurrent` | Max executions to run in parallel in the stage (`0` = no limit). | `0` |
 | `schedule` | Schedule expression. See [Schedules](schedules). | `""` |
 | `schedule_format` | `English` or `Cron`. | `English` |
 | `schedule_enabled` | Whether the schedule is active. | `true` |

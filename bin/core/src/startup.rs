@@ -384,7 +384,8 @@ async fn ensure_init_user_and_resources() {
             execution: Execution::BackupCoreDatabase(BackupCoreDatabase {}),
             enabled: true
           }
-        ]
+        ],
+        max_concurrent: 0,
       }])
       .schedule(String::from("Every day at 01:00"))
       .build()
@@ -427,7 +428,8 @@ async fn ensure_init_user_and_resources() {
             execution: Execution::GlobalAutoUpdate(GlobalAutoUpdate { skip_auto_update: false }),
             enabled: true
           }
-        ]
+        ],
+        max_concurrent: 0,
       }])
       .schedule(String::from("Every day at 03:00"))
       .build()
@@ -479,7 +481,8 @@ async fn ensure_init_user_and_resources() {
             execution: Execution::RotateAllServerKeys(RotateAllServerKeys {}),
             enabled: true
           }
-        ]
+        ],
+        max_concurrent: 0,
       }])
       .schedule(String::from("Every day at 06:00"))
       .build()
