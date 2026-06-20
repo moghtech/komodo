@@ -6982,6 +6982,12 @@ export interface Deploy {
      * Only used when deployment needs to be taken down before redeploy.
      */
     stop_time?: number;
+    /**
+     * If `true`, after the container is started, wait until it exits before this
+     * execution resolves. Default `false`. Pair with a stage's `max_concurrent`
+     * to cap how many one-shot / batch deployments run at the same time.
+     */
+    wait_for_completion?: boolean;
 }
 /** Deploys the target stack. `docker compose up`. Response: [Update] */
 export interface DeployStack {

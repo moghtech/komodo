@@ -7280,6 +7280,19 @@ export interface Deploy {
 	 * Only used when deployment needs to be taken down before redeploy.
 	 */
 	stop_time?: number;
+	/**
+	 * If `true`, after the container is started, wait until it **exits** before
+	 * this execution resolves (by polling the container state). Default `false`:
+	 * resolve as soon as the container is started (correct for long-running
+	 * services).
+	 * 
+	 * Set this for one-shot / batch deployments so that a procedure stage with
+	 * `max_concurrent` actually caps how many run *at the same time* — the
+	 * worker-pool slot stays held until the container finishes, instead of
+	 * freeing as soon as the (fire-and-forget) deploy is issued. Ignored for
+	 * Swarm services.
+	 */
+	wait_for_completion?: boolean;
 }
 
 /** Deploys the target stack. `docker compose up`. Response: [Update] */

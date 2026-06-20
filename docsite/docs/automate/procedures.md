@@ -8,6 +8,21 @@ A Procedure composes multiple executions (like `RunBuild`, `DeployStack`, `Deplo
 
 A stage can optionally cap how many of its executions run at once with `max_concurrent`. With the default `0` every execution runs in parallel (original behavior); set e.g. `max_concurrent = 10` to run the stage as a **worker pool** of that size — useful when a stage fans out to many executions (e.g. a `Batch*` deploy across hundreds of resources) and you don't want to saturate the host.
 
+:::note Capping one-shot / batch jobs
+`max_concurrent` limits how many executions run concurrently. Most executions block until their work is done, so the cap directly limits concurrent work. But a `Deploy` is fire-and-forget — it resolves as soon as the container is *started*, not when it *exits*. So for one-shot / batch containers (a parser, a backup job, etc.), pair `max_concurrent` with **`wait_for_completion = true`** on the `Deploy` execution: the worker-pool slot is then held until the container actually exits, so `max_concurrent = 10` means at most 10 are *running* at once.
+
+```toml
+[[procedure.config.stage]]
+name = "run-all-jobs"
+max_concurrent = 10
+executions = [
+  { execution.type = "Deploy", execution.params.deployment = "job-01", execution.params.wait_for_completion = true },
+  { execution.type = "Deploy", execution.params.deployment = "job-02", execution.params.wait_for_completion = true },
+  # ...
+]
+```
+:::
+
 ```toml
 [[procedure]]
 name = "build-and-deploy"

@@ -621,6 +621,7 @@ impl ExtendBatch for BatchDeploy {
       deployment,
       stop_signal: None,
       stop_time: None,
+      wait_for_completion: false,
     })
   }
 }

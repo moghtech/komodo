@@ -622,6 +622,7 @@ async fn handle_post_build_redeploy(build_id: &str) {
             deployment: deployment.id.clone(),
             stop_signal: None,
             stop_time: None,
+            wait_for_completion: false,
           });
           let user = auto_redeploy_user().to_owned();
           let res = async {
@@ -630,6 +631,7 @@ async fn handle_post_build_redeploy(build_id: &str) {
               deployment: deployment.id.clone(),
               stop_signal: None,
               stop_time: None,
+              wait_for_completion: false,
             }
             .resolve(&ExecuteArgs {
               user,
