@@ -1109,7 +1109,10 @@ export interface EnabledExecution {
     /** Whether the execution is enabled to run in the procedure. */
     enabled: boolean;
 }
-/** A single stage of a procedure. Runs a list of executions in parallel. */
+/**
+ * A single stage of a procedure. Runs a list of executions in parallel,
+ * optionally capped to `max_concurrent` at a time.
+ */
 export interface ProcedureStage {
     /** A name for the procedure */
     name: string;
@@ -1117,6 +1120,11 @@ export interface ProcedureStage {
     enabled: boolean;
     /** The executions in the stage */
     executions?: EnabledExecution[];
+    /**
+     * Maximum number of executions to run in parallel within this stage.
+     * `0` (default) = no limit. Set e.g. `10` to cap concurrency (worker pool).
+     */
+    max_concurrent?: I64;
 }
 /** Config for the [Procedure] */
 export interface ProcedureConfig {
@@ -6974,6 +6982,12 @@ export interface Deploy {
      * Only used when deployment needs to be taken down before redeploy.
      */
     stop_time?: number;
+    /**
+     * If `true`, after the container is started, wait until it exits before this
+     * execution resolves. Default `false`. Pair with a stage's `max_concurrent`
+     * to cap how many one-shot / batch deployments run at the same time.
+     */
+    wait_for_completion?: boolean;
 }
 /** Deploys the target stack. `docker compose up`. Response: [Update] */
 export interface DeployStack {

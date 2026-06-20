@@ -953,7 +953,10 @@ export interface EnabledExecution {
 	enabled: boolean;
 }
 
-/** A single stage of a procedure. Runs a list of executions in parallel. */
+/**
+ * A single stage of a procedure. Runs a list of executions in parallel,
+ * optionally capped to `max_concurrent` at a time.
+ */
 export interface ProcedureStage {
 	/** A name for the procedure */
 	name: string;
@@ -961,6 +964,16 @@ export interface ProcedureStage {
 	enabled: boolean;
 	/** The executions in the stage */
 	executions?: EnabledExecution[];
+	/**
+	 * Maximum number of executions to run in parallel within this stage.
+	 * 
+	 * `0` (the default) means no limit: every execution runs at once, the
+	 * original behavior. Set e.g. `10` to run the stage as a worker pool of
+	 * that size — the executions beyond the limit are queued and started as
+	 * running ones finish. Useful to avoid saturating the host (CPU / RAM /
+	 * network / disk) when a stage fans out to many executions.
+	 */
+	max_concurrent?: I64;
 }
 
 /** Config for the [Procedure] */
@@ -7267,6 +7280,19 @@ export interface Deploy {
 	 * Only used when deployment needs to be taken down before redeploy.
 	 */
 	stop_time?: number;
+	/**
+	 * If `true`, after the container is started, wait until it **exits** before
+	 * this execution resolves (by polling the container state). Default `false`:
+	 * resolve as soon as the container is started (correct for long-running
+	 * services).
+	 * 
+	 * Set this for one-shot / batch deployments so that a procedure stage with
+	 * `max_concurrent` actually caps how many run *at the same time* — the
+	 * worker-pool slot stays held until the container finishes, instead of
+	 * freeing as soon as the (fire-and-forget) deploy is issued. Ignored for
+	 * Swarm services.
+	 */
+	wait_for_completion?: boolean;
 }
 
 /** Deploys the target stack. `docker compose up`. Response: [Update] */

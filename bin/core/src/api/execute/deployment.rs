@@ -1,4 +1,5 @@
 use std::sync::OnceLock;
+use std::time::{Duration, Instant};
 
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
@@ -46,6 +47,7 @@ impl super::BatchExecute for BatchDeploy {
       deployment,
       stop_signal: None,
       stop_time: None,
+      wait_for_completion: false,
     })
   }
 }
@@ -211,6 +213,9 @@ impl Resolve<ExecuteArgs> for Deploy {
     update_update(update.clone()).await?;
 
     let deployment_id = deployment.id.clone();
+    // Captured before `deployment` is moved into the deploy request below, so we
+    // can poll the container by name if `wait_for_completion` is set.
+    let container_name = deployment.name.clone();
 
     match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -251,7 +256,15 @@ impl Resolve<ExecuteArgs> for Deploy {
         {
           Ok(log) => {
             refresh_server_cache(&server, true).await;
-            update.logs.push(log)
+            update.logs.push(log);
+            if self.wait_for_completion {
+              wait_for_container_exit(
+                &server,
+                &container_name,
+                &mut update,
+              )
+              .await;
+            }
           }
           Err(e) => {
             update.push_error_log(
@@ -281,6 +294,62 @@ impl Resolve<ExecuteArgs> for Deploy {
     update_update(update.clone()).await?;
 
     Ok(update)
+  }
+}
+
+/// Poll a container's state until it exits (or is gone), so a `Deploy` with
+/// `wait_for_completion` only resolves once a one-shot / batch container has
+/// actually finished. A generous hard cap prevents a hung container from
+/// holding the caller (e.g. a `max_concurrent` worker-pool slot) forever.
+async fn wait_for_container_exit(
+  server: &Server,
+  container_name: &str,
+  update: &mut Update,
+) {
+  use komodo_client::entities::docker::container::ContainerStateStatusEnum as CState;
+  const POLL_SECS: u64 = 5;
+  const MAX_WAIT_SECS: u64 = 86_400; // 24h safety cap
+
+  update.push_simple_log(
+    "Wait For Completion",
+    format!("Waiting for container '{container_name}' to exit..."),
+  );
+  let deadline = Instant::now() + Duration::from_secs(MAX_WAIT_SECS);
+  loop {
+    tokio::time::sleep(Duration::from_secs(POLL_SECS)).await;
+    let finished = match periphery_client(server).await {
+      Ok(client) => match client
+        .request(api::container::InspectContainer {
+          name: container_name.to_string(),
+        })
+        .await
+      {
+        Ok(container) => matches!(
+          container.state.map(|state| state.status),
+          Some(CState::Exited) | Some(CState::Dead) | None
+        ),
+        // Inspect failed (likely the container was removed) -> treat as done.
+        Err(_) => true,
+      },
+      // Couldn't reach periphery -> stop waiting rather than hang forever.
+      Err(_) => true,
+    };
+    if finished {
+      update.push_simple_log(
+        "Wait For Completion",
+        format!("Container '{container_name}' finished"),
+      );
+      return;
+    }
+    if Instant::now() >= deadline {
+      update.push_error_log(
+        "Wait For Completion",
+        format!(
+          "Timed out after {MAX_WAIT_SECS}s waiting for container '{container_name}' to exit"
+        ),
+      );
+      return;
+    }
   }
 }
 

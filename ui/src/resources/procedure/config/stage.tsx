@@ -4,6 +4,7 @@ import {
   Button,
   Group,
   Menu,
+  NumberInput,
   Stack,
   Switch,
   TextInput,
@@ -44,6 +45,17 @@ export default function ProcedureStage({
           value={stage.name}
           onChange={(e) => setStage({ ...stage, name: e.target.value })}
           w={250}
+        />
+        <NumberInput
+          placeholder="Max parallel"
+          title="Max executions to run in parallel in this stage. 0 = no limit."
+          value={stage.max_concurrent || 0}
+          onChange={(v) =>
+            setStage({ ...stage, max_concurrent: Number(v) || 0 })
+          }
+          min={0}
+          w={130}
+          disabled={disabled}
         />
         <Group>
           <EnableSwitch

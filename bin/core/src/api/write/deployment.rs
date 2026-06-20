@@ -515,6 +515,7 @@ pub async fn check_deployment_for_update_inner(
           deployment: name.clone(),
           stop_signal: None,
           stop_time: None,
+          wait_for_completion: false,
         }),
         auto_redeploy_user().to_owned(),
       )

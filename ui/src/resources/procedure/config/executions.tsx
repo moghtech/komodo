@@ -181,12 +181,26 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
     params: { deployment: "" },
     Component: ({ params, setParams, disabled }) => {
       return (
-        <ResourceSelector
-          type="Deployment"
-          selected={params.deployment}
-          onSelect={(deployment) => setParams({ deployment })}
-          disabled={disabled}
-        />
+        <Stack gap="xs">
+          <ResourceSelector
+            type="Deployment"
+            selected={params.deployment}
+            onSelect={(deployment) => setParams({ ...params, deployment })}
+            disabled={disabled}
+          />
+          <Switch
+            label="Wait for completion"
+            description="Hold the slot until the container exits (one-shot / batch jobs)"
+            checked={!!params.wait_for_completion}
+            onChange={(e) =>
+              setParams({
+                ...params,
+                wait_for_completion: e.currentTarget.checked,
+              })
+            }
+            disabled={disabled}
+          />
+        </Stack>
       );
     },
   },

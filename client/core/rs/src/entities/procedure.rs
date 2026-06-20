@@ -211,7 +211,8 @@ impl utoipa::PartialSchema for PartialProcedureConfig {
 #[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialProcedureConfig {}
 
-/// A single stage of a procedure. Runs a list of executions in parallel.
+/// A single stage of a procedure. Runs a list of executions in parallel,
+/// optionally capped to `max_concurrent` at a time.
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -225,6 +226,15 @@ pub struct ProcedureStage {
   /// The executions in the stage
   #[serde(default, alias = "execution")]
   pub executions: Vec<EnabledExecution>,
+  /// Maximum number of executions to run in parallel within this stage.
+  ///
+  /// `0` (the default) means no limit: every execution runs at once, the
+  /// original behavior. Set e.g. `10` to run the stage as a worker pool of
+  /// that size — the executions beyond the limit are queued and started as
+  /// running ones finish. Useful to avoid saturating the host (CPU / RAM /
+  /// network / disk) when a stage fans out to many executions.
+  #[serde(default)]
+  pub max_concurrent: I64,
 }
 
 /// Allows to enable / disabled procedures in the sequence / parallel vec on the fly

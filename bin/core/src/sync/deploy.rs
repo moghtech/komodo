@@ -94,6 +94,7 @@ pub async fn deploy_from_cache(
                 deployment: name.to_string(),
                 stop_signal: None,
                 stop_time: None,
+                wait_for_completion: false,
               });
 
               let update = init_execution_update(&req, user).await?;

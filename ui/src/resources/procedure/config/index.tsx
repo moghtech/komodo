@@ -20,11 +20,12 @@ import { useFullProcedure } from "..";
 
 const PROCEDURE_GIT_PROVIDER = "Procedure";
 
-export function newStage(next_index: number) {
+export function newStage(next_index: number): Types.ProcedureStage {
   return {
     name: `Stage ${next_index}`,
     enabled: true,
     executions: [defaultEnabledExecution()],
+    max_concurrent: 0,
   };
 }
 
