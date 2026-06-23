@@ -290,6 +290,16 @@ pub struct ResourceSyncConfig {
   #[partial_default(default_include_resources())]
   pub include_resources: bool,
 
+  /// If the sync declares itself among its managed resources, applying
+  /// its own config change only takes effect on the *next* run (the current
+  /// run already loaded resources using the previous config). When enabled,
+  /// the sync will automatically run a second time immediately after a run
+  /// in which it modified its own configuration, so the new scope is applied
+  /// without waiting for an external trigger.
+  #[serde(default)]
+  #[builder(default)]
+  pub rerun_on_self_change: bool,
+
   /// When using `managed` resource sync, will only export resources
   /// matching all of the given tags. If none, will match all resources.
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -383,6 +393,7 @@ impl Default for ResourceSyncConfig {
       file_contents: Default::default(),
       managed: Default::default(),
       include_resources: default_include_resources(),
+      rerun_on_self_change: Default::default(),
       match_tags: Default::default(),
       include_variables: Default::default(),
       include_user_groups: Default::default(),

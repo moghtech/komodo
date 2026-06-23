@@ -558,8 +558,33 @@ pub async fn create<T: KomodoResource>(
 
 pub async fn update<T: KomodoResource>(
   id_or_name: &str,
+  config: T::PartialConfig,
+  user: &User,
+) -> anyhow::Result<Resource<T::Config, T::Info>> {
+  update_inner::<T>(id_or_name, config, user, true).await
+}
+
+/// Like [update], but skips the "busy" check.
+///
+/// Used when a Resource Sync updates itself (it declares itself among its
+/// own managed resources). The running sync holds its own action state lock
+/// for the entire duration of the run, so the normal busy check would always
+/// reject the self update with a confusing "ResourceSync busy" error - leaving
+/// the sync permanently unable to converge. The update is safe to apply here
+/// because it runs sequentially as part of the in-progress sync.
+pub async fn update_ignore_busy<T: KomodoResource>(
+  id_or_name: &str,
+  config: T::PartialConfig,
+  user: &User,
+) -> anyhow::Result<Resource<T::Config, T::Info>> {
+  update_inner::<T>(id_or_name, config, user, false).await
+}
+
+async fn update_inner<T: KomodoResource>(
+  id_or_name: &str,
   mut config: T::PartialConfig,
   user: &User,
+  check_busy: bool,
 ) -> anyhow::Result<Resource<T::Config, T::Info>> {
   let resource = get_check_permissions::<T>(
     id_or_name,
@@ -568,7 +593,7 @@ pub async fn update<T: KomodoResource>(
   )
   .await?;
 
-  if T::busy(&resource.id).await? {
+  if check_busy && T::busy(&resource.id).await? {
     return Err(anyhow!("{} busy", T::resource_type()));
   }
 

@@ -252,7 +252,26 @@ git_provider = "git.mogh.tech" # use an alternate git provider (default is githu
 git_account = "mbecker20"
 repo = "moghtech/komodo"
 resource_path = ["stacks.toml", "repos.toml"]
+# If the sync manages itself (declares its own resource above) and changes its
+# own config during a run, run once more automatically to apply the new scope.
+# Default: false
+rerun_on_self_change = true
 ```
+
+:::info Syncs that manage themselves
+A sync can declare itself among its managed resources. Komodo applies the
+sync's changes to itself during the run (no more "ResourceSync busy" errors).
+
+Because a run reconciles using the config that was active when it started, a
+change the sync makes to its own config (for example a new `resource_path`)
+only takes effect on the **next** run — after the first run the sync simply
+shows `Pending` again. Enable `rerun_on_self_change` to have it run once more
+automatically and apply the new scope immediately.
+
+A sync can never delete itself: if `delete`/`managed` mode is enabled and the
+sync is not declared in its own resource files, the run fails up front with a
+clear error (before changing anything) instead of silently skipping it.
+:::
 
 ### User Group:
 

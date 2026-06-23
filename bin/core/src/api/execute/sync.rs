@@ -49,6 +49,13 @@ use crate::{
 
 use super::ExecuteArgs;
 
+/// Maximum number of reconciliation passes performed by a single `RunSync`.
+///
+/// A second pass lets a sync that changed its own configuration apply the
+/// new scope immediately (when `rerun_on_self_change` is enabled), while
+/// guaranteeing the run always terminates.
+const MAX_SYNC_PASSES: u32 = 2;
+
 impl Resolve<ExecuteArgs> for RunSync {
   #[instrument(
     "RunSync",
@@ -81,16 +88,7 @@ impl Resolve<ExecuteArgs> for RunSync {
       PermissionLevel::Execute.into(),
     )
     .await?;
-
-    let repo = if !sync.config.files_on_host
-      && !sync.config.linked_repo.is_empty()
-    {
-      crate::resource::get::<Repo>(&sync.config.linked_repo)
-        .await?
-        .into()
-    } else {
-      None
-    };
+    let sync_id = sync.id.clone();
 
     // get the action state for the sync (or insert default).
     let action_state =
@@ -106,155 +104,249 @@ impl Resolve<ExecuteArgs> for RunSync {
     // Send update here for FE to recheck action state
     update_update(update.clone()).await?;
 
-    let RemoteResources {
-      resources,
-      logs,
-      hash,
-      message,
-      file_errors,
-      ..
-    } =
-      crate::sync::remote::get_remote_resources(&sync, repo.as_ref())
-        .await
-        .context("failed to get remote resources")?;
+    // Each pass reconciles against the sync config as it was when the pass
+    // started. A sync can declare itself among its managed resources; if it
+    // changes its own config during a pass, that new config only takes effect
+    // on the next pass (the current pass already loaded resources using the
+    // previous config). When `rerun_on_self_change` is enabled, run one extra
+    // pass so the new scope is applied without waiting for an external trigger.
+    let mut sync = sync;
+    let mut passes = 0u32;
+    loop {
+      passes += 1;
 
-    update.logs.extend(logs);
+      let outcome = execute_sync_pass(
+        &sync,
+        match_resource_type,
+        match_resources.as_deref(),
+        &mut update,
+      )
+      .await?;
+
+      if !outcome.no_changes
+        && outcome.self_config_changed
+        && sync.config.rerun_on_self_change
+        && passes < MAX_SYNC_PASSES
+      {
+        update.push_simple_log(
+          "Re-run sync",
+          format!(
+            "The sync modified its own configuration. {} to apply the updated scope.",
+            colored("re-running once", Color::Blue)
+          ),
+        );
+        update_update(update.clone()).await?;
+        // Re-read the (now updated) config for the next pass.
+        sync =
+          crate::resource::get::<entities::sync::ResourceSync>(
+            &sync_id,
+          )
+          .await?;
+        continue;
+      }
+
+      break;
+    }
+
+    update.finalize();
     update_update(update.clone()).await?;
 
-    if !file_errors.is_empty() {
-      return Err(
-        anyhow!("Found file errors. Cannot execute sync.").into(),
-      );
-    }
+    Ok(update)
+  }
+}
 
-    let resources = resources?;
+/// Outcome of a single sync reconciliation pass.
+struct SyncPassOutcome {
+  /// Nothing was out of sync this pass.
+  no_changes: bool,
+  /// The sync successfully updated its own config this pass (which may have
+  /// changed what it resolves on a subsequent pass).
+  self_config_changed: bool,
+}
 
-    let id_to_tags = get_id_to_tags(None).await?;
-    let all_resources = AllResourcesById::load().await?;
-    // Convert all match_resources to names
-    let match_resources = match_resources.map(|resources| {
-      resources
-        .into_iter()
-        .filter_map(|name_or_id| {
-          let Some(resource_type) = match_resource_type else {
-            return Some(name_or_id);
-          };
-          macro_rules! resolve_id_to_name {
-            ($(($Variant:ident, $field:ident)),* $(,)?) => {
-              match ObjectId::from_str(&name_or_id) {
-                Ok(_) => match resource_type {
-                  $(
-                    ResourceTargetVariant::$Variant => all_resources
-                      .$field
-                      .get(&name_or_id)
-                      .map(|r| r.name.clone()),
-                  )*
-                  ResourceTargetVariant::System => None,
-                },
-                Err(_) => Some(name_or_id),
-              }
-            };
-          }
-          // New resource types need to be added here manually.
-          resolve_id_to_name!(
-            (Server, servers),
-            (Swarm, swarms),
-            (Stack, stacks),
-            (Deployment, deployments),
-            (Build, builds),
-            (Repo, repos),
-            (Procedure, procedures),
-            (Action, actions),
-            (ResourceSync, syncs),
-            (Builder, builders),
-            (Alerter, alerters),
-          )
-        })
-        .collect::<Vec<_>>()
-    });
+/// Runs a single reconciliation pass: loads the remote resources using the
+/// sync's *current* config, computes the deltas and applies them. Logs are
+/// appended to `update`; the update is not finalized here.
+async fn execute_sync_pass(
+  sync: &ResourceSync,
+  match_resource_type: Option<ResourceTargetVariant>,
+  match_resources: Option<&[String]>,
+  update: &mut Update,
+) -> mogh_error::Result<SyncPassOutcome> {
+  let repo = if !sync.config.files_on_host
+    && !sync.config.linked_repo.is_empty()
+  {
+    crate::resource::get::<Repo>(&sync.config.linked_repo)
+      .await?
+      .into()
+  } else {
+    None
+  };
 
-    let deployments_by_name = all_resources
-      .deployments
-      .values()
-      .filter(|deployment| {
-        Deployment::include_resource(
-          &deployment.name,
-          &deployment.config,
-          match_resource_type,
-          match_resources.as_deref(),
-          &deployment.tags,
-          &id_to_tags,
-          &sync.config.match_tags,
-        )
-      })
-      .map(|deployment| (deployment.name.clone(), deployment.clone()))
-      .collect::<HashMap<_, _>>();
-    let stacks_by_name = all_resources
-      .stacks
-      .values()
-      .filter(|stack| {
-        Stack::include_resource(
-          &stack.name,
-          &stack.config,
-          match_resource_type,
-          match_resources.as_deref(),
-          &stack.tags,
-          &id_to_tags,
-          &sync.config.match_tags,
-        )
-      })
-      .map(|stack| (stack.name.clone(), stack.clone()))
-      .collect::<HashMap<_, _>>();
+  let RemoteResources {
+    resources,
+    logs,
+    hash,
+    message,
+    file_errors,
+    ..
+  } = crate::sync::remote::get_remote_resources(sync, repo.as_ref())
+    .await
+    .context("failed to get remote resources")?;
 
-    let deploy_cache = build_deploy_cache(SyncDeployParams {
-      deployments: &resources.deployments,
-      deployment_map: &deployments_by_name,
-      stacks: &resources.stacks,
-      stack_map: &stacks_by_name,
-    })
-    .await?;
+  update.logs.extend(logs);
+  update_update(update.clone()).await?;
 
-    let delete = sync.config.managed || sync.config.delete;
-
-    macro_rules! get_deltas {
-      ($(($var:ident, $Type:ident, $field:ident)),* $(,)?) => {
-        $(
-          let $var = if sync.config.include_resources {
-            get_updates_for_execution::<$Type>(
-              resources.$field,
-              delete,
-              match_resource_type,
-              match_resources.as_deref(),
-              &id_to_tags,
-              &sync.config.match_tags,
-            )
-            .await?
-          } else {
-            Default::default()
-          };
-        )*
-      };
-    }
-    // New resource types need to be added here manually.
-    get_deltas!(
-      (server_deltas, Server, servers),
-      (swarm_deltas, Swarm, swarms),
-      (stack_deltas, Stack, stacks),
-      (deployment_deltas, Deployment, deployments),
-      (build_deltas, Build, builds),
-      (repo_deltas, Repo, repos),
-      (procedure_deltas, Procedure, procedures),
-      (action_deltas, Action, actions),
-      (builder_deltas, Builder, builders),
-      (alerter_deltas, Alerter, alerters),
-      (resource_sync_deltas, ResourceSync, resource_syncs),
+  if !file_errors.is_empty() {
+    return Err(
+      anyhow!("Found file errors. Cannot execute sync.").into(),
     );
+  }
 
-    let (
-      variables_to_create,
-      variables_to_update,
-      variables_to_delete,
-    ) = if match_resource_type.is_none()
+  let resources = resources?;
+
+  let id_to_tags = get_id_to_tags(None).await?;
+  let all_resources = AllResourcesById::load().await?;
+  // Convert all match_resources to names
+  let match_resources = match_resources.map(|resources| {
+    resources
+      .iter()
+      .cloned()
+      .filter_map(|name_or_id| {
+        let Some(resource_type) = match_resource_type else {
+          return Some(name_or_id);
+        };
+        macro_rules! resolve_id_to_name {
+          ($(($Variant:ident, $field:ident)),* $(,)?) => {
+            match ObjectId::from_str(&name_or_id) {
+              Ok(_) => match resource_type {
+                $(
+                  ResourceTargetVariant::$Variant => all_resources
+                    .$field
+                    .get(&name_or_id)
+                    .map(|r| r.name.clone()),
+                )*
+                ResourceTargetVariant::System => None,
+              },
+              Err(_) => Some(name_or_id),
+            }
+          };
+        }
+        // New resource types need to be added here manually.
+        resolve_id_to_name!(
+          (Server, servers),
+          (Swarm, swarms),
+          (Stack, stacks),
+          (Deployment, deployments),
+          (Build, builds),
+          (Repo, repos),
+          (Procedure, procedures),
+          (Action, actions),
+          (ResourceSync, syncs),
+          (Builder, builders),
+          (Alerter, alerters),
+        )
+      })
+      .collect::<Vec<_>>()
+  });
+
+  let deployments_by_name = all_resources
+    .deployments
+    .values()
+    .filter(|deployment| {
+      Deployment::include_resource(
+        &deployment.name,
+        &deployment.config,
+        match_resource_type,
+        match_resources.as_deref(),
+        &deployment.tags,
+        &id_to_tags,
+        &sync.config.match_tags,
+      )
+    })
+    .map(|deployment| (deployment.name.clone(), deployment.clone()))
+    .collect::<HashMap<_, _>>();
+  let stacks_by_name = all_resources
+    .stacks
+    .values()
+    .filter(|stack| {
+      Stack::include_resource(
+        &stack.name,
+        &stack.config,
+        match_resource_type,
+        match_resources.as_deref(),
+        &stack.tags,
+        &id_to_tags,
+        &sync.config.match_tags,
+      )
+    })
+    .map(|stack| (stack.name.clone(), stack.clone()))
+    .collect::<HashMap<_, _>>();
+
+  let deploy_cache = build_deploy_cache(SyncDeployParams {
+    deployments: &resources.deployments,
+    deployment_map: &deployments_by_name,
+    stacks: &resources.stacks,
+    stack_map: &stacks_by_name,
+  })
+  .await?;
+
+  let delete = sync.config.managed || sync.config.delete;
+
+  macro_rules! get_deltas {
+    ($(($var:ident, $Type:ident, $field:ident)),* $(,)?) => {
+      $(
+        let $var = if sync.config.include_resources {
+          get_updates_for_execution::<$Type>(
+            resources.$field,
+            delete,
+            match_resource_type,
+            match_resources.as_deref(),
+            &id_to_tags,
+            &sync.config.match_tags,
+          )
+          .await?
+        } else {
+          Default::default()
+        };
+      )*
+    };
+  }
+  // New resource types need to be added here manually.
+  get_deltas!(
+    (server_deltas, Server, servers),
+    (swarm_deltas, Swarm, swarms),
+    (stack_deltas, Stack, stacks),
+    (deployment_deltas, Deployment, deployments),
+    (build_deltas, Build, builds),
+    (repo_deltas, Repo, repos),
+    (procedure_deltas, Procedure, procedures),
+    (action_deltas, Action, actions),
+    (builder_deltas, Builder, builders),
+    (alerter_deltas, Alerter, alerters),
+    (resource_sync_deltas, ResourceSync, resource_syncs),
+  );
+
+  // A running sync cannot delete itself. If delete/managed mode would remove
+  // the running sync (because it isn't declared in its own resource files),
+  // hard fail up front - before any resources are mutated - rather than
+  // silently skipping the deletion.
+  if resource_sync_deltas
+    .to_delete
+    .iter()
+    .any(|name| name == &sync.name)
+  {
+    return Err(
+      anyhow!(
+        "Sync '{}' is configured to delete itself: it is not declared in its own resource files while delete/managed mode is enabled. Declare it in the resource files, or remove it manually / disable delete mode.",
+        sync.name
+      )
+      .into(),
+    );
+  }
+
+  let (variables_to_create, variables_to_update, variables_to_delete) =
+    if match_resource_type.is_none()
       && match_resources.is_none()
       && sync.config.include_variables
     {
@@ -266,186 +358,198 @@ impl Resolve<ExecuteArgs> for RunSync {
     } else {
       Default::default()
     };
-    let (
+  let (
+    user_groups_to_create,
+    user_groups_to_update,
+    user_groups_to_delete,
+  ) = if match_resource_type.is_none()
+    && match_resources.is_none()
+    && sync.config.include_user_groups
+  {
+    crate::sync::user_groups::get_updates_for_execution(
+      resources.user_groups,
+      delete,
+    )
+    .await?
+  } else {
+    Default::default()
+  };
+
+  // New resource types need to be added here manually.
+  if deploy_cache.is_empty()
+    && resource_sync_deltas.no_changes()
+    && server_deltas.no_changes()
+    && swarm_deltas.no_changes()
+    && deployment_deltas.no_changes()
+    && stack_deltas.no_changes()
+    && build_deltas.no_changes()
+    && builder_deltas.no_changes()
+    && alerter_deltas.no_changes()
+    && repo_deltas.no_changes()
+    && procedure_deltas.no_changes()
+    && action_deltas.no_changes()
+    && user_groups_to_create.is_empty()
+    && user_groups_to_update.is_empty()
+    && user_groups_to_delete.is_empty()
+    && variables_to_create.is_empty()
+    && variables_to_update.is_empty()
+    && variables_to_delete.is_empty()
+  {
+    update.push_simple_log(
+      "No Changes",
+      format!("{}. exiting.", colored("nothing to do", Color::Green)),
+    );
+    return Ok(SyncPassOutcome {
+      no_changes: true,
+      self_config_changed: false,
+    });
+  }
+
+  // =====================================================
+  // The ordering these are executed does matter, since
+  // latter resources may depend on prior synced resources
+  // already being updated with the declared state.
+  // =====================================================
+
+  // No deps
+  maybe_extend(
+    &mut update.logs,
+    crate::sync::variables::run_updates(
+      variables_to_create,
+      variables_to_update,
+      variables_to_delete,
+    )
+    .await,
+  );
+  maybe_extend(
+    &mut update.logs,
+    crate::sync::user_groups::run_updates(
       user_groups_to_create,
       user_groups_to_update,
       user_groups_to_delete,
-    ) = if match_resource_type.is_none()
-      && match_resources.is_none()
-      && sync.config.include_user_groups
-    {
-      crate::sync::user_groups::get_updates_for_execution(
-        resources.user_groups,
-        delete,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-
-    // New resource types need to be added here manually.
-    if deploy_cache.is_empty()
-      && resource_sync_deltas.no_changes()
-      && server_deltas.no_changes()
-      && swarm_deltas.no_changes()
-      && deployment_deltas.no_changes()
-      && stack_deltas.no_changes()
-      && build_deltas.no_changes()
-      && builder_deltas.no_changes()
-      && alerter_deltas.no_changes()
-      && repo_deltas.no_changes()
-      && procedure_deltas.no_changes()
-      && action_deltas.no_changes()
-      && user_groups_to_create.is_empty()
-      && user_groups_to_update.is_empty()
-      && user_groups_to_delete.is_empty()
-      && variables_to_create.is_empty()
-      && variables_to_update.is_empty()
-      && variables_to_delete.is_empty()
-    {
-      update.push_simple_log(
-        "No Changes",
-        format!(
-          "{}. exiting.",
-          colored("nothing to do", Color::Green)
-        ),
-      );
-      update.finalize();
-      update_update(update.clone()).await?;
-      return Ok(update);
-    }
-
-    // =====================================================
-    // The ordering these are executed does matter, since
-    // latter resources may depend on prior synced resources
-    // already being updated with the declared state.
-    // =====================================================
-
-    // No deps
-    maybe_extend(
-      &mut update.logs,
-      crate::sync::variables::run_updates(
-        variables_to_create,
-        variables_to_update,
-        variables_to_delete,
-      )
-      .await,
-    );
-    maybe_extend(
-      &mut update.logs,
-      crate::sync::user_groups::run_updates(
-        user_groups_to_create,
-        user_groups_to_update,
-        user_groups_to_delete,
-      )
-      .await,
-    );
-
-    maybe_extend(
-      &mut update.logs,
-      Server::execute_sync_updates(server_deltas).await,
-    );
-    maybe_extend(
-      &mut update.logs,
-      Alerter::execute_sync_updates(alerter_deltas).await,
-    );
-    maybe_extend(
-      &mut update.logs,
-      Action::execute_sync_updates(action_deltas).await,
-    );
-
-    // Depends on server
-    maybe_extend(
-      &mut update.logs,
-      Swarm::execute_sync_updates(swarm_deltas).await,
-    );
-    // Depends on server
-    maybe_extend(
-      &mut update.logs,
-      Builder::execute_sync_updates(builder_deltas).await,
-    );
-    // Depends on server / builder
-    maybe_extend(
-      &mut update.logs,
-      Repo::execute_sync_updates(repo_deltas).await,
-    );
-
-    // Depends on builder / repo
-    maybe_extend(
-      &mut update.logs,
-      Build::execute_sync_updates(build_deltas).await,
-    );
-    // Depends on server / repo
-    maybe_extend(
-      &mut update.logs,
-      Stack::execute_sync_updates(stack_deltas).await,
-    );
-    // Depends on repo
-    maybe_extend(
-      &mut update.logs,
-      ResourceSync::execute_sync_updates(resource_sync_deltas).await,
-    );
-    // Depends on server / build
-    maybe_extend(
-      &mut update.logs,
-      Deployment::execute_sync_updates(deployment_deltas).await,
-    );
-    // Depends on everything
-    maybe_extend(
-      &mut update.logs,
-      Procedure::execute_sync_updates(procedure_deltas).await,
-    );
-
-    // Execute the deploy cache
-    deploy_from_cache(deploy_cache, &mut update.logs).await;
-
-    let db = db_client();
-
-    if let Err(e) = update_one_by_id(
-      &db.resource_syncs,
-      &sync.id,
-      doc! {
-        "$set": {
-          "info.last_sync_ts": komodo_timestamp(),
-          "info.last_sync_hash": hash,
-          "info.last_sync_message": message,
-        }
-      },
-      None,
     )
-    .await
-    {
-      warn!(
-        "failed to update resource sync {} info after sync | {e:#}",
-        sync.name
-      )
-    }
+    .await,
+  );
 
-    if let Err(e) = (RefreshResourceSyncPending { sync: sync.id })
-      .resolve(&WriteArgs {
-        user: sync_user().to_owned(),
-      })
-      .await
-    {
-      warn!(
-        "failed to refresh sync {} after run | {:#}",
-        sync.name, e.error
-      );
-      update.push_error_log(
-        "refresh sync",
-        format_serror(
-          &e.error
-            .context("failed to refresh sync pending after run")
-            .into(),
-        ),
-      );
-    }
+  maybe_extend(
+    &mut update.logs,
+    Server::execute_sync_updates(server_deltas).await,
+  );
+  maybe_extend(
+    &mut update.logs,
+    Alerter::execute_sync_updates(alerter_deltas).await,
+  );
+  maybe_extend(
+    &mut update.logs,
+    Action::execute_sync_updates(action_deltas).await,
+  );
 
-    update.finalize();
-    update_update(update.clone()).await?;
+  // Depends on server
+  maybe_extend(
+    &mut update.logs,
+    Swarm::execute_sync_updates(swarm_deltas).await,
+  );
+  // Depends on server
+  maybe_extend(
+    &mut update.logs,
+    Builder::execute_sync_updates(builder_deltas).await,
+  );
+  // Depends on server / builder
+  maybe_extend(
+    &mut update.logs,
+    Repo::execute_sync_updates(repo_deltas).await,
+  );
 
-    Ok(update)
+  // Depends on builder / repo
+  maybe_extend(
+    &mut update.logs,
+    Build::execute_sync_updates(build_deltas).await,
+  );
+  // Depends on server / repo
+  maybe_extend(
+    &mut update.logs,
+    Stack::execute_sync_updates(stack_deltas).await,
+  );
+  // Depends on repo
+  //
+  // A sync can declare itself among its managed resources. Apply those self
+  // changes first, bypassing the busy check that the running sync would
+  // otherwise trip ("ResourceSync busy"). This mutates the deltas in place so
+  // the regular execution below skips the sync's own entry.
+  let mut resource_sync_deltas = resource_sync_deltas;
+  let (self_logs, self_config_changed) =
+    crate::sync::execute::execute_self_sync_updates(
+      &mut resource_sync_deltas,
+      &sync.id,
+    )
+    .await;
+  update.logs.extend(self_logs);
+  maybe_extend(
+    &mut update.logs,
+    ResourceSync::execute_sync_updates(resource_sync_deltas).await,
+  );
+  // Depends on server / build
+  maybe_extend(
+    &mut update.logs,
+    Deployment::execute_sync_updates(deployment_deltas).await,
+  );
+  // Depends on everything
+  maybe_extend(
+    &mut update.logs,
+    Procedure::execute_sync_updates(procedure_deltas).await,
+  );
+
+  // Execute the deploy cache
+  deploy_from_cache(deploy_cache, &mut update.logs).await;
+
+  let db = db_client();
+
+  if let Err(e) = update_one_by_id(
+    &db.resource_syncs,
+    &sync.id,
+    doc! {
+      "$set": {
+        "info.last_sync_ts": komodo_timestamp(),
+        "info.last_sync_hash": hash,
+        "info.last_sync_message": message,
+      }
+    },
+    None,
+  )
+  .await
+  {
+    warn!(
+      "failed to update resource sync {} info after sync | {e:#}",
+      sync.name
+    )
   }
+
+  if let Err(e) = (RefreshResourceSyncPending {
+    sync: sync.id.clone(),
+  })
+  .resolve(&WriteArgs {
+    user: sync_user().to_owned(),
+  })
+  .await
+  {
+    warn!(
+      "failed to refresh sync {} after run | {:#}",
+      sync.name, e.error
+    );
+    update.push_error_log(
+      "refresh sync",
+      format_serror(
+        &e.error
+          .context("failed to refresh sync pending after run")
+          .into(),
+      ),
+    );
+  }
+
+  Ok(SyncPassOutcome {
+    no_changes: false,
+    self_config_changed,
+  })
 }
 
 fn maybe_extend(logs: &mut Vec<Log>, log: Option<Log>) {

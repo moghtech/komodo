@@ -4,12 +4,15 @@ use anyhow::Context;
 use database::mungos::find::find_collect;
 use formatting::{Color, bold, colored, muted};
 use komodo_client::entities::{
-  ResourceTargetVariant, tag::Tag, toml::ResourceToml, update::Log,
-  user::sync_user,
+  ResourceTargetVariant, sync::ResourceSync, tag::Tag,
+  toml::ResourceToml, update::Log, user::sync_user,
 };
 use partial_derive2::MaybeNone;
 
-use crate::{api::write::WriteArgs, resource::ResourceMetaUpdate};
+use crate::{
+  api::write::WriteArgs,
+  resource::{KomodoResource, ResourceMetaUpdate},
+};
 
 use super::{ResourceSyncTrait, SyncDeltas, ToUpdateItem};
 
@@ -267,6 +270,109 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
       Log::simple(&stage, log)
     })
   }
+}
+
+/// Applies a Resource Sync's changes to itself, if it declares itself among
+/// its own managed resources.
+///
+/// The running sync holds its own action state lock for the entire run, so
+/// routing the self update through the normal sync execution would fail the
+/// busy check with a confusing "ResourceSync busy" error, and the sync could
+/// never converge. This pulls the sync's own update entry out of the deltas
+/// (so the regular execution skips it) and applies it directly via
+/// [`update_ignore_busy`](crate::resource::update_ignore_busy), which skips
+/// the busy check (safe, since it runs sequentially within the in-progress
+/// sync).
+///
+/// Self *deletion* is not handled here - it is rejected up front by the
+/// caller (a running sync deleting itself is a hard error, not a silent skip).
+///
+/// Returns the logs plus a flag indicating whether the sync's own *config*
+/// was successfully changed (meta-only changes like tags/description don't
+/// count, since they can't alter what the sync resolves). The caller uses
+/// this to optionally re-run the sync (see `rerun_on_self_change`).
+pub async fn execute_self_sync_updates(
+  deltas: &mut SyncDeltas<<ResourceSync as KomodoResource>::PartialConfig>,
+  self_id: &str,
+) -> (Vec<Log>, bool) {
+  let stage = format!("Update {}s", ResourceSync::resource_type());
+  let mut logs = Vec::new();
+  let mut config_changed = false;
+
+  let Some(pos) =
+    deltas.to_update.iter().position(|item| item.id == self_id)
+  else {
+    return (logs, config_changed);
+  };
+
+  let ToUpdateItem {
+    id,
+    resource,
+    update_description,
+    update_template,
+    update_tags,
+  } = deltas.to_update.remove(pos);
+
+  let name = resource.name.clone();
+  let mut has_error = false;
+  let mut log = format!(
+    "running self update on {} '{}'",
+    ResourceSync::resource_type(),
+    bold(&name)
+  );
+
+  let meta = ResourceMetaUpdate {
+    description: update_description
+      .then(|| resource.description.clone()),
+    template: update_template.then_some(resource.template),
+    tags: update_tags.then(|| resource.tags.clone()),
+  };
+
+  if !meta.is_none() {
+    run_update_meta::<ResourceSync>(
+      id.clone(),
+      &name,
+      meta,
+      &mut log,
+      &mut has_error,
+    )
+    .await;
+  }
+
+  if !resource.config.is_none() {
+    if let Err(e) = crate::resource::update_ignore_busy::<ResourceSync>(
+      &id,
+      resource.config,
+      sync_user(),
+    )
+    .await
+    {
+      has_error = true;
+      log.push_str(&format!(
+        "\n{}: failed to update config on {} '{}' | {e:#}",
+        colored("ERROR", Color::Red),
+        ResourceSync::resource_type(),
+        bold(&name),
+      ))
+    } else {
+      config_changed = true;
+      log.push_str(&format!(
+        "\n{}: {} {} '{}' configuration",
+        muted("INFO"),
+        colored("updated", Color::Blue),
+        ResourceSync::resource_type(),
+        bold(&name)
+      ));
+    }
+  }
+
+  logs.push(if has_error {
+    Log::error(&stage, log)
+  } else {
+    Log::simple(&stage, log)
+  });
+
+  (logs, config_changed)
 }
 
 pub async fn run_update_meta<Resource: ResourceSyncTrait>(

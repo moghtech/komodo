@@ -162,6 +162,11 @@ export default function ResourceSyncConfig({
         description:
           "Enabled managed mode / the 'Commit' button. Commit is the 'reverse' of Execute, and will update the sync file with your configs updated in the UI.",
       },
+      rerun_on_self_change: {
+        label: "Re-run On Self Change",
+        description:
+          "If the sync manages itself and updates its own config during a run, automatically run once more to apply the new scope (instead of waiting for the next trigger).",
+      },
     },
   };
 

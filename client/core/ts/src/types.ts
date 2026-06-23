@@ -2140,6 +2140,15 @@ export interface ResourceSyncConfig {
 	 */
 	include_resources: boolean;
 	/**
+	 * If the sync declares itself among its managed resources, applying
+	 * its own config change only takes effect on the *next* run (the current
+	 * run already loaded resources using the previous config). When enabled,
+	 * the sync will automatically run a second time immediately after a run
+	 * in which it modified its own configuration, so the new scope is applied
+	 * without waiting for an external trigger.
+	 */
+	rerun_on_self_change?: boolean;
+	/**
 	 * When using `managed` resource sync, will only export resources
 	 * matching all of the given tags. If none, will match all resources.
 	 */
