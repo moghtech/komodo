@@ -171,10 +171,10 @@ impl Resolve<WriteArgs> for DeleteTerminal {
     )
   )]
   async fn resolve(
-    self,
+    mut self,
     WriteArgs { user }: &WriteArgs,
   ) -> mogh_error::Result<NoData> {
-    let server = match &self.target {
+    let server = match &mut self.target {
       TerminalTarget::Server { server } => {
         let server = server
           .as_ref()
@@ -195,27 +195,31 @@ impl Resolve<WriteArgs> for DeleteTerminal {
         )
         .await?
       }
-      TerminalTarget::Stack { stack, .. } => {
-        let server = get_check_permissions::<Stack>(
-          stack,
+      TerminalTarget::Stack {
+        stack: stack_id, ..
+      } => {
+        let stack = get_check_permissions::<Stack>(
+          stack_id,
           user,
           PermissionLevel::Read.terminal(),
         )
-        .await?
-        .config
-        .server_id;
-        resource::get::<Server>(&server).await?
+        .await?;
+        // Must fix any incoming stack name to id
+        *stack_id = stack.id;
+        resource::get::<Server>(&stack.config.server_id).await?
       }
-      TerminalTarget::Deployment { deployment } => {
-        let server = get_check_permissions::<Deployment>(
-          deployment,
+      TerminalTarget::Deployment {
+        deployment: deployment_id,
+      } => {
+        let deployment = get_check_permissions::<Deployment>(
+          deployment_id,
           user,
           PermissionLevel::Read.terminal(),
         )
-        .await?
-        .config
-        .server_id;
-        resource::get::<Server>(&server).await?
+        .await?;
+        // Must fix any incoming deployment name to id
+        *deployment_id = deployment.id;
+        resource::get::<Server>(&deployment.config.server_id).await?
       }
     };
 
