@@ -10,7 +10,7 @@ import ResourceHeader from "../header";
 import BuilderConfig from "./config";
 import BatchExecutions from "@/components/batch-executions";
 import { useState } from "react";
-import { Select } from "@mantine/core";
+import { Group, Select } from "@mantine/core";
 
 export function useBuilder(id: string | undefined, useName?: boolean) {
   return useRead("ListBuilders", {}).data?.find((r) =>
@@ -111,14 +111,18 @@ export const BuilderComponents: RequiredResourceComponents<
         name={builder?.name}
         state={builder?.info.builder_type}
         status={
-          builder?.info.builder_type === "Aws"
-            ? builder?.info.instance_type
-            : builder?.info.builder_type === "Server"
-              ? builder?.info.instance_type
-                  ?.split(",")
-                  .slice(0, 3)
-                  .map((id) => <ResourceLink type="Server" id={id.trim()} />)
-              : undefined
+          builder?.info.builder_type === "Aws" ? (
+            builder?.info.instance_type
+          ) : builder?.info.builder_type === "Server" ? (
+            <Group gap="xs">
+              {builder?.info.instance_type
+                ?.split(",")
+                .slice(0, 3)
+                .map((id) => (
+                  <ResourceLink type="Server" id={id.trim()} />
+                ))}
+            </Group>
+          ) : undefined
         }
       />
     );
