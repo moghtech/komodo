@@ -617,6 +617,16 @@
             "null"
           ]
         },
+        "auto_update_skip_services": {
+          "description": "Ignore certain services during Global Auto Update polling.\nServices listed here are skipped only in the global auto-update flow.\nManual checks still include all services.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
         "destroy_before_deploy": {
           "description": "Whether to run `docker compose down` before `compose up`.",
           "type": [
@@ -5703,12 +5713,15 @@
     "PartialServerBuilderConfig": {
       "type": "object",
       "properties": {
-        "server": {
-          "description": "The server id of the builder",
+        "servers": {
+          "description": "The server ids of the builders.\nIf multiple are given, builds will overflow\nto later specified servers as needed.",
           "type": [
-            "string",
+            "array",
             "null"
-          ]
+          ],
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
