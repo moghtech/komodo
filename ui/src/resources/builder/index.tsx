@@ -5,7 +5,6 @@ import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import NewResource from "@/resources/new";
 import BuilderTable from "./table";
-import { useServer } from "../server";
 import { serverStateIntention } from "@/lib/color";
 import ResourceHeader from "../header";
 import BuilderConfig from "./config";
@@ -77,20 +76,31 @@ export const BuilderComponents: RequiredResourceComponents<
 
   ResourcePageHeader: ({ id }) => {
     const builder = useBuilder(id);
-    const server = useServer(
-      builder?.info.builder_type === "Server"
-        ? builder.info.instance_type
-        : undefined,
+    const configured =
+      (builder?.info.builder_type === "Server" &&
+        builder.info.instance_type?.split(",").map((id) => id.trim())) ||
+      [];
+    const servers = useRead("ListServers", {}).data?.filter((s) =>
+      configured.includes(s.id),
     );
     const coreVersion = useRead("GetVersion", {}).data?.version;
-    const intent = server?.info.state
-      ? serverStateIntention(
-          server.info.state,
-          !!coreVersion &&
-            !!server.info.version &&
-            coreVersion !== server.info.version,
-        )
-      : "Neutral";
+    const intent = !servers?.length
+      ? "Neutral"
+      : servers.length === 1
+        ? serverStateIntention(
+            servers[0].info.state,
+            !!coreVersion &&
+              !!servers[0].info.version &&
+              coreVersion !== servers[0].info.version,
+          )
+        : // All servers connected
+          servers.every((s) => s.info.state === Types.ServerState.Ok)
+          ? "Good"
+          : // No servers connected
+            servers.every((s) => s.info.state !== Types.ServerState.Ok)
+            ? "Critical"
+            : // Some servers connected
+              "Warning";
     return (
       <ResourceHeader
         type="Builder"
@@ -101,12 +111,14 @@ export const BuilderComponents: RequiredResourceComponents<
         name={builder?.name}
         state={builder?.info.builder_type}
         status={
-          builder?.info.builder_type === "Aws" ? (
-            builder?.info.instance_type
-          ) : builder?.info.builder_type === "Server" &&
-            builder.info.instance_type ? (
-            <ResourceLink type="Server" id={builder.info.instance_type} />
-          ) : undefined
+          builder?.info.builder_type === "Aws"
+            ? builder?.info.instance_type
+            : builder?.info.builder_type === "Server"
+              ? builder?.info.instance_type
+                  ?.split(",")
+                  .slice(0, 3)
+                  .map((id) => <ResourceLink type="Server" id={id.trim()} />)
+              : undefined
         }
       />
     );
