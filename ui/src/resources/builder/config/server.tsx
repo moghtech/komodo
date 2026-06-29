@@ -40,7 +40,7 @@ export default function ServerBuilderConfig({ id }: { id: string }) {
                 return (
                   <ConfigItem
                     label="Select Servers"
-                    description="If multiple servers are configured, will distribute builds among them."
+                    description="If multiple servers are configured, builds will be distributed among them."
                     gap="sm"
                   >
                     {serverIds?.map((serverId, index) => {
