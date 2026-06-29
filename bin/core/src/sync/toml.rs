@@ -476,8 +476,14 @@ impl ToToml for Builder {
                   .into_iter()
                   .map(|(key, value)| {
                     match key.as_str() {
-                      "server_id" => {
-                        return (String::from("server"), value);
+                      "server_ids" => {
+                        if let serde_json::Value::Array(arr) = &value
+                          && arr.len() > 1
+                        {
+                          return (String::from("servers"), value);
+                        } else {
+                          return (String::from("server"), value);
+                        }
                       }
                       _ => {}
                     }
