@@ -1,13 +1,16 @@
 use std::time::Duration;
 
 use anyhow::{Context, anyhow};
-use database::mungos::mongodb::bson::oid::ObjectId;
+use database::{bson::doc, mungos::mongodb::bson::oid::ObjectId};
 use formatting::muted;
+use futures_util::{StreamExt, stream::FuturesOrdered};
 use komodo_client::entities::{
   Version,
+  build::{Build, BuildState},
   builder::{AwsBuilderConfig, Builder, BuilderConfig},
   komodo_timestamp,
-  server::Server,
+  repo::{Repo, RepoState},
+  server::{Server, ServerState},
   update::{Log, Update},
 };
 use periphery_client::api::{self, GetVersionResponse};
@@ -23,7 +26,8 @@ use crate::{
   connection::PeripheryConnectionArgs,
   helpers::update::update_update,
   periphery::PeripheryClient,
-  resource,
+  resource::{self, list_all_resources},
+  state::{build_state_cache, repo_state_cache, server_status_cache},
 };
 
 use super::periphery_client;
@@ -37,25 +41,26 @@ const BUILDER_POLL_MAX_TRIES: usize = 60;
   fields(
     resource_name,
     builder_id = builder.id,
-    update_id = update.id
+    update_id = update.as_ref().map(|u| u.id.as_str())
   )
 )]
 pub async fn connect_builder_periphery(
-  // build: &Build,
   resource_name: String,
   version: Option<Version>,
   builder: Builder,
-  update: &mut Update,
+  update: Option<&mut Update>,
 ) -> anyhow::Result<(PeripheryClient, BuildCleanupData)> {
   match builder.config {
+    BuilderConfig::Aws(config) => {
+      get_aws_builder(&resource_name, version, config, update).await
+    }
     BuilderConfig::Url(config) => {
       if config.address.is_empty() {
         return Err(anyhow!(
           "Builder has not yet configured an address"
         ));
       }
-      // TODO: Dont use builder id, or will be problems
-      // with simultaneous spawned builders.
+      // Builder id no good because it may be active for multiple connections.
       let periphery = PeripheryClient::new(
         PeripheryConnectionArgs::from_url_builder(
           &ObjectId::new().to_hex(),
@@ -64,22 +69,108 @@ pub async fn connect_builder_periphery(
         config.insecure_tls,
       )
       .await?;
-      periphery
-        .health_check()
-        .await
-        .context("Url Builder failed health check")?;
-      Ok((periphery, BuildCleanupData::Url))
+      // Poll for connection to be estalished
+      let mut err = None;
+      for _ in 0..10 {
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        match periphery
+          .health_check()
+          .await
+          .context("Url Builder failed health check")
+        {
+          Ok(_) => return Ok((periphery, BuildCleanupData::Url)),
+          Err(e) => err = Some(e),
+        };
+      }
+      Err(err.context("Missing error")?)
     }
     BuilderConfig::Server(config) => {
-      if config.server_id.is_empty() {
-        return Err(anyhow!("Builder has not configured a server"));
+      if config.server_ids.is_empty() {
+        return Err(anyhow!(
+          "Server Builder has no configured Servers"
+        ));
       }
-      let server = resource::get::<Server>(&config.server_id).await?;
+
+      // Short path for single configured builder
+      if config.server_ids.len() == 1 {
+        let server =
+          resource::get::<Server>(&config.server_ids[0]).await?;
+        let periphery = periphery_client(&server).await?;
+        return Ok((periphery, BuildCleanupData::Server));
+      }
+
+      // Query for builds / repos using the builder
+      let (builds, repos) = tokio::join!(
+        list_all_resources::<Build>(
+          doc! { "config.builder_id": &builder.id },
+        ),
+        list_all_resources::<Repo>(
+          doc! { "config.builder_id": &builder.id },
+        )
+      );
+
+      // Count currently building resources
+      let mut building = 0;
+
+      let build_state_cache = build_state_cache();
+      for build in builds
+        .inspect_err(|e| {
+          warn!("Failed to query for Builds using Builder | {e:#}")
+        })
+        .unwrap_or_default()
+      {
+        if build_state_cache
+          .get(&build.id)
+          .await
+          .map(|s| matches!(s, BuildState::Building))
+          .unwrap_or_default()
+        {
+          building += 1;
+        }
+      }
+      let repo_state_cache = repo_state_cache();
+      for repo in repos
+        .inspect_err(|e| {
+          warn!("Failed to query for Repos using Builder | {e:#}")
+        })
+        .unwrap_or_default()
+      {
+        if repo_state_cache
+          .get(&repo.id)
+          .await
+          .map(|s| matches!(s, RepoState::Building))
+          .unwrap_or_default()
+        {
+          building += 1;
+        }
+      }
+
+      // Get filtered list of available Servers
+      let server_status_cache = server_status_cache();
+      let available_server_ids = config
+        .server_ids
+        .iter()
+        .map(|server_id| async move {
+          server_status_cache
+            .get(server_id)
+            .await
+            .map(|s| matches!(s.state, ServerState::Ok))
+            .unwrap_or_default()
+            .then_some(server_id)
+        })
+        .collect::<FuturesOrdered<_>>()
+        .collect::<Vec<_>>()
+        .await
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+
+      // Select server based on building count modulo available length.
+      let index = building % available_server_ids.len();
+      let server =
+        resource::get::<Server>(available_server_ids[index]).await?;
       let periphery = periphery_client(&server).await?;
       Ok((periphery, BuildCleanupData::Server))
-    }
-    BuilderConfig::Aws(config) => {
-      get_aws_builder(&resource_name, version, config, update).await
     }
   }
 }
@@ -89,14 +180,14 @@ pub async fn connect_builder_periphery(
   skip_all,
   fields(
     resource_name,
-    update_id = update.id,
+    update_id = update.as_ref().map(|u| u.id.as_str()),
   )
 )]
 async fn get_aws_builder(
   resource_name: &str,
   version: Option<Version>,
   config: AwsBuilderConfig,
-  update: &mut Update,
+  mut update: Option<&mut Update>,
 ) -> anyhow::Result<(PeripheryClient, BuildCleanupData)> {
   let start_create_ts = komodo_timestamp();
 
@@ -114,9 +205,10 @@ async fn get_aws_builder(
     ..Default::default()
   };
 
-  update.logs.push(log);
-
-  update_update(update.clone()).await?;
+  if let Some(update) = &mut update {
+    update.logs.push(log);
+    update_update((*update).clone()).await?;
+  }
 
   let protocol = if config.use_https { "wss" } else { "ws" };
 
@@ -153,8 +245,10 @@ async fn get_aws_builder(
         end_ts: komodo_timestamp(),
         ..Default::default()
       };
-      update.logs.push(connect_log);
-      update_update(update.clone()).await?;
+      if let Some(update) = update {
+        update.logs.push(connect_log);
+        update_update(update.clone()).await?;
+      }
       return Ok((
         periphery,
         BuildCleanupData::Aws {

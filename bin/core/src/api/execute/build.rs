@@ -216,7 +216,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
       build.name.clone(),
       Some(build.config.version),
       builder,
-      &mut update,
+      Some(&mut update),
     )
     .await
     {

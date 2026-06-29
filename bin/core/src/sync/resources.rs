@@ -210,14 +210,16 @@ impl ResourceSyncTrait for Builder {
     mut original: Self::Config,
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
-    // need to replace server builder id with name
+    // need to replace builder server ids with names
     if let BuilderConfig::Server(config) = &mut original {
       let all = all_resources_cache().load();
-      config.server_id = all
-        .servers
-        .get(&config.server_id)
-        .map(|s| s.name.clone())
-        .unwrap_or_default();
+      for server_id in &mut config.server_ids {
+        *server_id = all
+          .servers
+          .get(server_id)
+          .map(|s| s.name.clone())
+          .unwrap_or_default();
+      }
     }
 
     Ok(original.partial_diff(update))

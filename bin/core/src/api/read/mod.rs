@@ -381,7 +381,9 @@ impl Resolve<ReadArgs> for ListSecrets {
         ResourceTarget::Builder(id) => {
           match resource::get::<Builder>(&id).await?.config {
             BuilderConfig::Url(_) => None,
-            BuilderConfig::Server(config) => Some(config.server_id),
+            BuilderConfig::Server(config) => {
+              config.server_ids.first().cloned()
+            }
             BuilderConfig::Aws(config) => {
               secrets.extend(config.secrets);
               None
@@ -436,11 +438,13 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
           match resource::get::<Builder>(&id).await?.config {
             BuilderConfig::Url(_) => {}
             BuilderConfig::Server(config) => {
-              merge_git_providers_for_server(
-                &mut providers,
-                &config.server_id,
-              )
-              .await?;
+              if let Some(server_id) = config.server_ids.first() {
+                merge_git_providers_for_server(
+                  &mut providers,
+                  server_id,
+                )
+                .await?;
+              }
             }
             BuilderConfig::Aws(config) => {
               merge_git_providers(
@@ -542,11 +546,13 @@ impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
           match resource::get::<Builder>(&id).await?.config {
             BuilderConfig::Url(_) => {}
             BuilderConfig::Server(config) => {
-              merge_docker_registries_for_server(
-                &mut registries,
-                &config.server_id,
-              )
-              .await?;
+              if let Some(server_id) = config.server_ids.first() {
+                merge_docker_registries_for_server(
+                  &mut registries,
+                  server_id,
+                )
+                .await?;
+              }
             }
             BuilderConfig::Aws(config) => {
               merge_docker_registries(

@@ -490,7 +490,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
       repo.name.clone(),
       None,
       builder,
-      &mut update,
+      Some(&mut update),
     )
     .await
     {

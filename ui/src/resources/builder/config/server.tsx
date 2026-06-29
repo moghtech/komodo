@@ -1,11 +1,11 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { Config } from "mogh_ui";
 import { ConfigItem } from "mogh_ui";
-import { Group } from "@mantine/core";
+import { ActionIcon, Button, Group } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
+import { ICONS } from "@/lib/icons";
 
 export default function ServerBuilderConfig({ id }: { id: string }) {
   const { canWrite } = usePermissions({ type: "Builder", id });
@@ -36,33 +36,71 @@ export default function ServerBuilderConfig({ id }: { id: string }) {
             label: "Server",
             labelHidden: true,
             fields: {
-              server_id: (serverId, set) => {
+              server_ids: (serverIds, set) => {
                 return (
                   <ConfigItem
-                    label={
-                      serverId ? (
-                        <Group fz="h3" fw="bold">
-                          Server:
-                          <ResourceLink
-                            type="Server"
-                            id={serverId}
-                            fz="h3"
-                            iconSize="1.2rem"
-                          />
-                        </Group>
-                      ) : (
-                        "Select Server"
-                      )
-                    }
-                    description="Select the Server to build on."
+                    label="Select Servers"
+                    description="If multiple servers are configured, will distribute builds among them."
+                    gap="sm"
                   >
-                    <ResourceSelector
-                      type="Server"
-                      selected={serverId}
-                      onSelect={(server_id) => set({ server_id })}
-                      disabled={disabled}
-                      clearable
-                    />
+                    {serverIds?.map((serverId, index) => {
+                      return (
+                        <Group
+                          key={index}
+                          gap="xs"
+                          w={{ base: "100%", lg: 400 }}
+                          justify="space-between"
+                          wrap="nowrap"
+                        >
+                          <ResourceSelector
+                            type="Server"
+                            excludeIds={serverIds}
+                            selected={serverId}
+                            onSelect={(server_id) =>
+                              set({
+                                server_ids: [
+                                  ...serverIds.map((id, i) =>
+                                    i === index ? server_id : id,
+                                  ),
+                                ],
+                              })
+                            }
+                            disabled={disabled}
+                            targetProps={{ w: "90%", maw: "" }}
+                            clearable={false}
+                          />
+                          {!disabled && (
+                            <ActionIcon variant="filled" color="red">
+                              <ICONS.Remove
+                                size="1rem"
+                                onClick={() =>
+                                  set({
+                                    server_ids: [
+                                      ...serverIds?.filter(
+                                        (_, i) => i !== index,
+                                      ),
+                                    ],
+                                  })
+                                }
+                              />
+                            </ActionIcon>
+                          )}
+                        </Group>
+                      );
+                    })}
+                    {!disabled && (
+                      <Button
+                        onClick={() =>
+                          set({
+                            server_ids: [...(serverIds ?? []), ""],
+                          })
+                        }
+                        leftSection={<ICONS.Add size="1rem" />}
+                        w={{ base: "100%", lg: 400 }}
+                      >
+                        Add Server
+                      </Button>
+                    )}
                   </ConfigItem>
                 );
               },
