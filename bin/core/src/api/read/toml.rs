@@ -28,6 +28,7 @@ use crate::{
   resource,
   state::db_client,
   sync::{
+    replace_ids::ReplaceIds,
     toml::{ToToml, convert_resource},
     user_groups::{convert_user_groups, user_group_to_toml},
     variables::variable_to_toml,
@@ -142,7 +143,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           PermissionLevel::Read.into(),
         )
         .await?;
-        $Type::replace_ids(&mut resource);
+        $Type::replace_ids(&mut resource.config);
         let (deploy, after) = existing
           .as_ref()
           .and_then(|e| {
@@ -200,7 +201,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
               || !sync.config.repo.is_empty()
               || !sync.config.linked_repo.is_empty())
           {
-            ResourceSync::replace_ids(&mut sync);
+            ResourceSync::replace_ids(&mut sync.config);
             res.resource_syncs.push(convert_resource::<ResourceSync>(
               sync,
               false,
