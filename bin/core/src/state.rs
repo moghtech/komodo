@@ -25,7 +25,7 @@ use crate::{
   connection::PeripheryConnections,
   helpers::{
     action_state::ActionStates, all_resources::AllResourcesById,
-    image_digest::ImageDigestCache,
+    builder::BuilderUsage, image_digest::ImageDigestCache,
   },
 };
 
@@ -208,6 +208,7 @@ pub fn action_state_cache() -> &'static ActionStateCache {
   ACTION_STATE_CACHE.get_or_init(Default::default)
 }
 
+/// Store all resources in local cache for fast lookup
 pub fn all_resources_cache() -> &'static ArcSwap<AllResourcesById> {
   static ALL_RESOURCES: OnceLock<ArcSwap<AllResourcesById>> =
     OnceLock::new();
@@ -221,4 +222,16 @@ pub fn image_digest_cache() -> &'static ImageDigestCache {
   static IMAGE_DIGEST_CACHE: OnceLock<Arc<ImageDigestCache>> =
     OnceLock::new();
   IMAGE_DIGEST_CACHE.get_or_init(ImageDigestCache::new)
+}
+
+/// Maps Builder id => downstream count map (eg server id => active count)
+type BuilderUsageCache = CloneCache<String, Arc<BuilderUsage>>;
+
+/// For builders with multiple downstream machines to choose.
+/// Stores active build count for each downstream.
+/// Maps Builder id => downstream count map
+pub fn builder_usage_cache() -> &'static BuilderUsageCache {
+  static BUILDER_USAGE_CACHE: OnceLock<BuilderUsageCache> =
+    OnceLock::new();
+  BUILDER_USAGE_CACHE.get_or_init(Default::default)
 }

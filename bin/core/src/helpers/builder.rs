@@ -1,19 +1,18 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use anyhow::{Context, anyhow};
-use database::{bson::doc, mungos::mongodb::bson::oid::ObjectId};
+use database::mungos::mongodb::bson::oid::ObjectId;
 use formatting::muted;
 use futures_util::{StreamExt, stream::FuturesOrdered};
 use komodo_client::entities::{
   Version,
-  build::Build,
   builder::{AwsBuilderConfig, Builder, BuilderConfig},
   komodo_timestamp,
-  repo::Repo,
   server::{Server, ServerState},
   update::{Log, Update},
 };
 use periphery_client::api::{self, GetVersionResponse};
+use tokio::sync::Mutex;
 
 use crate::{
   cloud::{
@@ -26,8 +25,8 @@ use crate::{
   connection::PeripheryConnectionArgs,
   helpers::update::update_update,
   periphery::PeripheryClient,
-  resource::{self, list_all_resources},
-  state::{action_states, server_status_cache},
+  resource,
+  state::{builder_usage_cache, server_status_cache},
 };
 
 use super::periphery_client;
@@ -96,54 +95,7 @@ pub async fn connect_builder_periphery(
         let server =
           resource::get::<Server>(&config.server_ids[0]).await?;
         let periphery = periphery_client(&server).await?;
-        return Ok((periphery, BuildCleanupData::Server));
-      }
-
-      // Query for builds / repos using the builder
-      let (builds, repos) = tokio::join!(
-        list_all_resources::<Build>(
-          doc! { "config.builder_id": &builder.id },
-        ),
-        list_all_resources::<Repo>(
-          doc! { "config.builder_id": &builder.id },
-        )
-      );
-
-      // Count currently building resources
-      let mut building = 0;
-      let action_states = action_states();
-
-      for build in builds
-        .inspect_err(|e| {
-          warn!("Failed to query for Builds using Builder | {e:#}")
-        })
-        .unwrap_or_default()
-      {
-        if action_states
-          .build
-          .get(&build.id)
-          .await
-          .and_then(|s| s.get().map(|s| s.building).ok())
-          .unwrap_or_default()
-        {
-          building += 1;
-        }
-      }
-      for repo in repos
-        .inspect_err(|e| {
-          warn!("Failed to query for Repos using Builder | {e:#}")
-        })
-        .unwrap_or_default()
-      {
-        if action_states
-          .repo
-          .get(&repo.id)
-          .await
-          .and_then(|s| s.get().map(|s| s.building).ok())
-          .unwrap_or_default()
-        {
-          building += 1;
-        }
+        return Ok((periphery, BuildCleanupData::Server(None)));
       }
 
       // Get filtered list of available Servers
@@ -166,12 +118,16 @@ pub async fn connect_builder_periphery(
         .flatten()
         .collect::<Vec<_>>();
 
-      // Select server based on building count modulo available length.
-      let index = building % available_server_ids.len();
-      let server =
-        resource::get::<Server>(available_server_ids[index]).await?;
+      let selected = builder_usage_cache()
+        .get_or_insert_default(&builder.id)
+        .await
+        .select(&available_server_ids)
+        .await
+        .context("Server builder has no available servers")?;
+
+      let server = resource::get::<Server>(selected).await?;
       let periphery = periphery_client(&server).await?;
-      Ok((periphery, BuildCleanupData::Server))
+      Ok((periphery, BuildCleanupData::Server(Some(server.id))))
     }
   }
 }
@@ -289,8 +245,16 @@ pub async fn cleanup_builder_instance(
   update: &mut Update,
 ) {
   match cleanup_data {
-    BuildCleanupData::Server => {
+    BuildCleanupData::Server(None) => {
       // Nothing to clean up
+    }
+    BuildCleanupData::Server(Some(builder_id)) => {
+      // Release periphery (server) id from builder
+      builder_usage_cache()
+        .get_or_insert_default(&builder_id)
+        .await
+        .release(&periphery.id)
+        .await
     }
     BuildCleanupData::Url => {
       periphery.cleanup().await;
@@ -346,4 +310,30 @@ pub fn start_aws_builder_log(
     format!("{}: {use_https}", muted("use https")),
   ]
   .join("\n")
+}
+
+#[derive(Default)]
+pub struct BuilderUsage(Mutex<HashMap<String, usize>>);
+
+impl BuilderUsage {
+  pub async fn select<'a>(
+    &self,
+    available: &'a [&String],
+  ) -> Option<&'a str> {
+    let mut lock = self.0.lock().await;
+    let selected = *available.iter().min_by_key(|key| {
+      lock.get(key.as_str()).copied().unwrap_or(0)
+    })?;
+    *lock.entry(selected.clone()).or_insert(0) += 1;
+    Some(selected.as_str())
+  }
+
+  pub async fn release(&self, key: &str) {
+    let mut lock = self.0.lock().await;
+    if let Some(count) = lock.get_mut(key)
+      && *count > 0
+    {
+      *count -= 1;
+    }
+  }
 }
