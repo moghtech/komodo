@@ -53,7 +53,9 @@ export function useOmniSearch(): {
 
   const containersQuery = useMemo(
     () => ({
-      containers: debouncedTerms,
+      containers: debouncedTerms
+        // Allows search like 'cont my name' to return containers matching 'my name'
+        .filter((term) => !"container".includes(term)),
       limit: 300,
       page: 0,
     }),
@@ -66,7 +68,9 @@ export function useOmniSearch(): {
 
   const servicesQuery = useMemo(
     () => ({
-      services: debouncedTerms,
+      services: debouncedTerms
+        // Allows search like 'serv my name' to return services matching 'my name'
+        .filter((term) => !"service".includes(term)),
       limit: 300,
       page: 0,
     }),
