@@ -37,8 +37,8 @@ pub struct Container {
   /// Specify the format of the output.
   #[arg(long, short = 'f', default_value_t = super::CliFormat::Table)]
   pub format: super::CliFormat,
-  /// Specify page for container list
-  #[arg(long, short = 'p', default_value_t = 300)]
+  /// Specify page for container list, starting at 1.
+  #[arg(long, short = 'p', default_value_t = 1)]
   pub page: u64,
 }
 

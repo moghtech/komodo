@@ -8250,9 +8250,9 @@ export interface ListAllDockerContainers {
     tags?: string[];
     /**
      * Filter by container name.
-     * Supports wildcard matching syntax.
+     * Returned containers have names which contain all terms.
      */
-    containers?: string[];
+    terms?: string[];
     /** Filter by container state. */
     state?: ContainerStateStatusEnum[];
     /**
@@ -8262,7 +8262,7 @@ export interface ListAllDockerContainers {
     page?: U64;
     /**
      * Set the limit for number of containers per-page.
-     * `limit: 300` is default.
+     * `limit: 100` is default.
      *
      * Note: the page logic relies on this being consistent
      * across queries for more pages.
@@ -8280,9 +8280,9 @@ export interface ListAllStackServices {
     tags?: string[];
     /**
      * Filter by service name.
-     * Supports wildcard matching syntax.
+     * Returned services have names which contain all terms.
      */
-    services?: string[];
+    terms?: string[];
     /** Filter by service state. */
     state?: StackServiceState[];
     /**
@@ -8292,7 +8292,7 @@ export interface ListAllStackServices {
     page?: U64;
     /**
      * Set the limit for number of services per-page.
-     * `limit: 300` is default.
+     * `limit: 100` is default.
      *
      * Note: the page logic relies on this being consistent
      * across queries for more pages.

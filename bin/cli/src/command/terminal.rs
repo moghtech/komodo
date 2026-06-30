@@ -130,7 +130,7 @@ async fn get_server(
     .read(ListAllDockerContainers {
       servers: Default::default(),
       tags: Default::default(),
-      containers: vec![container.to_string()],
+      terms: vec![container.to_string()],
       state: Default::default(),
       limit: 300,
       page: 0,

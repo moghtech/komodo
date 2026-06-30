@@ -108,9 +108,9 @@ pub struct ListAllStackServices {
   pub tags: Vec<String>,
 
   /// Filter by service name.
-  /// Supports wildcard matching syntax.
+  /// Returned services have names which contain all terms.
   #[serde(default)]
-  pub services: Vec<String>,
+  pub terms: Vec<String>,
 
   /// Filter by service state.
   #[serde(default)]
@@ -122,7 +122,7 @@ pub struct ListAllStackServices {
   pub page: U64,
 
   /// Set the limit for number of services per-page.
-  /// `limit: 300` is default.
+  /// `limit: 100` is default.
   ///
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
@@ -131,7 +131,7 @@ pub struct ListAllStackServices {
 }
 
 fn default_limit() -> u64 {
-  300
+  100
 }
 
 #[typeshare]

@@ -51,12 +51,12 @@ export function useOmniSearch(): {
 
   const debouncedTerms = useDebounce(searchTerms, 700);
 
-  const containersQuery = useMemo(
+  const containersQuery: Types.ListAllDockerContainers = useMemo(
     () => ({
-      containers: debouncedTerms
+      terms: debouncedTerms
         // Allows search like 'cont my name' to return containers matching 'my name'
         .filter((term) => !"container".includes(term)),
-      limit: 300,
+      limit: 10,
       page: 0,
     }),
     [debouncedTerms],
@@ -66,12 +66,12 @@ export function useOmniSearch(): {
     refetchInterval: 15_000,
   }).data;
 
-  const servicesQuery = useMemo(
+  const servicesQuery: Types.ListAllStackServices = useMemo(
     () => ({
-      services: debouncedTerms
+      terms: debouncedTerms
         // Allows search like 'serv my name' to return services matching 'my name'
         .filter((term) => !"service".includes(term)),
-      limit: 300,
+      limit: 10,
       page: 0,
     }),
     [debouncedTerms],

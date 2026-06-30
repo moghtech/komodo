@@ -19,7 +19,7 @@ export default function Containers() {
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
 
   const debouncedSearch = useDebounce(search, 700);
-  const containersQuery = useMemo(
+  const searchTerms = useMemo(
     () => debouncedSearch.split(" ").filter((term) => term),
     [debouncedSearch],
   );
@@ -39,11 +39,11 @@ export default function Containers() {
 
   const containers =
     useRead("ListAllDockerContainers", {
-      containers: containersQuery,
+      terms: searchTerms,
       servers: selectedServers,
       tags,
       page,
-      limit: 300,
+      limit: 100,
     }).data ?? [];
 
   const Table = useMemo(() => {

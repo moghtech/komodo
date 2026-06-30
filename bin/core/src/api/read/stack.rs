@@ -22,7 +22,6 @@ use periphery_client::api::{
   container::InspectContainer,
 };
 use reqwest::StatusCode;
-use wildcard::Wildcard;
 
 use crate::{
   helpers::{
@@ -92,14 +91,6 @@ impl Resolve<ReadArgs> for ListAllStackServices {
     )
     .await?;
 
-    let terms = self
-      .services
-      .iter()
-      .flat_map(|term| {
-        anyhow::Ok((term, Wildcard::new(term.as_bytes())?))
-      })
-      .collect::<Vec<_>>();
-
     let mut services = Vec::<StackService>::new();
     let mut skipped = 0;
     let limit_usize = self.limit as usize;
@@ -113,15 +104,13 @@ impl Resolve<ReadArgs> for ListAllStackServices {
           // Apply state filter if defined.
           (self.state.is_empty() || self.state.contains(&service.state)) &&
           // Apply terms filter if defined
-          terms.is_empty()
+          (self.terms.is_empty()
             // Match when all terms contained within a name.
-            || terms.iter().all(|(term, _)| service.service.contains(*term))
-            // Match when any wildcard term directly matches.
-            || terms.iter().any(|(_, wc)| wc.is_match(service.service.as_bytes()))
+            || self.terms.iter().all(|term| service.service.contains(term)))
         });
       for service in more {
         if skipped < self.limit * self.page {
-          // Eg. page 1 skips until after 300 services, page 2 after 600.
+          // Eg. page 1 skips until after 100 services, page 2 after 200.
           skipped += 1;
         } else {
           // push and maybe early return

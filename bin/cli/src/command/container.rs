@@ -44,7 +44,7 @@ async fn list_containers(
     down,
     links,
     reverse,
-    containers: names,
+    containers: terms,
     images,
     networks,
     servers,
@@ -64,10 +64,11 @@ async fn list_containers(
     client.read(ListAllDockerContainers {
       servers: Default::default(),
       tags: Default::default(),
-      containers: names.clone(),
+      terms: terms.clone(),
       state: Default::default(),
-      limit: 300,
-      page: *page,
+      limit: 100,
+      // Page is more naturally given starting as 1, 2, 3.
+      page: if *page == 0 { 0 } else { *page - 1 },
     }),
   )?;
 
@@ -151,7 +152,7 @@ pub async fn inspect_container(
     client.read(ListAllDockerContainers {
       servers: inspect.servers.clone(),
       tags: Default::default(),
-      containers: vec![inspect.container.clone()],
+      terms: vec![inspect.container.clone()],
       state: Default::default(),
       limit: 300,
       page: 0,
