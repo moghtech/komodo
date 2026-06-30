@@ -6,10 +6,10 @@ use formatting::muted;
 use futures_util::{StreamExt, stream::FuturesOrdered};
 use komodo_client::entities::{
   Version,
-  build::{Build, BuildState},
+  build::Build,
   builder::{AwsBuilderConfig, Builder, BuilderConfig},
   komodo_timestamp,
-  repo::{Repo, RepoState},
+  repo::Repo,
   server::{Server, ServerState},
   update::{Log, Update},
 };
@@ -27,7 +27,7 @@ use crate::{
   helpers::update::update_update,
   periphery::PeripheryClient,
   resource::{self, list_all_resources},
-  state::{build_state_cache, repo_state_cache, server_status_cache},
+  state::{action_states, server_status_cache},
 };
 
 use super::periphery_client;
@@ -111,34 +111,35 @@ pub async fn connect_builder_periphery(
 
       // Count currently building resources
       let mut building = 0;
+      let action_states = action_states();
 
-      let build_state_cache = build_state_cache();
       for build in builds
         .inspect_err(|e| {
           warn!("Failed to query for Builds using Builder | {e:#}")
         })
         .unwrap_or_default()
       {
-        if build_state_cache
+        if action_states
+          .build
           .get(&build.id)
           .await
-          .map(|s| matches!(s, BuildState::Building))
+          .and_then(|s| s.get().map(|s| s.building).ok())
           .unwrap_or_default()
         {
           building += 1;
         }
       }
-      let repo_state_cache = repo_state_cache();
       for repo in repos
         .inspect_err(|e| {
           warn!("Failed to query for Repos using Builder | {e:#}")
         })
         .unwrap_or_default()
       {
-        if repo_state_cache
+        if action_states
+          .repo
           .get(&repo.id)
           .await
-          .map(|s| matches!(s, RepoState::Building))
+          .and_then(|s| s.get().map(|s| s.building).ok())
           .unwrap_or_default()
         {
           building += 1;
