@@ -9,6 +9,8 @@ use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
 
 use crate::{config::periphery_config, state::stats_client};
 
+mod mem;
+
 /// This should be called before starting the server in main.rs.
 /// Keeps the cached stats up to date
 pub fn spawn_polling_thread() {
@@ -78,8 +80,7 @@ impl StatsClient {
   }
 
   pub fn get_system_stats(&self) -> SystemStats {
-    let total_mem = self.system.total_memory();
-    let available_mem = self.system.available_memory();
+    let memory = mem::read(&self.system);
 
     let mut network_ingress_bytes: u64 = 0;
     let mut network_egress_bytes: u64 = 0;
@@ -98,9 +99,13 @@ impl StatsClient {
         five: load_avg.five,
         fifteen: load_avg.fifteen,
       },
-      mem_free_gb: self.system.free_memory() as f64 / BYTES_PER_GB,
-      mem_used_gb: (total_mem - available_mem) as f64 / BYTES_PER_GB,
-      mem_total_gb: total_mem as f64 / BYTES_PER_GB,
+      mem_free_gb: memory.free as f64 / BYTES_PER_GB,
+      mem_used_gb: memory.used as f64 / BYTES_PER_GB,
+      mem_total_gb: memory.total as f64 / BYTES_PER_GB,
+      mem_buff_cache_gb: memory.buff_cache as f64 / BYTES_PER_GB,
+      mem_zfs_arc_gb: memory.zfs_arc as f64 / BYTES_PER_GB,
+      swap_total_gb: self.system.total_swap() as f64 / BYTES_PER_GB,
+      swap_used_gb: self.system.used_swap() as f64 / BYTES_PER_GB,
       network_ingress_bytes: network_ingress_bytes as f64,
       network_egress_bytes: network_egress_bytes as f64,
       disks: self.get_disks(),

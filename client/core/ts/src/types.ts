@@ -2834,10 +2834,33 @@ export interface SystemStats {
 	 * It may be different than mem_total_gb - mem_used_gb.
 	 */
 	mem_free_gb?: number;
-	/** Used memory in GB. 'Total' - 'Available' (not free) memory. */
+	/**
+	 * Used memory in GB. 'Total' - 'Available' (not free) memory,
+	 * with the (reclaimable) ZFS ARC cache subtracted out.
+	 */
 	mem_used_gb: number;
 	/** Total memory in GB */
 	mem_total_gb: number;
+	/**
+	 * [2.3.0+]
+	 * Reclaimable page cache + buffers in GB.
+	 */
+	mem_buff_cache_gb?: number;
+	/**
+	 * [2.3.0+]
+	 * ZFS ARC cache in GB. 0 when ZFS is not present.
+	 */
+	mem_zfs_arc_gb?: number;
+	/**
+	 * [2.3.0+]
+	 * Total swap in GB.
+	 */
+	swap_total_gb?: number;
+	/**
+	 * [2.3.0+]
+	 * Used swap in GB.
+	 */
+	swap_used_gb?: number;
 	/** Breakdown of individual disks, ie their usages, sizes, and mount points */
 	disks: SingleDiskUsage[];
 	/** Network ingress usage in MB */
@@ -7960,6 +7983,26 @@ export interface SystemStatsRecord {
 	mem_used_gb: number;
 	/** Total memory in GB */
 	mem_total_gb: number;
+	/**
+	 * [2.3.0+]
+	 * Reclaimable page cache + buffers in GB.
+	 */
+	mem_buff_cache_gb?: number;
+	/**
+	 * [2.3.0+]
+	 * ZFS ARC cache in GB. 0 when ZFS is not present.
+	 */
+	mem_zfs_arc_gb?: number;
+	/**
+	 * [2.3.0+]
+	 * Total swap in GB.
+	 */
+	swap_total_gb?: number;
+	/**
+	 * [2.3.0+]
+	 * Used swap in GB.
+	 */
+	swap_used_gb?: number;
 	/** Disk used in GB */
 	disk_used_gb: number;
 	/** Total disk size in GB */
