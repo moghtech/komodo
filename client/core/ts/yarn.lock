@@ -7,10 +7,10 @@ jwt-decode@^4.0.0:
   resolved "https://registry.yarnpkg.com/jwt-decode/-/jwt-decode-4.0.0.tgz#2270352425fd413785b2faf11f6e755c5151bd4b"
   integrity sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==
 
-mogh_auth_client@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/mogh_auth_client/-/mogh_auth_client-1.5.0.tgz#f54b8ae35648d5bf1e60d7b67fcdcef45b0ccd7a"
-  integrity sha512-eUQmx682AzJRaY4QJSALtIGxXzg2r2Tr8exnDeFMrNe0Ibn4Oqm3h9SkOzYiqqZjKQ13wvHm0RoxT2QKo+908g==
+mogh_auth_client@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/mogh_auth_client/-/mogh_auth_client-1.7.0.tgz#a016c8dafd0f73633098d41aa95889c444e481d9"
+  integrity sha512-v4TJVNIiFYBLd70yGw/eS37E15he4I5w3poj5X7W75D+m6ry9gbhtlePp5elRbqjDZ/WXkOZ/XYCHqGYb/PQ2A==
   dependencies:
     jwt-decode "^4.0.0"
 
