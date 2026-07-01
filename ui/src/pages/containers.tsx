@@ -220,7 +220,7 @@ export default function Containers() {
             />
             {/* PAGINATION */}
             <Pagination.Root
-              total={containers.length >= 300 ? page + 2 : page + 1}
+              total={containers.length >= 100 ? page + 2 : page + 1}
               value={page + 1}
               onChange={(page) => setPage(page - 1)}
             >
