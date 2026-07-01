@@ -34,11 +34,11 @@ export default function StackTabs({ id }: { id: string }) {
 
   const state = info?.state;
   const hideInfo = !info?.files_on_host && !info?.repo && !info?.linked_repo;
-  const hideServices =
+  const hideLogs =
     state === undefined ||
     state === Types.StackState.Unknown ||
-    state === Types.StackState.Down;
-  const hideLogs = hideServices || !specificLogs;
+    state === Types.StackState.Down ||
+    !specificLogs;
   const terminalDisabled =
     !specificTerminal ||
     containerTerminalsDisabled ||
@@ -53,7 +53,6 @@ export default function StackTabs({ id }: { id: string }) {
 
   const view =
     (_view === "Info" && hideInfo) ||
-    (_view === "Services" && hideServices) ||
     (_view === "Terminals" && terminalDisabled) ||
     (_view === "Log" && hideLogs)
       ? "Config"
@@ -72,7 +71,6 @@ export default function StackTabs({ id }: { id: string }) {
       },
       {
         value: "Services",
-        disabled: hideServices,
         icon: ICONS.Service,
       },
       {
@@ -89,7 +87,6 @@ export default function StackTabs({ id }: { id: string }) {
     ],
     [
       hideInfo,
-      hideServices,
       specificLogs,
       hideLogs,
       specificTerminal,
