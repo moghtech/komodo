@@ -47,6 +47,7 @@ function StackServicesSwarm({
   stackId: string;
   services: Types.ListStackServicesResponse;
 }) {
+  const isUnknown = useStack(stackId)?.info.state === Types.StackState.Unknown;
   return (
     <DataTable
       tableKey="StackServices"
@@ -71,7 +72,16 @@ function StackServicesSwarm({
           cell: ({ row }) => {
             const state = row.original.swarm_service?.State;
             return (
-              <StatusBadge text={state} intent={swarmStateIntention(state)} />
+              <StatusBadge
+                text={state ?? (isUnknown ? "Unknown" : "Down")}
+                intent={
+                  state
+                    ? swarmStateIntention(state)
+                    : isUnknown
+                      ? "Unknown"
+                      : "Neutral"
+                }
+              />
             );
           },
         },
@@ -114,6 +124,7 @@ function StackServicesServer({
   serverId: string;
   services: Types.ListStackServicesResponse;
 }) {
+  const isUnknown = useStack(stackId)?.info.state === Types.StackState.Unknown;
   return (
     <DataTable
       tableKey="StackServices"
@@ -139,8 +150,14 @@ function StackServicesServer({
             const state = row.original.container?.state;
             return (
               <StatusBadge
-                text={state}
-                intent={containerStateIntention(state)}
+                text={state ?? (isUnknown ? "Unknown" : "Down")}
+                intent={
+                  state
+                    ? containerStateIntention(state)
+                    : isUnknown
+                      ? "Unknown"
+                      : "Neutral"
+                }
               />
             );
           },
