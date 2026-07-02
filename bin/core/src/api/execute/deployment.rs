@@ -122,26 +122,16 @@ impl Resolve<ExecuteArgs> for Deploy {
     let (version, registry_token) = match &deployment.config.image {
       DeploymentImage::Build { build_id, version } => {
         let build = resource::get::<Build>(build_id).await?;
-        let image_names = build.get_image_names();
-        let image_name = image_names
-          .first()
-          .context("No image name could be created")
-          .context("Failed to create image name")?;
         let version = if version.is_none() {
           build.config.version
         } else {
           *version
         };
-        let version_str = version.to_string();
-        // Potentially add the build image_tag postfix
-        let version_str = if build.config.image_tag.is_empty() {
-          version_str
-        } else {
-          format!("{version_str}-{}", build.config.image_tag)
-        };
+        let image_name = build.get_deployment_image_name();
+        let image_tag = build.get_deployment_image_tag(version);
         // replace image with corresponding build image.
         deployment.config.image = DeploymentImage::Image {
-          image: format!("{image_name}:{version_str}"),
+          image: format!("{image_name}:{image_tag}"),
         };
         let first_registry = build
           .config

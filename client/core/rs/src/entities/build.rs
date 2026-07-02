@@ -56,30 +56,7 @@ impl Build {
     }
     image_registry
       .iter()
-      .map(
-        |ImageRegistryConfig {
-           domain,
-           account,
-           organization,
-         }| {
-          match (
-            !domain.is_empty(),
-            !organization.is_empty(),
-            !account.is_empty(),
-          ) {
-            // If organization and account provided, name under organization.
-            (true, true, true) => {
-              format!("{domain}/{organization}/{name}")
-            }
-            // Just domain / account provided
-            (true, false, true) => {
-              format!("{domain}/{account}/{name}")
-            }
-            // Otherwise, just use name (local only)
-            _ => name.to_string(),
-          }
-        },
-      )
+      .map(|registry| registry.full_image_name(name))
       .collect()
   }
 
@@ -93,7 +70,7 @@ impl Build {
       version,
       image_tag,
       include_latest_tag,
-      include_version_tags: include_version_tag,
+      include_version_tags,
       include_commit_tag,
       ..
     } = &self.config;
@@ -118,7 +95,7 @@ impl Build {
         tags.push(format!("{image_name}:latest{image_tag_postfix}"));
       }
       // `:1.19.5` + `:1.19` etc. / `1.19.5-tag`
-      if *include_version_tag {
+      if *include_version_tags {
         tags
           .push(format!("{image_name}:{version}{image_tag_postfix}"));
         tags.push(format!(
@@ -151,6 +128,70 @@ impl Build {
       write!(&mut res, " -t {image_tag}")?;
     }
     Ok(res)
+  }
+
+  /// Used in build -> deployment flow to choose
+  /// the associated image to deploy.
+  pub fn get_deployment_image_name(&self) -> String {
+    let Build {
+      name,
+      config:
+        BuildConfig {
+          image_name,
+          image_registry,
+          ..
+        },
+      ..
+    } = self;
+    let name = if image_name.is_empty() {
+      name
+    } else {
+      image_name
+    };
+    if let Some(registry) = image_registry.first() {
+      registry.full_image_name(name)
+    } else {
+      name.to_string()
+    }
+  }
+
+  /// Used in build -> deployment flow to choose the
+  /// associated latest tag.
+  ///
+  /// Priority:
+  ///   - Semver version
+  ///   - Commit hash
+  ///   - Latest tag
+  pub fn get_deployment_image_tag(&self, version: Version) -> String {
+    let Build {
+      config:
+        BuildConfig {
+          image_tag,
+          include_version_tags,
+          include_commit_tag,
+          repo,
+          linked_repo,
+          ..
+        },
+      ..
+    } = self;
+
+    let image_tag_postfix = if image_tag.is_empty() {
+      format_args!("")
+    } else {
+      format_args!("-{image_tag}")
+    };
+
+    if *include_version_tags {
+      format!("{version}{image_tag_postfix}")
+    } else if (!repo.is_empty() || !linked_repo.is_empty())
+      && *include_commit_tag
+      && let Some(hash) = &self.info.built_hash
+    {
+      format!("{hash}{image_tag_postfix}")
+    } else {
+      String::from("latest")
+    }
   }
 }
 
@@ -630,6 +671,30 @@ impl ImageRegistryConfig {
   pub fn static_default() -> &'static ImageRegistryConfig {
     static DEFAULT: OnceLock<ImageRegistryConfig> = OnceLock::new();
     DEFAULT.get_or_init(Default::default)
+  }
+
+  pub fn full_image_name(&self, short_name: &str) -> String {
+    let Self {
+      domain,
+      organization,
+      account,
+    } = self;
+    match (
+      !domain.is_empty(),
+      !organization.is_empty(),
+      !account.is_empty(),
+    ) {
+      // If organization and account provided, name under organization.
+      (true, true, true) => {
+        format!("{domain}/{organization}/{short_name}")
+      }
+      // Just domain / account provided
+      (true, false, true) => {
+        format!("{domain}/{account}/{short_name}")
+      }
+      // Otherwise, just use name (local only)
+      _ => short_name.to_string(),
+    }
   }
 }
 
