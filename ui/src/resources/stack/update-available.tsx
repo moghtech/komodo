@@ -109,18 +109,6 @@ export default function StackUpdateAvailable({
 
   return (
     <>
-      <Box>
-        <Button
-          title="Check for updates"
-          variant="outline"
-          c="dimmed"
-          rightSection={<ICONS.UpdateAvailable size="1rem" />}
-          onClick={() => checkForUpdate({ stack: id })}
-          loading={checkPending}
-        >
-          Check
-        </Button>
-      </Box>
       {updateAvailable && (
         <Box>
           <ConfirmModalWithDisable
@@ -163,6 +151,18 @@ export default function StackUpdateAvailable({
           </ConfirmModalWithDisable>
         </Box>
       )}
+      <Box>
+        <Button
+          title="Check for updates"
+          variant="outline"
+          c="dimmed"
+          rightSection={<ICONS.UpdateAvailable size="1rem" />}
+          onClick={() => checkForUpdate({ stack: id })}
+          loading={checkPending}
+        >
+          Check
+        </Button>
+      </Box>
     </>
   );
 }
