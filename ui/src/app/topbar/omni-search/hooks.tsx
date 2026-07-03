@@ -64,6 +64,8 @@ export function useOmniSearch(): {
 
   const containers = useRead("ListAllDockerContainers", containersQuery, {
     refetchInterval: 15_000,
+    // Only fetch when there is query typed
+    enabled: !!debouncedTerms.length,
   }).data;
 
   const servicesQuery: Types.ListAllStackServices = useMemo(
@@ -79,6 +81,8 @@ export function useOmniSearch(): {
 
   const services = useRead("ListAllStackServices", servicesQuery, {
     refetchInterval: 15_000,
+    // Only fetch when there is query typed
+    enabled: !!debouncedTerms.length,
   }).data;
 
   const _terminals = useRead(
