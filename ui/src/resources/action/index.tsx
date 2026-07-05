@@ -1,5 +1,5 @@
 import { actionStateIntention } from "@/lib/color";
-import { useExecute, useRead } from "@/lib/hooks";
+import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -8,12 +8,12 @@ import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
-import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import NewResource from "@/resources/new";
 import ActionConfig from "./config";
 import ActionTable from "./table";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
+import { RunAction } from "./executions";
 
 export function useAction(id: string | undefined, useName?: boolean) {
   return useRead("ListActions", {}).data?.find((r) =>
@@ -148,33 +148,7 @@ export const ActionComponents: RequiredResourceComponents<
   },
 
   Executions: {
-    RunAction: ({ id }) => {
-      const running =
-        (useRead(
-          "GetActionActionState",
-          { action: id },
-          { refetchInterval: 5000 },
-        ).data?.running ?? 0) > 0;
-      const { mutateAsync, isPending } = useExecute("RunAction");
-      const action = useAction(id);
-
-      if (!action) {
-        return null;
-      }
-
-      return (
-        <ConfirmModalWithDisable
-          icon={<ICONS.Run size="1rem" />}
-          confirmText={action.name}
-          onConfirm={async () => {
-            await mutateAsync({ action: id, args: {} });
-          }}
-          loading={running || isPending}
-        >
-          {running ? "Running" : "Run Action"}
-        </ConfirmModalWithDisable>
-      );
-    },
+    RunAction,
   },
 
   Config: ActionConfig,

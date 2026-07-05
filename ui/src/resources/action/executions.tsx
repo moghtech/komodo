@@ -1,22 +1,19 @@
 import { useExecute, useRead } from "@/lib/hooks";
-import { useProcedure } from ".";
-import { ICONS } from "@/lib/icons";
+import { useAction } from ".";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
+import { ICONS } from "@/lib/icons";
 import { ConfirmButton } from "mogh_ui";
 
-export function RunProcedure({ id }: { id: string }) {
-  const running = useRead(
-    "GetProcedureActionState",
-    { procedure: id },
-    { refetchInterval: 5000 },
-  ).data?.running;
-  const { mutateAsync: run, isPending: runPending } =
-    useExecute("RunProcedure");
+export function RunAction({ id }: { id: string }) {
+  const running =
+    (useRead("GetActionActionState", { action: id }, { refetchInterval: 5000 })
+      .data?.running ?? 0) > 0;
+  const { mutateAsync: run, isPending: runPending } = useExecute("RunAction");
   const { mutateAsync: cancel, isPending: cancelPending } =
-    useExecute("CancelProcedure");
-  const procedure = useProcedure(id);
+    useExecute("CancelAction");
+  const action = useAction(id);
 
-  if (!procedure) {
+  if (!action) {
     return null;
   }
 
@@ -26,7 +23,7 @@ export function RunProcedure({ id }: { id: string }) {
         variant="filled"
         color="red"
         icon={<ICONS.Cancel size="1rem" />}
-        onClick={() => cancel({ procedure: id })}
+        onClick={() => cancel({ action: id })}
         loading={cancelPending}
       >
         Cancel Run
@@ -36,11 +33,11 @@ export function RunProcedure({ id }: { id: string }) {
     return (
       <ConfirmModalWithDisable
         icon={<ICONS.Run size="1rem" />}
-        confirmText={procedure.name}
-        onConfirm={() => run({ procedure: id })}
+        confirmText={action.name}
+        onConfirm={() => run({ action: id, args: {} })}
         loading={runPending}
       >
-        Run Procedure
+        Run Action
       </ConfirmModalWithDisable>
     );
   }

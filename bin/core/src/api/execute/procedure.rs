@@ -231,7 +231,7 @@ impl Resolve<ExecuteArgs> for CancelProcedure {
     let mut update = update.clone();
     update.push_simple_log(
       "Cancel Triggered",
-      "The procedure cancel has been triggered",
+      "Procedure cancel has been triggered. The procedure will exit after the currently running stage is complete.",
     );
     update.finalize();
     update_update(update.clone()).await?;

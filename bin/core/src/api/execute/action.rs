@@ -525,7 +525,7 @@ impl Resolve<ExecuteArgs> for CancelAction {
     let mut update = update.clone();
     update.push_simple_log(
       "Cancel Triggered",
-      "The action cancel has been triggered",
+      "The action cancel has been triggered.",
     );
     update.finalize();
     update_update(update.clone()).await?;
