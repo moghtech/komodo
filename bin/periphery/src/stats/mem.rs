@@ -49,10 +49,11 @@ fn read_linux() -> Option<MemBreakdown> {
   let meminfo =
     parse_meminfo(&std::fs::read_to_string("/proc/meminfo").ok()?)?;
   // Absent when ZFS isn't loaded => arc stays zero.
-  let zfs_arc = std::fs::read_to_string("/proc/spl/kstat/zfs/arcstats")
-    .ok()
-    .map(|c| parse_zfs_arc_size(&c))
-    .unwrap_or(0);
+  let zfs_arc =
+    std::fs::read_to_string("/proc/spl/kstat/zfs/arcstats")
+      .ok()
+      .map(|c| parse_zfs_arc_size(&c))
+      .unwrap_or(0);
 
   // Cached + SReclaimable + Buffers - Shmem
   let buff_cache = meminfo
