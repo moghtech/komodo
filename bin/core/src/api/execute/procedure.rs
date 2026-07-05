@@ -151,7 +151,7 @@ fn resolve_inner(
         );
       }
       Err(e) => update
-        .push_error_log("execution error", format_serror(&e.into())),
+        .push_error_log("Execution error", format_serror(&e.into())),
     }
 
     update.finalize();

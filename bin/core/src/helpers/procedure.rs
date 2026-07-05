@@ -521,14 +521,13 @@ async fn handle_resolve_result(
   match res {
     Ok(res) => Ok(res),
     Err(e) => {
-      let log =
-        Log::error("execution error", format_serror(&e.into()));
       let mut update =
         find_one_by_id(&db_client().updates, update_id)
           .await
           .context("Failed to query to db")?
           .context("no update exists with given id")?;
-      update.logs.push(log);
+      update
+        .push_error_log("Execution error", format_serror(&e.into()));
       update.finalize();
       update_update(update.clone()).await?;
       Ok(update)
