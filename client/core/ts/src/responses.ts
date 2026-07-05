@@ -397,10 +397,12 @@ export type ExecuteResponses = {
   // ==== PROCEDURE ====
   RunProcedure: Types.Update;
   BatchRunProcedure: Types.BatchExecutionResponse;
+  CancelProcedure: Types.Update;
 
   // ==== ACTION ====
   RunAction: Types.Update;
   BatchRunAction: Types.BatchExecutionResponse;
+  CancelAction: Types.Update;
 
   // ==== SYNC ====
   RunSync: Types.Update;

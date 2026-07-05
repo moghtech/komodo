@@ -294,8 +294,10 @@ export type ExecuteResponses = {
     CancelRepoBuild: Types.Update;
     RunProcedure: Types.Update;
     BatchRunProcedure: Types.BatchExecutionResponse;
+    CancelProcedure: Types.Update;
     RunAction: Types.Update;
     BatchRunAction: Types.BatchExecutionResponse;
+    CancelAction: Types.Update;
     RunSync: Types.Update;
     TestAlerter: Types.Update;
     SendAlert: Types.Update;

@@ -1,12 +1,14 @@
 use std::pin::Pin;
 
+use anyhow::Context as _;
 use database::mungos::{
   by_id::update_one_by_id, mongodb::bson::to_document,
 };
 use formatting::{Color, bold, colored, format_serror, muted};
 use komodo_client::{
   api::execute::{
-    BatchExecutionResponse, BatchRunProcedure, RunProcedure,
+    BatchExecutionResponse, BatchRunProcedure, CancelProcedure,
+    RunProcedure,
   },
   entities::{
     alert::{Alert, AlertData, SeverityLevel},
@@ -19,13 +21,14 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use tokio::sync::Mutex;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
   alert::send_alerts,
   helpers::{procedure::execute_procedure, update::update_update},
   permission::get_check_permissions,
   resource::refresh_procedure_state_cache,
-  state::{action_states, db_client},
+  state::{action_states, db_client, procedure_cancel_cache},
 };
 
 use super::{ExecuteArgs, ExecuteRequest};
@@ -122,9 +125,17 @@ fn resolve_inner(
 
     update_update(update.clone()).await?;
 
+    let cancel = CancellationToken::new();
+
+    procedure_cancel_cache()
+      .insert(procedure.id.clone(), cancel.clone())
+      .await;
+
     let update = Mutex::new(update);
 
-    let res = execute_procedure(&procedure, &update).await;
+    let res = execute_procedure(&procedure, &update, cancel).await;
+
+    procedure_cancel_cache().remove(&procedure.id).await;
 
     let mut update = update.into_inner();
 
@@ -183,4 +194,48 @@ fn resolve_inner(
 
     Ok(update)
   })
+}
+
+impl Resolve<ExecuteArgs> for CancelProcedure {
+  #[instrument(
+    "CancelProcedure",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      procedure = self.procedure,
+    )
+  )]
+  async fn resolve(
+    self,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let procedure = get_check_permissions::<Procedure>(
+      &self.procedure,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    procedure_cancel_cache()
+      .get(&procedure.id)
+      .await
+      .context("Procedure run cancel token not found")?
+      .cancel();
+
+    let mut update = update.clone();
+    update.push_simple_log(
+      "Cancel Triggered",
+      "The procedure cancel has been triggered",
+    );
+    update.finalize();
+    update_update(update.clone()).await?;
+
+    Ok(update)
+  }
 }

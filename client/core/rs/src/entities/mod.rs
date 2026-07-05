@@ -1281,6 +1281,7 @@ pub enum Operation {
   RenameProcedure,
   DeleteProcedure,
   RunProcedure,
+  CancelProcedure,
 
   // Action
   CreateAction,
@@ -1288,6 +1289,7 @@ pub enum Operation {
   RenameAction,
   DeleteAction,
   RunAction,
+  CancelAction,
 
   // Sync
   CreateResourceSync,

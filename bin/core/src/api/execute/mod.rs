@@ -111,10 +111,12 @@ pub enum ExecuteRequest {
   // ==== PROCEDURE ====
   RunProcedure(RunProcedure),
   BatchRunProcedure(BatchRunProcedure),
+  CancelProcedure(CancelProcedure),
 
   // ==== ACTION ====
   RunAction(RunAction),
   BatchRunAction(BatchRunAction),
+  CancelAction(CancelAction),
 
   // ==== SYNC ====
   RunSync(RunSync),

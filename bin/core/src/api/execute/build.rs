@@ -561,8 +561,8 @@ impl Resolve<ExecuteArgs> for CancelBuild {
     let mut update = update.clone();
 
     update.push_simple_log(
-      "cancel triggered",
-      "the build cancel has been triggered",
+      "Cancel Triggered",
+      "The build cancel has been triggered",
     );
     update_update(update.clone()).await?;
 

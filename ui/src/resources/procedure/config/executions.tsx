@@ -52,6 +52,8 @@ export type ProcedureMinExecutionType = Exclude<
   | "CreateSwarmSecret"
   | "RotateSwarmSecret"
   | "RemoveSwarmSecrets"
+  | "CancelProcedure"
+  | "CancelAction"
 >;
 
 export type ProcedureExecutionParams<T extends ProcedureMinExecutionType> =

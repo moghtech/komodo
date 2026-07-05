@@ -86,3 +86,37 @@ pub struct BatchRunAction {
   /// ```
   pub pattern: String,
 }
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CancelAction",
+  description = "Cancel an action run.",
+  request_body(content = CancelAction),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn cancel_action() {}
+
+/// Cancels the target action run. Response: [Update]
+#[typeshare]
+#[derive(
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(mogh_error::Error)]
+pub struct CancelAction {
+  /// Id or name
+  pub action: String,
+  /// The update id associated with the specific
+  /// run to cancel
+  /// Must provide either `action`
+  /// or `update_id`
+  pub update_id: Option<String>,
+}
