@@ -571,3 +571,38 @@ function addUserTargetPermissions<I>(
     }
   });
 }
+
+/**
+ * Checks if target operation is cancelling
+ * by querying relevant Updates on the target.
+ * If a 'Cancel' operation is more recent than
+ * an InProgress 'Run' operation, the target
+ * is cancelling.
+ */
+export function useIsCancelling(
+  target: Types.ResourceTarget,
+  runOp: Types.Operation,
+  cancelOp: Types.Operation,
+) {
+  const updates = useRead("ListUpdates", {
+    query: {
+      "target.type": target.type,
+      "target.id": target.id,
+    },
+  }).data?.updates;
+  if (!updates) {
+    return true;
+  }
+  let hasCancel = false;
+  for (const update of updates) {
+    if (update.operation === cancelOp) {
+      hasCancel = true;
+    } else if (
+      update.operation === runOp &&
+      update.status === Types.UpdateStatus.InProgress
+    ) {
+      return hasCancel;
+    }
+  }
+  return false;
+}

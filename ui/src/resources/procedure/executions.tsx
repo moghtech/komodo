@@ -1,8 +1,9 @@
-import { useExecute, useRead } from "@/lib/hooks";
+import { useExecute, useIsCancelling, useRead } from "@/lib/hooks";
 import { useProcedure } from ".";
 import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import { ConfirmButton } from "mogh_ui";
+import { Types } from "komodo_client";
 
 export function RunProcedure({ id }: { id: string }) {
   const running = useRead(
@@ -15,6 +16,11 @@ export function RunProcedure({ id }: { id: string }) {
   const { mutateAsync: cancel, isPending: cancelPending } =
     useExecute("CancelProcedure");
   const procedure = useProcedure(id);
+  const cancelling = useIsCancelling(
+    { type: "Procedure", id },
+    Types.Operation.RunProcedure,
+    Types.Operation.CancelProcedure,
+  );
 
   if (!procedure) {
     return null;
@@ -27,7 +33,7 @@ export function RunProcedure({ id }: { id: string }) {
         color="red"
         icon={<ICONS.Cancel size="1rem" />}
         onClick={() => cancel({ procedure: id })}
-        loading={cancelPending}
+        loading={cancelPending || cancelling}
       >
         Cancel Run
       </ConfirmButton>

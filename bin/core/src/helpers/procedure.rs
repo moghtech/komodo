@@ -14,7 +14,7 @@ use komodo_client::{
     procedure::{Procedure, ProcedureStage},
     repo::Repo,
     stack::Stack,
-    update::{Log, Update},
+    update::Update,
     user::procedure_user,
   },
 };
