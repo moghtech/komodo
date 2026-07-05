@@ -11,7 +11,7 @@ use command::{
 use formatting::format_serror;
 use interpolate::Interpolator;
 use komodo_client::entities::{
-  EnvironmentVar, all_logs_success,
+  EnvironmentVar, NoData, all_logs_success,
   build::{Build, BuildConfig},
   environment_vars_from_str, optional_string,
   to_path_compatible_name,
@@ -19,17 +19,19 @@ use komodo_client::entities::{
 };
 use mogh_resolver::Resolve;
 use periphery_client::api::build::{
-  self, GetDockerfileContentsOnHost,
+  self, CancelBuild, GetDockerfileContentsOnHost,
   GetDockerfileContentsOnHostResponse, PruneBuilders, PruneBuildx,
   WriteDockerfileContentsToHost,
 };
 use tokio::fs;
+use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
 
 use crate::{
   config::periphery_config,
   docker::docker_login,
   helpers::{format_extra_args, format_labels},
+  state::build_cancel_cache,
 };
 
 mod helpers;
@@ -133,7 +135,8 @@ impl Resolve<crate::api::Args> for build::Build {
     fields(
       id = args.id.to_string(),
       core = args.core,
-      build = self.build.name,
+      build_id = self.build.id,
+      build_name = self.build.name,
       repo = self.repo.as_ref().map(|repo| &repo.name),
     )
   )]
@@ -263,6 +266,11 @@ impl Resolve<crate::api::Args> for build::Build {
       }
     };
 
+    let cancel = CancellationToken::new();
+    build_cancel_cache()
+      .insert(build.id.clone(), cancel.clone())
+      .await;
+
     // Pre Build
     if !pre_build.is_none() {
       let pre_build_path = build_path.join(&pre_build.path);
@@ -270,7 +278,9 @@ impl Resolve<crate::api::Args> for build::Build {
       if let Some(log) = run_komodo_command_with_sanitization(
         "Pre Build",
         &pre_build.command,
-        CommandOptions::default().path(pre_build_path.as_path()),
+        CommandOptions::default()
+          .path(pre_build_path.as_path())
+          .cancel(cancel.clone()),
         if pre_build.shell_mode {
           KomodoCommandMode::Shell
         } else {
@@ -284,53 +294,73 @@ impl Resolve<crate::api::Args> for build::Build {
         let success = log.success;
         logs.push(log);
         if !success {
+          build_cancel_cache().remove(&build.id).await;
           return Ok(logs);
         }
       }
     }
 
     // Get command parts
+    // Do this in fallible block to ensure
+    // cancel token removed from cache on failure.
+    let command = async {
+      // Add VERSION to build args (if not already there)
+      let mut build_args = environment_vars_from_str(build_args)
+        .context("Invalid build_args")?;
+      if !build_args.iter().any(|a| a.variable == "VERSION") {
+        build_args.push(EnvironmentVar {
+          variable: String::from("VERSION"),
+          value: build.config.version.to_string(),
+        });
+      }
+      let build_args = parse_build_args(&build_args);
 
-    // Add VERSION to build args (if not already there)
-    let mut build_args = environment_vars_from_str(build_args)
-      .context("Invalid build_args")?;
-    if !build_args.iter().any(|a| a.variable == "VERSION") {
-      build_args.push(EnvironmentVar {
-        variable: String::from("VERSION"),
-        value: build.config.version.to_string(),
-      });
-    }
-    let build_args = parse_build_args(&build_args);
+      let secret_args = environment_vars_from_str(secret_args)
+        .context("Invalid secret_args")?;
+      let command_secret_args =
+        parse_secret_args(&secret_args, &build_path).await?;
 
-    let secret_args = environment_vars_from_str(secret_args)
-      .context("Invalid secret_args")?;
-    let command_secret_args =
-      parse_secret_args(&secret_args, &build_path).await?;
+      let labels = format_labels(
+        &environment_vars_from_str(labels)
+          .context("Invalid labels")?,
+      );
 
-    let labels = format_labels(
-      &environment_vars_from_str(labels).context("Invalid labels")?,
-    );
+      let extra_args = format_extra_args(extra_args);
 
-    let extra_args = format_extra_args(extra_args);
+      let buildx = if *use_buildx { " buildx" } else { "" };
 
-    let buildx = if *use_buildx { " buildx" } else { "" };
+      let image_tags = build
+        .get_image_tags_as_arg(
+          commit_hash.as_deref(),
+          &additional_tags,
+        )
+        .context("Failed to parse image tags into command")?;
 
-    let image_tags = build
-      .get_image_tags_as_arg(commit_hash.as_deref(), &additional_tags)
-      .context("Failed to parse image tags into command")?;
+      let maybe_push = if should_push { " --push" } else { "" };
 
-    let maybe_push = if should_push { " --push" } else { "" };
+      // Construct command
+      let command = format!(
+        "docker{buildx} build{build_args}{command_secret_args}{extra_args}{labels}{image_tags}{maybe_push} -f {dockerfile_path} .",
+      );
 
-    // Construct command
-    let command = format!(
-      "docker{buildx} build{build_args}{command_secret_args}{extra_args}{labels}{image_tags}{maybe_push} -f {dockerfile_path} .",
-    );
+      anyhow::Ok(command)
+    }.await;
+
+    let command = match command {
+      Ok(command) => command,
+      Err(e) => {
+        build_cancel_cache().remove(&build.id).await;
+        return Err(e);
+      }
+    };
 
     let span = info_span!("RunDockerBuild");
     if let Some(build_log) = run_komodo_command_with_sanitization(
       "Docker Build",
       command,
-      CommandOptions::default().path(build_path.as_path()),
+      CommandOptions::default()
+        .path(build_path.as_path())
+        .cancel(cancel),
       KomodoCommandMode::Shell,
       &replacers,
     )
@@ -340,7 +370,34 @@ impl Resolve<crate::api::Args> for build::Build {
       logs.push(build_log);
     };
 
+    build_cancel_cache().remove(&build.id).await;
+
     Ok(logs)
+  }
+}
+
+//
+
+impl Resolve<crate::api::Args> for CancelBuild {
+  #[instrument(
+    "CancelBuild",
+    skip_all,
+    fields(
+      build_id = self.id,
+      id = args.id.to_string(),
+      core = args.core,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<NoData> {
+    build_cancel_cache()
+      .get(&self.id)
+      .await
+      .context("No running build found")?
+      .cancel();
+    Ok(NoData {})
   }
 }
 
