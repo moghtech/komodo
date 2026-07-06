@@ -35,8 +35,7 @@ pub async fn send_alert(
     if let Some(value) = client_id.as_mut() {
       interpolator.interpolate_string(value)?;
     }
-    let topic = topic
-      .replace("{data.type}", &AlertDataVariant::from(&alert.data).to_string());
+    let topic = topic;
 
     send_message(
       &broker_url,
