@@ -64,6 +64,7 @@ serde_qs.workspace = true
 colored.workspace = true
 tracing.workspace = true
 reqwest.workspace = true
+rumqttc.workspace = true
 dotenvy.workspace = true
 anyhow.workspace = true
 bcrypt.workspace = true

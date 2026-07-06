@@ -53,6 +53,7 @@ svi = "1.2.0"
 
 # ASYNC
 reqwest = { version = "0.13.3", default-features = false, features = ["json", "stream", "form", "query", "rustls"] }
+rumqttc = "0.25.0"
 tokio = { version = "1.52.2", features = ["full"] }
 tokio-util = { version = "0.7.18", features = ["io", "codec"] }
 tokio-stream = { version = "0.1.18", features = ["sync"] }
