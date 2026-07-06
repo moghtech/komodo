@@ -51,7 +51,7 @@ export function useOmniSearch(): {
 
   const debouncedTerms = useDebounce(searchTerms, 700);
 
-  const containersQuery: Types.ListAllDockerContainers = useMemo(
+  const containersQuery: Types.ListAllContainers = useMemo(
     () => ({
       terms: debouncedTerms
         // Allows search like 'cont my name' to return containers matching 'my name'
@@ -62,7 +62,7 @@ export function useOmniSearch(): {
     [debouncedTerms],
   );
 
-  const containers = useRead("ListAllDockerContainers", containersQuery, {
+  const containers = useRead("ListAllContainers", containersQuery, {
     refetchInterval: 15_000,
     // Only fetch when there is query typed
     enabled: !!debouncedTerms.length,

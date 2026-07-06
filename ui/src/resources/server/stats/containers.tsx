@@ -19,7 +19,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
   });
   const isServerAvailable = useIsServerAvailable(id);
   const containers = useRead(
-    "ListDockerContainers",
+    "ListContainers",
     {
       server: id,
     },

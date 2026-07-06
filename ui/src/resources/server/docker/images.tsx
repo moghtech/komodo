@@ -18,8 +18,8 @@ export default function ServerImages({
 }) {
   const [search, setSearch] = useServerDockerSearch();
   const images =
-    useRead("ListDockerImages", { server: id }, { refetchInterval: 10_000 })
-      .data ?? [];
+    useRead("ListImages", { server: id }, { refetchInterval: 10_000 }).data ??
+    [];
 
   const allInUse = images.every((image) => image.in_use);
 

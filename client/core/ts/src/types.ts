@@ -1035,33 +1035,6 @@ export interface CreateApiKeyResponse {
 
 export type CreateApiKeyForServiceUserResponse = CreateApiKeyResponse;
 
-/** Configuration to access private image repositories on various registries. */
-export interface DockerRegistryAccount {
-	/**
-	 * The Mongo ID of the docker registry account.
-	 * This field is de/serialized from/to JSON as
-	 * `{ "_id": { "$oid": "..." }, ...(rest of DockerRegistryAccount) }`
-	 */
-	_id?: MongoId;
-	/**
-	 * The domain of the provider.
-	 * 
-	 * For docker registry, this can include 'http://...',
-	 * however this is not recommended and won't work unless "insecure registries" are enabled
-	 * on your hosts. See <https://docs.docker.com/reference/cli/dockerd/#insecure-registries>.
-	 */
-	domain: string;
-	/** The account username */
-	username?: string;
-	/**
-	 * The token in plain text on the db.
-	 * If the database / host can be accessed this is insecure.
-	 */
-	token?: string;
-}
-
-export type CreateDockerRegistryAccountResponse = DockerRegistryAccount;
-
 /**
  * Configuration to access private git repos from various git providers.
  * Note. Cannot create two accounts with the same domain and username.
@@ -1092,6 +1065,33 @@ export interface GitProviderAccount {
 }
 
 export type CreateGitProviderAccountResponse = GitProviderAccount;
+
+/** Configuration to access private image repositories on various registries. */
+export interface ImageRegistryAccount {
+	/**
+	 * The Mongo ID of the docker registry account.
+	 * This field is de/serialized from/to JSON as
+	 * `{ "_id": { "$oid": "..." }, ...(rest of ImageRegistryAccount) }`
+	 */
+	_id?: MongoId;
+	/**
+	 * The domain of the provider.
+	 * 
+	 * For docker registry, this can include 'http://...',
+	 * however this is not recommended and won't work unless "insecure registries" are enabled
+	 * on your hosts. See <https://docs.docker.com/reference/cli/dockerd/#insecure-registries>.
+	 */
+	domain: string;
+	/** The account username */
+	username?: string;
+	/**
+	 * The token in plain text on the db.
+	 * If the database / host can be accessed this is insecure.
+	 */
+	token?: string;
+}
+
+export type CreateImageRegistryAccountResponse = ImageRegistryAccount;
 
 export type UserConfig = 
 	/** User that logs in with username / password */
@@ -1214,9 +1214,9 @@ export type CreateVariableResponse = Variable;
 
 export type DeleteApiKeyForServiceUserResponse = NoData;
 
-export type DeleteDockerRegistryAccountResponse = DockerRegistryAccount;
-
 export type DeleteGitProviderAccountResponse = GitProviderAccount;
+
+export type DeleteImageRegistryAccountResponse = ImageRegistryAccount;
 
 /**
  * An public key used to authenticate new Periphery -> Core connections
@@ -1879,9 +1879,9 @@ export interface ContainerStats {
 
 export type GetDeploymentStatsResponse = ContainerStats;
 
-export type GetDockerRegistryAccountResponse = DockerRegistryAccount;
-
 export type GetGitProviderAccountResponse = GitProviderAccount;
+
+export type GetImageRegistryAccountResponse = ImageRegistryAccount;
 
 export enum Timelength {
 	/** `1-sec` */
@@ -3536,6 +3536,8 @@ export interface Container {
 	NetworkSettings?: NetworkSettings;
 }
 
+export type InspectContainerResponse = Container;
+
 export type InspectDeploymentContainerResponse = Container;
 
 /** The service mode. */
@@ -4096,8 +4098,6 @@ export interface SwarmService {
 
 export type InspectDeploymentSwarmServiceResponse = SwarmService;
 
-export type InspectDockerContainerResponse = Container;
-
 /** Describes the platform which the image in the manifest runs on, as defined in the [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md). */
 export interface OciPlatform {
 	/** The CPU architecture, for example `amd64` or `ppc64`. */
@@ -4254,7 +4254,7 @@ export interface Image {
 	Metadata?: ImageInspectMetadata;
 }
 
-export type InspectDockerImageResponse = Image;
+export type InspectImageResponse = Image;
 
 export interface IpamConfig {
 	Subnet?: string;
@@ -4299,157 +4299,7 @@ export interface Network {
 	Labels?: Record<string, string>;
 }
 
-export type InspectDockerNetworkResponse = Network;
-
-export enum VolumeScopeEnum {
-	Empty = "",
-	Local = "local",
-	Global = "global",
-}
-
-export enum ClusterVolumeSpecAccessModeScopeEnum {
-	Empty = "",
-	Single = "single",
-	Multi = "multi",
-}
-
-export enum ClusterVolumeSpecAccessModeSharingEnum {
-	Empty = "",
-	None = "none",
-	Readonly = "readonly",
-	Onewriter = "onewriter",
-	All = "all",
-}
-
-/** One cluster volume secret entry. Defines a key-value pair that is passed to the plugin. */
-export interface ClusterVolumeSpecAccessModeSecrets {
-	/** Key is the name of the key of the key-value pair passed to the plugin. */
-	Key?: string;
-	/** Secret is the swarm Secret object from which to read data. This can be a Secret name or ID. The Secret data is retrieved by swarm and used as the value of the key-value pair passed to the plugin. */
-	Secret?: string;
-}
-
-/** A map of topological domains to topological segments. For in depth details, see documentation for the Topology object in the CSI specification. */
-export interface Topology {
-	Segments?: Record<string, string>;
-}
-
-/** Requirements for the accessible topology of the volume. These fields are optional. For an in-depth description of what these fields mean, see the CSI specification. */
-export interface ClusterVolumeSpecAccessModeAccessibilityRequirements {
-	/** A list of required topologies, at least one of which the volume must be accessible from. */
-	Requisite?: Topology[];
-	/** A list of topologies that the volume should attempt to be provisioned in. */
-	Preferred?: Topology[];
-}
-
-/** The desired capacity that the volume should be created with. If empty, the plugin will decide the capacity. */
-export interface ClusterVolumeSpecAccessModeCapacityRange {
-	/** The volume must be at least this big. The value of 0 indicates an unspecified minimum */
-	RequiredBytes?: I64;
-	/** The volume must not be bigger than this. The value of 0 indicates an unspecified maximum. */
-	LimitBytes?: I64;
-}
-
-export enum ClusterVolumeSpecAccessModeAvailabilityEnum {
-	Empty = "",
-	Active = "active",
-	Pause = "pause",
-	Drain = "drain",
-}
-
-/** Defines how the volume is used by tasks. */
-export interface ClusterVolumeSpecAccessMode {
-	/** The set of nodes this volume can be used on at one time. - `single` The volume may only be scheduled to one node at a time. - `multi` the volume may be scheduled to any supported number of nodes at a time. */
-	Scope?: ClusterVolumeSpecAccessModeScopeEnum;
-	/** The number and way that different tasks can use this volume at one time. - `none` The volume may only be used by one task at a time. - `readonly` The volume may be used by any number of tasks, but they all must mount the volume as readonly - `onewriter` The volume may be used by any number of tasks, but only one may mount it as read/write. - `all` The volume may have any number of readers and writers. */
-	Sharing?: ClusterVolumeSpecAccessModeSharingEnum;
-	/** Swarm Secrets that are passed to the CSI storage plugin when operating on this volume. */
-	Secrets?: ClusterVolumeSpecAccessModeSecrets[];
-	AccessibilityRequirements?: ClusterVolumeSpecAccessModeAccessibilityRequirements;
-	CapacityRange?: ClusterVolumeSpecAccessModeCapacityRange;
-	/** The availability of the volume for use in tasks. - `active` The volume is fully available for scheduling on the cluster - `pause` No new workloads should use the volume, but existing workloads are not stopped. - `drain` All workloads using this volume should be stopped and rescheduled, and no new ones should be started. */
-	Availability?: ClusterVolumeSpecAccessModeAvailabilityEnum;
-}
-
-/** Cluster-specific options used to create the volume. */
-export interface ClusterVolumeSpec {
-	/** Group defines the volume group of this volume. Volumes belonging to the same group can be referred to by group name when creating Services.  Referring to a volume by group instructs Swarm to treat volumes in that group interchangeably for the purpose of scheduling. Volumes with an empty string for a group technically all belong to the same, emptystring group. */
-	Group?: string;
-	AccessMode?: ClusterVolumeSpecAccessMode;
-}
-
-/** Information about the global status of the volume. */
-export interface ClusterVolumeInfo {
-	/** The capacity of the volume in bytes. A value of 0 indicates that the capacity is unknown. */
-	CapacityBytes?: I64;
-	/** A map of strings to strings returned from the storage plugin when the volume is created. */
-	VolumeContext?: Record<string, string>;
-	/** The ID of the volume as returned by the CSI storage plugin. This is distinct from the volume's ID as provided by Docker. This ID is never used by the user when communicating with Docker to refer to this volume. If the ID is blank, then the Volume has not been successfully created in the plugin yet. */
-	VolumeID?: string;
-	/** The topology this volume is actually accessible from. */
-	AccessibleTopology?: Topology[];
-}
-
-export enum ClusterVolumePublishStatusStateEnum {
-	Empty = "",
-	PendingPublish = "pending-publish",
-	Published = "published",
-	PendingNodeUnpublish = "pending-node-unpublish",
-	PendingControllerUnpublish = "pending-controller-unpublish",
-}
-
-export interface ClusterVolumePublishStatus {
-	/** The ID of the Swarm node the volume is published on. */
-	NodeID?: string;
-	/** The published state of the volume. * `pending-publish` The volume should be published to this node, but the call to the controller plugin to do so has not yet been successfully completed. * `published` The volume is published successfully to the node. * `pending-node-unpublish` The volume should be unpublished from the node, and the manager is awaiting confirmation from the worker that it has done so. * `pending-controller-unpublish` The volume is successfully unpublished from the node, but has not yet been successfully unpublished on the controller. */
-	State?: ClusterVolumePublishStatusStateEnum;
-	/** A map of strings to strings returned by the CSI controller plugin when a volume is published. */
-	PublishContext?: Record<string, string>;
-}
-
-/** Options and information specific to, and only present on, Swarm CSI cluster volumes. */
-export interface ClusterVolume {
-	/** The Swarm ID of this volume. Because cluster volumes are Swarm objects, they have an ID, unlike non-cluster volumes. This ID can be used to refer to the Volume instead of the name. */
-	ID?: string;
-	Version?: ObjectVersion;
-	CreatedAt?: string;
-	UpdatedAt?: string;
-	Spec?: ClusterVolumeSpec;
-	Info?: ClusterVolumeInfo;
-	/** The status of the volume as it pertains to its publishing and use on specific nodes */
-	PublishStatus?: ClusterVolumePublishStatus[];
-}
-
-/** Usage details about the volume. This information is used by the `GET /system/df` endpoint, and omitted in other endpoints. */
-export interface VolumeUsageData {
-	/** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
-	Size: I64;
-	/** The number of containers referencing this volume. This field is set to `-1` if the reference-count is not available. */
-	RefCount: I64;
-}
-
-export interface Volume {
-	/** Name of the volume. */
-	Name: string;
-	/** Name of the volume driver used by the volume. */
-	Driver: string;
-	/** Mount path of the volume on the host. */
-	Mountpoint: string;
-	/** Date/Time the volume was created. */
-	CreatedAt?: string;
-	/** Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. */
-	Status?: string[];
-	/** User-defined key/value metadata. */
-	Labels?: Record<string, string>;
-	/** The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level. */
-	Scope?: VolumeScopeEnum;
-	ClusterVolume?: ClusterVolume;
-	/** The driver specific options used when creating the volume. */
-	Options?: Record<string, string>;
-	UsageData?: VolumeUsageData;
-}
-
-export type InspectDockerVolumeResponse = Volume;
+export type InspectNetworkResponse = Network;
 
 export type InspectStackContainerResponse = Container;
 
@@ -4924,6 +4774,156 @@ export interface SwarmTask {
 
 export type InspectSwarmTaskResponse = SwarmTask;
 
+export enum VolumeScopeEnum {
+	Empty = "",
+	Local = "local",
+	Global = "global",
+}
+
+export enum ClusterVolumeSpecAccessModeScopeEnum {
+	Empty = "",
+	Single = "single",
+	Multi = "multi",
+}
+
+export enum ClusterVolumeSpecAccessModeSharingEnum {
+	Empty = "",
+	None = "none",
+	Readonly = "readonly",
+	Onewriter = "onewriter",
+	All = "all",
+}
+
+/** One cluster volume secret entry. Defines a key-value pair that is passed to the plugin. */
+export interface ClusterVolumeSpecAccessModeSecrets {
+	/** Key is the name of the key of the key-value pair passed to the plugin. */
+	Key?: string;
+	/** Secret is the swarm Secret object from which to read data. This can be a Secret name or ID. The Secret data is retrieved by swarm and used as the value of the key-value pair passed to the plugin. */
+	Secret?: string;
+}
+
+/** A map of topological domains to topological segments. For in depth details, see documentation for the Topology object in the CSI specification. */
+export interface Topology {
+	Segments?: Record<string, string>;
+}
+
+/** Requirements for the accessible topology of the volume. These fields are optional. For an in-depth description of what these fields mean, see the CSI specification. */
+export interface ClusterVolumeSpecAccessModeAccessibilityRequirements {
+	/** A list of required topologies, at least one of which the volume must be accessible from. */
+	Requisite?: Topology[];
+	/** A list of topologies that the volume should attempt to be provisioned in. */
+	Preferred?: Topology[];
+}
+
+/** The desired capacity that the volume should be created with. If empty, the plugin will decide the capacity. */
+export interface ClusterVolumeSpecAccessModeCapacityRange {
+	/** The volume must be at least this big. The value of 0 indicates an unspecified minimum */
+	RequiredBytes?: I64;
+	/** The volume must not be bigger than this. The value of 0 indicates an unspecified maximum. */
+	LimitBytes?: I64;
+}
+
+export enum ClusterVolumeSpecAccessModeAvailabilityEnum {
+	Empty = "",
+	Active = "active",
+	Pause = "pause",
+	Drain = "drain",
+}
+
+/** Defines how the volume is used by tasks. */
+export interface ClusterVolumeSpecAccessMode {
+	/** The set of nodes this volume can be used on at one time. - `single` The volume may only be scheduled to one node at a time. - `multi` the volume may be scheduled to any supported number of nodes at a time. */
+	Scope?: ClusterVolumeSpecAccessModeScopeEnum;
+	/** The number and way that different tasks can use this volume at one time. - `none` The volume may only be used by one task at a time. - `readonly` The volume may be used by any number of tasks, but they all must mount the volume as readonly - `onewriter` The volume may be used by any number of tasks, but only one may mount it as read/write. - `all` The volume may have any number of readers and writers. */
+	Sharing?: ClusterVolumeSpecAccessModeSharingEnum;
+	/** Swarm Secrets that are passed to the CSI storage plugin when operating on this volume. */
+	Secrets?: ClusterVolumeSpecAccessModeSecrets[];
+	AccessibilityRequirements?: ClusterVolumeSpecAccessModeAccessibilityRequirements;
+	CapacityRange?: ClusterVolumeSpecAccessModeCapacityRange;
+	/** The availability of the volume for use in tasks. - `active` The volume is fully available for scheduling on the cluster - `pause` No new workloads should use the volume, but existing workloads are not stopped. - `drain` All workloads using this volume should be stopped and rescheduled, and no new ones should be started. */
+	Availability?: ClusterVolumeSpecAccessModeAvailabilityEnum;
+}
+
+/** Cluster-specific options used to create the volume. */
+export interface ClusterVolumeSpec {
+	/** Group defines the volume group of this volume. Volumes belonging to the same group can be referred to by group name when creating Services.  Referring to a volume by group instructs Swarm to treat volumes in that group interchangeably for the purpose of scheduling. Volumes with an empty string for a group technically all belong to the same, emptystring group. */
+	Group?: string;
+	AccessMode?: ClusterVolumeSpecAccessMode;
+}
+
+/** Information about the global status of the volume. */
+export interface ClusterVolumeInfo {
+	/** The capacity of the volume in bytes. A value of 0 indicates that the capacity is unknown. */
+	CapacityBytes?: I64;
+	/** A map of strings to strings returned from the storage plugin when the volume is created. */
+	VolumeContext?: Record<string, string>;
+	/** The ID of the volume as returned by the CSI storage plugin. This is distinct from the volume's ID as provided by Docker. This ID is never used by the user when communicating with Docker to refer to this volume. If the ID is blank, then the Volume has not been successfully created in the plugin yet. */
+	VolumeID?: string;
+	/** The topology this volume is actually accessible from. */
+	AccessibleTopology?: Topology[];
+}
+
+export enum ClusterVolumePublishStatusStateEnum {
+	Empty = "",
+	PendingPublish = "pending-publish",
+	Published = "published",
+	PendingNodeUnpublish = "pending-node-unpublish",
+	PendingControllerUnpublish = "pending-controller-unpublish",
+}
+
+export interface ClusterVolumePublishStatus {
+	/** The ID of the Swarm node the volume is published on. */
+	NodeID?: string;
+	/** The published state of the volume. * `pending-publish` The volume should be published to this node, but the call to the controller plugin to do so has not yet been successfully completed. * `published` The volume is published successfully to the node. * `pending-node-unpublish` The volume should be unpublished from the node, and the manager is awaiting confirmation from the worker that it has done so. * `pending-controller-unpublish` The volume is successfully unpublished from the node, but has not yet been successfully unpublished on the controller. */
+	State?: ClusterVolumePublishStatusStateEnum;
+	/** A map of strings to strings returned by the CSI controller plugin when a volume is published. */
+	PublishContext?: Record<string, string>;
+}
+
+/** Options and information specific to, and only present on, Swarm CSI cluster volumes. */
+export interface ClusterVolume {
+	/** The Swarm ID of this volume. Because cluster volumes are Swarm objects, they have an ID, unlike non-cluster volumes. This ID can be used to refer to the Volume instead of the name. */
+	ID?: string;
+	Version?: ObjectVersion;
+	CreatedAt?: string;
+	UpdatedAt?: string;
+	Spec?: ClusterVolumeSpec;
+	Info?: ClusterVolumeInfo;
+	/** The status of the volume as it pertains to its publishing and use on specific nodes */
+	PublishStatus?: ClusterVolumePublishStatus[];
+}
+
+/** Usage details about the volume. This information is used by the `GET /system/df` endpoint, and omitted in other endpoints. */
+export interface VolumeUsageData {
+	/** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
+	Size: I64;
+	/** The number of containers referencing this volume. This field is set to `-1` if the reference-count is not available. */
+	RefCount: I64;
+}
+
+export interface Volume {
+	/** Name of the volume. */
+	Name: string;
+	/** Name of the volume driver used by the volume. */
+	Driver: string;
+	/** Mount path of the volume on the host. */
+	Mountpoint: string;
+	/** Date/Time the volume was created. */
+	CreatedAt?: string;
+	/** Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. */
+	Status?: string[];
+	/** User-defined key/value metadata. */
+	Labels?: Record<string, string>;
+	/** The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level. */
+	Scope?: VolumeScopeEnum;
+	ClusterVolume?: ClusterVolume;
+	/** The driver specific options used when creating the volume. */
+	Options?: Record<string, string>;
+	UsageData?: VolumeUsageData;
+}
+
+export type InspectVolumeResponse = Volume;
+
 export type JsonObject = any;
 
 export type ListActionsResponse = ActionListItem[];
@@ -4988,7 +4988,7 @@ export interface ContainerListItem {
 	labels?: Record<string, string>;
 }
 
-export type ListAllDockerContainersResponse = ContainerListItem[];
+export type ListAllContainersResponse = ContainerListItem[];
 
 /**
  * Combined state options for
@@ -5091,9 +5091,51 @@ export interface ComposeProject {
 
 export type ListComposeProjectsResponse = ComposeProject[];
 
+export type ListContainersResponse = ContainerListItem[];
+
 export type ListDeploymentsResponse = DeploymentListItem[];
 
-export type ListDockerContainersResponse = ContainerListItem[];
+export type ListFullActionsResponse = Action[];
+
+export type ListFullAlertersResponse = Alerter[];
+
+export type ListFullBuildersResponse = Builder[];
+
+export type ListFullBuildsResponse = Build[];
+
+export type ListFullDeploymentsResponse = Deployment[];
+
+export type ListFullProceduresResponse = Procedure[];
+
+export type ListFullReposResponse = Repo[];
+
+export type ListFullResourceSyncsResponse = ResourceSync[];
+
+export type ListFullServersResponse = Server[];
+
+export type ListFullStacksResponse = Stack[];
+
+export type ListFullSwarmsResponse = Swarm[];
+
+export type ListGitProviderAccountsResponse = GitProviderAccount[];
+
+export interface ProviderAccount {
+	/** The account username. Required. */
+	username: string;
+	/** The account access token. Required. */
+	token?: string;
+}
+
+export interface GitProvider {
+	/** The git provider domain. Default: `github.com`. */
+	domain: string;
+	/** Whether to use https. Default: true. */
+	https: boolean;
+	/** The accounts on the git provider. Required. */
+	accounts: ProviderAccount[];
+}
+
+export type ListGitProvidersFromConfigResponse = GitProvider[];
 
 /** individual image layer information in response to ImageHistory operation */
 export interface ImageHistoryResponseItem {
@@ -5105,7 +5147,23 @@ export interface ImageHistoryResponseItem {
 	Comment: string;
 }
 
-export type ListDockerImageHistoryResponse = ImageHistoryResponseItem[];
+export type ListImageHistoryResponse = ImageHistoryResponseItem[];
+
+export interface ImageRegistry {
+	/** The image provider domain. Default: `docker.io`. */
+	domain: string;
+	/** The accounts on the registry. Required. */
+	accounts: ProviderAccount[];
+	/**
+	 * Available organizations on the registry provider.
+	 * Used to push an image under an organization's repo rather than an account's repo.
+	 */
+	organizations?: string[];
+}
+
+export type ListImageRegistriesFromConfigResponse = ImageRegistry[];
+
+export type ListImageRegistryAccountsResponse = ImageRegistryAccount[];
 
 export interface ImageListItem {
 	/**
@@ -5134,7 +5192,7 @@ export interface ImageListItem {
 	in_use: boolean;
 }
 
-export type ListDockerImagesResponse = ImageListItem[];
+export type ListImagesResponse = ImageListItem[];
 
 export interface NetworkListItem {
 	name?: string;
@@ -5153,80 +5211,7 @@ export interface NetworkListItem {
 	in_use: boolean;
 }
 
-export type ListDockerNetworksResponse = NetworkListItem[];
-
-export interface ProviderAccount {
-	/** The account username. Required. */
-	username: string;
-	/** The account access token. Required. */
-	token?: string;
-}
-
-export interface DockerRegistry {
-	/** The docker provider domain. Default: `docker.io`. */
-	domain: string;
-	/** The accounts on the registry. Required. */
-	accounts: ProviderAccount[];
-	/**
-	 * Available organizations on the registry provider.
-	 * Used to push an image under an organization's repo rather than an account's repo.
-	 */
-	organizations?: string[];
-}
-
-export type ListDockerRegistriesFromConfigResponse = DockerRegistry[];
-
-export type ListDockerRegistryAccountsResponse = DockerRegistryAccount[];
-
-export interface VolumeListItem {
-	/** The name of the volume */
-	name: string;
-	driver: string;
-	mountpoint: string;
-	created?: string;
-	scope: VolumeScopeEnum;
-	/** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
-	size?: I64;
-	/** Whether the volume is currently attached to any container */
-	in_use: boolean;
-}
-
-export type ListDockerVolumesResponse = VolumeListItem[];
-
-export type ListFullActionsResponse = Action[];
-
-export type ListFullAlertersResponse = Alerter[];
-
-export type ListFullBuildersResponse = Builder[];
-
-export type ListFullBuildsResponse = Build[];
-
-export type ListFullDeploymentsResponse = Deployment[];
-
-export type ListFullProceduresResponse = Procedure[];
-
-export type ListFullReposResponse = Repo[];
-
-export type ListFullResourceSyncsResponse = ResourceSync[];
-
-export type ListFullServersResponse = Server[];
-
-export type ListFullStacksResponse = Stack[];
-
-export type ListFullSwarmsResponse = Swarm[];
-
-export type ListGitProviderAccountsResponse = GitProviderAccount[];
-
-export interface GitProvider {
-	/** The git provider domain. Default: `github.com`. */
-	domain: string;
-	/** Whether to use https. Default: true. */
-	https: boolean;
-	/** The accounts on the git provider. Required. */
-	accounts: ProviderAccount[];
-}
-
-export type ListGitProvidersFromConfigResponse = GitProvider[];
+export type ListNetworksResponse = NetworkListItem[];
 
 export type ListOnboardingKeysResponse = OnboardingKey[];
 
@@ -5746,6 +5731,21 @@ export type ListUsersResponse = User[];
 
 export type ListVariablesResponse = Variable[];
 
+export interface VolumeListItem {
+	/** The name of the volume */
+	name: string;
+	driver: string;
+	mountpoint: string;
+	created?: string;
+	scope: VolumeScopeEnum;
+	/** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
+	size?: I64;
+	/** Whether the volume is currently attached to any container */
+	in_use: boolean;
+}
+
+export type ListVolumesResponse = VolumeListItem[];
+
 export type MongoDocument = any;
 
 export interface ProcedureQuerySpecifics {
@@ -5812,9 +5812,9 @@ export interface SwarmQuerySpecifics {
 
 export type SwarmQuery = ResourceQuery<SwarmQuerySpecifics>;
 
-export type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
-
 export type UpdateGitProviderAccountResponse = GitProviderAccount;
+
+export type UpdateImageRegistryAccountResponse = ImageRegistryAccount;
 
 export type UpdateOnboardingKeyResponse = OnboardingKey;
 
@@ -5850,9 +5850,9 @@ export type _PartialBuilderConfig = Partial<BuilderConfig>;
 
 export type _PartialDeploymentConfig = Partial<DeploymentConfig>;
 
-export type _PartialDockerRegistryAccount = Partial<DockerRegistryAccount>;
-
 export type _PartialGitProviderAccount = Partial<GitProviderAccount>;
+
+export type _PartialImageRegistryAccount = Partial<ImageRegistryAccount>;
 
 export type _PartialProcedureConfig = Partial<ProcedureConfig>;
 
@@ -5930,8 +5930,12 @@ export interface AwsBuilderConfig {
 	insecure_tls: boolean;
 	/** Which git providers are available on the AMI */
 	git_providers?: GitProvider[];
-	/** Which docker registries are available on the AMI. */
-	docker_registries?: DockerRegistry[];
+	/**
+	 * Which image registries are available on the AMI.
+	 * 
+	 * Pre v2.3.0, called `docker_registries`
+	 */
+	image_registries?: ImageRegistry[];
 	/** Which secrets are available on the AMI. */
 	secrets?: string[];
 }
@@ -6854,14 +6858,6 @@ export interface CreateDeploymentFromContainer {
 }
 
 /**
- * **Admin only.** Create a docker registry account.
- * Response: [DockerRegistryAccount].
- */
-export interface CreateDockerRegistryAccount {
-	account: _PartialDockerRegistryAccount;
-}
-
-/**
  * **Admin only.** Create a git provider account.
  * Response: [GitProviderAccount].
  */
@@ -6871,6 +6867,16 @@ export interface CreateGitProviderAccount {
 	 * as this is generated on creation.
 	 */
 	account: _PartialGitProviderAccount;
+}
+
+/**
+ * **Admin only.** Create an image registry account.
+ * Response: [ImageRegistryAccount].
+ * 
+ * Pre v2.3.0, called `CreateDockerRegistryAccount`
+ */
+export interface CreateImageRegistryAccount {
+	account: _PartialImageRegistryAccount;
 }
 
 /**
@@ -7178,15 +7184,6 @@ export interface DeleteDeployment {
 }
 
 /**
- * **Admin only.** Delete a docker registry account.
- * Response: [DockerRegistryAccount].
- */
-export interface DeleteDockerRegistryAccount {
-	/** The id of the docker registry account to delete */
-	id: string;
-}
-
-/**
  * **Admin only.** Delete a git provider account.
  * Response: [DeleteGitProviderAccountResponse].
  */
@@ -7204,6 +7201,17 @@ export interface DeleteImage {
 	server: string;
 	/** The name of the image to delete. */
 	name: string;
+}
+
+/**
+ * **Admin only.** Delete an image registry account.
+ * Response: [ImageRegistryAccount].
+ * 
+ * Pre v2.3.0, called `DeleteDockerRegistryAccount`
+ */
+export interface DeleteImageRegistryAccount {
+	/** The id of the image registry account to delete */
+	id: string;
 }
 
 /**
@@ -7827,6 +7835,29 @@ export interface GetContainerLog {
 }
 
 /**
+ * Gets a summary of data relating to all containers.
+ * Response: [GetContainersSummaryResponse].
+ * 
+ * Pre v2.3.0, called `GetDockerContainersSummary`
+ */
+export interface GetContainersSummary {
+}
+
+/** Response for [GetContainersSummary] */
+export interface GetContainersSummaryResponse {
+	/** The total number of Containers */
+	total: number;
+	/** The number of Containers with Running state */
+	running: number;
+	/** The number of Containers with Stopped or Paused or Created state */
+	stopped: number;
+	/** The number of Containers with Restarting or Dead state */
+	unhealthy: number;
+	/** The number of Containers with Unknown state */
+	unknown: number;
+}
+
+/**
  * Get information about the Komodo Core API configuration.
  * Response: [GetCoreInfoResponse].
  */
@@ -7947,35 +7978,6 @@ export interface GetDeploymentsSummaryResponse {
 }
 
 /**
- * Gets a summary of data relating to all containers.
- * Response: [GetDockerContainersSummaryResponse].
- */
-export interface GetDockerContainersSummary {
-}
-
-/** Response for [GetDockerContainersSummary] */
-export interface GetDockerContainersSummaryResponse {
-	/** The total number of Containers */
-	total: number;
-	/** The number of Containers with Running state */
-	running: number;
-	/** The number of Containers with Stopped or Paused or Created state */
-	stopped: number;
-	/** The number of Containers with Restarting or Dead state */
-	unhealthy: number;
-	/** The number of Containers with Unknown state */
-	unknown: number;
-}
-
-/**
- * Get a specific docker registry account.
- * Response: [GetDockerRegistryAccountResponse].
- */
-export interface GetDockerRegistryAccount {
-	id: string;
-}
-
-/**
  * Get a specific git provider account.
  * Response: [GetGitProviderAccountResponse].
  */
@@ -8051,6 +8053,16 @@ export interface GetHistoricalServerStatsResponse {
 	stats: SystemStatsRecord[];
 	/** If there is a next page of data, pass this to `page` to get it. */
 	next_page?: number;
+}
+
+/**
+ * Get a specific image registry account.
+ * Response: [GetImageRegistryAccountResponse].
+ * 
+ * Pre v2.3.0, called `GetDockerRegistryAccount`
+ */
+export interface GetImageRegistryAccount {
+	id: string;
 }
 
 /**
@@ -8460,6 +8472,18 @@ export interface GlobalAutoUpdate {
 }
 
 /**
+ * Inspect a container on the server. Response: [Container].
+ * 
+ * Pre v2.3.0, called `InspectDockerContainer`
+ */
+export interface InspectContainer {
+	/** Id or name */
+	server: string;
+	/** The container name */
+	container: string;
+}
+
+/**
  * Inspect the docker container associated with the Deployment.
  * Response: [Container].
  */
@@ -8477,36 +8501,28 @@ export interface InspectDeploymentSwarmService {
 	deployment: string;
 }
 
-/** Inspect a docker container on the server. Response: [Container]. */
-export interface InspectDockerContainer {
-	/** Id or name */
-	server: string;
-	/** The container name */
-	container: string;
-}
-
-/** Inspect a docker image on the server. Response: [Image]. */
-export interface InspectDockerImage {
+/**
+ * Inspect a container image on the server. Response: [Image].
+ * 
+ * Pre v2.3.0, called `InspectDockerImage`
+ */
+export interface InspectImage {
 	/** Id or name */
 	server: string;
 	/** The image name */
 	image: string;
 }
 
-/** Inspect a docker network on the server. Response: [InspectDockerNetworkResponse]. */
-export interface InspectDockerNetwork {
+/**
+ * Inspect a container network on the server. Response: [InspectNetworkResponse].
+ * 
+ * Pre v2.3.0, called `InspectDockerNetwork`
+ */
+export interface InspectNetwork {
 	/** Id or name */
 	server: string;
 	/** The network name */
 	network: string;
-}
-
-/** Inspect a docker volume on the server. Response: [Volume]. */
-export interface InspectDockerVolume {
-	/** Id or name */
-	server: string;
-	/** The volume name */
-	volume: string;
 }
 
 /**
@@ -8615,6 +8631,18 @@ export interface InspectSwarmTask {
 	task: string;
 }
 
+/**
+ * Inspect a container volume on the server. Response: [Volume].
+ * 
+ * Pre v2.3.0, called `InspectDockerVolume`
+ */
+export interface InspectVolume {
+	/** Id or name */
+	server: string;
+	/** The volume name */
+	volume: string;
+}
+
 export interface LatestCommit {
 	hash: string;
 	message: string;
@@ -8682,10 +8710,12 @@ export interface ListAlertsResponse {
 }
 
 /**
- * List all docker containers on the target servers.
- * Response: [ListDockerContainersResponse].
+ * List all containers on the target servers.
+ * Response: [ListAllContainersResponse].
+ * 
+ * Pre v2.3.0, called `ListAllDockerContainers`
  */
-export interface ListAllDockerContainers {
+export interface ListAllContainers {
 	/** Filter by server id or name. */
 	servers?: string[];
 	/** Filter servers by tag. */
@@ -8827,10 +8857,21 @@ export interface ListCommonStackExtraArgs {
 }
 
 /**
- * List all docker compose projects on the target server.
+ * List all compose projects on the target server.
  * Response: [ListComposeProjectsResponse].
  */
 export interface ListComposeProjects {
+	/** Id or name */
+	server: string;
+}
+
+/**
+ * List all containers on the target server.
+ * Response: [ListContainersResponse].
+ * 
+ * Pre v2.3.0, called `ListDockerContainers`
+ */
+export interface ListContainers {
 	/** Id or name */
 	server: string;
 }
@@ -8842,75 +8883,6 @@ export interface ListComposeProjects {
 export interface ListDeployments {
 	/** optional structured query to filter deployments. */
 	query?: DeploymentQuery;
-}
-
-/**
- * List all docker containers on the target server.
- * Response: [ListDockerContainersResponse].
- */
-export interface ListDockerContainers {
-	/** Id or name */
-	server: string;
-}
-
-/** Get image history from the server. Response: [ListDockerImageHistoryResponse]. */
-export interface ListDockerImageHistory {
-	/** Id or name */
-	server: string;
-	/** The image name */
-	image: string;
-}
-
-/**
- * List the docker images locally cached on the target server.
- * Response: [ListDockerImagesResponse].
- */
-export interface ListDockerImages {
-	/** Id or name */
-	server: string;
-}
-
-/** List the docker networks on the server. Response: [ListDockerNetworksResponse]. */
-export interface ListDockerNetworks {
-	/** Id or name */
-	server: string;
-}
-
-/**
- * List the docker registry providers available in Core / Periphery config files.
- * Response: [ListDockerRegistriesFromConfigResponse].
- * 
- * Includes:
- * - registries in core config
- * - registries configured on builds, deployments
- * - registries on the optional Server or Builder
- */
-export interface ListDockerRegistriesFromConfig {
-	/**
-	 * Accepts an optional Server or Builder target to expand the core list with
-	 * providers available on that specific resource.
-	 */
-	target?: ResourceTarget;
-}
-
-/**
- * List docker registry accounts matching optional query.
- * Response: [ListDockerRegistryAccountsResponse].
- */
-export interface ListDockerRegistryAccounts {
-	/** Optionally filter by accounts with a specific domain. */
-	domain?: string;
-	/** Optionally filter by accounts with a specific username. */
-	username?: string;
-}
-
-/**
- * List all docker volumes on the target server.
- * Response: [ListDockerVolumesResponse].
- */
-export interface ListDockerVolumes {
-	/** Id or name */
-	server: string;
 }
 
 /** List actions matching optional query. Response: [ListFullActionsResponse]. */
@@ -9007,6 +8979,71 @@ export interface ListGitProvidersFromConfig {
 	 * providers available on that specific resource.
 	 */
 	target?: ResourceTarget;
+}
+
+/**
+ * Get image history from the server. Response: [ListImageHistoryResponse].
+ * 
+ * Pre v2.3.0, called `ListDockerImageHistory`
+ */
+export interface ListImageHistory {
+	/** Id or name */
+	server: string;
+	/** The image name */
+	image: string;
+}
+
+/**
+ * List the image registry providers available in Core / Periphery config files.
+ * Response: [ListImageRegistriesFromConfigResponse].
+ * 
+ * Includes:
+ * - registries in core config
+ * - registries configured on builds, deployments
+ * - registries on the optional Server or Builder
+ * 
+ * Pre v2.3.0, called `ListDockerRegistriesFromConfig`
+ */
+export interface ListImageRegistriesFromConfig {
+	/**
+	 * Accepts an optional Server or Builder target to expand the core list with
+	 * providers available on that specific resource.
+	 */
+	target?: ResourceTarget;
+}
+
+/**
+ * List image registry accounts matching optional query.
+ * Response: [ListImageRegistryAccountsResponse].
+ * 
+ * Pre v2.3.0, called `ListDockerRegistryAccounts`
+ */
+export interface ListImageRegistryAccounts {
+	/** Optionally filter by accounts with a specific domain. */
+	domain?: string;
+	/** Optionally filter by accounts with a specific username. */
+	username?: string;
+}
+
+/**
+ * List the container images locally cached on the target server.
+ * Response: [ListImagesResponse].
+ * 
+ * Pre v2.3.0, called `ListDockerImages`
+ */
+export interface ListImages {
+	/** Id or name */
+	server: string;
+}
+
+/**
+ * List the container networks on the server. Response: [ListNetworksResponse].
+ * 
+ * Pre v2.3.0, called `ListDockerNetworks`
+ */
+export interface ListNetworks {
+	/** Id or name */
+	server: string;
 }
 
 /**
@@ -9294,6 +9331,17 @@ export interface ListUsers {
  * secret variables will have their values obscured.
  */
 export interface ListVariables {
+}
+
+/**
+ * List all container volumes on the target server.
+ * Response: [ListVolumesResponse].
+ * 
+ * Pre v2.3.0, called `ListDockerVolumes`
+ */
+export interface ListVolumes {
+	/** Id or name */
+	server: string;
 }
 
 export interface NameAndId {
@@ -10443,17 +10491,6 @@ export interface UpdateDeployment {
 }
 
 /**
- * **Admin only.** Update a docker registry account.
- * Response: [DockerRegistryAccount].
- */
-export interface UpdateDockerRegistryAccount {
-	/** The id of the docker registry to update */
-	id: string;
-	/** The partial docker registry account. */
-	account: _PartialDockerRegistryAccount;
-}
-
-/**
  * **Admin only.** Update a git provider account.
  * Response: [GitProviderAccount].
  */
@@ -10462,6 +10499,19 @@ export interface UpdateGitProviderAccount {
 	id: string;
 	/** The partial git provider account. */
 	account: _PartialGitProviderAccount;
+}
+
+/**
+ * **Admin only.** Update a image registry account.
+ * Response: [ImageRegistryAccount].
+ * 
+ * Pre v2.3.0, called `UpdateDockerRegistryAccount`
+ */
+export interface UpdateImageRegistryAccount {
+	/** The id of the image registry to update */
+	id: string;
+	/** The partial image registry account. */
+	account: _PartialImageRegistryAccount;
 }
 
 /**
@@ -10996,7 +11046,7 @@ export type ReadRequest =
 	| { type: "GetCoreInfo", params: GetCoreInfo }
 	| { type: "ListSecrets", params: ListSecrets }
 	| { type: "ListGitProvidersFromConfig", params: ListGitProvidersFromConfig }
-	| { type: "ListDockerRegistriesFromConfig", params: ListDockerRegistriesFromConfig }
+	| { type: "ListImageRegistriesFromConfig", params: ListImageRegistriesFromConfig }
 	| { type: "GetSwarmsSummary", params: GetSwarmsSummary }
 	| { type: "GetSwarm", params: GetSwarm }
 	| { type: "GetSwarmActionState", params: GetSwarmActionState }
@@ -11026,21 +11076,21 @@ export type ReadRequest =
 	| { type: "ListServers", params: ListServers }
 	| { type: "ListFullServers", params: ListFullServers }
 	| { type: "ListTerminals", params: ListTerminals }
-	| { type: "GetDockerContainersSummary", params: GetDockerContainersSummary }
-	| { type: "ListAllDockerContainers", params: ListAllDockerContainers }
-	| { type: "ListDockerContainers", params: ListDockerContainers }
-	| { type: "InspectDockerContainer", params: InspectDockerContainer }
+	| { type: "GetContainersSummary", params: GetContainersSummary }
+	| { type: "ListAllContainers", params: ListAllContainers }
+	| { type: "ListContainers", params: ListContainers }
+	| { type: "InspectContainer", params: InspectContainer }
 	| { type: "GetResourceMatchingContainer", params: GetResourceMatchingContainer }
 	| { type: "GetContainerLog", params: GetContainerLog }
 	| { type: "SearchContainerLog", params: SearchContainerLog }
 	| { type: "ListComposeProjects", params: ListComposeProjects }
-	| { type: "ListDockerNetworks", params: ListDockerNetworks }
-	| { type: "InspectDockerNetwork", params: InspectDockerNetwork }
-	| { type: "ListDockerImages", params: ListDockerImages }
-	| { type: "InspectDockerImage", params: InspectDockerImage }
-	| { type: "ListDockerImageHistory", params: ListDockerImageHistory }
-	| { type: "ListDockerVolumes", params: ListDockerVolumes }
-	| { type: "InspectDockerVolume", params: InspectDockerVolume }
+	| { type: "ListNetworks", params: ListNetworks }
+	| { type: "InspectNetwork", params: InspectNetwork }
+	| { type: "ListImages", params: ListImages }
+	| { type: "InspectImage", params: InspectImage }
+	| { type: "ListImageHistory", params: ListImageHistory }
+	| { type: "ListVolumes", params: ListVolumes }
+	| { type: "InspectVolume", params: InspectVolume }
 	| { type: "GetSystemInformation", params: GetSystemInformation }
 	| { type: "GetSystemStats", params: GetSystemStats }
 	| { type: "GetHistoricalServerStats", params: GetHistoricalServerStats }
@@ -11129,8 +11179,8 @@ export type ReadRequest =
 	| { type: "ListVariables", params: ListVariables }
 	| { type: "GetGitProviderAccount", params: GetGitProviderAccount }
 	| { type: "ListGitProviderAccounts", params: ListGitProviderAccounts }
-	| { type: "GetDockerRegistryAccount", params: GetDockerRegistryAccount }
-	| { type: "ListDockerRegistryAccounts", params: ListDockerRegistryAccounts }
+	| { type: "GetImageRegistryAccount", params: GetImageRegistryAccount }
+	| { type: "ListImageRegistryAccounts", params: ListImageRegistryAccounts }
 	| { type: "ListOnboardingKeys", params: ListOnboardingKeys };
 
 export enum RepoWebhookAction {
@@ -11299,9 +11349,9 @@ export type WriteRequest =
 	| { type: "CreateGitProviderAccount", params: CreateGitProviderAccount }
 	| { type: "UpdateGitProviderAccount", params: UpdateGitProviderAccount }
 	| { type: "DeleteGitProviderAccount", params: DeleteGitProviderAccount }
-	| { type: "CreateDockerRegistryAccount", params: CreateDockerRegistryAccount }
-	| { type: "UpdateDockerRegistryAccount", params: UpdateDockerRegistryAccount }
-	| { type: "DeleteDockerRegistryAccount", params: DeleteDockerRegistryAccount }
+	| { type: "CreateImageRegistryAccount", params: CreateImageRegistryAccount }
+	| { type: "UpdateImageRegistryAccount", params: UpdateImageRegistryAccount }
+	| { type: "DeleteImageRegistryAccount", params: DeleteImageRegistryAccount }
 	| { type: "CloseAlert", params: CloseAlert };
 
 export type WsLoginMessage = 

@@ -6,7 +6,7 @@ import { Pause, Play, RefreshCcw, Square, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const useContainer = (serverId: string, containerName: string) => {
-  return useRead("ListDockerContainers", { server: serverId }).data?.find(
+  return useRead("ListContainers", { server: serverId }).data?.find(
     (container) => container.name === containerName,
   );
 };

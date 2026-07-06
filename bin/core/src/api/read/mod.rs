@@ -10,7 +10,7 @@ use komodo_client::{
     ResourceTarget,
     build::Build,
     builder::{Builder, BuilderConfig},
-    config::{DockerRegistry, GitProvider},
+    config::{GitProvider, ImageRegistry},
     permission::PermissionLevel,
     repo::Repo,
     server::Server,
@@ -81,7 +81,8 @@ enum ReadRequest {
   GetCoreInfo(GetCoreInfo),
   ListSecrets(ListSecrets),
   ListGitProvidersFromConfig(ListGitProvidersFromConfig),
-  ListDockerRegistriesFromConfig(ListDockerRegistriesFromConfig),
+  #[serde(alias = "ListDockerRegistriesFromConfig")]
+  ListImageRegistriesFromConfig(ListImageRegistriesFromConfig),
 
   // ==== SWARM ====
   GetSwarmsSummary(GetSwarmsSummary),
@@ -118,22 +119,33 @@ enum ReadRequest {
   // ==== TERMINAL ====
   ListTerminals(ListTerminals),
 
-  // ==== DOCKER ====
-  GetDockerContainersSummary(GetDockerContainersSummary),
-  ListAllDockerContainers(ListAllDockerContainers),
-  ListDockerContainers(ListDockerContainers),
-  InspectDockerContainer(InspectDockerContainer),
+  // ==== CONTAINER ====
+  #[serde(alias = "GetDockerContainersSummary")]
+  GetContainersSummary(GetContainersSummary),
+  #[serde(alias = "ListAllDockerContainers")]
+  ListAllContainers(ListAllContainers),
+  #[serde(alias = "ListDockerContainers")]
+  ListContainers(ListContainers),
+  #[serde(alias = "InspectDockerContainer")]
+  InspectContainer(InspectContainer),
   GetResourceMatchingContainer(GetResourceMatchingContainer),
   GetContainerLog(GetContainerLog),
   SearchContainerLog(SearchContainerLog),
   ListComposeProjects(ListComposeProjects),
-  ListDockerNetworks(ListDockerNetworks),
-  InspectDockerNetwork(InspectDockerNetwork),
-  ListDockerImages(ListDockerImages),
-  InspectDockerImage(InspectDockerImage),
-  ListDockerImageHistory(ListDockerImageHistory),
-  ListDockerVolumes(ListDockerVolumes),
-  InspectDockerVolume(InspectDockerVolume),
+  #[serde(alias = "ListDockerNetworks")]
+  ListNetworks(ListNetworks),
+  #[serde(alias = "InspectDockerNetwork")]
+  InspectNetwork(InspectNetwork),
+  #[serde(alias = "ListDockerImages")]
+  ListImages(ListImages),
+  #[serde(alias = "InspectDockerImage")]
+  InspectImage(InspectImage),
+  #[serde(alias = "ListDockerImageHistory")]
+  ListImageHistory(ListImageHistory),
+  #[serde(alias = "ListDockerVolumes")]
+  ListVolumes(ListVolumes),
+  #[serde(alias = "InspectDockerVolume")]
+  InspectVolume(InspectVolume),
 
   // ==== SERVER STATS ====
   GetSystemInformation(GetSystemInformation),
@@ -260,8 +272,10 @@ enum ReadRequest {
   // ==== PROVIDER ====
   GetGitProviderAccount(GetGitProviderAccount),
   ListGitProviderAccounts(ListGitProviderAccounts),
-  GetDockerRegistryAccount(GetDockerRegistryAccount),
-  ListDockerRegistryAccounts(ListDockerRegistryAccounts),
+  #[serde(alias = "GetDockerRegistryAccount")]
+  GetImageRegistryAccount(GetImageRegistryAccount),
+  #[serde(alias = "ListDockerRegistryAccounts")]
+  ListImageRegistryAccounts(ListImageRegistryAccounts),
 
   // ==== ONBOARDING KEY ====
   ListOnboardingKeys(ListOnboardingKeys),
@@ -529,17 +543,17 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
 
 //
 
-impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
+impl Resolve<ReadArgs> for ListImageRegistriesFromConfig {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> mogh_error::Result<ListDockerRegistriesFromConfigResponse> {
-    let mut registries = core_config().docker_registries.clone();
+  ) -> mogh_error::Result<ListImageRegistriesFromConfigResponse> {
+    let mut registries = core_config().image_registries.clone();
 
     if let Some(target) = self.target {
       match target {
         ResourceTarget::Server(id) => {
-          merge_docker_registries_for_server(&mut registries, &id)
+          merge_image_registries_for_server(&mut registries, &id)
             .await?;
         }
         ResourceTarget::Builder(id) => {
@@ -547,7 +561,7 @@ impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
             BuilderConfig::Url(_) => {}
             BuilderConfig::Server(config) => {
               if let Some(server_id) = config.server_ids.first() {
-                merge_docker_registries_for_server(
+                merge_image_registries_for_server(
                   &mut registries,
                   server_id,
                 )
@@ -555,9 +569,9 @@ impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
               }
             }
             BuilderConfig::Aws(config) => {
-              merge_docker_registries(
+              merge_image_registries(
                 &mut registries,
-                config.docker_registries,
+                config.image_registries,
               );
             }
           }
@@ -615,14 +629,14 @@ fn merge_git_providers(
   }
 }
 
-async fn merge_docker_registries_for_server(
-  registries: &mut Vec<DockerRegistry>,
+async fn merge_image_registries_for_server(
+  registries: &mut Vec<ImageRegistry>,
   server_id: &str,
 ) -> mogh_error::Result<()> {
   let server = resource::get::<Server>(server_id).await?;
   let more = periphery_client(&server)
     .await?
-    .request(periphery_client::api::ListDockerRegistries {})
+    .request(periphery_client::api::ListImageRegistries {})
     .await
     .with_context(|| {
       format!(
@@ -630,13 +644,13 @@ async fn merge_docker_registries_for_server(
         server.name
       )
     })?;
-  merge_docker_registries(registries, more);
+  merge_image_registries(registries, more);
   Ok(())
 }
 
-fn merge_docker_registries(
-  registries: &mut Vec<DockerRegistry>,
-  more: Vec<DockerRegistry>,
+fn merge_image_registries(
+  registries: &mut Vec<ImageRegistry>,
+  more: Vec<ImageRegistry>,
 ) {
   for incoming_registry in more {
     if let Some(registry) = registries

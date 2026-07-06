@@ -271,7 +271,7 @@ pub fn registry_token(
   account_username: &str,
 ) -> anyhow::Result<&'static str> {
   periphery_config()
-    .docker_registries
+    .image_registries
     .iter()
     .find(|registry| registry.domain == domain)
     .and_then(|registry| {

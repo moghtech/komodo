@@ -16,7 +16,7 @@ import { DividedChildren } from "mogh_ui";
 
 export interface ContainersSectionProps extends SectionProps {
   serverId: string;
-  containers: Types.ListDockerContainersResponse;
+  containers: Types.ListContainersResponse;
   show?: boolean;
   setShow?: (show: boolean) => void;
   pruneButton?: boolean;
@@ -35,7 +35,7 @@ export default function ContainersSection({
   titleOther,
   ...sectionProps
 }: ContainersSectionProps) {
-  const allRunning = useRead("ListDockerContainers", {
+  const allRunning = useRead("ListContainers", {
     server: serverId,
   }).data?.every(
     (container) => container.state === Types.ContainerStateStatusEnum.Running,

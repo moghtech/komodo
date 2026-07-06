@@ -2,7 +2,7 @@ use anyhow::{Context, anyhow};
 use colored::Colorize;
 use komodo_client::{
   api::{
-    read::{GetServer, ListAllDockerContainers, ListServers},
+    read::{GetServer, ListAllContainers, ListServers},
     terminal::InitTerminal,
   },
   entities::{
@@ -127,7 +127,7 @@ async fn get_server(
   let client = super::komodo_client().await?;
 
   let mut containers = client
-    .read(ListAllDockerContainers {
+    .read(ListAllContainers {
       servers: Default::default(),
       tags: Default::default(),
       terms: vec![container.to_string()],

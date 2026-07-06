@@ -2548,6 +2548,22 @@
           ]
         },
         {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CancelProcedure"
+            },
+            "params": {
+              "$ref": "#/definitions/CancelProcedure"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
           "description": "Run the target action. (alias: `action`, `ac`)",
           "type": "object",
           "properties": {
@@ -2573,6 +2589,22 @@
             },
             "params": {
               "$ref": "#/definitions/BatchRunAction"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CancelAction"
+            },
+            "params": {
+              "$ref": "#/definitions/CancelAction"
             }
           },
           "required": [
@@ -3951,6 +3983,26 @@
         "pattern"
       ]
     },
+    "CancelProcedure": {
+      "description": "Cancels the target procedure run. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "procedure": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "update_id": {
+          "description": "The update id associated with the specific\nrun to cancel\nMust provide either `action`\nor `update_id`",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "procedure"
+      ]
+    },
     "RunAction": {
       "description": "Runs the target Action. Response: [Update]",
       "type": "object",
@@ -3983,6 +4035,26 @@
       },
       "required": [
         "pattern"
+      ]
+    },
+    "CancelAction": {
+      "description": "Cancels the target action run. Response: [Update]",
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "Id or name",
+          "type": "string"
+        },
+        "update_id": {
+          "description": "The update id associated with the specific\nrun to cancel\nMust provide either `action`\nor `update_id`",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "action"
       ]
     },
     "RunSync": {
@@ -5840,14 +5912,14 @@
             "$ref": "#/definitions/GitProvider"
           }
         },
-        "docker_registries": {
-          "description": "Which docker registries are available on the AMI.",
+        "image_registries": {
+          "description": "Which image registries are available on the AMI.\n\nPre v2.3.0, called `docker_registries`",
           "type": [
             "array",
             "null"
           ],
           "items": {
-            "$ref": "#/definitions/DockerRegistry"
+            "$ref": "#/definitions/ImageRegistry"
           }
         },
         "secrets": {
@@ -5904,11 +5976,11 @@
         "username"
       ]
     },
-    "DockerRegistry": {
+    "ImageRegistry": {
       "type": "object",
       "properties": {
         "domain": {
-          "description": "The docker provider domain. Default: `docker.io`.",
+          "description": "The image provider domain. Default: `docker.io`.",
           "type": "string",
           "default": "docker.io"
         },

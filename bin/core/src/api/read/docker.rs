@@ -22,13 +22,7 @@ use komodo_client::{
   },
 };
 use mogh_resolver::Resolve;
-use periphery_client::api::{
-  self as periphery,
-  container::InspectContainer,
-  docker::{
-    ImageHistory, InspectImage, InspectNetwork, InspectVolume,
-  },
-};
+use periphery_client::api as periphery;
 
 use crate::{
   api::read::ReadArgs,
@@ -39,11 +33,11 @@ use crate::{
   state::server_status_cache,
 };
 
-impl Resolve<ReadArgs> for GetDockerContainersSummary {
+impl Resolve<ReadArgs> for GetContainersSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<GetDockerContainersSummaryResponse> {
+  ) -> mogh_error::Result<GetContainersSummaryResponse> {
     let servers = resource::list_full_for_user::<Server>(
       Default::default(),
       user,
@@ -53,7 +47,7 @@ impl Resolve<ReadArgs> for GetDockerContainersSummary {
     .await
     .context("failed to get servers from db")?;
 
-    let mut res = GetDockerContainersSummaryResponse::default();
+    let mut res = GetContainersSummaryResponse::default();
 
     for server in servers {
       let cache = server_status_cache()
@@ -79,11 +73,11 @@ impl Resolve<ReadArgs> for GetDockerContainersSummary {
   }
 }
 
-impl Resolve<ReadArgs> for ListAllDockerContainers {
+impl Resolve<ReadArgs> for ListAllContainers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<ListAllDockerContainersResponse> {
+  ) -> mogh_error::Result<ListAllContainersResponse> {
     let servers = resource::list_for_user::<Server>(
       ServerQuery::builder()
         .names(self.servers.clone())
@@ -135,11 +129,11 @@ impl Resolve<ReadArgs> for ListAllDockerContainers {
   }
 }
 
-impl Resolve<ReadArgs> for ListDockerContainers {
+impl Resolve<ReadArgs> for ListContainers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<ListDockerContainersResponse> {
+  ) -> mogh_error::Result<ListContainersResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -157,7 +151,7 @@ impl Resolve<ReadArgs> for ListDockerContainers {
   }
 }
 
-impl Resolve<ReadArgs> for InspectDockerContainer {
+impl Resolve<ReadArgs> for InspectContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
@@ -182,7 +176,7 @@ impl Resolve<ReadArgs> for InspectDockerContainer {
     }
     let res = periphery_client(&server)
       .await?
-      .request(InspectContainer {
+      .request(periphery::container::InspectContainer {
         name: self.container,
       })
       .await?;
@@ -339,11 +333,11 @@ impl Resolve<ReadArgs> for ListComposeProjects {
   }
 }
 
-impl Resolve<ReadArgs> for ListDockerNetworks {
+impl Resolve<ReadArgs> for ListNetworks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<ListDockerNetworksResponse> {
+  ) -> mogh_error::Result<ListNetworksResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -361,7 +355,7 @@ impl Resolve<ReadArgs> for ListDockerNetworks {
   }
 }
 
-impl Resolve<ReadArgs> for InspectDockerNetwork {
+impl Resolve<ReadArgs> for InspectNetwork {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
@@ -386,17 +380,19 @@ impl Resolve<ReadArgs> for InspectDockerNetwork {
     }
     let res = periphery_client(&server)
       .await?
-      .request(InspectNetwork { name: self.network })
+      .request(periphery::docker::InspectNetwork {
+        name: self.network,
+      })
       .await?;
     Ok(res)
   }
 }
 
-impl Resolve<ReadArgs> for ListDockerImages {
+impl Resolve<ReadArgs> for ListImages {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<ListDockerImagesResponse> {
+  ) -> mogh_error::Result<ListImagesResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -414,7 +410,7 @@ impl Resolve<ReadArgs> for ListDockerImages {
   }
 }
 
-impl Resolve<ReadArgs> for InspectDockerImage {
+impl Resolve<ReadArgs> for InspectImage {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
@@ -436,13 +432,13 @@ impl Resolve<ReadArgs> for InspectDockerImage {
     }
     let res = periphery_client(&server)
       .await?
-      .request(InspectImage { name: self.image })
+      .request(periphery::docker::InspectImage { name: self.image })
       .await?;
     Ok(res)
   }
 }
 
-impl Resolve<ReadArgs> for ListDockerImageHistory {
+impl Resolve<ReadArgs> for ListImageHistory {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
@@ -467,17 +463,17 @@ impl Resolve<ReadArgs> for ListDockerImageHistory {
     }
     let res = periphery_client(&server)
       .await?
-      .request(ImageHistory { name: self.image })
+      .request(periphery::docker::ImageHistory { name: self.image })
       .await?;
     Ok(res)
   }
 }
 
-impl Resolve<ReadArgs> for ListDockerVolumes {
+impl Resolve<ReadArgs> for ListVolumes {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<ListDockerVolumesResponse> {
+  ) -> mogh_error::Result<ListVolumesResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -495,7 +491,7 @@ impl Resolve<ReadArgs> for ListDockerVolumes {
   }
 }
 
-impl Resolve<ReadArgs> for InspectDockerVolume {
+impl Resolve<ReadArgs> for InspectVolume {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
@@ -517,7 +513,7 @@ impl Resolve<ReadArgs> for InspectDockerVolume {
     }
     let res = periphery_client(&server)
       .await?
-      .request(InspectVolume { name: self.volume })
+      .request(periphery::docker::InspectVolume { name: self.volume })
       .await?;
     Ok(res)
   }

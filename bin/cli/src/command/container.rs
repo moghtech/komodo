@@ -7,9 +7,7 @@ use futures_util::{
   FutureExt, TryStreamExt, stream::FuturesUnordered,
 };
 use komodo_client::{
-  api::read::{
-    InspectDockerContainer, ListAllDockerContainers, ListServers,
-  },
+  api::read::{self, ListAllContainers, ListServers},
   entities::{
     config::cli::args::container::{
       Container, ContainerCommand, InspectContainer,
@@ -61,7 +59,7 @@ async fn list_containers(
         .into_iter()
         .map(|s| (s.id.clone(), s))
         .collect::<HashMap<_, _>>())),
-    client.read(ListAllDockerContainers {
+    client.read(ListAllContainers {
       servers: Default::default(),
       tags: Default::default(),
       terms: terms.clone(),
@@ -149,7 +147,7 @@ pub async fn inspect_container(
         .into_iter()
         .map(|s| (s.id.clone(), s))
         .collect::<HashMap<_, _>>())),
-    client.read(ListAllDockerContainers {
+    client.read(ListAllContainers {
       servers: inspect.servers.clone(),
       tags: Default::default(),
       terms: vec![inspect.container.clone()],
@@ -174,7 +172,7 @@ pub async fn inspect_container(
     .into_iter()
     .map(|c| async move {
       client
-        .read(InspectDockerContainer {
+        .read(read::InspectContainer {
           container: c.name,
           server: c.server_id.context("No server...")?,
         })

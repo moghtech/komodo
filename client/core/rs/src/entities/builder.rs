@@ -10,7 +10,7 @@ use crate::deserializers::{
 
 use super::{
   MergePartial,
-  config::{DockerRegistry, GitProvider},
+  config::{GitProvider, ImageRegistry},
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
 };
 
@@ -353,9 +353,9 @@ impl MergePartial for BuilderConfig {
             git_providers: partial
               .git_providers
               .unwrap_or(config.git_providers),
-            docker_registries: partial
-              .docker_registries
-              .unwrap_or(config.docker_registries),
+            image_registries: partial
+              .image_registries
+              .unwrap_or(config.image_registries),
             secrets: partial.secrets.unwrap_or(config.secrets),
           };
           BuilderConfig::Aws(config)
@@ -596,10 +596,12 @@ pub struct AwsBuilderConfig {
   #[serde(default)]
   #[builder(default)]
   pub git_providers: Vec<GitProvider>,
-  /// Which docker registries are available on the AMI.
+  /// Which image registries are available on the AMI.
+  ///
+  /// Pre v2.3.0, called `docker_registries`
   #[serde(default)]
   #[builder(default)]
-  pub docker_registries: Vec<DockerRegistry>,
+  pub image_registries: Vec<ImageRegistry>,
   /// Which secrets are available on the AMI.
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
@@ -628,7 +630,7 @@ impl Default for AwsBuilderConfig {
       periphery_public_key: Default::default(),
       insecure_tls: default_insecure_tls(),
       git_providers: Default::default(),
-      docker_registries: Default::default(),
+      image_registries: Default::default(),
       secrets: Default::default(),
     }
   }

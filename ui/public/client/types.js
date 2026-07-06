@@ -600,41 +600,6 @@ export var ImageManifestSummaryKindEnum;
     ImageManifestSummaryKindEnum["Attestation"] = "attestation";
     ImageManifestSummaryKindEnum["Unknown"] = "unknown";
 })(ImageManifestSummaryKindEnum || (ImageManifestSummaryKindEnum = {}));
-export var VolumeScopeEnum;
-(function (VolumeScopeEnum) {
-    VolumeScopeEnum["Empty"] = "";
-    VolumeScopeEnum["Local"] = "local";
-    VolumeScopeEnum["Global"] = "global";
-})(VolumeScopeEnum || (VolumeScopeEnum = {}));
-export var ClusterVolumeSpecAccessModeScopeEnum;
-(function (ClusterVolumeSpecAccessModeScopeEnum) {
-    ClusterVolumeSpecAccessModeScopeEnum["Empty"] = "";
-    ClusterVolumeSpecAccessModeScopeEnum["Single"] = "single";
-    ClusterVolumeSpecAccessModeScopeEnum["Multi"] = "multi";
-})(ClusterVolumeSpecAccessModeScopeEnum || (ClusterVolumeSpecAccessModeScopeEnum = {}));
-export var ClusterVolumeSpecAccessModeSharingEnum;
-(function (ClusterVolumeSpecAccessModeSharingEnum) {
-    ClusterVolumeSpecAccessModeSharingEnum["Empty"] = "";
-    ClusterVolumeSpecAccessModeSharingEnum["None"] = "none";
-    ClusterVolumeSpecAccessModeSharingEnum["Readonly"] = "readonly";
-    ClusterVolumeSpecAccessModeSharingEnum["Onewriter"] = "onewriter";
-    ClusterVolumeSpecAccessModeSharingEnum["All"] = "all";
-})(ClusterVolumeSpecAccessModeSharingEnum || (ClusterVolumeSpecAccessModeSharingEnum = {}));
-export var ClusterVolumeSpecAccessModeAvailabilityEnum;
-(function (ClusterVolumeSpecAccessModeAvailabilityEnum) {
-    ClusterVolumeSpecAccessModeAvailabilityEnum["Empty"] = "";
-    ClusterVolumeSpecAccessModeAvailabilityEnum["Active"] = "active";
-    ClusterVolumeSpecAccessModeAvailabilityEnum["Pause"] = "pause";
-    ClusterVolumeSpecAccessModeAvailabilityEnum["Drain"] = "drain";
-})(ClusterVolumeSpecAccessModeAvailabilityEnum || (ClusterVolumeSpecAccessModeAvailabilityEnum = {}));
-export var ClusterVolumePublishStatusStateEnum;
-(function (ClusterVolumePublishStatusStateEnum) {
-    ClusterVolumePublishStatusStateEnum["Empty"] = "";
-    ClusterVolumePublishStatusStateEnum["PendingPublish"] = "pending-publish";
-    ClusterVolumePublishStatusStateEnum["Published"] = "published";
-    ClusterVolumePublishStatusStateEnum["PendingNodeUnpublish"] = "pending-node-unpublish";
-    ClusterVolumePublishStatusStateEnum["PendingControllerUnpublish"] = "pending-controller-unpublish";
-})(ClusterVolumePublishStatusStateEnum || (ClusterVolumePublishStatusStateEnum = {}));
 export var TaskState;
 (function (TaskState) {
     TaskState["NEW"] = "new";
@@ -686,6 +651,41 @@ export var SwarmSpecCaConfigExternalCasProtocolEnum;
     SwarmSpecCaConfigExternalCasProtocolEnum["EMPTY"] = "";
     SwarmSpecCaConfigExternalCasProtocolEnum["CFSSL"] = "cfssl";
 })(SwarmSpecCaConfigExternalCasProtocolEnum || (SwarmSpecCaConfigExternalCasProtocolEnum = {}));
+export var VolumeScopeEnum;
+(function (VolumeScopeEnum) {
+    VolumeScopeEnum["Empty"] = "";
+    VolumeScopeEnum["Local"] = "local";
+    VolumeScopeEnum["Global"] = "global";
+})(VolumeScopeEnum || (VolumeScopeEnum = {}));
+export var ClusterVolumeSpecAccessModeScopeEnum;
+(function (ClusterVolumeSpecAccessModeScopeEnum) {
+    ClusterVolumeSpecAccessModeScopeEnum["Empty"] = "";
+    ClusterVolumeSpecAccessModeScopeEnum["Single"] = "single";
+    ClusterVolumeSpecAccessModeScopeEnum["Multi"] = "multi";
+})(ClusterVolumeSpecAccessModeScopeEnum || (ClusterVolumeSpecAccessModeScopeEnum = {}));
+export var ClusterVolumeSpecAccessModeSharingEnum;
+(function (ClusterVolumeSpecAccessModeSharingEnum) {
+    ClusterVolumeSpecAccessModeSharingEnum["Empty"] = "";
+    ClusterVolumeSpecAccessModeSharingEnum["None"] = "none";
+    ClusterVolumeSpecAccessModeSharingEnum["Readonly"] = "readonly";
+    ClusterVolumeSpecAccessModeSharingEnum["Onewriter"] = "onewriter";
+    ClusterVolumeSpecAccessModeSharingEnum["All"] = "all";
+})(ClusterVolumeSpecAccessModeSharingEnum || (ClusterVolumeSpecAccessModeSharingEnum = {}));
+export var ClusterVolumeSpecAccessModeAvailabilityEnum;
+(function (ClusterVolumeSpecAccessModeAvailabilityEnum) {
+    ClusterVolumeSpecAccessModeAvailabilityEnum["Empty"] = "";
+    ClusterVolumeSpecAccessModeAvailabilityEnum["Active"] = "active";
+    ClusterVolumeSpecAccessModeAvailabilityEnum["Pause"] = "pause";
+    ClusterVolumeSpecAccessModeAvailabilityEnum["Drain"] = "drain";
+})(ClusterVolumeSpecAccessModeAvailabilityEnum || (ClusterVolumeSpecAccessModeAvailabilityEnum = {}));
+export var ClusterVolumePublishStatusStateEnum;
+(function (ClusterVolumePublishStatusStateEnum) {
+    ClusterVolumePublishStatusStateEnum["Empty"] = "";
+    ClusterVolumePublishStatusStateEnum["PendingPublish"] = "pending-publish";
+    ClusterVolumePublishStatusStateEnum["Published"] = "published";
+    ClusterVolumePublishStatusStateEnum["PendingNodeUnpublish"] = "pending-node-unpublish";
+    ClusterVolumePublishStatusStateEnum["PendingControllerUnpublish"] = "pending-controller-unpublish";
+})(ClusterVolumePublishStatusStateEnum || (ClusterVolumePublishStatusStateEnum = {}));
 export var PortTypeEnum;
 (function (PortTypeEnum) {
     PortTypeEnum["EMPTY"] = "";

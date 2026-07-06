@@ -25,10 +25,10 @@ export default function ProviderSelector({
 }: ProviderSelectorProps) {
   const [dbRequest, configRequest]:
     | ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-    | ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"] =
+    | ["ListImageRegistryAccounts", "ListImageRegistriesFromConfig"] =
     accountType === "git"
       ? ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-      : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
+      : ["ListImageRegistryAccounts", "ListImageRegistriesFromConfig"];
   const dbProviders = useRead(dbRequest, {}).data;
   const configProviders = useRead(configRequest, {}).data;
   const [customMode, setCustomMode] = useState(false);

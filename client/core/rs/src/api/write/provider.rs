@@ -104,88 +104,94 @@ pub type DeleteGitProviderAccountResponse = GitProviderAccount;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/CreateDockerRegistryAccount",
-  description = "**Admin only.** Create a docker registry account.",
-  request_body(content = CreateDockerRegistryAccount),
+  path = "/CreateImageRegistryAccount",
+  description = "**Admin only.** Create an image registry account.",
+  request_body(content = CreateImageRegistryAccount),
   responses(
-    (status = 200, description = "The created account", body = CreateDockerRegistryAccountResponse),
+    (status = 200, description = "The created account", body = CreateImageRegistryAccountResponse),
   ),
 )]
-pub fn create_docker_registry_account() {}
+pub fn create_image_registry_account() {}
 
-/// **Admin only.** Create a docker registry account.
-/// Response: [DockerRegistryAccount].
+/// **Admin only.** Create an image registry account.
+/// Response: [ImageRegistryAccount].
+///
+/// Pre v2.3.0, called `CreateDockerRegistryAccount`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
-#[response(CreateDockerRegistryAccountResponse)]
+#[response(CreateImageRegistryAccountResponse)]
 #[error(mogh_error::Error)]
-pub struct CreateDockerRegistryAccount {
-  pub account: _PartialDockerRegistryAccount,
+pub struct CreateImageRegistryAccount {
+  pub account: _PartialImageRegistryAccount,
 }
 
 #[typeshare]
-pub type CreateDockerRegistryAccountResponse = DockerRegistryAccount;
+pub type CreateImageRegistryAccountResponse = ImageRegistryAccount;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/UpdateDockerRegistryAccount",
-  description = "**Admin only.** Update a docker registry account.",
-  request_body(content = UpdateDockerRegistryAccount),
+  path = "/UpdateImageRegistryAccount",
+  description = "**Admin only.** Update an image registry account.",
+  request_body(content = UpdateImageRegistryAccount),
   responses(
-    (status = 200, description = "The updated account", body = UpdateDockerRegistryAccountResponse),
+    (status = 200, description = "The updated account", body = UpdateImageRegistryAccountResponse),
   ),
 )]
-pub fn update_docker_registry_account() {}
+pub fn update_image_registry_account() {}
 
-/// **Admin only.** Update a docker registry account.
-/// Response: [DockerRegistryAccount].
+/// **Admin only.** Update a image registry account.
+/// Response: [ImageRegistryAccount].
+///
+/// Pre v2.3.0, called `UpdateDockerRegistryAccount`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
-#[response(UpdateDockerRegistryAccountResponse)]
+#[response(UpdateImageRegistryAccountResponse)]
 #[error(mogh_error::Error)]
-pub struct UpdateDockerRegistryAccount {
-  /// The id of the docker registry to update
+pub struct UpdateImageRegistryAccount {
+  /// The id of the image registry to update
   pub id: String,
-  /// The partial docker registry account.
-  pub account: _PartialDockerRegistryAccount,
+  /// The partial image registry account.
+  pub account: _PartialImageRegistryAccount,
 }
 
 #[typeshare]
-pub type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
+pub type UpdateImageRegistryAccountResponse = ImageRegistryAccount;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/DeleteDockerRegistryAccount",
-  description = "**Admin only.** Delete a docker registry account.",
-  request_body(content = DeleteDockerRegistryAccount),
+  path = "/DeleteImageRegistryAccount",
+  description = "**Admin only.** Delete an image registry account.",
+  request_body(content = DeleteImageRegistryAccount),
   responses(
-    (status = 200, description = "The deleted account", body = DeleteDockerRegistryAccountResponse),
+    (status = 200, description = "The deleted account", body = DeleteImageRegistryAccountResponse),
   ),
 )]
-pub fn delete_docker_registry_account() {}
+pub fn delete_image_registry_account() {}
 
-/// **Admin only.** Delete a docker registry account.
-/// Response: [DockerRegistryAccount].
+/// **Admin only.** Delete an image registry account.
+/// Response: [ImageRegistryAccount].
+/// 
+/// Pre v2.3.0, called `DeleteDockerRegistryAccount`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
-#[response(DeleteDockerRegistryAccountResponse)]
+#[response(DeleteImageRegistryAccountResponse)]
 #[error(mogh_error::Error)]
-pub struct DeleteDockerRegistryAccount {
-  /// The id of the docker registry account to delete
+pub struct DeleteImageRegistryAccount {
+  /// The id of the image registry account to delete
   pub id: String,
 }
 
 #[typeshare]
-pub type DeleteDockerRegistryAccountResponse = DockerRegistryAccount;
+pub type DeleteImageRegistryAccountResponse = ImageRegistryAccount;

@@ -1,7 +1,7 @@
 use command::{CommandOptions, run_komodo_standard_command};
 use encoding::{EncodedJsonMessage, EncodedResponse};
 use komodo_client::entities::{
-  config::{DockerRegistry, GitProvider},
+  config::{GitProvider, ImageRegistry},
   stats::SystemProcess,
   update::Log,
 };
@@ -54,7 +54,7 @@ pub enum PeripheryRequest {
 
   // Config (Read)
   ListGitProviders(ListGitProviders),
-  ListDockerRegistries(ListDockerRegistries),
+  ListImageRegistries(ListImageRegistries),
   ListSecrets(ListSecrets),
 
   // Repo (Write)
@@ -226,12 +226,12 @@ impl Resolve<Args> for ListGitProviders {
   }
 }
 
-impl Resolve<Args> for ListDockerRegistries {
+impl Resolve<Args> for ListImageRegistries {
   async fn resolve(
     self,
     _: &Args,
-  ) -> anyhow::Result<Vec<DockerRegistry>> {
-    Ok(periphery_config().docker_registries.0.clone())
+  ) -> anyhow::Result<Vec<ImageRegistry>> {
+    Ok(periphery_config().image_registries.0.clone())
   }
 }
 

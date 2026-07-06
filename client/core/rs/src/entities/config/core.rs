@@ -23,7 +23,7 @@ use crate::{
   },
 };
 
-use super::{DockerRegistry, GitProvider, empty_or_redacted};
+use super::{GitProvider, ImageRegistry, empty_or_redacted};
 
 /// # Komodo Core Environment Variables
 ///
@@ -726,14 +726,17 @@ pub struct CoreConfig {
   // ======================
   // = Registry Providers =
   // ======================
-  /// Configure docker credentials used to push / pull images.
-  /// Supports any docker image repository.
+  /// Configure image registry credentials used to push / pull images.
+  ///
+  /// Pre v2.3.0, called `docker_registries`
   #[serde(
     default,
+    alias = "image_registry",
     alias = "docker_registry",
+    alias = "docker_registries",
     skip_serializing_if = "Vec::is_empty"
   )]
-  pub docker_registries: Vec<DockerRegistry>,
+  pub image_registries: Vec<ImageRegistry>,
 
   // ===========
   // = Secrets =
@@ -950,7 +953,7 @@ impl Default for CoreConfig {
       monitoring_interval: default_monitoring_interval(),
       aws: Default::default(),
       git_providers: Default::default(),
-      docker_registries: Default::default(),
+      image_registries: Default::default(),
       secrets: Default::default(),
       ssl_enabled: Default::default(),
       ssl_key_file: default_ssl_key_file(),
@@ -1080,8 +1083,8 @@ impl CoreConfig {
           provider
         })
         .collect(),
-      docker_registries: config
-        .docker_registries
+      image_registries: config
+        .image_registries
         .into_iter()
         .map(|mut provider| {
           provider.accounts.iter_mut().for_each(|account| {

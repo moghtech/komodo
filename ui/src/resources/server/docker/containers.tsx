@@ -12,7 +12,7 @@ export default function ServerContainers({
 }) {
   const _search = useServerDockerSearch();
   const containers =
-    useRead("ListDockerContainers", { server: id }, { refetchInterval: 10_000 })
+    useRead("ListContainers", { server: id }, { refetchInterval: 10_000 })
       .data ?? [];
   return (
     <ContainersSection

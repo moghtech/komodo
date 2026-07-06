@@ -247,7 +247,7 @@ export const DeploymentComponents: RequiredResourceComponents<
     Ports: ({ id }) => {
       const deployment = useDeployment(id);
       const container = useRead(
-        "ListDockerContainers",
+        "ListContainers",
         {
           server: deployment?.info.server_id!,
         },

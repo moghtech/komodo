@@ -23,30 +23,32 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/GetDockerContainersSummary",
+  path = "/GetContainersSummary",
   description = "Gets a summary of data relating to all containers.",
-  request_body(content = GetDockerContainersSummary),
+  request_body(content = GetContainersSummary),
   responses(
-    (status = 200, description = "The docker containers summary", body = GetDockerContainersSummaryResponse),
+    (status = 200, description = "The containers summary", body = GetContainersSummaryResponse),
   ),
 )]
-pub fn get_docker_containers_summary() {}
+pub fn get_containers_summary() {}
 
 /// Gets a summary of data relating to all containers.
-/// Response: [GetDockerContainersSummaryResponse].
+/// Response: [GetContainersSummaryResponse].
+///
+/// Pre v2.3.0, called `GetDockerContainersSummary`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(GetDockerContainersSummaryResponse)]
+#[response(GetContainersSummaryResponse)]
 #[error(mogh_error::Error)]
-pub struct GetDockerContainersSummary {}
+pub struct GetContainersSummary {}
 
-/// Response for [GetDockerContainersSummary]
+/// Response for [GetContainersSummary]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct GetDockerContainersSummaryResponse {
+pub struct GetContainersSummaryResponse {
   /// The total number of Containers
   pub total: u32,
   /// The number of Containers with Running state
@@ -64,24 +66,26 @@ pub struct GetDockerContainersSummaryResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/ListAllDockerContainers",
-  description = "List all docker containers on the target servers.",
-  request_body(content = ListAllDockerContainers),
+  path = "/ListAllContainers",
+  description = "List all containers on the target servers.",
+  request_body(content = ListAllContainers),
   responses(
-    (status = 200, description = "The list of containers", body = ListAllDockerContainersResponse),
+    (status = 200, description = "The list of containers", body = ListAllContainersResponse),
   ),
 )]
-pub fn list_all_docker_containers() {}
+pub fn list_all_containers() {}
 
-/// List all docker containers on the target servers.
-/// Response: [ListDockerContainersResponse].
+/// List all containers on the target servers.
+/// Response: [ListAllContainersResponse].
+///
+/// Pre v2.3.0, called `ListAllDockerContainers`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(ListAllDockerContainersResponse)]
+#[response(ListAllContainersResponse)]
 #[error(mogh_error::Error)]
-pub struct ListAllDockerContainers {
+pub struct ListAllContainers {
   /// Filter by server id or name.
   #[serde(default)]
   pub servers: Vec<String>,
@@ -118,61 +122,65 @@ fn default_limit() -> u64 {
 }
 
 #[typeshare]
-pub type ListAllDockerContainersResponse = Vec<ContainerListItem>;
+pub type ListAllContainersResponse = Vec<ContainerListItem>;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/ListDockerContainers",
-  description = "List all docker containers on the target server.",
-  request_body(content = ListDockerContainers),
+  path = "/ListContainers",
+  description = "List all containers on the target server.",
+  request_body(content = ListContainers),
   responses(
-    (status = 200, description = "The list of containers", body = ListDockerContainersResponse),
+    (status = 200, description = "The list of containers", body = ListContainersResponse),
   ),
 )]
-pub fn list_docker_containers() {}
+pub fn list_containers() {}
 
-/// List all docker containers on the target server.
-/// Response: [ListDockerContainersResponse].
+/// List all containers on the target server.
+/// Response: [ListContainersResponse].
+///
+/// Pre v2.3.0, called `ListDockerContainers`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(ListDockerContainersResponse)]
+#[response(ListContainersResponse)]
 #[error(mogh_error::Error)]
-pub struct ListDockerContainers {
+pub struct ListContainers {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
 }
 
 #[typeshare]
-pub type ListDockerContainersResponse = Vec<ContainerListItem>;
+pub type ListContainersResponse = Vec<ContainerListItem>;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/InspectDockerContainer",
-  description = "Inspect a docker container on the server.",
-  request_body(content = InspectDockerContainer),
+  path = "/InspectContainer",
+  description = "Inspect a container on the server.",
+  request_body(content = InspectContainer),
   responses(
-    (status = 200, description = "The container", body = InspectDockerContainerResponse),
+    (status = 200, description = "The container", body = InspectContainerResponse),
   ),
 )]
-pub fn inspect_docker_container() {}
+pub fn inspect_container() {}
 
-/// Inspect a docker container on the server. Response: [Container].
+/// Inspect a container on the server. Response: [Container].
+///
+/// Pre v2.3.0, called `InspectDockerContainer`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(InspectDockerContainerResponse)]
+#[response(InspectContainerResponse)]
 #[error(mogh_error::Error)]
-pub struct InspectDockerContainer {
+pub struct InspectContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
@@ -181,7 +189,7 @@ pub struct InspectDockerContainer {
 }
 
 #[typeshare]
-pub type InspectDockerContainerResponse = Container;
+pub type InspectContainerResponse = Container;
 
 //
 
@@ -322,7 +330,7 @@ pub type SearchContainerLogResponse = Log;
 #[utoipa::path(
   post,
   path = "/ListComposeProjects",
-  description = "List all docker compose projects on the target server.",
+  description = "List all compose projects on the target server.",
   request_body(content = ListComposeProjects),
   responses(
     (status = 200, description = "The list of compose projects", body = ListComposeProjectsResponse),
@@ -330,7 +338,7 @@ pub type SearchContainerLogResponse = Log;
 )]
 pub fn list_compose_projects() {}
 
-/// List all docker compose projects on the target server.
+/// List all compose projects on the target server.
 /// Response: [ListComposeProjectsResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -352,53 +360,57 @@ pub type ListComposeProjectsResponse = Vec<ComposeProject>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/ListDockerNetworks",
-  description = "List the docker networks on the server.",
-  request_body(content = ListDockerNetworks),
+  path = "/ListNetworks",
+  description = "List the container networks on the server.",
+  request_body(content = ListNetworks),
   responses(
-    (status = 200, description = "The list of networks", body = ListDockerNetworksResponse),
+    (status = 200, description = "The list of networks", body = ListNetworksResponse),
   ),
 )]
-pub fn list_docker_networks() {}
+pub fn list_networks() {}
 
-/// List the docker networks on the server. Response: [ListDockerNetworksResponse].
+/// List the container networks on the server. Response: [ListNetworksResponse].
+///
+/// Pre v2.3.0, called `ListDockerNetworks`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(ListDockerNetworksResponse)]
+#[response(ListNetworksResponse)]
 #[error(mogh_error::Error)]
-pub struct ListDockerNetworks {
+pub struct ListNetworks {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
 }
 
 #[typeshare]
-pub type ListDockerNetworksResponse = Vec<NetworkListItem>;
+pub type ListNetworksResponse = Vec<NetworkListItem>;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/InspectDockerNetwork",
-  description = "Inspect a docker network on the server.",
-  request_body(content = InspectDockerNetwork),
+  path = "/InspectNetwork",
+  description = "Inspect a container network on the server.",
+  request_body(content = InspectNetwork),
   responses(
-    (status = 200, description = "The network", body = InspectDockerNetworkResponse),
+    (status = 200, description = "The network", body = InspectNetworkResponse),
   ),
 )]
-pub fn inspect_docker_network() {}
+pub fn inspect_network() {}
 
-/// Inspect a docker network on the server. Response: [InspectDockerNetworkResponse].
+/// Inspect a container network on the server. Response: [InspectNetworkResponse].
+///
+/// Pre v2.3.0, called `InspectDockerNetwork`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(InspectDockerNetworkResponse)]
+#[response(InspectNetworkResponse)]
 #[error(mogh_error::Error)]
-pub struct InspectDockerNetwork {
+pub struct InspectNetwork {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
@@ -407,61 +419,65 @@ pub struct InspectDockerNetwork {
 }
 
 #[typeshare]
-pub type InspectDockerNetworkResponse = Network;
+pub type InspectNetworkResponse = Network;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/ListDockerImages",
-  description = "List the docker images locally cached on the target server.",
-  request_body(content = ListDockerImages),
+  path = "/ListImages",
+  description = "List the container images locally cached on the target server.",
+  request_body(content = ListImages),
   responses(
-    (status = 200, description = "The list of images", body = ListDockerImagesResponse),
+    (status = 200, description = "The list of images", body = ListImagesResponse),
   ),
 )]
-pub fn list_docker_images() {}
+pub fn list_images() {}
 
-/// List the docker images locally cached on the target server.
-/// Response: [ListDockerImagesResponse].
+/// List the container images locally cached on the target server.
+/// Response: [ListImagesResponse].
+///
+/// Pre v2.3.0, called `ListDockerImages`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(ListDockerImagesResponse)]
+#[response(ListImagesResponse)]
 #[error(mogh_error::Error)]
-pub struct ListDockerImages {
+pub struct ListImages {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
 }
 
 #[typeshare]
-pub type ListDockerImagesResponse = Vec<ImageListItem>;
+pub type ListImagesResponse = Vec<ImageListItem>;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/InspectDockerImage",
-  description = "Inspect a docker image on the server.",
-  request_body(content = InspectDockerImage),
+  path = "/InspectImage",
+  description = "Inspect a container image on the server.",
+  request_body(content = InspectImage),
   responses(
-    (status = 200, description = "The image", body = InspectDockerImageResponse),
+    (status = 200, description = "The image", body = InspectImageResponse),
   ),
 )]
-pub fn inspect_docker_image() {}
+pub fn inspect_image() {}
 
-/// Inspect a docker image on the server. Response: [Image].
+/// Inspect a container image on the server. Response: [Image].
+///
+/// Pre v2.3.0, called `InspectDockerImage`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(InspectDockerImageResponse)]
+#[response(InspectImageResponse)]
 #[error(mogh_error::Error)]
-pub struct InspectDockerImage {
+pub struct InspectImage {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
@@ -470,30 +486,32 @@ pub struct InspectDockerImage {
 }
 
 #[typeshare]
-pub type InspectDockerImageResponse = Image;
+pub type InspectImageResponse = Image;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/ListDockerImageHistory",
+  path = "/ListImageHistory",
   description = "Get image history from the server.",
-  request_body(content = ListDockerImageHistory),
+  request_body(content = ListImageHistory),
   responses(
-    (status = 200, description = "The image history", body = ListDockerImageHistoryResponse),
+    (status = 200, description = "The image history", body = ListImageHistoryResponse),
   ),
 )]
-pub fn list_docker_image_history() {}
+pub fn list_image_history() {}
 
-/// Get image history from the server. Response: [ListDockerImageHistoryResponse].
+/// Get image history from the server. Response: [ListImageHistoryResponse].
+///
+/// Pre v2.3.0, called `ListDockerImageHistory`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(ListDockerImageHistoryResponse)]
+#[response(ListImageHistoryResponse)]
 #[error(mogh_error::Error)]
-pub struct ListDockerImageHistory {
+pub struct ListImageHistory {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
@@ -502,62 +520,65 @@ pub struct ListDockerImageHistory {
 }
 
 #[typeshare]
-pub type ListDockerImageHistoryResponse =
-  Vec<ImageHistoryResponseItem>;
+pub type ListImageHistoryResponse = Vec<ImageHistoryResponseItem>;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/ListDockerVolumes",
-  description = "List all docker volumes on the target server.",
-  request_body(content = ListDockerVolumes),
+  path = "/ListVolumes",
+  description = "List all container volumes on the target server.",
+  request_body(content = ListVolumes),
   responses(
-    (status = 200, description = "The list of volumes", body = ListDockerVolumesResponse),
+    (status = 200, description = "The list of volumes", body = ListVolumesResponse),
   ),
 )]
-pub fn list_docker_volumes() {}
+pub fn list_volumes() {}
 
-/// List all docker volumes on the target server.
-/// Response: [ListDockerVolumesResponse].
+/// List all container volumes on the target server.
+/// Response: [ListVolumesResponse].
+///
+/// Pre v2.3.0, called `ListDockerVolumes`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(ListDockerVolumesResponse)]
+#[response(ListVolumesResponse)]
 #[error(mogh_error::Error)]
-pub struct ListDockerVolumes {
+pub struct ListVolumes {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
 }
 
 #[typeshare]
-pub type ListDockerVolumesResponse = Vec<VolumeListItem>;
+pub type ListVolumesResponse = Vec<VolumeListItem>;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/InspectDockerVolume",
-  description = "Inspect a docker volume on the server.",
-  request_body(content = InspectDockerVolume),
+  path = "/InspectVolume",
+  description = "Inspect a container volume on the server.",
+  request_body(content = InspectVolume),
   responses(
-    (status = 200, description = "The volume", body = InspectDockerVolumeResponse),
+    (status = 200, description = "The volume", body = InspectVolumeResponse),
   ),
 )]
-pub fn inspect_docker_volume() {}
+pub fn inspect_volume() {}
 
-/// Inspect a docker volume on the server. Response: [Volume].
+/// Inspect a container volume on the server. Response: [Volume].
+///
+/// Pre v2.3.0, called `InspectDockerVolume`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(InspectDockerVolumeResponse)]
+#[response(InspectVolumeResponse)]
 #[error(mogh_error::Error)]
-pub struct InspectDockerVolume {
+pub struct InspectVolume {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
@@ -566,4 +587,4 @@ pub struct InspectDockerVolume {
 }
 
 #[typeshare]
-pub type InspectDockerVolumeResponse = Volume;
+pub type InspectVolumeResponse = Volume;

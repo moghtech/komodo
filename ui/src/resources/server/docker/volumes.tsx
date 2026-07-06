@@ -18,7 +18,7 @@ export default function ServerVolumes({
 }) {
   const [search, setSearch] = useServerDockerSearch();
   const volumes =
-    useRead("ListDockerVolumes", { server: id }, { refetchInterval: 10_000 })
+    useRead("ListVolumes", { server: id }, { refetchInterval: 10_000 })
       .data ?? [];
 
   const allInUse = volumes.every((volume) => volume.in_use);

@@ -38,7 +38,7 @@ export default function Containers() {
   const tags = useTagsFilter();
 
   const containers =
-    useRead("ListAllDockerContainers", {
+    useRead("ListAllContainers", {
       terms: searchTerms,
       servers: selectedServers,
       tags,

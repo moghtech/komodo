@@ -18,7 +18,7 @@ export default function ServerNetworks({
 }) {
   const [search, setSearch] = useServerDockerSearch();
   const networks =
-    useRead("ListDockerNetworks", { server: id }, { refetchInterval: 10_000 })
+    useRead("ListNetworks", { server: id }, { refetchInterval: 10_000 })
       .data ?? [];
 
   const allInUse = networks.every((network) =>

@@ -311,7 +311,7 @@ export const ServerComponents: RequiredResourceComponents<
         { refetchInterval: 5000 },
       ).data?.starting_containers;
       const dontShow =
-        useRead("ListDockerContainers", {
+        useRead("ListContainers", {
           server: id,
         }).data?.every(
           (container) =>
@@ -369,7 +369,7 @@ export const ServerComponents: RequiredResourceComponents<
         { refetchInterval: 5000 },
       ).data?.pausing_containers;
       const dontShow =
-        useRead("ListDockerContainers", {
+        useRead("ListContainers", {
           server: id,
         }).data?.every(
           (container) =>
@@ -404,7 +404,7 @@ export const ServerComponents: RequiredResourceComponents<
         { refetchInterval: 5000 },
       ).data?.unpausing_containers;
       const dontShow =
-        useRead("ListDockerContainers", {
+        useRead("ListContainers", {
           server: id,
         }).data?.every(
           (container) =>

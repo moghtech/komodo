@@ -447,7 +447,7 @@ pub fn core_config() -> &'static CoreConfig {
       // These can't be overridden on env
       secrets: config.secrets,
       git_providers: config.git_providers,
-      docker_registries: config.docker_registries,
+      image_registries: config.image_registries,
     }
   })
 }
