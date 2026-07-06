@@ -90,9 +90,7 @@ async fn send_message(
   let host = parsed
     .host_str()
     .context("MQTT broker URL must include a host")?;
-  let port = parsed
-    .port_or_known_default()
-    .context("MQTT broker URL must include a port")?;
+  let port = parsed.port().unwrap_or(1883);
 
   let client_id = client_id
     .filter(|id| !id.trim().is_empty())
@@ -102,8 +100,10 @@ async fn send_message(
   let mut options = MqttOptions::new(client_id, host, port);
   options.set_keep_alive(Duration::from_secs(10));
 
+  let username = username.filter(|value| !value.trim().is_empty());
+  let password = password.filter(|value| !value.trim().is_empty());
   let url_username = parsed.username();
-  let url_password = parsed.password();
+  let url_password = parsed.password().filter(|value| !value.is_empty());
   match (username, password) {
     (Some(user), Some(pass)) => {
       options.set_credentials(user, pass);
