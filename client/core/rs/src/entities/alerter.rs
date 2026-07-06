@@ -170,6 +170,9 @@ pub enum AlerterEndpoint {
 
   /// Send alert to Pushover
   Pushover(PushoverAlerterEndpoint),
+
+  /// Send alert JSON to an MQTT broker
+  Mqtt(MqttAlerterEndpoint),
 }
 
 impl Default for AlerterEndpoint {
@@ -317,6 +320,66 @@ fn default_pushover_url() -> String {
   String::from(
     "https://api.pushover.net/1/messages.json?token=XXXXXXXXXXXXX&user=XXXXXXXXXXXXX",
   )
+}
+
+/// Configuration for an MQTT alerter.
+#[typeshare]
+#[derive(
+  Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct MqttAlerterEndpoint {
+  /// MQTT broker URL. Example: `mqtt://localhost:1883`
+  #[serde(default = "default_mqtt_broker_url")]
+  #[builder(default = "default_mqtt_broker_url()")]
+  pub broker_url: String,
+
+  /// Topic to publish alerts to
+  #[serde(default = "default_mqtt_topic")]
+  #[builder(default = "default_mqtt_topic()")]
+  pub topic: String,
+
+  /// Optional username for broker authentication
+  pub username: Option<String>,
+
+  /// Optional password for broker authentication
+  pub password: Option<String>,
+
+  /// Optional client identifier. If empty, core will generate one.
+  pub client_id: Option<String>,
+
+  /// MQTT QoS level: 0, 1, or 2
+  #[serde(default)]
+  #[builder(default)]
+  pub qos: u8,
+
+  /// Whether the broker should retain the message
+  #[serde(default)]
+  #[builder(default)]
+  pub retain: bool,
+}
+
+impl Default for MqttAlerterEndpoint {
+  fn default() -> Self {
+    Self {
+      broker_url: default_mqtt_broker_url(),
+      topic: default_mqtt_topic(),
+      username: None,
+      password: None,
+      client_id: None,
+      qos: 0,
+      retain: false,
+    }
+  }
+}
+
+fn default_mqtt_broker_url() -> String {
+  String::from("mqtt://localhost:1883")
+}
+
+fn default_mqtt_topic() -> String {
+  String::from("komodo/events")
 }
 
 // QUERY

@@ -227,7 +227,9 @@ export type AlerterEndpoint =
 	/** Send alert to Ntfy */
 	| { type: "Ntfy", params: NtfyAlerterEndpoint }
 	/** Send alert to Pushover */
-	| { type: "Pushover", params: PushoverAlerterEndpoint };
+	| { type: "Pushover", params: PushoverAlerterEndpoint }
+	/** Send alert JSON to an MQTT broker */
+	| { type: "Mqtt", params: MqttAlerterEndpoint };
 
 /** Used to reference a specific resource across all resource types */
 export type ResourceTarget = 
@@ -9148,6 +9150,24 @@ export interface NtfyAlerterEndpoint {
 	 * SMTP must be configured on the ntfy server.
 	 */
 	email?: string;
+}
+
+/** Configuration for an MQTT alerter. */
+export interface MqttAlerterEndpoint {
+	/** MQTT broker URL. Example: `mqtt://localhost:1883` */
+	broker_url: string;
+	/** Topic to publish alerts to */
+	topic: string;
+	/** Optional username for broker authentication */
+	username?: string;
+	/** Optional password for broker authentication */
+	password?: string;
+	/** Optional client identifier. If empty, core will generate one. */
+	client_id?: string;
+	/** MQTT QoS level: 0, 1, or 2 */
+	qos: number;
+	/** Whether the broker should retain the message */
+	retain: boolean;
 }
 
 /** Pauses all containers on the target server. Response: [Update] */

@@ -70,4 +70,5 @@ All resources which depend on git repos / docker registries are able to use thes
 ## Alerter
 
 - Route alerts to various endpoints.
+- Native endpoints include `Discord`, `Slack`, `Ntfy`, `Pushover`, `MQTT`, and `Custom`.
 - Can configure rules on each Alerter, such as resource whitelist, blacklist, or alert type filter.

@@ -18,6 +18,7 @@ use crate::helpers::{
 use crate::{config::core_config, state::db_client};
 
 mod discord;
+mod mqtt;
 mod ntfy;
 mod pushover;
 mod slack;
@@ -148,6 +149,14 @@ pub async fn send_alert_to_alerter(
         )
       })
     }
+    AlerterEndpoint::Mqtt(mqtt_endpoint) => mqtt::send_alert(
+      mqtt_endpoint,
+      alert,
+    )
+    .await
+    .with_context(|| {
+      format!("Failed to send alert to MQTT Alerter {}", alerter.name)
+    }),
   }
 }
 
