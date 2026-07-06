@@ -59,11 +59,11 @@ pub struct Alert {
 /// The variants of data related to the alert.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, EnumDiscriminants)]
-#[strum_discriminants(name(AlertDataVariant))]
+#[strum_discriminants(name(AlertDataVariant), derive(Display))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   not(feature = "utoipa"),
-  strum_discriminants(derive(Serialize, Deserialize, Hash))
+  strum_discriminants(derive(Serialize, Deserialize, Hash, Display))
 )]
 #[cfg_attr(
   feature = "utoipa",
@@ -71,6 +71,7 @@ pub struct Alert {
     Serialize,
     Deserialize,
     Hash,
+    Display,
     utoipa::ToSchema
   ))
 )]
