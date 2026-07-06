@@ -63,7 +63,7 @@ pub struct Alert {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   not(feature = "utoipa"),
-  strum_discriminants(derive(Serialize, Deserialize, Hash, Display))
+  strum_discriminants(derive(Serialize, Deserialize, Hash))
 )]
 #[cfg_attr(
   feature = "utoipa",
@@ -71,7 +71,6 @@ pub struct Alert {
     Serialize,
     Deserialize,
     Hash,
-    Display,
     utoipa::ToSchema
   ))
 )]
