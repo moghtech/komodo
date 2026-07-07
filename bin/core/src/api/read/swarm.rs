@@ -46,6 +46,8 @@ impl Resolve<ReadArgs> for ListSwarms {
     Ok(
       resource::list_for_user::<Swarm>(
         self.query,
+        None,
+        None,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -68,6 +70,8 @@ impl Resolve<ReadArgs> for ListFullSwarms {
     Ok(
       resource::list_full_for_user::<Swarm>(
         self.query,
+        None,
+        None,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -105,6 +109,8 @@ impl Resolve<ReadArgs> for GetSwarmsSummary {
   ) -> mogh_error::Result<GetSwarmsSummaryResponse> {
     let swarms = resource::list_full_for_user::<Swarm>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],

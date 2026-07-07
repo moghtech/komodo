@@ -293,6 +293,8 @@ impl Resolve<WriteArgs> for BatchDeleteAllTerminals {
 
     resource::list_full_for_user::<Server>(
       self.query,
+      None,
+      None,
       user,
       PermissionLevel::Read.terminal(),
       &all_tags,

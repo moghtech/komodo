@@ -555,6 +555,8 @@ async fn extend_batch_exection<E: ExtendBatch>(
   let more = list_full_for_user_using_pattern::<E::Resource>(
     pattern,
     Default::default(),
+    None,
+    None,
     procedure_user(),
     PermissionLevel::Read.into(),
     &[],

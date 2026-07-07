@@ -55,6 +55,8 @@ async fn get_all_targets(
         targets.extend(
           resource::list_full_for_user::<$Type>(
             ResourceQuery::builder().tags(tags).build(),
+            None,
+            None,
             user,
             PermissionLevel::Read.into(),
             &all_tags,

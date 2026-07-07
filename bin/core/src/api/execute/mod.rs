@@ -363,6 +363,8 @@ async fn batch_execute<E: BatchExecute>(
   let resources = list_full_for_user_using_pattern::<E::Resource>(
     pattern,
     Default::default(),
+    None,
+    None,
     user,
     PermissionLevel::Execute.into(),
     &[],

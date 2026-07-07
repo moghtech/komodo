@@ -48,6 +48,8 @@ impl Resolve<ReadArgs> for ListActions {
     Ok(
       resource::list_for_user::<Action>(
         self.query,
+        None,
+        None,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -70,6 +72,8 @@ impl Resolve<ReadArgs> for ListFullActions {
     Ok(
       resource::list_full_for_user::<Action>(
         self.query,
+        None,
+        None,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -107,6 +111,8 @@ impl Resolve<ReadArgs> for GetActionsSummary {
   ) -> mogh_error::Result<GetActionsSummaryResponse> {
     let actions = resource::list_full_for_user::<Action>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],

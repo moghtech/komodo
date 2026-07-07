@@ -92,6 +92,8 @@ async fn list_all_terminals_for_user(
   let (mut servers, stacks, deployments) = tokio::try_join!(
     resource::list_full_for_user::<Server>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.terminal(),
       &[]
@@ -103,12 +105,16 @@ async fn list_all_terminals_for_user(
       .collect::<Vec<_>>())),
     resource::list_full_for_user::<Stack>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.terminal(),
       &[]
     ),
     resource::list_full_for_user::<Deployment>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.terminal(),
       &[]

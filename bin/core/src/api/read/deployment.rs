@@ -65,6 +65,8 @@ impl Resolve<ReadArgs> for ListDeployments {
     let only_update_available = self.query.specific.update_available;
     let deployments = resource::list_for_user::<Deployment>(
       self.query,
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
@@ -95,6 +97,8 @@ impl Resolve<ReadArgs> for ListFullDeployments {
     Ok(
       resource::list_full_for_user::<Deployment>(
         self.query,
+        None,
+        None,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -374,6 +378,8 @@ impl Resolve<ReadArgs> for GetDeploymentsSummary {
   ) -> mogh_error::Result<GetDeploymentsSummaryResponse> {
     let deployments = resource::list_full_for_user::<Deployment>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],
@@ -422,6 +428,8 @@ impl Resolve<ReadArgs> for ListCommonDeploymentExtraArgs {
     };
     let deployments = resource::list_full_for_user::<Deployment>(
       self.query,
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &all_tags,

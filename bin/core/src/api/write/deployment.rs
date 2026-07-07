@@ -632,6 +632,8 @@ impl Resolve<WriteArgs> for BatchCheckDeploymentForUpdate {
     let deployments = list_full_for_user_using_pattern::<Deployment>(
       &self.pattern,
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Execute.into(),
       &[],

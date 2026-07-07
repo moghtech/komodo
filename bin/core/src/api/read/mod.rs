@@ -480,18 +480,24 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
     let (builds, repos, syncs) = tokio::try_join!(
       resource::list_full_for_user::<Build>(
         Default::default(),
+        None,
+        None,
         user,
         PermissionLevel::Read.into(),
         &[]
       ),
       resource::list_full_for_user::<Repo>(
         Default::default(),
+        None,
+        None,
         user,
         PermissionLevel::Read.into(),
         &[]
       ),
       resource::list_full_for_user::<ResourceSync>(
         Default::default(),
+        None,
+        None,
         user,
         PermissionLevel::Read.into(),
         &[]

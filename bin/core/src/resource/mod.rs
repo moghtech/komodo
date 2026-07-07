@@ -262,20 +262,24 @@ pub async fn get<T: KomodoResource>(
 /// Get full resource list with no permissions check.
 pub async fn list_all_resources<T: KomodoResource>(
   filters: impl Into<Option<Document>>,
+  limit: impl Into<Option<i64>>,
+  skip: impl Into<Option<u64>>,
 ) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>> {
-  find_collect(
-    T::coll(),
-    filters,
-    FindOptions::builder().sort(doc! { "name": 1 }).build(),
-  )
-  .await
-  .with_context(|| {
-    format!("Failed to pull {}s from mongo", T::resource_type())
-  })
+  let options = FindOptions::builder()
+    .sort(doc! { "name": 1 })
+    .limit(limit)
+    .skip(skip);
+  find_collect(T::coll(), filters, options.build())
+    .await
+    .with_context(|| {
+      format!("Failed to pull {}s from mongo", T::resource_type())
+    })
 }
 
 pub async fn list_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,
+  limit: impl Into<Option<i64>>,
+  skip: impl Into<Option<u64>>,
   user: &User,
   permission: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
@@ -283,7 +287,10 @@ pub async fn list_for_user<T: KomodoResource>(
   validate_resource_query_tags(&mut query, all_tags)?;
   let mut filters = Document::new();
   query.add_filters(&mut filters);
-  list_for_user_using_document::<T>(filters, user, permission).await
+  list_for_user_using_document::<T>(
+    filters, limit, skip, user, permission,
+  )
+  .await
 }
 
 // // pub async fn list_for_user_using_pattern<T: KomodoResource>(
@@ -308,13 +315,17 @@ pub async fn list_for_user<T: KomodoResource>(
 
 pub async fn list_for_user_using_document<T: KomodoResource>(
   filters: Document,
+  limit: impl Into<Option<i64>>,
+  skip: impl Into<Option<u64>>,
   user: &User,
   permission: PermissionLevelAndSpecifics,
 ) -> anyhow::Result<Vec<T::ListItem>> {
-  let list = list_resources_for_user::<T>(filters, user, permission)
-    .await?
-    .into_iter()
-    .map(|resource| T::to_list_item(resource));
+  let list = list_resources_for_user::<T>(
+    filters, limit, skip, user, permission,
+  )
+  .await?
+  .into_iter()
+  .map(|resource| T::to_list_item(resource));
   Ok(join_all(list).await)
 }
 
@@ -329,13 +340,16 @@ pub async fn list_for_user_using_document<T: KomodoResource>(
 pub async fn list_full_for_user_using_pattern<T: KomodoResource>(
   pattern: &str,
   query: ResourceQuery<T::QuerySpecifics>,
+  limit: impl Into<Option<i64>>,
+  skip: impl Into<Option<u64>>,
   user: &User,
   permission: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
 ) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>> {
-  let resources =
-    list_full_for_user::<T>(query, user, permission, all_tags)
-      .await?;
+  let resources = list_full_for_user::<T>(
+    query, limit, skip, user, permission, all_tags,
+  )
+  .await?;
 
   let patterns = parse_string_list(pattern);
   let mut names = HashSet::<String>::new();
@@ -370,6 +384,8 @@ pub async fn list_full_for_user_using_pattern<T: KomodoResource>(
 
 pub async fn list_full_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,
+  limit: impl Into<Option<i64>>,
+  skip: impl Into<Option<u64>>,
   user: &User,
   permissions: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
@@ -377,7 +393,14 @@ pub async fn list_full_for_user<T: KomodoResource>(
   validate_resource_query_tags(&mut query, all_tags)?;
   let mut filters = Document::new();
   query.add_filters(&mut filters);
-  list_resources_for_user::<T>(filters, user, permissions).await
+  list_resources_for_user::<T>(
+    filters,
+    limit,
+    skip,
+    user,
+    permissions,
+  )
+  .await
 }
 
 pub type IdResourceMap<T> = HashMap<
