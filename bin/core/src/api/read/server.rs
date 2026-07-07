@@ -106,11 +106,12 @@ impl Resolve<ReadArgs> for ListServers {
     } else {
       get_all_tags(None).await?
     };
+    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
       resource::list_for_user::<Server>(
         self.query,
-        self.limit as i64,
-        self.page * self.limit,
+        limit as i64,
+        self.page * limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -130,11 +131,12 @@ impl Resolve<ReadArgs> for ListFullServers {
     } else {
       get_all_tags(None).await?
     };
+    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
       resource::list_full_for_user::<Server>(
         self.query,
-        self.limit as i64,
-        self.page * self.limit,
+        limit as i64,
+        self.page * limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,

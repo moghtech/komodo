@@ -64,7 +64,7 @@ async fn list_containers(
       tags: Default::default(),
       terms: terms.clone(),
       state: Default::default(),
-      limit: 100,
+      limit: Some(100),
       // Page is more naturally given starting as 1, 2, 3.
       page: if *page == 0 { 0 } else { *page - 1 },
     }),
@@ -152,7 +152,7 @@ pub async fn inspect_container(
       tags: Default::default(),
       terms: vec![inspect.container.clone()],
       state: Default::default(),
-      limit: 300,
+      limit: Some(300),
       page: 0,
     }),
   )?;

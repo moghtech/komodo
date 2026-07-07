@@ -10,7 +10,7 @@ use crate::entities::{
   },
 };
 
-use super::{KomodoReadRequest, default_list_limit};
+use super::KomodoReadRequest;
 
 //
 
@@ -80,8 +80,7 @@ pub struct ListResourceSyncs {
   ///
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
-  #[serde(default = "default_list_limit")]
-  pub limit: U64,
+  pub limit: Option<U64>,
 }
 
 #[typeshare]
@@ -125,8 +124,7 @@ pub struct ListFullResourceSyncs {
   ///
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
-  #[serde(default = "default_list_limit")]
-  pub limit: U64,
+  pub limit: Option<U64>,
 }
 
 #[typeshare]

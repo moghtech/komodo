@@ -7,7 +7,7 @@ use crate::entities::{
   builder::{Builder, BuilderListItem, BuilderQuery},
 };
 
-use super::{KomodoReadRequest, default_list_limit};
+use super::KomodoReadRequest;
 
 //
 
@@ -76,8 +76,7 @@ pub struct ListBuilders {
   ///
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
-  #[serde(default = "default_list_limit")]
-  pub limit: U64,
+  pub limit: Option<U64>,
 }
 
 #[typeshare]
@@ -120,8 +119,7 @@ pub struct ListFullBuilders {
   ///
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
-  #[serde(default = "default_list_limit")]
-  pub limit: U64,
+  pub limit: Option<U64>,
 }
 
 #[typeshare]

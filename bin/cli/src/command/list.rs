@@ -58,8 +58,7 @@ pub async fn handle(list: &args::list::List) -> anyhow::Result<()> {
         .await
     }
     Some(ListCommand::Swarms(filters)) => {
-      list_resources::<SwarmListItem>(filters, list.page, false)
-        .await
+      list_resources::<SwarmListItem>(filters, list.page, false).await
     }
     Some(ListCommand::Stacks(filters)) => {
       list_resources::<StackListItem>(filters, list.page, false).await
@@ -326,7 +325,7 @@ impl ListResources for ServerListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
       .await?;
@@ -372,7 +371,7 @@ impl ListResources for SwarmListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
       .await?;
@@ -415,6 +414,7 @@ impl ListResources for StackListItem {
       client
         .read(ListServers {
           query: ResourceQuery::builder().build(),
+          limit: Some(0),
           ..Default::default()
         })
         .map(|res| res.map(|res| res
@@ -427,7 +427,7 @@ impl ListResources for StackListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
     )?;
@@ -491,6 +491,7 @@ impl ListResources for DeploymentListItem {
       client
         .read(ListServers {
           query: ResourceQuery::builder().build(),
+          limit: Some(0),
           ..Default::default()
         })
         .map(|res| res.map(|res| res
@@ -503,7 +504,7 @@ impl ListResources for DeploymentListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
     )?;
@@ -568,6 +569,7 @@ impl ListResources for BuildListItem {
       client
         .read(ListBuilders {
           query: ResourceQuery::builder().build(),
+          limit: Some(0),
           ..Default::default()
         })
         .map(|res| res.map(|res| res
@@ -580,7 +582,7 @@ impl ListResources for BuildListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
     )?;
@@ -644,7 +646,7 @@ impl ListResources for RepoListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
       .await?
@@ -695,7 +697,7 @@ impl ListResources for ProcedureListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
       .await?
@@ -746,7 +748,7 @@ impl ListResources for ActionListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
       .await?
@@ -797,7 +799,7 @@ impl ListResources for ResourceSyncListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
       .await?
@@ -845,7 +847,7 @@ impl ListResources for BuilderListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
       .await?
@@ -880,7 +882,7 @@ impl ListResources for AlerterListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
-        limit: 100,
+        limit: Some(100),
         page: page.saturating_sub(1),
       })
       .await?
