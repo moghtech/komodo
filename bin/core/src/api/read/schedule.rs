@@ -29,11 +29,10 @@ impl Resolve<ReadArgs> for ListSchedules {
     let (actions, procedures) = tokio::try_join!(
       list_full_for_user::<Action>(
         ResourceQuery {
-          names: Default::default(),
           templates: TemplatesQueryBehavior::Include,
           tag_behavior: self.tag_behavior,
           tags: self.tags.clone(),
-          specific: Default::default(),
+          ..Default::default()
         },
         None,
         None,
@@ -43,11 +42,10 @@ impl Resolve<ReadArgs> for ListSchedules {
       ),
       list_full_for_user::<Procedure>(
         ResourceQuery {
-          names: Default::default(),
           templates: TemplatesQueryBehavior::Include,
           tag_behavior: self.tag_behavior,
           tags: self.tags.clone(),
-          specific: Default::default(),
+          ..Default::default()
         },
         None,
         None,

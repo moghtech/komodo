@@ -18,7 +18,7 @@ pub struct List {
   /// List only "in progress" / "pending" resources, like Actions / Procedures that are running (alias: `pending`)
   #[arg(
     long,
-    short = 'p',
+    short = 'i',
     alias = "pending",
     default_value_t = false
   )]
@@ -52,6 +52,9 @@ pub struct List {
   /// Specify the format of the output.
   #[arg(long, short = 'f', default_value_t = super::CliFormat::Table)]
   pub format: super::CliFormat,
+  /// Specify page for resource list, starting at 1.
+  #[arg(long, short = 'p', default_value_t = 1)]
+  pub page: u64,
 }
 
 impl From<List> for ResourceFilters {

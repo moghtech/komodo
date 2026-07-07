@@ -16,7 +16,7 @@ use crate::entities::{
   update::Log,
 };
 
-use super::KomodoReadRequest;
+use super::{KomodoReadRequest, default_list_limit};
 
 //
 
@@ -113,12 +113,8 @@ pub struct ListAllContainers {
   ///
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
-  #[serde(default = "default_limit")]
+  #[serde(default = "default_list_limit")]
   pub limit: U64,
-}
-
-fn default_limit() -> u64 {
-  100
 }
 
 #[typeshare]

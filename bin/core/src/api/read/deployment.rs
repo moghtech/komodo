@@ -65,8 +65,8 @@ impl Resolve<ReadArgs> for ListDeployments {
     let only_update_available = self.query.specific.update_available;
     let deployments = resource::list_for_user::<Deployment>(
       self.query,
-      None,
-      None,
+      self.limit as i64,
+      self.page * self.limit,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
@@ -97,8 +97,8 @@ impl Resolve<ReadArgs> for ListFullDeployments {
     Ok(
       resource::list_full_for_user::<Deployment>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,

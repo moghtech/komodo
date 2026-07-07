@@ -48,8 +48,8 @@ impl Resolve<ReadArgs> for ListActions {
     Ok(
       resource::list_for_user::<Action>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -72,8 +72,8 @@ impl Resolve<ReadArgs> for ListFullActions {
     Ok(
       resource::list_full_for_user::<Action>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,

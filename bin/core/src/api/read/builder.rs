@@ -48,8 +48,8 @@ impl Resolve<ReadArgs> for ListBuilders {
     Ok(
       resource::list_for_user::<Builder>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -72,8 +72,8 @@ impl Resolve<ReadArgs> for ListFullBuilders {
     Ok(
       resource::list_full_for_user::<Builder>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,

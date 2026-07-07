@@ -109,8 +109,8 @@ impl Resolve<ReadArgs> for ListServers {
     Ok(
       resource::list_for_user::<Server>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -133,8 +133,8 @@ impl Resolve<ReadArgs> for ListFullServers {
     Ok(
       resource::list_full_for_user::<Server>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
