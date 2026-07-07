@@ -7,7 +7,8 @@ use komodo_client::{
   api::read::{
     ListActions, ListAlerters, ListBuilders, ListBuilds,
     ListDeployments, ListProcedures, ListRepos, ListResourceSyncs,
-    ListSchedules, ListServers, ListStacks, ListTags, ListTerminals,
+    ListSchedules, ListServers, ListStacks, ListSwarms, ListTags,
+    ListTerminals,
   },
   entities::{
     ResourceTargetVariant,
@@ -31,6 +32,7 @@ use komodo_client::{
     schedule::Schedule,
     server::{ServerListItem, ServerListItemInfo, ServerState},
     stack::{StackListItem, StackListItemInfo, StackState},
+    swarm::{SwarmListItem, SwarmListItemInfo, SwarmState},
     sync::{
       ResourceSyncListItem, ResourceSyncListItemInfo,
       ResourceSyncState,
@@ -53,6 +55,10 @@ pub async fn handle(list: &args::list::List) -> anyhow::Result<()> {
     None => list_all(list).await,
     Some(ListCommand::Servers(filters)) => {
       list_resources::<ServerListItem>(filters, list.page, false)
+        .await
+    }
+    Some(ListCommand::Swarms(filters)) => {
+      list_resources::<SwarmListItem>(filters, list.page, false)
         .await
     }
     Some(ListCommand::Stacks(filters)) => {
@@ -106,6 +112,7 @@ async fn list_all(list: &args::list::List) -> anyhow::Result<()> {
   let (
     tags,
     mut servers,
+    mut swarms,
     mut stacks,
     mut deployments,
     mut builds,
@@ -119,6 +126,7 @@ async fn list_all(list: &args::list::List) -> anyhow::Result<()> {
       .map(|t| (t.id, t.name))
       .collect::<HashMap<_, _>>())),
     ServerListItem::list(client, &filters, list.page, true),
+    SwarmListItem::list(client, &filters, list.page, true),
     StackListItem::list(client, &filters, list.page, true),
     DeploymentListItem::list(client, &filters, list.page, true),
     BuildListItem::list(client, &filters, list.page, true),
@@ -131,6 +139,12 @@ async fn list_all(list: &args::list::List) -> anyhow::Result<()> {
   if !servers.is_empty() {
     fix_tags(&mut servers, &tags);
     print_items(servers, filters.format, list.links)?;
+    println!();
+  }
+
+  if !swarms.is_empty() {
+    fix_tags(&mut swarms, &tags);
+    print_items(swarms, filters.format, list.links)?;
     println!();
   }
 
@@ -329,6 +343,52 @@ impl ListResources for ServerListItem {
           false
         } else {
           matches!(server.info.state, ServerState::Ok)
+        };
+        let name_items = &[server.name.as_str()];
+        state_check
+          && matches_wildcards(&names, name_items)
+          && matches_wildcards(&server_wildcards, name_items)
+      })
+      .collect::<Vec<_>>();
+    servers.sort_by(|a, b| {
+      a.info.state.cmp(&b.info.state).then(a.name.cmp(&b.name))
+    });
+    Ok(servers)
+  }
+}
+
+impl ListResources for SwarmListItem {
+  type Info = SwarmListItemInfo;
+  async fn list(
+    client: &KomodoClient,
+    filters: &ResourceFilters,
+    page: u64,
+    _minimal: bool,
+  ) -> anyhow::Result<Vec<Self>> {
+    let servers = client
+      .read(ListSwarms {
+        query: ResourceQuery::builder()
+          .tags(filters.tags.clone())
+          // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
+          .build(),
+        limit: 100,
+        page: page.saturating_sub(1),
+      })
+      .await?;
+    let names = parse_wildcards(&filters.names);
+    let server_wildcards = parse_wildcards(&filters.servers);
+    let mut servers = servers
+      .into_iter()
+      .filter(|server| {
+        let state_check = if filters.all {
+          true
+        } else if filters.down {
+          !matches!(server.info.state, SwarmState::Healthy)
+        } else if filters.in_progress {
+          false
+        } else {
+          matches!(server.info.state, SwarmState::Healthy)
         };
         let name_items = &[server.name.as_str()];
         state_check
@@ -863,6 +923,39 @@ impl PrintTable for ResourceListItem<ServerListItemInfo> {
         .fg(color)
         .add_attribute(Attribute::Bold),
       Cell::new(self.info.address.as_deref().unwrap_or("inbound")),
+      Cell::new(self.tags.join(", ")),
+    ];
+    if links {
+      res.push(Cell::new(resource_link(
+        &cli_config().host,
+        ResourceTargetVariant::Server,
+        &self.id,
+      )))
+    }
+    res
+  }
+}
+
+impl PrintTable for ResourceListItem<SwarmListItemInfo> {
+  fn header(links: bool) -> &'static [&'static str] {
+    if links {
+      &["Swarm", "State", "Tags", "Link"]
+    } else {
+      &["Swarm", "State", "Tags"]
+    }
+  }
+  fn row(self, links: bool) -> Vec<Cell> {
+    let color = match self.info.state {
+      SwarmState::Healthy => Color::Green,
+      SwarmState::Unhealthy => Color::Red,
+      SwarmState::Down => Color::Blue,
+      SwarmState::Unknown => Color::Magenta,
+    };
+    let mut res = vec![
+      Cell::new(self.name).add_attribute(Attribute::Bold),
+      Cell::new(self.info.state.to_string())
+        .fg(color)
+        .add_attribute(Attribute::Bold),
       Cell::new(self.tags.join(", ")),
     ];
     if links {

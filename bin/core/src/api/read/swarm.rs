@@ -46,8 +46,8 @@ impl Resolve<ReadArgs> for ListSwarms {
     Ok(
       resource::list_for_user::<Swarm>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -70,8 +70,8 @@ impl Resolve<ReadArgs> for ListFullSwarms {
     Ok(
       resource::list_full_for_user::<Swarm>(
         self.query,
-        None,
-        None,
+        self.limit as i64,
+        self.page * self.limit,
         user,
         PermissionLevel::Read.into(),
         &all_tags,

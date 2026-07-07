@@ -18,7 +18,7 @@ use crate::entities::{
   update::Log,
 };
 
-use super::KomodoReadRequest;
+use super::{KomodoReadRequest, default_list_limit};
 
 //
 
@@ -75,6 +75,21 @@ pub struct ListSwarms {
   /// Optional structured query to filter Swarms.
   #[serde(default)]
   pub query: SwarmQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// `limit: 100` is default.
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  #[serde(default = "default_list_limit")]
+  pub limit: U64,
 }
 
 #[typeshare]
@@ -105,6 +120,21 @@ pub struct ListFullSwarms {
   /// optional structured query to filter swarms.
   #[serde(default)]
   pub query: SwarmQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// `limit: 100` is default.
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  #[serde(default = "default_list_limit")]
+  pub limit: U64,
 }
 
 #[typeshare]

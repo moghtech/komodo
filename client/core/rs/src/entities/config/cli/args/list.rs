@@ -45,6 +45,10 @@ pub struct List {
   /// Can be specified multiple times. (alias `s`)
   #[arg(name = "server", long, short = 's')]
   pub servers: Vec<String>,
+  /// Filter by a particular swarm. Supports wildcard.
+  /// Can be specified multiple times. (alias `w`)
+  #[arg(name = "swarm", long, short = 'w')]
+  pub swarms: Vec<String>,
   /// Filter by a particular builder. Supports wildcard.
   /// Can be specified multiple times. (alias `b`)
   #[arg(name = "builder", long, short = 'b')]
@@ -69,6 +73,7 @@ impl From<List> for ResourceFilters {
       names: value.names,
       tags: value.tags,
       servers: value.servers,
+      swarms: value.swarms,
       builders: value.builders,
       format: value.format,
     }
@@ -80,6 +85,9 @@ pub enum ListCommand {
   /// List Servers (aliases: `server`, `sv`)
   #[clap(alias = "server", alias = "sv")]
   Servers(ResourceFilters),
+  /// List Swarms (aliases: `swarm`, `sw`)
+  #[clap(alias = "swarm", alias = "sw")]
+  Swarms(ResourceFilters),
   /// List Stacks (aliases: `stack`, `st`)
   #[clap(alias = "stack", alias = "st")]
   Stacks(ResourceFilters),
@@ -157,6 +165,10 @@ pub struct ResourceFilters {
   /// Can be specified multiple times. (alias `s`)
   #[arg(name = "server", long, short = 's')]
   pub servers: Vec<String>,
+  /// Filter by a particular swarm. Supports wildcard.
+  /// Can be specified multiple times. (alias `w`)
+  #[arg(name = "swarm", long, short = 'w')]
+  pub swarms: Vec<String>,
   /// Filter by a particular builder. Supports wildcard.
   /// Can be specified multiple times. (alias `b`)
   #[arg(name = "builder", long, short = 'b')]
