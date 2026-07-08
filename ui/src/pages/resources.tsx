@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useFilterByUpdateAvailable,
   useRead,
@@ -10,7 +10,7 @@ import {
 } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
-import { Page, useDebounce } from "mogh_ui";
+import { Page } from "mogh_ui";
 import { Group, Pagination, Stack } from "@mantine/core";
 import { TableSkeleton } from "mogh_ui";
 import TemplateQuerySelector from "@/components/template-query-selector";
@@ -60,8 +60,16 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const [page, setPage] = useState(0);
   const _resources = useRead(`List${type}s`, { query, page }).data ?? [];
 
-  // Prevent flashing when typing / fetching
-  const resources = useDebounce(_resources, 100);
+  // Debounce: prevents flashing when typing / fetching.
+  // Must also set immediately upon change of resource type
+  const [resources, setResources] = useState(_resources);
+  useEffect(() => setResources(_resources), [type]);
+  useEffect(() => {
+    const handler = setTimeout(() => setResources(_resources), 100);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [_resources]);
 
   const RC = ResourceComponents[type];
 

@@ -1,4 +1,4 @@
-import { useRead, useResourceName, useSelectedResources } from "@/lib/hooks";
+import { useResourceName, useSelectedResources } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { ICONS } from "@/lib/icons";
 import { Group, BoxProps } from "@mantine/core";
@@ -111,21 +111,17 @@ const Image = ({
   buildId: string | undefined;
   image: string;
 }) => {
-  const builds = useRead("ListBuilds", {}).data;
   if (buildId) {
-    const build = builds?.find((build) => build.id === buildId);
-    if (build) {
-      return <ResourceLink type="Build" id={buildId} />;
-    } else {
-      return undefined;
-    }
+    return <ResourceLink type="Build" id={buildId} />;
   } else {
-    const [img] = image.split(":");
-    return (
-      <Group wrap="nowrap">
-        <ICONS.Image size="1rem" />
-        {img}
-      </Group>
-    );
+    const img = image?.split(":")?.[0];
+    if (img) {
+      return (
+        <Group wrap="nowrap">
+          <ICONS.Image size="1rem" />
+          {img}
+        </Group>
+      );
+    }
   }
 };
