@@ -28,6 +28,7 @@ use crate::{
     execute::{ExecuteArgs, ExecuteRequest},
     write::WriteArgs,
   },
+  config::core_config,
   resource::{KomodoResource, list_full_for_user_using_pattern},
   state::{all_resources_cache, db_client},
 };
@@ -505,9 +506,10 @@ async fn execute_execution(
     Ok(())
   } else {
     Err(anyhow!(
-      "{}: execution not successful. see update '{}'",
+      "{}: Execution not successful, see update: '{}/updates/{}'",
       colored("ERROR", Color::Red),
-      bold(&update.id),
+      core_config().host,
+      update.id,
     ))
   }
 }
