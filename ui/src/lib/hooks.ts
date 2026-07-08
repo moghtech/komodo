@@ -208,7 +208,7 @@ export function useAllResources(
     Swarm: useRead(
       "ListSwarms",
       {
-        query: { terms: terms?.filter((term) => "swarm".includes(term)) },
+        query: { terms: terms?.filter((term) => !"swarm".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -216,7 +216,7 @@ export function useAllResources(
     Server: useRead(
       "ListServers",
       {
-        query: { terms: terms?.filter((term) => "server".includes(term)) },
+        query: { terms: terms?.filter((term) => !"server".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -224,7 +224,7 @@ export function useAllResources(
     Stack: useRead(
       "ListStacks",
       {
-        query: { terms: terms?.filter((term) => "stack".includes(term)) },
+        query: { terms: terms?.filter((term) => !"stack".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -232,7 +232,7 @@ export function useAllResources(
     Deployment: useRead(
       "ListDeployments",
       {
-        query: { terms: terms?.filter((term) => "deployment".includes(term)) },
+        query: { terms: terms?.filter((term) => !"deployment".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -240,7 +240,7 @@ export function useAllResources(
     Build: useRead(
       "ListBuilds",
       {
-        query: { terms: terms?.filter((term) => "build".includes(term)) },
+        query: { terms: terms?.filter((term) => !"build".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -248,7 +248,7 @@ export function useAllResources(
     Repo: useRead(
       "ListRepos",
       {
-        query: { terms: terms?.filter((term) => "repo".includes(term)) },
+        query: { terms: terms?.filter((term) => !"repo".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -256,7 +256,7 @@ export function useAllResources(
     Procedure: useRead(
       "ListProcedures",
       {
-        query: { terms: terms?.filter((term) => "procedure".includes(term)) },
+        query: { terms: terms?.filter((term) => !"procedure".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -264,7 +264,7 @@ export function useAllResources(
     Action: useRead(
       "ListActions",
       {
-        query: { terms: terms?.filter((term) => "action".includes(term)) },
+        query: { terms: terms?.filter((term) => !"action".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -272,7 +272,7 @@ export function useAllResources(
     Builder: useRead(
       "ListBuilders",
       {
-        query: { terms: terms?.filter((term) => "builder".includes(term)) },
+        query: { terms: terms?.filter((term) => !"builder".includes(term)) },
         limit,
       },
       { refetchInterval },
@@ -280,14 +280,14 @@ export function useAllResources(
     Alerter: useRead(
       "ListAlerters",
       {
-        query: { terms: terms?.filter((term) => "alerter".includes(term)) },
+        query: { terms: terms?.filter((term) => !"alerter".includes(term)) },
         limit,
       },
       { refetchInterval },
     ).data,
     ResourceSync: useRead(
       "ListResourceSyncs",
-      { query: { terms: terms?.filter((term) => "sync".includes(term)) } },
+      { query: { terms: terms?.filter((term) => !"sync".includes(term)) } },
       { refetchInterval },
     ).data,
   };
