@@ -1,5 +1,5 @@
 import TagsFilter from "@/components/tags/filter";
-import { useFilterResources, useRead } from "@/lib/hooks";
+import { useRead, useTagsFilter, useTemplatesQueryBehavior } from "@/lib/hooks";
 import { usableResourcePath } from "@/lib/utils";
 import {
   RequiredResourceComponents,
@@ -7,10 +7,9 @@ import {
   UsableResource,
 } from "@/resources";
 import { ICONS } from "@/lib/icons";
-import { Section } from "mogh_ui";
+import { Section, useDebounce } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
-import { Types } from "komodo_client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNoResources from "./no-resources";
 import { ShowHideButton } from "mogh_ui";
@@ -48,18 +47,26 @@ function TableSection({
   RC: RequiredResourceComponents;
   search?: string;
 }) {
-  const resources = useRead(`List${type}s`, {}).data;
-
-  const filtered = useFilterResources(
-    resources as Types.ResourceListItem<unknown>[],
-    search,
+  const terms = useMemo(
+    () =>
+      search
+        ?.toLowerCase()
+        .split(" ")
+        .map((term) => term.trim())
+        .filter((term) => term),
+    [search],
   );
 
-  let count = filtered.length;
+  const tags = useTagsFilter();
+  const [templates] = useTemplatesQueryBehavior();
+  const _resources =
+    useRead(`List${type}s`, { query: { terms, tags, templates } }).data ?? [];
+  // Prevent flashing when typing / fetching
+  const resources = useDebounce(_resources, 100);
 
   const [show, setShow] = useState(true);
 
-  if (!count) return;
+  if (!resources.length) return;
 
   const Icon = ICONS[type];
 
@@ -79,7 +86,7 @@ function TableSection({
       }
       actions={<ShowHideButton show={show} setShow={setShow} />}
     >
-      {show && <RC.Table resources={filtered} />}
+      {show && <RC.Table resources={resources} />}
     </Section>
   );
 }

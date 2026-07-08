@@ -316,22 +316,6 @@ export function useCheckResourceExists() {
   };
 }
 
-export function useFilterResources<Info>(
-  resources?: Types.ResourceListItem<Info>[],
-  search?: string,
-) {
-  const searchSplit = search?.toLowerCase()?.split(" ") || [];
-  return (
-    resources?.filter((resource) =>
-      searchSplit.length > 0
-        ? searchSplit.every((search) =>
-            resource.name.toLowerCase().includes(search),
-          )
-        : true,
-    ) ?? []
-  );
-}
-
 export function usePushRecentlyViewed({ type, id }: Types.ResourceTarget) {
   const userInvalidate = useUserInvalidate();
 

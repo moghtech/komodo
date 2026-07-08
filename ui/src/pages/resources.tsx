@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useFilterByUpdateAvailable,
-  useFilterResources,
   useRead,
   useResourceParamType,
   useSetTitle,
@@ -11,8 +10,8 @@ import {
 } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
-import { Page } from "mogh_ui";
-import { Group, Stack } from "@mantine/core";
+import { Page, useDebounce } from "mogh_ui";
+import { Group, Pagination, Stack } from "@mantine/core";
 import { TableSkeleton } from "mogh_ui";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";
@@ -23,37 +22,46 @@ import { SearchInput } from "mogh_ui";
 import { LabelledSwitch } from "mogh_ui";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
-  const is_admin = useUser().data?.admin ?? false;
-  const disable_non_admin_create =
+  const isAdmin = useUser().data?.admin ?? false;
+  const disableNonAdminCreate =
     useRead("GetCoreInfo", {}).data?.disable_non_admin_create ?? true;
+
   const __type = useResourceParamType()!;
   const type = _type ? _type : __type;
+
   const name = type === "ResourceSync" ? "Resource Sync" : type;
   useSetTitle(name + "s");
+
   const [search, setSearch] = useState("");
+  const terms = useMemo(
+    () =>
+      search
+        .toLowerCase()
+        .split(" ")
+        .map((term) => term.trim())
+        .filter((term) => term),
+    [search],
+  );
+
   const [filterUpdateAvailable, toggleFilterUpdateAvailable] =
     useFilterByUpdateAvailable();
+
   const tags = useTagsFilter();
-  const query =
-    type === "Stack" || type === "Deployment"
-      ? {
-          tags,
-          query: {
-            specific: { update_available: filterUpdateAvailable },
-          },
-        }
-      : { tags };
-  const [templatesQueryBehavior] = useTemplatesQueryBehavior();
-  const resources = useRead(`List${type}s`, query).data;
-  const templatesFilterFn =
-    templatesQueryBehavior === Types.TemplatesQueryBehavior.Exclude
-      ? (resource: Types.ResourceListItem<unknown>) => !resource.template
-      : templatesQueryBehavior === Types.TemplatesQueryBehavior.Only
-        ? (resource: Types.ResourceListItem<unknown>) => resource.template
-        : () => true;
-  const filtered = useFilterResources(resources as any, search).filter(
-    templatesFilterFn,
-  );
+  const [templates] = useTemplatesQueryBehavior();
+  const query: Types.ResourceQuery<any> = {
+    terms,
+    tags,
+    templates,
+    specific:
+      type === "Stack" || type === "Deployment"
+        ? { update_available: filterUpdateAvailable }
+        : undefined,
+  };
+  const [page, setPage] = useState(0);
+  const _resources = useRead(`List${type}s`, { query, page }).data ?? [];
+
+  // Prevent flashing when typing / fetching
+  const resources = useDebounce(_resources, 100);
 
   const RC = ResourceComponents[type];
 
@@ -61,7 +69,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
     return <ResourceNotFound type={type} />;
   }
 
-  const targets = filtered?.map((resource) => ({ type, id: resource.id }));
+  const targets = resources.map((resource) => ({ type, id: resource.id }));
 
   return (
     <Page
@@ -78,8 +86,23 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
       <Stack>
         <Group justify="space-between" w="100%">
           <Group w={{ base: "100%", xs: "fit-content" }}>
-            {(is_admin || !disable_non_admin_create) && <RC.New />}
+            {(isAdmin || !disableNonAdminCreate) && <RC.New />}
             <RC.BatchExecutions />
+            {/* PAGINATION (only shown when needed) */}
+            {(resources.length >= 100 || page > 0) && (
+              <Pagination.Root
+                total={resources.length >= 100 ? page + 2 : page + 1}
+                value={page + 1}
+                onChange={(page) => setPage(page - 1)}
+              >
+                <Group gap="0.2rem" justify="center">
+                  <Pagination.First />
+                  <Pagination.Previous />
+                  <Pagination.Items />
+                  <Pagination.Next />
+                </Group>
+              </Pagination.Root>
+            )}
           </Group>
 
           <Group w={{ base: "100%", xs: "fit-content" }}>
@@ -98,7 +121,11 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
           </Group>
         </Group>
 
-        {filtered ? <RC.Table resources={filtered ?? []} /> : <TableSkeleton />}
+        {resources ? (
+          <RC.Table resources={resources ?? []} />
+        ) : (
+          <TableSkeleton />
+        )}
       </Stack>
     </Page>
   );
