@@ -43,7 +43,7 @@ export function ExecuteSync({ id }: { id: string }) {
   const syncing = useRead(
     "GetResourceSyncActionState",
     { sync: id },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.syncing;
   const sync = useFullResourceSync(id);
   const { view } = useResourceSyncTabsView(sync);

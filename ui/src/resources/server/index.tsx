@@ -197,7 +197,6 @@ export const ServerComponents: RequiredResourceComponents<
           { server: id },
           {
             enabled: isServerAvailable,
-            refetchInterval: 5000,
           },
         ).data?.core_count ?? 0;
       return (
@@ -223,7 +222,7 @@ export const ServerComponents: RequiredResourceComponents<
         { server: id },
         {
           enabled: isServerAvailable,
-          refetchInterval: 5000,
+          refetchInterval: 5_000,
         },
       ).data;
 
@@ -250,7 +249,7 @@ export const ServerComponents: RequiredResourceComponents<
         { server: id },
         {
           enabled: isServerAvailable,
-          refetchInterval: 5000,
+          refetchInterval: 5_000,
         },
       ).data;
       return (
@@ -274,7 +273,7 @@ export const ServerComponents: RequiredResourceComponents<
         { server: id },
         {
           enabled: isServerAvailable,
-          refetchInterval: 5000,
+          refetchInterval: 5_000,
         },
       ).data;
       const diskTotalGb = stats?.disks.reduce(
@@ -314,7 +313,7 @@ export const ServerComponents: RequiredResourceComponents<
       const starting = useRead(
         "GetServerActionState",
         { server: id },
-        { refetchInterval: 5000 },
+        { refetchInterval: 5_000 },
       ).data?.starting_containers;
       const dontShow =
         useRead("ListContainers", {
@@ -348,7 +347,7 @@ export const ServerComponents: RequiredResourceComponents<
       const restarting = useRead(
         "GetServerActionState",
         { server: id },
-        { refetchInterval: 5000 },
+        { refetchInterval: 5_000 },
       ).data?.restarting_containers;
       const pending = isPending || restarting;
       return (
@@ -372,7 +371,7 @@ export const ServerComponents: RequiredResourceComponents<
       const pausing = useRead(
         "GetServerActionState",
         { server: id },
-        { refetchInterval: 5000 },
+        { refetchInterval: 5_000 },
       ).data?.pausing_containers;
       const dontShow =
         useRead("ListContainers", {
@@ -407,7 +406,7 @@ export const ServerComponents: RequiredResourceComponents<
       const unpausing = useRead(
         "GetServerActionState",
         { server: id },
-        { refetchInterval: 5000 },
+        { refetchInterval: 5_000 },
       ).data?.unpausing_containers;
       const dontShow =
         useRead("ListContainers", {
@@ -439,7 +438,7 @@ export const ServerComponents: RequiredResourceComponents<
       const stopping = useRead(
         "GetServerActionState",
         { server: id },
-        { refetchInterval: 5000 },
+        { refetchInterval: 5_000 },
       ).data?.stopping_containers;
       const pending = isPending || stopping;
       return (

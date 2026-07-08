@@ -26,7 +26,7 @@ const DestroyContainer = ({
   const destroying = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.pruning_containers;
 
   if (!container) {
@@ -61,7 +61,7 @@ const RestartContainer = ({
   const action_state = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!container || state !== Types.ContainerStateStatusEnum.Running) {
@@ -96,7 +96,7 @@ const StartStopContainer = ({
   const action_state = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!container) {
@@ -146,7 +146,7 @@ const PauseUnpauseContainer = ({
   const action_state = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!container) {

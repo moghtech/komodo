@@ -10,7 +10,7 @@ export function CloneRepo({ id }: { id: string }) {
   const cloning = useRead(
     "GetRepoActionState",
     { repo: id },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.cloning;
   const info = useRepo(id)?.info;
   if (!info?.server_id) return null;
@@ -34,7 +34,7 @@ export function PullRepo({ id }: { id: string }) {
   const pulling = useRead(
     "GetRepoActionState",
     { repo: id },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.pulling;
   const info = useRepo(id)?.info;
   if (!info?.server_id) return null;
@@ -59,7 +59,7 @@ export function BuildRepo({ id }: { id: string }) {
   const building = useRead(
     "GetRepoActionState",
     { repo: id },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.building;
   const updates = useRead("ListUpdates", {
     query: {

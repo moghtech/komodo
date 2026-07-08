@@ -32,12 +32,12 @@ export default function DeploymentUpdateAvailable({
       },
     },
   );
+
   const deploying = useRead(
     "GetDeploymentActionState",
     { deployment: id },
-    { refetchInterval: 5_000 },
+    { refetchInterval: 5_000, enabled: !small && canExecute },
   ).data?.deploying;
-
   const pending = isPending || deploying;
 
   const deployment = useDeployment(id);

@@ -7,7 +7,7 @@ import { Types } from "komodo_client";
 
 export function RunAction({ id }: { id: string }) {
   const running =
-    (useRead("GetActionActionState", { action: id }, { refetchInterval: 5000 })
+    (useRead("GetActionActionState", { action: id }, { refetchInterval: 5_000 })
       .data?.running ?? 0) > 0;
   const { mutateAsync: run, isPending: runPending } = useExecute("RunAction");
   const { mutateAsync: cancel, isPending: cancelPending } =

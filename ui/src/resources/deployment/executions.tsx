@@ -101,7 +101,7 @@ export function DestroyDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.destroying;
 
   const pending = isPending || destroying;
@@ -145,7 +145,7 @@ export function PullDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!deployment || deployment.info.swarm_id) return null;
@@ -172,7 +172,7 @@ export function RestartDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!deployment || deployment.info.swarm_id) return null;
@@ -204,7 +204,7 @@ export function StartStopDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!deployment || deployment.info.swarm_id) return null;
@@ -241,7 +241,7 @@ function StopDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.stopping;
 
   const pending = isPending || stopping;
@@ -317,7 +317,7 @@ export function PauseUnpauseDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!deployment || deployment.info.swarm_id) return null;

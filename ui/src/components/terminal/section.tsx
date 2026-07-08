@@ -26,7 +26,7 @@ export default function TerminalSection({
       target,
     },
     {
-      refetchInterval: 5000,
+      refetchInterval: 5_000,
     },
   );
 

@@ -9,7 +9,7 @@ export function RunProcedure({ id }: { id: string }) {
   const running = useRead(
     "GetProcedureActionState",
     { procedure: id },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.running;
   const { mutateAsync: run, isPending: runPending } =
     useExecute("RunProcedure");

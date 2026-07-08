@@ -40,11 +40,14 @@ export default function StackUpdateAvailable({
       },
     },
   );
+
   const deploying = useRead(
     "GetStackActionState",
     { stack: id },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000, enabled: !small && canExecute },
   ).data?.deploying;
+  const pending = isPending || deploying;
+
   const stack = useStack(id);
   const fullStack = useFullStack(id);
   const info = stack?.info;
@@ -61,8 +64,6 @@ export default function StackUpdateAvailable({
     info?.services.filter((s) => s.update_available) ?? [];
 
   const updateAvailable = servicesWithUpdate.length > 0;
-
-  const pending = isPending || deploying;
 
   // No quick deploy action / check for update button
   if (small || !canExecute) {
