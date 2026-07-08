@@ -18,8 +18,8 @@ import RepoLink from "@/components/repo-link";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useRepo(id: string | undefined, useName?: boolean) {
-  return useRead("ListRepos", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
+  return useRead("ListRepos", { query: { names: id ? [id] : [] } }).data?.find(
+    (r) => (useName ? r.name === id : r.id === id),
   );
 }
 
@@ -30,9 +30,11 @@ export function useFullRepo(id: string) {
 export const RepoComponents: RequiredResourceComponents<
   Types.RepoConfig,
   Types.RepoInfo,
-  Types.RepoListItemInfo
+  Types.RepoListItemInfo,
+  Types.RepoQuerySpecifics
 > = {
-  useList: () => useRead("ListRepos", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListRepos", { query, limit, page }).data,
   useListItem: useRepo,
   useFull: useFullRepo,
 

@@ -21,8 +21,8 @@ import { HoverError } from "mogh_ui";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useSwarm(id: string | undefined, useName?: boolean) {
-  return useRead("ListSwarms", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
+  return useRead("ListSwarms", { query: { names: id ? [id] : [] } }).data?.find(
+    (r) => (useName ? r.name === id : r.id === id),
   );
 }
 
@@ -33,9 +33,11 @@ export function useFullSwarm(id: string) {
 export const SwarmComponents: RequiredResourceComponents<
   Types.SwarmConfig,
   Types.SwarmInfo,
-  Types.SwarmListItemInfo
+  Types.SwarmListItemInfo,
+  Types.SwarmQuerySpecifics
 > = {
-  useList: () => useRead("ListSwarms", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListSwarms", { query, limit, page }).data,
   useListItem: useSwarm,
   useFull: useFullSwarm,
 

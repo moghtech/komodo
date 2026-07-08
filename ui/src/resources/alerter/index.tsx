@@ -11,9 +11,9 @@ import BatchExecutions from "@/components/batch-executions";
 import { ConfirmButton } from "mogh_ui";
 
 export function useAlerter(id: string | undefined, useName?: boolean) {
-  return useRead("ListAlerters", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+  return useRead("ListAlerters", {
+    query: { names: id ? [id] : [] },
+  }).data?.find((r) => (useName ? r.name === id : r.id === id));
 }
 
 export function useFullAlerter(id: string) {
@@ -24,9 +24,11 @@ export function useFullAlerter(id: string) {
 export const AlerterComponents: RequiredResourceComponents<
   Types.AlerterConfig,
   undefined,
-  Types.AlerterListItemInfo
+  Types.AlerterListItemInfo,
+  Types.AlerterQuerySpecifics
 > = {
-  useList: () => useRead("ListAlerters", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListAlerters", { query, limit, page }).data,
   useListItem: useAlerter,
   useFull: useFullAlerter,
 

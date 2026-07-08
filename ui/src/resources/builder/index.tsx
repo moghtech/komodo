@@ -13,9 +13,9 @@ import { useState } from "react";
 import { Group, Select } from "@mantine/core";
 
 export function useBuilder(id: string | undefined, useName?: boolean) {
-  return useRead("ListBuilders", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+  return useRead("ListBuilders", {
+    query: { names: id ? [id] : [] },
+  }).data?.find((r) => (useName ? r.name === id : r.id === id));
 }
 
 export function useFullBuilder(id: string) {
@@ -26,9 +26,11 @@ export function useFullBuilder(id: string) {
 export const BuilderComponents: RequiredResourceComponents<
   Types.BuilderConfig,
   undefined,
-  Types.BuilderListItemInfo
+  Types.BuilderListItemInfo,
+  Types.BuilderQuerySpecifics
 > = {
-  useList: () => useRead("ListBuilders", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListBuilders", { query, limit, page }).data,
   useListItem: useBuilder,
   useFull: useFullBuilder,
 

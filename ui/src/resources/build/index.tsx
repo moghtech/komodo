@@ -21,8 +21,8 @@ import ResourceSelector from "../selector";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useBuild(id: string | undefined, useName?: boolean) {
-  return useRead("ListBuilds", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
+  return useRead("ListBuilds", { query: { names: id ? [id] : [] } }).data?.find(
+    (r) => (useName ? r.name === id : r.id === id),
   );
 }
 
@@ -33,9 +33,11 @@ export function useFullBuild(id: string) {
 export const BuildComponents: RequiredResourceComponents<
   Types.BuildConfig,
   Types.BuildInfo,
-  Types.BuildListItemInfo
+  Types.BuildListItemInfo,
+  Types.BuildQuerySpecifics
 > = {
-  useList: () => useRead("ListBuilds", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListBuilds", { query, limit, page }).data,
   useListItem: useBuild,
   useFull: useFullBuild,
 

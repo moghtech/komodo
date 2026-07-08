@@ -29,9 +29,9 @@ import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useDeployment(id: string | undefined, useName?: boolean) {
-  return useRead("ListDeployments", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+  return useRead("ListDeployments", {
+    query: { names: id ? [id] : [] },
+  }).data?.find((r) => (useName ? r.name === id : r.id === id));
 }
 
 export function useFullDeployment(id: string) {
@@ -45,9 +45,11 @@ export function useFullDeployment(id: string) {
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
   Types.DeploymentInfo,
-  Types.DeploymentListItemInfo
+  Types.DeploymentListItemInfo,
+  Types.DeploymentQuerySpecifics
 > = {
-  useList: () => useRead("ListDeployments", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListDeployments", { query, limit, page }).data,
   useListItem: useDeployment,
   useFull: useFullDeployment,
 

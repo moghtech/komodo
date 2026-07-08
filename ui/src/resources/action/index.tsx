@@ -16,9 +16,9 @@ import BatchExecutions from "@/components/batch-executions";
 import { RunAction } from "./executions";
 
 export function useAction(id: string | undefined, useName?: boolean) {
-  return useRead("ListActions", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+  return useRead("ListActions", {
+    query: { names: id ? [id] : [] },
+  }).data?.find((r) => (useName ? r.name === id : r.id === id));
 }
 
 export function useFullAction(id: string) {
@@ -28,9 +28,11 @@ export function useFullAction(id: string) {
 export const ActionComponents: RequiredResourceComponents<
   Types.ActionConfig,
   {},
-  Types.ActionListItemInfo
+  Types.ActionListItemInfo,
+  Types.ActionQuerySpecifics
 > = {
-  useList: () => useRead("ListActions", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListActions", { query, limit, page }).data,
   useListItem: useAction,
   useFull: useFullAction,
 

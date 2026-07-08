@@ -45,11 +45,12 @@ export function useOmniSearch(): {
       search
         .toLowerCase()
         .split(" ")
+        .map((term) => term.trim())
         .filter((term) => term),
     [search],
   );
 
-  const debouncedTerms = useDebounce(searchTerms, 700);
+  const debouncedTerms = useDebounce(searchTerms, 500);
 
   const containersQuery: Types.ListAllContainers = useMemo(
     () => ({
@@ -101,7 +102,7 @@ export function useOmniSearch(): {
   }, [_terminals, searchTerms]);
 
   const user = useUser().data;
-  const resources = useAllResources(15_000);
+  const resources = useAllResources(debouncedTerms, 10, 15_000);
   const [_, setSettingsView] = useSettingsView();
 
   const _actions = useMemo(() => {

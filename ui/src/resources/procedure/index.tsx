@@ -17,9 +17,9 @@ import { updateLogToHtml } from "@/lib/utils";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useProcedure(id: string | undefined, useName?: boolean) {
-  return useRead("ListProcedures", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+  return useRead("ListProcedures", {
+    query: { names: id ? [id] : [] },
+  }).data?.find((r) => (useName ? r.name === id : r.id === id));
 }
 
 export function useFullProcedure(id: string) {
@@ -30,9 +30,11 @@ export function useFullProcedure(id: string) {
 export const ProcedureComponents: RequiredResourceComponents<
   Types.ProcedureConfig,
   undefined,
-  Types.ProcedureListItemInfo
+  Types.ProcedureListItemInfo,
+  Types.ProcedureQuerySpecifics
 > = {
-  useList: () => useRead("ListProcedures", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListProcedures", { query, limit, page }).data,
   useListItem: useProcedure,
   useFull: useFullProcedure,
 

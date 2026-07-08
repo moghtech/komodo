@@ -25,21 +25,27 @@ import ServerCpuUsage from "./stats/current/cpu";
 import { HoverError } from "mogh_ui";
 
 export function useServer(id: string | undefined, useName?: boolean) {
-  return useRead("ListServers", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+  return useRead("ListServers", {
+    query: { names: id ? [id] : [] },
+  }).data?.find((r) => (useName ? r.name === id : r.id === id));
 }
 
-export function useFullServer(id: string) {
-  return useRead("GetServer", { server: id }, { refetchInterval: 30_000 }).data;
+export function useFullServer(id: string | undefined) {
+  return useRead(
+    "GetServer",
+    { server: id! },
+    { refetchInterval: 30_000, enabled: !!id },
+  ).data;
 }
 
 export const ServerComponents: RequiredResourceComponents<
   Types.ServerConfig,
   Types.ServerInfo,
-  Types.ServerListItemInfo
+  Types.ServerListItemInfo,
+  Types.ServerQuerySpecifics
 > = {
-  useList: () => useRead("ListServers", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListServers", { query, limit, page }).data,
   useListItem: useServer,
   useFull: useFullServer,
 

@@ -17,9 +17,9 @@ import BatchExecutions from "@/components/batch-executions";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useResourceSync(id: string | undefined, useName?: boolean) {
-  return useRead("ListResourceSyncs", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+  return useRead("ListResourceSyncs", {
+    query: { names: id ? [id] : [] },
+  }).data?.find((r) => (useName ? r.name === id : r.id === id));
 }
 
 export function useFullResourceSync(id: string) {
@@ -30,9 +30,11 @@ export function useFullResourceSync(id: string) {
 export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncConfig,
   Types.ResourceSyncInfo,
-  Types.ResourceSyncListItemInfo
+  Types.ResourceSyncListItemInfo,
+  Types.ResourceSyncQuerySpecifics
 > = {
-  useList: () => useRead("ListResourceSyncs", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListResourceSyncs", { query, limit, page }).data,
   useListItem: useResourceSync,
   useFull: useFullResourceSync,
 

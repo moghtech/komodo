@@ -37,8 +37,8 @@ import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useStack(id: string | undefined, useName?: boolean) {
-  return useRead("ListStacks", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
+  return useRead("ListStacks", { query: { names: id ? [id] : [] } }).data?.find(
+    (r) => (useName ? r.name === id : r.id === id),
   );
 }
 
@@ -49,9 +49,11 @@ export function useFullStack(id: string) {
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
   Types.StackInfo,
-  Types.StackListItemInfo
+  Types.StackListItemInfo,
+  Types.StackQuerySpecifics
 > = {
-  useList: () => useRead("ListStacks", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListStacks", { query, limit, page }).data,
   useListItem: useStack,
   useFull: useFullStack,
 

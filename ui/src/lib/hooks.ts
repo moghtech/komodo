@@ -199,19 +199,97 @@ export type ResourceMap = {
   [Resource in UsableResource]: Types.ResourceListItem<unknown>[] | undefined;
 };
 
-export function useAllResources(refetchInterval?: number): ResourceMap {
+export function useAllResources(
+  terms?: string[],
+  limit?: number,
+  refetchInterval?: number,
+): ResourceMap {
   return {
-    Swarm: useRead("ListSwarms", {}, { refetchInterval }).data,
-    Server: useRead("ListServers", {}, { refetchInterval }).data,
-    Stack: useRead("ListStacks", {}, { refetchInterval }).data,
-    Deployment: useRead("ListDeployments", {}, { refetchInterval }).data,
-    Build: useRead("ListBuilds", {}, { refetchInterval }).data,
-    Repo: useRead("ListRepos", {}, { refetchInterval }).data,
-    Procedure: useRead("ListProcedures", {}, { refetchInterval }).data,
-    Action: useRead("ListActions", {}, { refetchInterval }).data,
-    Builder: useRead("ListBuilders", {}, { refetchInterval }).data,
-    Alerter: useRead("ListAlerters", {}, { refetchInterval }).data,
-    ResourceSync: useRead("ListResourceSyncs", {}, { refetchInterval }).data,
+    Swarm: useRead(
+      "ListSwarms",
+      {
+        query: { terms: terms?.filter((term) => "swarm".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Server: useRead(
+      "ListServers",
+      {
+        query: { terms: terms?.filter((term) => "server".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Stack: useRead(
+      "ListStacks",
+      {
+        query: { terms: terms?.filter((term) => "stack".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Deployment: useRead(
+      "ListDeployments",
+      {
+        query: { terms: terms?.filter((term) => "deployment".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Build: useRead(
+      "ListBuilds",
+      {
+        query: { terms: terms?.filter((term) => "build".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Repo: useRead(
+      "ListRepos",
+      {
+        query: { terms: terms?.filter((term) => "repo".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Procedure: useRead(
+      "ListProcedures",
+      {
+        query: { terms: terms?.filter((term) => "procedure".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Action: useRead(
+      "ListActions",
+      {
+        query: { terms: terms?.filter((term) => "action".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Builder: useRead(
+      "ListBuilders",
+      {
+        query: { terms: terms?.filter((term) => "builder".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    Alerter: useRead(
+      "ListAlerters",
+      {
+        query: { terms: terms?.filter((term) => "alerter".includes(term)) },
+        limit,
+      },
+      { refetchInterval },
+    ).data,
+    ResourceSync: useRead(
+      "ListResourceSyncs",
+      { query: { terms: terms?.filter((term) => "sync".includes(term)) } },
+      { refetchInterval },
+    ).data,
   };
 }
 

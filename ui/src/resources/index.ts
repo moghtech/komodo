@@ -62,8 +62,13 @@ export interface RequiredResourceComponents<
   Config = any,
   Info = any,
   ListItemInfo = any,
+  ResourceQuerySpecifics = any,
 > {
-  useList: () => Types.ResourceListItem<ListItemInfo>[] | undefined;
+  useList: (
+    query?: Types.ResourceQuery<ResourceQuerySpecifics>,
+    limit?: number,
+    page?: number,
+  ) => Types.ResourceListItem<ListItemInfo>[] | undefined;
   useListItem: (
     id: string | undefined,
     useName?: boolean,
