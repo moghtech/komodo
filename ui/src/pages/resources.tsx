@@ -10,7 +10,7 @@ import {
 } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
-import { Page } from "mogh_ui";
+import { Page, useDebounce } from "mogh_ui";
 import { Group, Pagination, Stack } from "@mantine/core";
 import { TableSkeleton } from "mogh_ui";
 import TemplateQuerySelector from "@/components/template-query-selector";
@@ -32,16 +32,18 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const name = type === "ResourceSync" ? "Resource Sync" : type;
   useSetTitle(name + "s");
 
+  const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
-  const terms = useMemo(
-    () =>
-      search
-        .toLowerCase()
-        .split(" ")
-        .map((term) => term.trim())
-        .filter((term) => term),
-    [search],
-  );
+  const debouncedSearch = useDebounce(search, 200);
+  const terms = useMemo(() => {
+    // Set to page 0 whenever search changes
+    setPage(0);
+    return debouncedSearch
+      .toLowerCase()
+      .split(" ")
+      .map((term) => term.trim())
+      .filter((term) => term);
+  }, [debouncedSearch]);
 
   const [filterUpdateAvailable, toggleFilterUpdateAvailable] =
     useFilterByUpdateAvailable();
@@ -57,7 +59,6 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         ? { update_available: filterUpdateAvailable }
         : undefined,
   };
-  const [page, setPage] = useState(0);
   const _resources = useRead(`List${type}s`, { query, page }).data ?? [];
 
   // Debounce: prevents flashing when typing / fetching.
@@ -65,13 +66,19 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const [resources, setResources] = useState(_resources);
   useEffect(() => setResources(_resources), [type]);
   useEffect(() => {
-    const handler = setTimeout(() => setResources(_resources), 100);
+    const handler = setTimeout(() => setResources(_resources), 200);
     return () => {
       clearTimeout(handler);
     };
   }, [_resources]);
 
   const RC = ResourceComponents[type];
+
+  const Table = useMemo(
+    () =>
+      resources && RC ? <RC.Table resources={resources} /> : <TableSkeleton />,
+    [resources],
+  );
 
   if (!RC) {
     return <ResourceNotFound type={type} />;
@@ -129,11 +136,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
           </Group>
         </Group>
 
-        {resources ? (
-          <RC.Table resources={resources ?? []} />
-        ) : (
-          <TableSkeleton />
-        )}
+        {Table}
       </Stack>
     </Page>
   );

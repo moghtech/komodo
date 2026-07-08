@@ -17,6 +17,27 @@ import { SearchInput } from "mogh_ui";
 
 export default function DashboardTables() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 200);
+  const terms = useMemo(() => {
+    return debouncedSearch
+      .toLowerCase()
+      .split(" ")
+      .map((term) => term.trim())
+      .filter((term) => term);
+  }, [debouncedSearch]);
+
+  const Tables = useMemo(
+    () =>
+      Object.entries(ResourceComponents).map(([type, RC]) => (
+        <TableSection
+          key={type}
+          type={type as UsableResource}
+          RC={RC}
+          terms={terms}
+        />
+      )),
+    [terms],
+  );
   return (
     <Stack gap="xl">
       <Group justify="end">
@@ -26,14 +47,7 @@ export default function DashboardTables() {
 
       <DashboardNoResources />
 
-      {Object.entries(ResourceComponents).map(([type, RC]) => (
-        <TableSection
-          key={type}
-          type={type as UsableResource}
-          RC={RC}
-          search={search}
-        />
-      ))}
+      {Tables}
     </Stack>
   );
 }
@@ -41,30 +55,24 @@ export default function DashboardTables() {
 function TableSection({
   type,
   RC,
-  search,
+  terms,
 }: {
   type: UsableResource;
   RC: RequiredResourceComponents;
-  search?: string;
+  terms: string[];
 }) {
-  const terms = useMemo(
-    () =>
-      search
-        ?.toLowerCase()
-        .split(" ")
-        .map((term) => term.trim())
-        .filter((term) => term),
-    [search],
-  );
-
+  const [show, setShow] = useState(true);
   const tags = useTagsFilter();
   const [templates] = useTemplatesQueryBehavior();
   const _resources =
     useRead(`List${type}s`, { query: { terms, tags, templates } }).data ?? [];
   // Prevent flashing when typing / fetching
-  const resources = useDebounce(_resources, 100);
+  const resources = useDebounce(_resources, 200);
 
-  const [show, setShow] = useState(true);
+  const Table = useMemo(
+    () => show && <RC.Table resources={resources} />,
+    [resources, show],
+  );
 
   if (!resources.length) return;
 
@@ -86,7 +94,7 @@ function TableSection({
       }
       actions={<ShowHideButton show={show} setShow={setShow} />}
     >
-      {show && <RC.Table resources={resources} />}
+      {Table}
     </Section>
   );
 }

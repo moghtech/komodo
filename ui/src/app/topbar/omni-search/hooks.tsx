@@ -1,5 +1,4 @@
 import {
-  ResourceMap,
   SettingsView,
   useAllResources,
   useRead,
@@ -21,6 +20,10 @@ import { DOCKER_LINK_ICONS } from "@/components/docker/link";
 import { Types } from "komodo_client";
 import { hexColorByIntention, useDebounce } from "mogh_ui";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
+import { ServerComponents } from "@/resources/server";
+import { SwarmComponents } from "@/resources/swarm";
+import { StackComponents } from "@/resources/stack";
+import { DeploymentComponents } from "@/resources/deployment";
 
 const ITEM_LIMIT = 7;
 let count = 0;
@@ -100,6 +103,11 @@ export function useOmniSearch(): {
       );
     });
   }, [_terminals, searchTerms]);
+
+  const servers = ServerComponents.useList(undefined, 0);
+  const swarms = SwarmComponents.useList(undefined, 0);
+  const stacks = StackComponents.useList(undefined, 0);
+  const deployments = DeploymentComponents.useList(undefined, 0);
 
   const user = useUser().data;
   const resources = useAllResources(debouncedTerms, 10, 15_000);
@@ -217,14 +225,11 @@ export function useOmniSearch(): {
                   ),
                   description: info.swarm_id
                     ? "Swarm: " +
-                      resources.Swarm?.find(
-                        (swarm) => info.swarm_id === swarm.id,
-                      )?.name
+                      swarms?.find((swarm) => info.swarm_id === swarm.id)?.name
                     : info.server_id
                       ? "Server: " +
-                        resources.Server?.find(
-                          (server) => info.server_id === server.id,
-                        )?.name
+                        servers?.find((server) => info.server_id === server.id)
+                          ?.name
                       : undefined,
                 };
               }) ?? [],
@@ -239,9 +244,8 @@ export function useOmniSearch(): {
             label: container.name,
             description:
               "Server: " +
-              resources.Server?.find(
-                (server) => container.server_id === server.id,
-              )?.name,
+              servers?.find((server) => container.server_id === server.id)
+                ?.name,
             onClick: () =>
               nav(
                 `/servers/${container.server_id}/container/${container.name}`,
@@ -269,8 +273,7 @@ export function useOmniSearch(): {
               label: service.service,
               description:
                 "Stack: " +
-                resources.Stack?.find((stack) => service.stack_id === stack.id)
-                  ?.name,
+                stacks?.find((stack) => service.stack_id === stack.id)?.name,
               onClick: () =>
                 nav(`/stacks/${service.stack_id}/service/${service.service}`),
               leftSection: <ICONS.Service size="1.3rem" color={color} />,
@@ -284,7 +287,12 @@ export function useOmniSearch(): {
           terminals?.map((terminal) => ({
             id: JSON.stringify(terminal.target) + " " + terminal.name,
             label: terminal.name,
-            description: terminalTargetDescription(terminal.target, resources),
+            description: terminalTargetDescription(
+              terminal.target,
+              servers,
+              stacks,
+              deployments,
+            ),
             onClick: () => nav(terminalLink(terminal)),
             leftSection: <ICONS.Terminal size="1.3rem" />,
           })) ?? [],
@@ -322,35 +330,34 @@ export function useOmniSearch(): {
 
 function terminalTargetDescription(
   target: Types.TerminalTarget,
-  resources: ResourceMap,
+  servers: Types.ServerListItem[] | undefined,
+  stacks: Types.StackListItem[] | undefined,
+  deployments: Types.DeploymentListItem[] | undefined,
 ) {
   switch (target.type) {
     case "Server":
       return (
         "Server: " +
-        resources.Server?.find((server) => target.params.server === server.id)
-          ?.name
+        servers?.find((server) => target.params.server === server.id)?.name
       );
     case "Container":
       return (
         "Server: " +
-        resources.Server?.find((server) => target.params.server === server.id)
-          ?.name +
+        servers?.find((server) => target.params.server === server.id)?.name +
         ", Container: " +
         target.params.container
       );
     case "Stack":
       return (
         "Stack: " +
-        resources.Stack?.find((stack) => target.params.stack === stack.id)
-          ?.name +
+        stacks?.find((stack) => target.params.stack === stack.id)?.name +
         ", Service: " +
         target.params.service
       );
     case "Deployment":
       return (
         "Deployment: " +
-        resources.Deployment?.find(
+        deployments?.find(
           (deployment) => target.params.deployment === deployment.id,
         )?.name
       );
