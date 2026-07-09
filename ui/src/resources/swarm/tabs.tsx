@@ -1,9 +1,6 @@
 import { usePermissions, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import {
-  MobileFriendlyTabsSelector,
-  TabNoContent,
-} from "mogh_ui";
+import { MobileFriendlyTabsSelector, TabNoContent } from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { useMemo } from "react";
 import { useSwarm } from ".";
@@ -27,14 +24,16 @@ export default function SwarmTabs({ id }: { id: string }) {
   const swarmInfo = useSwarm(id)?.info;
 
   const stacks =
-    useRead("ListStacks", { limit: 0 }).data?.filter(
-      (stack) => stack.info.swarm_id === id,
-    ) ?? [];
+    useRead("ListStacks", {
+      query: { specific: { swarm_ids: [id] } },
+      limit: 0,
+    }).data?.filter((stack) => stack.info.swarm_id === id) ?? [];
   const noStacks = stacks.length === 0;
   const deployments =
-    useRead("ListDeployments", { limit: 0 }).data?.filter(
-      (deployment) => deployment.info.swarm_id === id,
-    ) ?? [];
+    useRead("ListDeployments", {
+      query: { specific: { swarm_ids: [id] } },
+      limit: 0,
+    }).data?.filter((deployment) => deployment.info.swarm_id === id) ?? [];
   const noDeployments = deployments.length === 0;
   const noResources = noDeployments && noStacks;
 

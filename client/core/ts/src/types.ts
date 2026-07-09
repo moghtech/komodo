@@ -1497,6 +1497,12 @@ export interface DeploymentQuerySpecifics {
 	 */
 	server_ids?: string[];
 	/**
+	 * Query only for Deployments on these Swarms.
+	 * If empty, does not filter by Swarm.
+	 * Only accepts Swarm id (not name).
+	 */
+	swarm_ids?: string[];
+	/**
 	 * Query only for Deployments with these Builds attached.
 	 * If empty, does not filter by Build.
 	 * Only accepts Build id (not name).
@@ -5847,6 +5853,12 @@ export interface StackQuerySpecifics {
 	 * Only accepts Server id (not name).
 	 */
 	server_ids?: string[];
+	/**
+	 * Query only for Stacks on these Swarms.
+	 * If empty, does not filter by Swarm.
+	 * Only accepts Swarm id (not name).
+	 */
+	swarm_ids?: string[];
 	/**
 	 * Query only for Stacks with these linked repos.
 	 * Only accepts Repo id (not name).

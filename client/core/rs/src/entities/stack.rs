@@ -944,6 +944,11 @@ pub struct StackQuerySpecifics {
   /// Only accepts Server id (not name).
   #[serde(default)]
   pub server_ids: Vec<String>,
+  /// Query only for Stacks on these Swarms.
+  /// If empty, does not filter by Swarm.
+  /// Only accepts Swarm id (not name).
+  #[serde(default)]
+  pub swarm_ids: Vec<String>,
   /// Query only for Stacks with these linked repos.
   /// Only accepts Repo id (not name).
   #[serde(default)]
@@ -965,6 +970,10 @@ impl super::resource::AddFilters for StackQuerySpecifics {
     if !self.server_ids.is_empty() {
       filters
         .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
+    if !self.swarm_ids.is_empty() {
+      filters
+        .insert("config.swarm_id", doc! { "$in": &self.swarm_ids });
     }
     if !self.linked_repos.is_empty() {
       filters.insert(

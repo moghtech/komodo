@@ -606,6 +606,12 @@ pub struct DeploymentQuerySpecifics {
   #[serde(default)]
   pub server_ids: Vec<String>,
 
+  /// Query only for Deployments on these Swarms.
+  /// If empty, does not filter by Swarm.
+  /// Only accepts Swarm id (not name).
+  #[serde(default)]
+  pub swarm_ids: Vec<String>,
+
   /// Query only for Deployments with these Builds attached.
   /// If empty, does not filter by Build.
   /// Only accepts Build id (not name).
@@ -627,6 +633,10 @@ impl super::resource::AddFilters for DeploymentQuerySpecifics {
     if !self.server_ids.is_empty() {
       filters
         .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
+    if !self.swarm_ids.is_empty() {
+      filters
+        .insert("config.swarm_id", doc! { "$in": &self.swarm_ids });
     }
     if !self.build_ids.is_empty() {
       filters.insert("config.image.type", "Build");
