@@ -106,18 +106,35 @@ impl Resolve<ReadArgs> for ListServers {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-    Ok(
-      resource::list_for_user::<Server>(
-        self.query,
-        limit as i64,
-        self.page * limit,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-      )
-      .await?,
+    // When filtering by state, the db level pagination must be
+    // disabled, and applied in memory after the state filter.
+    let (db_limit, db_skip) = if states.is_empty() {
+      (limit, self.page * limit)
+    } else {
+      (0, 0)
+    };
+    let servers = resource::list_for_user::<Server>(
+      self.query,
+      db_limit as i64,
+      db_skip,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
+    .await?;
+    let servers = if states.is_empty() {
+      servers
+    } else {
+      resource::filter_list_items_paginated(
+        servers,
+        |server| states.contains(&server.info.state),
+        limit,
+        self.page,
+      )
+    };
+    Ok(servers)
   }
 }
 

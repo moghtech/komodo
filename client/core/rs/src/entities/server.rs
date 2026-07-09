@@ -462,6 +462,11 @@ pub type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct ServerQuerySpecifics {}
+pub struct ServerQuerySpecifics {
+  /// Query only for Servers matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<ServerState>,
+}
 
 impl AddFilters for ServerQuerySpecifics {}

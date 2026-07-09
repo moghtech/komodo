@@ -45,24 +45,31 @@ impl Resolve<ReadArgs> for ListRepos {
     };
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    // When filtering by state, the db level pagination must be
+    // disabled, and applied in memory after the state filter.
+    let (db_limit, db_skip) = if states.is_empty() {
+      (limit, self.page * limit)
+    } else {
+      (0, 0)
+    };
     let repos = resource::list_for_user::<Repo>(
       self.query,
-      limit as i64,
-      self.page * limit,
+      db_limit as i64,
+      db_skip,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?;
-    // The state is not stored on the database,
-    // it can only be filtered after they are attached to list items.
     let repos = if states.is_empty() {
       repos
     } else {
-      repos
-        .into_iter()
-        .filter(|repo| states.contains(&repo.info.state))
-        .collect()
+      resource::filter_list_items_paginated(
+        repos,
+        |repo| states.contains(&repo.info.state),
+        limit,
+        self.page,
+      )
     };
     Ok(repos)
   }

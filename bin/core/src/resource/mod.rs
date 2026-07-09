@@ -276,6 +276,30 @@ pub async fn list_all_resources<T: KomodoResource>(
     })
 }
 
+/// Some list item filters (eg. state, update available) are computed
+/// from in-memory caches rather than stored on the database, and can
+/// only be applied after the db query converts to list items.
+/// Callers using these filters should pass `(0, 0)` limit / skip to
+/// the db level query, and apply the equivalent pagination here
+/// after filtering.
+pub fn filter_list_items_paginated<T>(
+  items: Vec<T>,
+  filter: impl Fn(&T) -> bool,
+  limit: u64,
+  page: u64,
+) -> Vec<T> {
+  items
+    .into_iter()
+    .filter(|item| filter(item))
+    .skip((page * limit) as usize)
+    .take(if limit == 0 {
+      usize::MAX
+    } else {
+      limit as usize
+    })
+    .collect()
+}
+
 pub async fn list_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,
   limit: impl Into<Option<i64>>,

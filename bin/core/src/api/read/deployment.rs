@@ -65,32 +65,39 @@ impl Resolve<ReadArgs> for ListDeployments {
     let only_update_available = self.query.specific.update_available;
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    // Update available / state are computed in memory rather than
+    // stored on the db. When filtering on them, the db level
+    // pagination must be disabled, and applied in memory
+    // after the filters.
+    let use_db_pagination =
+      !only_update_available && states.is_empty();
+    let (db_limit, db_skip) = if use_db_pagination {
+      (limit, self.page * limit)
+    } else {
+      (0, 0)
+    };
     let deployments = resource::list_for_user::<Deployment>(
       self.query,
-      limit as i64,
-      self.page * limit,
+      db_limit as i64,
+      db_skip,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?;
-    let deployments = if only_update_available {
-      deployments
-        .into_iter()
-        .filter(|deployment| deployment.info.update_available)
-        .collect()
-    } else {
-      deployments
-    };
-    // The state is not stored on the database,
-    // it can only be filtered after they are attached to list items.
-    let deployments = if states.is_empty() {
+    let deployments = if use_db_pagination {
       deployments
     } else {
-      deployments
-        .into_iter()
-        .filter(|deployment| states.contains(&deployment.info.state))
-        .collect()
+      resource::filter_list_items_paginated(
+        deployments,
+        |deployment| {
+          (!only_update_available || deployment.info.update_available)
+            && (states.is_empty()
+              || states.contains(&deployment.info.state))
+        },
+        limit,
+        self.page,
+      )
     };
     Ok(deployments)
   }

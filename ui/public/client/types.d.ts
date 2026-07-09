@@ -5674,6 +5674,11 @@ export type SearchDeploymentLogResponse = Log;
 export type SearchStackLogResponse = Log;
 export type SearchSwarmServiceLogResponse = Log;
 export interface ServerQuerySpecifics {
+    /**
+     * Query only for Servers matching these states.
+     * If empty, does not filter by state.
+     */
+    states?: ServerState[];
 }
 /** Server-specific query */
 export type ServerQuery = ResourceQuery<ServerQuerySpecifics>;

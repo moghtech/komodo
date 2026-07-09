@@ -469,38 +469,44 @@ impl Resolve<ReadArgs> for ListStacks {
     let only_update_available = self.query.specific.update_available;
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    // Update available / state are computed in memory rather than
+    // stored on the db. When filtering on them, the db level
+    // pagination must be disabled, and applied in memory
+    // after the filters.
+    let use_db_pagination =
+      !only_update_available && states.is_empty();
+    let (db_limit, db_skip) = if use_db_pagination {
+      (limit, self.page * limit)
+    } else {
+      (0, 0)
+    };
     let stacks = resource::list_for_user::<Stack>(
       self.query,
-      limit as i64,
-      self.page * limit,
+      db_limit as i64,
+      db_skip,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?;
-    let stacks = if only_update_available {
-      stacks
-        .into_iter()
-        .filter(|stack| {
-          stack
-            .info
-            .services
-            .iter()
-            .any(|service| service.update_available)
-        })
-        .collect()
-    } else {
-      stacks
-    };
-    // The state is not stored on the database,
-    // it can only be filtered after they are attached to list items.
-    let stacks = if states.is_empty() {
+    let stacks = if use_db_pagination {
       stacks
     } else {
-      stacks
-        .into_iter()
-        .filter(|stack| states.contains(&stack.info.state))
-        .collect()
+      resource::filter_list_items_paginated(
+        stacks,
+        |stack| {
+          (!only_update_available
+            || stack
+              .info
+              .services
+              .iter()
+              .any(|service| service.update_available))
+            && (states.is_empty()
+              || states.contains(&stack.info.state))
+        },
+        limit,
+        self.page,
+      )
     };
     Ok(stacks)
   }
