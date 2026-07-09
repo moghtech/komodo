@@ -22,6 +22,9 @@ pub struct ContainerListItem {
   /// The Server which hosts the container.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub server_id: Option<String>,
+  /// The name of the Server which hosts the container.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub server_name: Option<String>,
   /// The first name in Names, not including the initial '/'
   pub name: String,
   /// The ID of this container

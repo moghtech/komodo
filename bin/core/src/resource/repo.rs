@@ -26,7 +26,8 @@ use crate::{
   config::core_config,
   helpers::{periphery_client, repo_link},
   state::{
-    action_states, db_client, repo_state_cache, repo_status_cache,
+    action_states, all_resources_cache, db_client, repo_state_cache,
+    repo_status_cache,
   },
 };
 
@@ -63,6 +64,12 @@ impl super::KomodoResource for Repo {
     let state = get_repo_state(&repo.id).await;
     let status =
       repo_status_cache().get(&repo.id).await.unwrap_or_default();
+    let server_name = all_resources_cache()
+      .load()
+      .servers
+      .get(&repo.config.server_id)
+      .map(|server| server.name.clone())
+      .unwrap_or_default();
     RepoListItem {
       name: repo.name,
       id: repo.id,
@@ -71,6 +78,7 @@ impl super::KomodoResource for Repo {
       resource_type: ResourceTargetVariant::Repo,
       info: RepoListItemInfo {
         server_id: repo.config.server_id,
+        server_name,
         builder_id: repo.config.builder_id,
         last_pulled_at: repo.info.last_pulled_at,
         last_built_at: repo.info.last_built_at,

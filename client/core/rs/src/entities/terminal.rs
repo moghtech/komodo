@@ -16,6 +16,10 @@ pub struct Terminal {
   pub name: String,
   /// The target resource of the Terminal.
   pub target: TerminalTarget,
+  /// The name of the target resource (Server / Stack / Deployment).
+  /// Resolved by Core when listing all terminals for a user.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub target_name: Option<String>,
   /// The command used to init the shell.
   pub command: String,
   /// The size of the terminal history in memory.

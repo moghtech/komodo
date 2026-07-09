@@ -34,7 +34,10 @@ use crate::{
     swarm::swarm_request,
   },
   monitor::{refresh_server_cache, refresh_swarm_cache},
-  state::{action_states, db_client, deployment_status_cache},
+  state::{
+    action_states, all_resources_cache, db_client,
+    deployment_status_cache,
+  },
 };
 
 use super::get_check_permissions;
@@ -104,17 +107,28 @@ impl super::KomodoResource for Deployment {
     } else {
       status.as_ref().map(|s| s.curr.state).unwrap_or_default()
     };
+    let all = all_resources_cache().load();
+    let server_name = all
+      .servers
+      .get(&deployment.config.server_id)
+      .map(|server| server.name.clone())
+      .unwrap_or_default();
+    let swarm_name = all
+      .swarms
+      .get(&deployment.config.swarm_id)
+      .map(|swarm| swarm.name.clone())
+      .unwrap_or_default();
     let (build_image, build_id) = match deployment.config.image {
       DeploymentImage::Build { build_id, version } => {
-        let (build_name, build_id, build_version) =
-          super::get::<Build>(&build_id)
-            .await
-            .map(|b| (b.name, b.id, b.config.version))
-            .unwrap_or((
-              String::from("unknown"),
-              String::new(),
-              Default::default(),
-            ));
+        let (build_name, build_id, build_version) = all
+          .builds
+          .get(&build_id)
+          .map(|b| (b.name.clone(), b.id.clone(), b.config.version))
+          .unwrap_or((
+            String::from("unknown"),
+            String::new(),
+            Default::default(),
+          ));
         let version = if version.is_none() {
           build_version.to_string()
         } else {
@@ -171,7 +185,9 @@ impl super::KomodoResource for Deployment {
         image,
         update_available,
         swarm_id: deployment.config.swarm_id,
+        swarm_name,
         server_id: deployment.config.server_id,
+        server_name,
         build_id,
       },
     }

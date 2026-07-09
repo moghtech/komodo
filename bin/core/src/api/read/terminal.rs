@@ -174,6 +174,7 @@ async fn list_all_terminals_for_user(
                       server_id.clone()
                     }),
                   };
+                  terminal.target_name = Some(server_name.clone());
                   terminal
                 }),
               TerminalTarget::Container { container, .. } => {
@@ -186,6 +187,7 @@ async fn list_all_terminals_for_user(
                     },
                     container,
                   };
+                  terminal.target_name = Some(server_name.clone());
                   terminal
                 })
               }
@@ -199,6 +201,7 @@ async fn list_all_terminals_for_user(
                     },
                     service,
                   };
+                  terminal.target_name = Some(s.name.clone());
                   terminal
                 })
               }
@@ -212,6 +215,7 @@ async fn list_all_terminals_for_user(
                         d.id.clone()
                       },
                     };
+                    terminal.target_name = Some(d.name.clone());
                     terminal
                   },
                 )

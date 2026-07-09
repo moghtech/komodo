@@ -193,7 +193,8 @@ pub fn refresh_server_cache(
 
     if let Some(docker) = &mut docker {
       docker.containers.iter_mut().for_each(|container| {
-        container.server_id = Some(server.id.clone())
+        container.server_id = Some(server.id.clone());
+        container.server_name = Some(server.name.clone());
       });
     }
 

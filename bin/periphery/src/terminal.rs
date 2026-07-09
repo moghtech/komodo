@@ -185,6 +185,7 @@ pub async fn list_terminals(
     .map(|terminal| Terminal {
       name: terminal.name.clone(),
       target: terminal.target.clone(),
+      target_name: None,
       command: terminal.command.clone(),
       stored_size_kb: terminal.history.size_kb(),
       created_at: terminal.created_at,
