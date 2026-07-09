@@ -12,7 +12,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { atomWithHash } from "jotai-location";
@@ -180,19 +180,105 @@ export function atomWithStorage<T>(key: string, init: T) {
   );
 }
 
-export function useResourceName(type: UsableResource) {
-  const resources = useRead(`List${type}s`, {}).data;
-  return useCallback(
-    (id: string) => resources?.find((resource) => resource.id === id)?.name,
-    [resources],
-  );
-}
-
 export function useResourceParamType() {
   const type = useParams().type;
   if (!type) return undefined;
   if (type === "resource-syncs") return "ResourceSync";
   return (type[0].toUpperCase() + type.slice(1, -1)) as UsableResource;
+}
+
+// ============== BATCHED LIST ITEM LOOKUP ==============
+
+/**
+ * All list item lookups mounting within the window (eg. the rows of a
+ * rendering table) are combined into a single `List<Type>s` request.
+ */
+const LIST_ITEM_BATCH_MS = 10;
+
+/** Matches the server side ObjectId parse used to split `query.names` into ids / names. */
+const OBJECT_ID_REGEX = /^[0-9a-f]{24}$/i;
+
+type ListItemBatch = {
+  names: Set<string>;
+  promise: Promise<Map<string, Types.ResourceListItem<unknown>>>;
+};
+
+const listItemBatches = new Map<string, ListItemBatch>();
+
+function batchedListItemFetch(
+  type: UsableResource,
+  name: string,
+): Promise<Types.ResourceListItem<unknown>[]> {
+  // The server ANDs the id filter / name filter it extracts from
+  // `query.names`, so id lookups must be batched separately from
+  // name lookups to avoid empty intersections.
+  const bucket = `${type}:${OBJECT_ID_REGEX.test(name) ? "id" : "name"}`;
+  let batch = listItemBatches.get(bucket);
+  if (!batch) {
+    const names = new Set<string>();
+    const promise = new Promise<Types.ResourceListItem<unknown>[]>(
+      (resolve, reject) => {
+        setTimeout(() => {
+          listItemBatches.delete(bucket);
+          komodo_client()
+            .read(`List${type}s`, {
+              query: { names: [...names] },
+              // limit: 0 so large batches aren't truncated to the default page size
+              limit: 0,
+            })
+            .then(resolve, reject);
+        }, LIST_ITEM_BATCH_MS);
+      },
+    ).then((resources) => {
+      const map = new Map<string, Types.ResourceListItem<unknown>>();
+      for (const resource of resources) {
+        map.set(resource.id, resource);
+        map.set(resource.name, resource);
+      }
+      return map;
+    });
+    batch = { names, promise };
+    listItemBatches.set(bucket, batch);
+  }
+  batch.names.add(name);
+  return batch.promise.then((map) => {
+    const resource = map.get(name);
+    return resource ? [resource] : [];
+  });
+}
+
+/**
+ * The underlying query for [useListItem]. The query key mirrors the
+ * plain `useRead("List<Type>s", { query: { names: [id] } })` call, so cache
+ * entries are shared and `useInvalidate(["List<Type>s"])` style prefix
+ * invalidations reach these too.
+ */
+export function useListItemQuery(
+  type: UsableResource,
+  id: string | undefined,
+) {
+  const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
+  return useQuery({
+    queryKey: [`List${type}s`, { query: { names: id ? [id] : [] } }],
+    queryFn: () => batchedListItemFetch(type, id!),
+    enabled: hasJwt && !!id,
+  });
+}
+
+/**
+ * Look up a single resource list item by id (or name, with `useName`).
+ * Concurrent lookups are transparently batched into a single
+ * `List<Type>s` call per resource type, instead of a request per id.
+ */
+export function useListItem<T extends UsableResource>(
+  type: T,
+  id: string | undefined,
+  useName?: boolean,
+): ReadResponses[`List${T}s`][number] | undefined {
+  const { data } = useListItemQuery(type, id);
+  return (data as Types.ResourceListItem<unknown>[] | undefined)?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  ) as ReadResponses[`List${T}s`][number] | undefined;
 }
 
 export type ResourceMap = {
@@ -203,6 +289,7 @@ export function useAllResources(
   terms?: string[],
   limit?: number,
   refetchInterval?: number,
+  enabled?: boolean,
 ): ResourceMap {
   return {
     Swarm: useRead(
@@ -211,7 +298,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"swarm".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Server: useRead(
       "ListServers",
@@ -219,7 +306,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"server".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Stack: useRead(
       "ListStacks",
@@ -227,7 +314,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"stack".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Deployment: useRead(
       "ListDeployments",
@@ -235,7 +322,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"deployment".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Build: useRead(
       "ListBuilds",
@@ -243,7 +330,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"build".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Repo: useRead(
       "ListRepos",
@@ -251,7 +338,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"repo".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Procedure: useRead(
       "ListProcedures",
@@ -259,7 +346,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"procedure".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Action: useRead(
       "ListActions",
@@ -267,7 +354,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"action".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Builder: useRead(
       "ListBuilders",
@@ -275,7 +362,7 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"builder".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     Alerter: useRead(
       "ListAlerters",
@@ -283,12 +370,15 @@ export function useAllResources(
         query: { terms: terms?.filter((term) => !"alerter".includes(term)) },
         limit,
       },
-      { refetchInterval },
+      { refetchInterval, enabled },
     ).data,
     ResourceSync: useRead(
       "ListResourceSyncs",
-      { query: { terms: terms?.filter((term) => !"sync".includes(term)) } },
-      { refetchInterval },
+      {
+        query: { terms: terms?.filter((term) => !"sync".includes(term)) },
+        limit,
+      },
+      { refetchInterval, enabled },
     ).data,
   };
 }
@@ -304,18 +394,6 @@ export function useNoResources() {
   return true;
 }
 
-/** returns function that takes a resource target and checks if it exists */
-export function useCheckResourceExists() {
-  const resources = useAllResources();
-  return (target: Types.ResourceTarget) => {
-    return (
-      resources[target.type as UsableResource]?.some(
-        (resource) => resource.id === target.id,
-      ) || false
-    );
-  };
-}
-
 export function usePushRecentlyViewed({ type, id }: Types.ResourceTarget) {
   const userInvalidate = useUserInvalidate();
 
@@ -323,11 +401,7 @@ export function usePushRecentlyViewed({ type, id }: Types.ResourceTarget) {
     onSuccess: userInvalidate,
   }).mutate;
 
-  const exists = useRead(`List${type as UsableResource}s`, {}).data?.find(
-    (r) => r.id === id,
-  )
-    ? true
-    : false;
+  const exists = useListItem(type as UsableResource, id) ? true : false;
 
   useEffect(() => {
     exists && push({ resource: { type, id } });
@@ -594,7 +668,7 @@ export function useUserTargetPermissions(user_target: Types.UserTarget) {
   const permissions = useRead("ListUserTargetPermissions", {
     user_target,
   }).data;
-  const allResources = useAllResources();
+  const allResources = useAllResources(undefined, 0);
   const perms: (Types.Permission & { name: string })[] = [];
   for (const [resource_type, resources] of Object.entries(allResources)) {
     addUserTargetPermissions(

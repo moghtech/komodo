@@ -20,15 +20,11 @@ import { DOCKER_LINK_ICONS } from "@/components/docker/link";
 import { Types } from "komodo_client";
 import { hexColorByIntention, useDebounce } from "mogh_ui";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
-import { ServerComponents } from "@/resources/server";
-import { SwarmComponents } from "@/resources/swarm";
-import { StackComponents } from "@/resources/stack";
-import { DeploymentComponents } from "@/resources/deployment";
 
 const ITEM_LIMIT = 7;
 let count = 0;
 
-export function useOmniSearch(): {
+export function useOmniSearch(opened: boolean): {
   search: string;
   setSearch: (value: string) => void;
   actions: SpotlightActionGroupData[];
@@ -68,8 +64,8 @@ export function useOmniSearch(): {
 
   const containers = useRead("ListAllContainers", containersQuery, {
     refetchInterval: 15_000,
-    // Only fetch when there is query typed
-    enabled: !!debouncedTerms.length,
+    // Only fetch when open and there is query typed
+    enabled: opened && !!debouncedTerms.length,
   }).data;
 
   const servicesQuery: Types.ListAllStackServices = useMemo(
@@ -85,14 +81,14 @@ export function useOmniSearch(): {
 
   const services = useRead("ListAllStackServices", servicesQuery, {
     refetchInterval: 15_000,
-    // Only fetch when there is query typed
-    enabled: !!debouncedTerms.length,
+    // Only fetch when open and there is query typed
+    enabled: opened && !!debouncedTerms.length,
   }).data;
 
   const _terminals = useRead(
     "ListTerminals",
     {},
-    { refetchInterval: 15_000 },
+    { refetchInterval: 15_000, enabled: opened },
   ).data;
   const terminals = useMemo(() => {
     return _terminals?.filter((c) => {
@@ -104,13 +100,8 @@ export function useOmniSearch(): {
     });
   }, [_terminals, searchTerms]);
 
-  const servers = ServerComponents.useList(undefined, 0);
-  const swarms = SwarmComponents.useList(undefined, 0);
-  const stacks = StackComponents.useList(undefined, 0);
-  const deployments = DeploymentComponents.useList(undefined, 0);
-
   const user = useUser().data;
-  const resources = useAllResources(debouncedTerms, 10, 15_000);
+  const resources = useAllResources(debouncedTerms, 10, 15_000, opened);
   const [_, setSettingsView] = useSettingsView();
 
   const _actions = useMemo(() => {
@@ -209,8 +200,10 @@ export function useOmniSearch(): {
               })
               .map((resource) => {
                 const info = resource.info as {
-                  swarm_id: string;
-                  server_id: string;
+                  swarm_id?: string;
+                  swarm_name?: string;
+                  server_id?: string;
+                  server_name?: string;
                 };
                 return {
                   id: type + " " + resource.name,
@@ -224,12 +217,9 @@ export function useOmniSearch(): {
                     <TemplateMarker type={_type} />
                   ),
                   description: info.swarm_id
-                    ? "Swarm: " +
-                      swarms?.find((swarm) => info.swarm_id === swarm.id)?.name
+                    ? "Swarm: " + info.swarm_name
                     : info.server_id
-                      ? "Server: " +
-                        servers?.find((server) => info.server_id === server.id)
-                          ?.name
+                      ? "Server: " + info.server_name
                       : undefined,
                 };
               }) ?? [],
@@ -242,10 +232,7 @@ export function useOmniSearch(): {
           containers?.map((container) => ({
             id: container.server_id ?? "" + " " + container.name,
             label: container.name,
-            description:
-              "Server: " +
-              servers?.find((server) => container.server_id === server.id)
-                ?.name,
+            description: "Server: " + container.server_name,
             onClick: () =>
               nav(
                 `/servers/${container.server_id}/container/${container.name}`,
@@ -271,9 +258,7 @@ export function useOmniSearch(): {
             return {
               id: service.stack_id + " " + service.service,
               label: service.service,
-              description:
-                "Stack: " +
-                stacks?.find((stack) => service.stack_id === stack.id)?.name,
+              description: "Stack: " + service.stack_name,
               onClick: () =>
                 nav(`/stacks/${service.stack_id}/service/${service.service}`),
               leftSection: <ICONS.Service size="1.3rem" color={color} />,
@@ -289,16 +274,14 @@ export function useOmniSearch(): {
             label: terminal.name,
             description: terminalTargetDescription(
               terminal.target,
-              servers,
-              stacks,
-              deployments,
+              terminal.target_name,
             ),
             onClick: () => nav(terminalLink(terminal)),
             leftSection: <ICONS.Terminal size="1.3rem" />,
           })) ?? [],
       },
     ];
-  }, [resources]);
+  }, [resources, containers, services, terminals, searchTerms]);
 
   // LIMIT the action count for performance.
   // Reset count on render before creating actual actions.
@@ -330,36 +313,18 @@ export function useOmniSearch(): {
 
 function terminalTargetDescription(
   target: Types.TerminalTarget,
-  servers: Types.ServerListItem[] | undefined,
-  stacks: Types.StackListItem[] | undefined,
-  deployments: Types.DeploymentListItem[] | undefined,
+  target_name: string | undefined,
 ) {
   switch (target.type) {
     case "Server":
-      return (
-        "Server: " +
-        servers?.find((server) => target.params.server === server.id)?.name
-      );
+      return "Server: " + target_name;
     case "Container":
       return (
-        "Server: " +
-        servers?.find((server) => target.params.server === server.id)?.name +
-        ", Container: " +
-        target.params.container
+        "Server: " + target_name + ", Container: " + target.params.container
       );
     case "Stack":
-      return (
-        "Stack: " +
-        stacks?.find((stack) => target.params.stack === stack.id)?.name +
-        ", Service: " +
-        target.params.service
-      );
+      return "Stack: " + target_name + ", Service: " + target.params.service;
     case "Deployment":
-      return (
-        "Deployment: " +
-        deployments?.find(
-          (deployment) => target.params.deployment === deployment.id,
-        )?.name
-      );
+      return "Deployment: " + target_name;
   }
 }

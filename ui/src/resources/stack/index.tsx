@@ -1,5 +1,11 @@
 import { stackStateIntention } from "@/lib/color";
-import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
+import {
+  useInvalidate,
+  useListItem,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
 import { StatusBadge } from "mogh_ui";
@@ -37,9 +43,7 @@ import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useStack(id: string | undefined, useName?: boolean) {
-  return useRead("ListStacks", { query: { names: id ? [id] : [] } }).data?.find(
-    (r) => (useName ? r.name === id : r.id === id),
-  );
+  return useListItem("Stack", id, useName);
 }
 
 export function useFullStack(id: string) {
@@ -118,7 +122,7 @@ export const StackComponents: RequiredResourceComponents<
   Table: StackTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const info = useRead("ListStacks", {}).data?.find((r) => r.id === id)?.info;
+    const info = useStack(id)?.info;
     const color = noColor
       ? undefined
       : info &&

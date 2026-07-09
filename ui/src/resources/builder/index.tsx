@@ -1,4 +1,4 @@
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -13,9 +13,7 @@ import { useState } from "react";
 import { Group, Select } from "@mantine/core";
 
 export function useBuilder(id: string | undefined, useName?: boolean) {
-  return useRead("ListBuilders", {
-    query: { names: id ? [id] : [] },
-  }).data?.find((r) => (useName ? r.name === id : r.id === id));
+  return useListItem("Builder", id, useName);
 }
 
 export function useFullBuilder(id: string) {
@@ -82,9 +80,9 @@ export const BuilderComponents: RequiredResourceComponents<
       (builder?.info.builder_type === "Server" &&
         builder.info.instance_type?.split(",").map((id) => id.trim())) ||
       [];
-    const servers = useRead("ListServers", {}).data?.filter((s) =>
-      configured.includes(s.id),
-    );
+    const servers = useRead("ListServers", {
+      query: { names: configured },
+    }).data?.filter((s) => configured.includes(s.id));
     const coreVersion = useRead("GetVersion", {}).data?.version;
     const intent = !servers?.length
       ? "Neutral"

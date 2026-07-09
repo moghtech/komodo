@@ -1467,8 +1467,12 @@ export interface DeploymentListItemInfo {
 	update_available: boolean;
 	/** The swarm that deployment is deployed on, when in Swarm mode. */
 	swarm_id: string;
+	/** The name of the swarm that deployment is deployed on, when in Swarm mode. */
+	swarm_name?: string;
 	/** The server that deployment is deployed on, when in Server mode. */
 	server_id: string;
+	/** The name of the server that deployment is deployed on, when in Server mode. */
+	server_name?: string;
 	/** An attached Komodo Build, if it exists. */
 	build_id?: string;
 }
@@ -4958,6 +4962,8 @@ export interface Port {
 export interface ContainerListItem {
 	/** The Server which hosts the container. */
 	server_id?: string;
+	/** The name of the Server which hosts the container. */
+	server_name?: string;
 	/** The first name in Names, not including the initial '/' */
 	name: string;
 	/** The ID of this container */
@@ -5031,6 +5037,8 @@ export enum StackServiceState {
 export interface StackService {
 	/** The stack which the service is a part of. */
 	stack_id: string;
+	/** The name of the stack which the service is a part of. */
+	stack_name?: string;
 	/** The service name */
 	service: string;
 	/** The service image */
@@ -5295,6 +5303,8 @@ export enum RepoState {
 export interface RepoListItemInfo {
 	/** The server that repo sits on. */
 	server_id: string;
+	/** The name of the server that repo sits on. */
+	server_name?: string;
 	/** The builder that builds the repo. */
 	builder_id: string;
 	/** Repo last cloned / pulled timestamp in ms. */
@@ -5499,8 +5509,12 @@ export enum StackState {
 export interface StackListItemInfo {
 	/** The swarm that stack is deployed on, when in Swarm mode. */
 	swarm_id: string;
+	/** The name of the swarm that stack is deployed on, when in Swarm mode. */
+	swarm_name?: string;
 	/** The server that stack is deployed on, when in Server mode. */
 	server_id: string;
+	/** The name of the server that stack is deployed on, when in Server mode. */
+	server_name?: string;
 	/** Whether stack is using files on host mode */
 	files_on_host: boolean;
 	/** Whether stack has file contents defined. */
@@ -5716,6 +5730,11 @@ export interface Terminal {
 	name: string;
 	/** The target resource of the Terminal. */
 	target: TerminalTarget;
+	/**
+	 * The name of the target resource (Server / Stack / Deployment).
+	 * Resolved by Core when listing all terminals for a user.
+	 */
+	target_name?: string;
 	/** The command used to init the shell. */
 	command: string;
 	/** The size of the terminal history in memory. */

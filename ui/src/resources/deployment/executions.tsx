@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Group, Select, Stack, Text } from "@mantine/core";
-import { useExecute, useRead } from "@/lib/hooks";
+import { useExecute, useListItem, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { parseKeyValue } from "@/lib/utils";
 import { useDeployment } from ".";
@@ -23,8 +23,7 @@ export function DeployDeployment({ id }: DeploymentId) {
 
   const { mutateAsync: deploy, isPending } = useExecute("Deploy");
 
-  const deployments = useRead("ListDeployments", {}).data;
-  const deployment_item = deployments?.find((d) => d.id === id);
+  const deployment_item = useListItem("Deployment", id);
 
   const deploying = useRead(
     "GetDeploymentActionState",
@@ -93,8 +92,7 @@ export function DestroyDeployment({ id }: DeploymentId) {
 
   const { mutateAsync: destroy, isPending } = useExecute("DestroyDeployment");
 
-  const deployments = useRead("ListDeployments", {}).data;
-  const state = deployments?.find((d) => d.id === id)?.info.state;
+  const state = useListItem("Deployment", id)?.info.state;
 
   const destroying = useRead(
     "GetDeploymentActionState",

@@ -6,12 +6,15 @@ import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader, useDebounce } from "mogh_ui";
 import { Page } from "mogh_ui";
 import { StatusBadge } from "mogh_ui";
-import { Group, MultiSelect, Pagination, Stack } from "@mantine/core";
-import { useCallback, useMemo, useState } from "react";
+import { Group, MultiSelect, Stack } from "@mantine/core";
+import { useEffect, useMemo, useState } from "react";
 import { DividedChildren } from "mogh_ui";
 import ResourceLink from "@/resources/link";
 import { SearchInput } from "mogh_ui";
 import TagsFilter from "@/components/tags/filter";
+import ListPagination, {
+  RESOURCE_PAGE_SIZE,
+} from "@/components/list-pagination";
 
 export default function Containers() {
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
@@ -35,12 +38,13 @@ export default function Containers() {
     [servers],
   );
 
-  const serverName = useCallback(
-    (id: string) => servers?.find((server) => server.id === id)?.name,
-    [servers],
-  );
-
   const tags = useTagsFilter();
+
+  // Set to page 0 whenever any filter changes,
+  // otherwise the query can point past the last page and come back empty.
+  useEffect(() => {
+    setPage(0);
+  }, [selectedServers, tags]);
 
   const _containers =
     useRead("ListAllContainers", {
@@ -48,7 +52,7 @@ export default function Containers() {
       servers: selectedServers,
       tags,
       page,
-      limit: 100,
+      limit: RESOURCE_PAGE_SIZE,
     }).data ?? [];
 
   // Prevent flashes during loading
@@ -78,8 +82,8 @@ export default function Containers() {
             accessorKey: "server_id",
             size: 200,
             sortingFn: (a, b) => {
-              const sa = serverName(a.original.server_id!);
-              const sb = serverName(b.original.server_id!);
+              const sa = a.original.server_name;
+              const sb = b.original.server_name;
 
               if (!sa && !sb) return 0;
               if (!sa) return -1;
@@ -207,7 +211,7 @@ export default function Containers() {
         ]}
       />
     ),
-    [containers, serverName],
+    [containers],
   );
 
   return (
@@ -227,19 +231,11 @@ export default function Containers() {
               searchable
               clearable
             />
-            {/* PAGINATION */}
-            <Pagination.Root
-              total={containers.length >= 100 ? page + 2 : page + 1}
-              value={page + 1}
-              onChange={(page) => setPage(page - 1)}
-            >
-              <Group gap="0.2rem" justify="center">
-                <Pagination.First />
-                <Pagination.Previous />
-                <Pagination.Items />
-                <Pagination.Next />
-              </Group>
-            </Pagination.Root>
+            <ListPagination
+              page={page}
+              setPage={setPage}
+              count={containers.length}
+            />
           </Group>
 
           <Group w={{ base: "100%", xs: "fit-content" }}>

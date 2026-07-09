@@ -1,5 +1,5 @@
 import { actionStateIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -16,9 +16,7 @@ import BatchExecutions from "@/components/batch-executions";
 import { RunAction } from "./executions";
 
 export function useAction(id: string | undefined, useName?: boolean) {
-  return useRead("ListActions", {
-    query: { names: id ? [id] : [] },
-  }).data?.find((r) => (useName ? r.name === id : r.id === id));
+  return useListItem("Action", id, useName);
 }
 
 export function useFullAction(id: string) {
@@ -75,8 +73,7 @@ export const ActionComponents: RequiredResourceComponents<
   Table: ActionTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListActions", {}).data?.find((r) => r.id === id)
-      ?.info.state;
+    const state = useAction(id)?.info.state;
     const color = noColor
       ? undefined
       : state && hexColorByIntention(actionStateIntention(state));

@@ -1,5 +1,5 @@
 import { resourceSyncStateIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
 import { fmtDate, StatusBadge } from "mogh_ui";
@@ -17,9 +17,7 @@ import BatchExecutions from "@/components/batch-executions";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useResourceSync(id: string | undefined, useName?: boolean) {
-  return useRead("ListResourceSyncs", {
-    query: { names: id ? [id] : [] },
-  }).data?.find((r) => (useName ? r.name === id : r.id === id));
+  return useListItem("ResourceSync", id, useName);
 }
 
 export function useFullResourceSync(id: string) {
@@ -88,9 +86,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   Table: ResourceSyncTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListResourceSyncs", {}).data?.find(
-      (r) => r.id === id,
-    )?.info.state;
+    const state = useResourceSync(id)?.info.state;
     const color = noColor
       ? undefined
       : state && hexColorByIntention(resourceSyncStateIntention(state));

@@ -1,5 +1,11 @@
 import { buildStateIntention } from "@/lib/color";
-import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
+import {
+  useInvalidate,
+  useListItem,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -21,9 +27,7 @@ import ResourceSelector from "../selector";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useBuild(id: string | undefined, useName?: boolean) {
-  return useRead("ListBuilds", { query: { names: id ? [id] : [] } }).data?.find(
-    (r) => (useName ? r.name === id : r.id === id),
-  );
+  return useListItem("Build", id, useName);
 }
 
 export function useFullBuild(id: string) {
@@ -108,8 +112,7 @@ export const BuildComponents: RequiredResourceComponents<
   Table: BuildTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListBuilds", {}).data?.find((r) => r.id === id)?.info
-      .state;
+    const state = useBuild(id)?.info.state;
     const color = noColor
       ? undefined
       : state && hexColorByIntention(buildStateIntention(state));

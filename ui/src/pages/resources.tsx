@@ -11,7 +11,8 @@ import {
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import { Page, useDebounce } from "mogh_ui";
-import { Group, Pagination, Stack } from "@mantine/core";
+import { Group, Stack } from "@mantine/core";
+import ListPagination from "@/components/list-pagination";
 import { TableSkeleton } from "mogh_ui";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";
@@ -50,6 +51,13 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
 
   const tags = useTagsFilter();
   const [templates] = useTemplatesQueryBehavior();
+
+  // Set to page 0 whenever the resource type or any filter changes,
+  // otherwise the query can point past the last page and come back empty.
+  useEffect(() => {
+    setPage(0);
+  }, [type, tags, templates, filterUpdateAvailable]);
+
   const query: Types.ResourceQuery<any> = {
     terms,
     tags,
@@ -84,8 +92,6 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
     return <ResourceNotFound type={type} />;
   }
 
-  const targets = resources.map((resource) => ({ type, id: resource.id }));
-
   return (
     <Page
       title={`${name}s`}
@@ -94,7 +100,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
       oppositeTitle={
         <Group w={{ base: "100%", xs: "fit-content" }}>
           {type === "Server" && <ServerShowStats />}
-          <ExportToml targets={targets} />
+          <ExportToml listQuery={{ type, query }} />
         </Group>
       }
     >
@@ -103,21 +109,11 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
           <Group w={{ base: "100%", xs: "fit-content" }}>
             {(isAdmin || !disableNonAdminCreate) && <RC.New />}
             <RC.BatchExecutions />
-            {/* PAGINATION (only shown when needed) */}
-            {(resources.length >= 100 || page > 0) && (
-              <Pagination.Root
-                total={resources.length >= 100 ? page + 2 : page + 1}
-                value={page + 1}
-                onChange={(page) => setPage(page - 1)}
-              >
-                <Group gap="0.2rem" justify="center">
-                  <Pagination.First />
-                  <Pagination.Previous />
-                  <Pagination.Items />
-                  <Pagination.Next />
-                </Group>
-              </Pagination.Root>
-            )}
+            <ListPagination
+              page={page}
+              setPage={setPage}
+              count={resources.length}
+            />
           </Group>
 
           <Group w={{ base: "100%", xs: "fit-content" }}>

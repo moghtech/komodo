@@ -1,4 +1,4 @@
-import { useExecute, useRead } from "@/lib/hooks";
+import { useExecute, useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -11,9 +11,7 @@ import BatchExecutions from "@/components/batch-executions";
 import { ConfirmButton } from "mogh_ui";
 
 export function useAlerter(id: string | undefined, useName?: boolean) {
-  return useRead("ListAlerters", {
-    query: { names: id ? [id] : [] },
-  }).data?.find((r) => (useName ? r.name === id : r.id === id));
+  return useListItem("Alerter", id, useName);
 }
 
 export function useFullAlerter(id: string) {
@@ -57,8 +55,7 @@ export const AlerterComponents: RequiredResourceComponents<
   Table: AlerterTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const enabled = useRead("ListAlerters", {}).data?.find((r) => r.id === id)
-      ?.info.enabled;
+    const enabled = useAlerter(id)?.info.enabled;
     const color =
       enabled === undefined || noColor
         ? undefined

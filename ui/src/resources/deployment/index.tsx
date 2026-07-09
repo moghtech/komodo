@@ -1,5 +1,5 @@
 import { deploymentStateIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -29,9 +29,7 @@ import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useDeployment(id: string | undefined, useName?: boolean) {
-  return useRead("ListDeployments", {
-    query: { names: id ? [id] : [] },
-  }).data?.find((r) => (useName ? r.name === id : r.id === id));
+  return useListItem("Deployment", id, useName);
 }
 
 export function useFullDeployment(id: string) {
@@ -114,9 +112,7 @@ export const DeploymentComponents: RequiredResourceComponents<
   Table: DeploymentTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const info = useRead("ListDeployments", {}).data?.find(
-      (r) => r.id === id,
-    )?.info;
+    const info = useDeployment(id)?.info;
     const color = noColor
       ? undefined
       : info &&

@@ -1,5 +1,5 @@
 import { procedureStateIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -17,9 +17,7 @@ import { updateLogToHtml } from "@/lib/utils";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useProcedure(id: string | undefined, useName?: boolean) {
-  return useRead("ListProcedures", {
-    query: { names: id ? [id] : [] },
-  }).data?.find((r) => (useName ? r.name === id : r.id === id));
+  return useListItem("Procedure", id, useName);
 }
 
 export function useFullProcedure(id: string) {
@@ -80,8 +78,7 @@ export const ProcedureComponents: RequiredResourceComponents<
   Table: ProcedureTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListProcedures", {}).data?.find((r) => r.id === id)
-      ?.info.state;
+    const state = useProcedure(id)?.info.state;
     const color = noColor
       ? undefined
       : state && hexColorByIntention(procedureStateIntention(state));

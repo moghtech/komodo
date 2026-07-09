@@ -1,5 +1,5 @@
 import { repoStateIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "@/resources";
 import { Types } from "komodo_client";
@@ -18,9 +18,7 @@ import RepoLink from "@/components/repo-link";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useRepo(id: string | undefined, useName?: boolean) {
-  return useRead("ListRepos", { query: { names: id ? [id] : [] } }).data?.find(
-    (r) => (useName ? r.name === id : r.id === id),
-  );
+  return useListItem("Repo", id, useName);
 }
 
 export function useFullRepo(id: string) {
@@ -84,8 +82,7 @@ export const RepoComponents: RequiredResourceComponents<
   Table: RepoTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListRepos", {}).data?.find((r) => r.id === id)?.info
-      .state;
+    const state = useRepo(id)?.info.state;
     const color = noColor
       ? undefined
       : state && hexColorByIntention(repoStateIntention(state));

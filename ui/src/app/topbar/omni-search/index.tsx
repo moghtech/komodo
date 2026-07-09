@@ -5,9 +5,13 @@ import { ICONS } from "@/lib/icons";
 import { useShiftKeyListener } from "mogh_ui";
 import classes from "./index.module.scss";
 import { useLocalStorage } from "@mantine/hooks";
+import { useState } from "react";
 
 export default function OmniSearch({}: {}) {
-  const { search, setSearch, actions } = useOmniSearch();
+  // Gates all omni search queries, so nothing is fetched / polled
+  // until the spotlight is actually opened.
+  const [opened, setOpened] = useState(false);
+  const { search, setSearch, actions } = useOmniSearch(opened);
   useShiftKeyListener("S", () => spotlight.open());
   const [clearOnClose, setClearOnClose] = useLocalStorage({
     key: "omnisearch.clearOnClose",
@@ -45,6 +49,8 @@ export default function OmniSearch({}: {}) {
         query={search}
         onQueryChange={setSearch}
         clearQueryOnClose={clearOnClose}
+        onSpotlightOpen={() => setOpened(true)}
+        onSpotlightClose={() => setOpened(false)}
         styles={{ content: { borderRadius: "var(--mantine-radius-sm)" } }}
       >
         <Spotlight.Search

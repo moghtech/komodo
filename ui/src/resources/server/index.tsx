@@ -1,5 +1,5 @@
 import { serverStateIntention } from "@/lib/color";
-import { useExecute, useRead } from "@/lib/hooks";
+import { useExecute, useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -25,9 +25,7 @@ import ServerCpuUsage from "./stats/current/cpu";
 import { HoverError } from "mogh_ui";
 
 export function useServer(id: string | undefined, useName?: boolean) {
-  return useRead("ListServers", {
-    query: { names: id ? [id] : [] },
-  }).data?.find((r) => (useName ? r.name === id : r.id === id));
+  return useListItem("Server", id, useName);
 }
 
 export function useFullServer(id: string | undefined) {
@@ -102,9 +100,7 @@ export const ServerComponents: RequiredResourceComponents<
 
   Icon: ({ id, size = "1rem", noColor }) => {
     const coreVersion = useRead("GetVersion", {}).data?.version;
-    const info = useRead("ListServers", {}).data?.find(
-      (r) => r.id === id,
-    )?.info;
+    const info = useServer(id)?.info;
     const state = info?.state;
     const color = noColor
       ? undefined

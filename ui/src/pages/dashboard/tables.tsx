@@ -9,7 +9,8 @@ import {
 import { ICONS } from "@/lib/icons";
 import { Section, useDebounce } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import ListPagination from "@/components/list-pagination";
 import { Link } from "react-router-dom";
 import DashboardNoResources from "./no-resources";
 import { ShowHideButton } from "mogh_ui";
@@ -64,8 +65,17 @@ function TableSection({
   const [show, setShow] = useState(true);
   const tags = useTagsFilter();
   const [templates] = useTemplatesQueryBehavior();
+
+  const [page, setPage] = useState(0);
+  // Set to page 0 whenever any filter changes,
+  // otherwise the query can point past the last page and come back empty.
+  useEffect(() => {
+    setPage(0);
+  }, [terms, tags, templates]);
+
   const _resources =
-    useRead(`List${type}s`, { query: { terms, tags, templates } }).data ?? [];
+    useRead(`List${type}s`, { query: { terms, tags, templates }, page }).data ??
+    [];
   // Prevent flashing when typing / fetching
   const resources = useDebounce(_resources, 200);
 
@@ -74,7 +84,9 @@ function TableSection({
     [resources, show],
   );
 
-  if (!resources.length) return;
+  // Keep the section visible on empty pages past the first,
+  // so the pagination controls remain available to navigate back.
+  if (!resources.length && page === 0) return;
 
   const Icon = ICONS[type];
 
@@ -92,7 +104,18 @@ function TableSection({
           {type + "s"}
         </Text>
       }
-      actions={<ShowHideButton show={show} setShow={setShow} />}
+      actions={
+        <Group gap="xs">
+          {show && (
+            <ListPagination
+              page={page}
+              setPage={setPage}
+              count={resources.length}
+            />
+          )}
+          <ShowHideButton show={show} setShow={setShow} />
+        </Group>
+      }
     >
       {Table}
     </Section>
