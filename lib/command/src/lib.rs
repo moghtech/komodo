@@ -264,7 +264,7 @@ async fn run_command(
   };
 
   kill_process_group(pid);
-  CommandOutput::from_err(std::io::Error::other(killed_reason))
+  CommandOutput::from_err_message(killed_reason)
 }
 
 /// Sends `SIGKILL` to the entire process group led by `pid`.
