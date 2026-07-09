@@ -18,17 +18,18 @@ export default function RepoTabs({ id }: { id: string }) {
   });
   const info = useRepo(id)?.info;
   const stacks =
-    useRead("ListStacks", {}).data?.filter(
-      (stack) => stack.info.linked_repo === id,
-    ) ?? [];
+    useRead("ListStacks", {
+      query: { specific: { linked_repos: [id] } },
+      limit: 0,
+    }).data ?? [];
   const noStacks = stacks.length === 0;
   const builds =
-    useRead("ListBuilds", {}).data?.filter(
+    useRead("ListBuilds", { limit: 0 }).data?.filter(
       (build) => build.info.linked_repo === id,
     ) ?? [];
   const noBuilds = builds.length === 0;
   const syncs =
-    useRead("ListResourceSyncs", {}).data?.filter(
+    useRead("ListResourceSyncs", { limit: 0 }).data?.filter(
       (sync) => sync.info.linked_repo === id,
     ) ?? [];
   const noSyncs = syncs.length === 0;

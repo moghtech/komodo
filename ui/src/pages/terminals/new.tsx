@@ -237,7 +237,7 @@ function CreateServerTerminal({
 }) {
   const nav = useNavigate();
   const firstServer =
-    (useRead("ListServers", {}).data?.filter(
+    (useRead("ListServers", { limit: 0 }).data?.filter(
       (s) => s.info.state === Types.ServerState.Ok,
     ) ?? [])[0]?.id ?? "";
   const [server, _setServer] = useState(firstServer);

@@ -14,9 +14,9 @@ export default function StandardServerTable({
   resources: Types.ServerListItem[];
 } & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("Server");
-  const deployments = useRead("ListDeployments", {}).data;
-  const stacks = useRead("ListStacks", {}).data;
-  const repos = useRead("ListRepos", {}).data;
+  const deployments = useRead("ListDeployments", { limit: 0 }).data;
+  const stacks = useRead("ListStacks", { limit: 0 }).data;
+  const repos = useRead("ListRepos", { limit: 0 }).data;
   const resourcesCount = useCallback(
     (id: string) => {
       return (

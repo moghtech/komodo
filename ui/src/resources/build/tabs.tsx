@@ -25,9 +25,10 @@ export default function BuildTabs({ id }: { id: string }) {
 
   const info = useBuild(id)?.info;
 
-  const deployments = useRead("ListDeployments", {}).data?.filter(
-    (deployment) => deployment.info.build_id === id,
-  );
+  const deployments = useRead("ListDeployments", {
+    query: { specific: { build_ids: [id] } },
+    limit: 0,
+  }).data;
   const deploymentsDisabled = (deployments?.length || 0) === 0;
 
   const hasBeenBuilt = !!useRead("ListUpdates", {

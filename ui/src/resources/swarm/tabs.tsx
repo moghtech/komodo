@@ -27,12 +27,12 @@ export default function SwarmTabs({ id }: { id: string }) {
   const swarmInfo = useSwarm(id)?.info;
 
   const stacks =
-    useRead("ListStacks", {}).data?.filter(
+    useRead("ListStacks", { limit: 0 }).data?.filter(
       (stack) => stack.info.swarm_id === id,
     ) ?? [];
   const noStacks = stacks.length === 0;
   const deployments =
-    useRead("ListDeployments", {}).data?.filter(
+    useRead("ListDeployments", { limit: 0 }).data?.filter(
       (deployment) => deployment.info.swarm_id === id,
     ) ?? [];
   const noDeployments = deployments.length === 0;

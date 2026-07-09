@@ -28,7 +28,7 @@ export default function DeploymentConfig({
 }) {
   const { canWrite } = usePermissions({ type: "Deployment", id });
   const config = useFullDeployment(id)?.config;
-  const builds = useRead("ListBuilds", {}).data;
+  const builds = useRead("ListBuilds", { limit: 0 }).data;
   const globalDisabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const swarmsExist = useRead("ListSwarms", {}).data?.length ? true : false;

@@ -19,7 +19,7 @@ import { ReactNode } from "react";
 
 export default function DashboardActiveResources() {
   const stacks =
-    useRead("ListStacks", {}).data?.filter((stack) =>
+    useRead("ListStacks", { limit: 0 }).data?.filter((stack) =>
       [
         Types.StackState.Deploying,
         Types.StackState.Restarting,
@@ -27,7 +27,7 @@ export default function DashboardActiveResources() {
       ].includes(stack.info.state),
     ) ?? [];
   const deployments =
-    useRead("ListDeployments", {}).data?.filter((deployment) =>
+    useRead("ListDeployments", { limit: 0 }).data?.filter((deployment) =>
       [
         Types.DeploymentState.Deploying,
         Types.DeploymentState.Restarting,
@@ -35,11 +35,11 @@ export default function DashboardActiveResources() {
       ].includes(deployment.info.state),
     ) ?? [];
   const builds =
-    useRead("ListBuilds", {}).data?.filter(
+    useRead("ListBuilds", { limit: 0 }).data?.filter(
       (build) => build.info.state === Types.BuildState.Building,
     ) ?? [];
   const repos =
-    useRead("ListRepos", {}).data?.filter((repo) =>
+    useRead("ListRepos", { limit: 0 }).data?.filter((repo) =>
       [
         Types.RepoState.Building,
         Types.RepoState.Cloning,
@@ -47,11 +47,11 @@ export default function DashboardActiveResources() {
       ].includes(repo.info.state),
     ) ?? [];
   const procedures =
-    useRead("ListProcedures", {}).data?.filter(
+    useRead("ListProcedures", { limit: 0 }).data?.filter(
       (procedure) => procedure.info.state === Types.ProcedureState.Running,
     ) ?? [];
   const actions =
-    useRead("ListActions", {}).data?.filter(
+    useRead("ListActions", { limit: 0 }).data?.filter(
       (action) => action.info.state === Types.ActionState.Running,
     ) ?? [];
   const globalAutoUpdates =
