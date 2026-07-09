@@ -6,12 +6,13 @@ import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader, useDebounce } from "mogh_ui";
 import { Page } from "mogh_ui";
 import { StatusBadge } from "mogh_ui";
-import { Group, MultiSelect, Stack } from "@mantine/core";
+import { Group, Stack } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 import { DividedChildren } from "mogh_ui";
 import ResourceLink from "@/resources/link";
 import { SearchInput } from "mogh_ui";
 import TagsFilter from "@/components/tags/filter";
+import ResourceMultiSelector from "@/resources/multi-selector";
 import ListPagination, {
   RESOURCE_PAGE_SIZE,
 } from "@/components/list-pagination";
@@ -31,12 +32,6 @@ export default function Containers() {
       .map((term) => term.trim())
       .filter((term) => term);
   }, [debouncedSearch]);
-
-  const servers = useRead("ListServers", { limit: 0 }).data;
-  const serverNames = useMemo(
-    () => servers?.map((server) => server.name) || [],
-    [servers],
-  );
 
   const tags = useTagsFilter();
 
@@ -223,13 +218,10 @@ export default function Containers() {
       <Stack>
         <Group justify="space-between">
           <Group w={{ base: "100%", xs: "fit-content" }}>
-            <MultiSelect
-              placeholder="Filter by Servers"
+            <ResourceMultiSelector
+              type="Server"
               value={selectedServers}
               onChange={setSelectedServers}
-              data={serverNames}
-              searchable
-              clearable
             />
             <ListPagination
               page={page}
