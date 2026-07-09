@@ -724,6 +724,11 @@ pub struct BuildQuerySpecifics {
   /// defaults to 0 which is a no op
   #[serde(default)]
   pub built_since: I64,
+
+  /// Query only for Builds matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<BuildState>,
 }
 
 impl super::resource::AddFilters for BuildQuerySpecifics {

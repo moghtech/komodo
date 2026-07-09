@@ -615,6 +615,11 @@ pub struct DeploymentQuerySpecifics {
   /// Query only for Deployments with available image updates.
   #[serde(default)]
   pub update_available: bool,
+
+  /// Query only for Deployments matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<DeploymentState>,
 }
 
 impl super::resource::AddFilters for DeploymentQuerySpecifics {

@@ -63,6 +63,7 @@ impl Resolve<ReadArgs> for ListDeployments {
       get_all_tags(None).await?
     };
     let only_update_available = self.query.specific.update_available;
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     let deployments = resource::list_for_user::<Deployment>(
       self.query,
@@ -80,6 +81,16 @@ impl Resolve<ReadArgs> for ListDeployments {
         .collect()
     } else {
       deployments
+    };
+    // The state is not stored on the database,
+    // it can only be filtered after they are attached to list items.
+    let deployments = if states.is_empty() {
+      deployments
+    } else {
+      deployments
+        .into_iter()
+        .filter(|deployment| states.contains(&deployment.info.state))
+        .collect()
     };
     Ok(deployments)
   }

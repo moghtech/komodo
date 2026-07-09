@@ -45,18 +45,28 @@ impl Resolve<ReadArgs> for ListActions {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-    Ok(
-      resource::list_for_user::<Action>(
-        self.query,
-        limit as i64,
-        self.page * limit,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-      )
-      .await?,
+    let actions = resource::list_for_user::<Action>(
+      self.query,
+      limit as i64,
+      self.page * limit,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
+    .await?;
+    // The state is not stored on the database,
+    // it can only be filtered after they are attached to list items.
+    let actions = if states.is_empty() {
+      actions
+    } else {
+      actions
+        .into_iter()
+        .filter(|action| states.contains(&action.info.state))
+        .collect()
+    };
+    Ok(actions)
   }
 }
 

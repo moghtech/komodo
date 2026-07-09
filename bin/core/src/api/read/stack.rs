@@ -467,6 +467,7 @@ impl Resolve<ReadArgs> for ListStacks {
       get_all_tags(None).await?
     };
     let only_update_available = self.query.specific.update_available;
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     let stacks = resource::list_for_user::<Stack>(
       self.query,
@@ -490,6 +491,16 @@ impl Resolve<ReadArgs> for ListStacks {
         .collect()
     } else {
       stacks
+    };
+    // The state is not stored on the database,
+    // it can only be filtered after they are attached to list items.
+    let stacks = if states.is_empty() {
+      stacks
+    } else {
+      stacks
+        .into_iter()
+        .filter(|stack| states.contains(&stack.info.state))
+        .collect()
     };
     Ok(stacks)
   }

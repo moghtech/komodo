@@ -53,18 +53,28 @@ impl Resolve<ReadArgs> for ListBuilds {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-    Ok(
-      resource::list_for_user::<Build>(
-        self.query,
-        limit as i64,
-        self.page * limit,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-      )
-      .await?,
+    let builds = resource::list_for_user::<Build>(
+      self.query,
+      limit as i64,
+      self.page * limit,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
+    .await?;
+    // The state is not stored on the database,
+    // it can only be filtered after they are attached to list items.
+    let builds = if states.is_empty() {
+      builds
+    } else {
+      builds
+        .into_iter()
+        .filter(|build| states.contains(&build.info.state))
+        .collect()
+    };
+    Ok(builds)
   }
 }
 

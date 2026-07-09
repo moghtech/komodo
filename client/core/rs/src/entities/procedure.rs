@@ -261,7 +261,12 @@ pub type ProcedureQuery = ResourceQuery<ProcedureQuerySpecifics>;
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct ProcedureQuerySpecifics {}
+pub struct ProcedureQuerySpecifics {
+  /// Query only for Procedures matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<ProcedureState>,
+}
 
 impl super::resource::AddFilters for ProcedureQuerySpecifics {
   fn add_filters(&self, _: &mut Document) {}

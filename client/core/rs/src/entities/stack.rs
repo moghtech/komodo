@@ -954,6 +954,10 @@ pub struct StackQuerySpecifics {
   /// Query only for Stack with available image updates.
   #[serde(default)]
   pub update_available: bool,
+  /// Query only for Stacks matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<StackState>,
 }
 
 impl super::resource::AddFilters for StackQuerySpecifics {

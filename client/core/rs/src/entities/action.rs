@@ -261,7 +261,12 @@ pub type ActionQuery = ResourceQuery<ActionQuerySpecifics>;
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct ActionQuerySpecifics {}
+pub struct ActionQuerySpecifics {
+  /// Query only for Actions matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<ActionState>,
+}
 
 impl super::resource::AddFilters for ActionQuerySpecifics {
   fn add_filters(&self, _filters: &mut Document) {}

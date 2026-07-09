@@ -19,41 +19,65 @@ import { ReactNode } from "react";
 
 export default function DashboardActiveResources() {
   const stacks =
-    useRead("ListStacks", { limit: 0 }).data?.filter((stack) =>
-      [
-        Types.StackState.Deploying,
-        Types.StackState.Restarting,
-        Types.StackState.Removing,
-      ].includes(stack.info.state),
-    ) ?? [];
+    useRead("ListStacks", {
+      query: {
+        specific: {
+          states: [
+            Types.StackState.Deploying,
+            Types.StackState.Restarting,
+            Types.StackState.Removing,
+          ],
+        },
+      },
+      limit: 0,
+    }).data ?? [];
   const deployments =
-    useRead("ListDeployments", { limit: 0 }).data?.filter((deployment) =>
-      [
-        Types.DeploymentState.Deploying,
-        Types.DeploymentState.Restarting,
-        Types.DeploymentState.Removing,
-      ].includes(deployment.info.state),
-    ) ?? [];
+    useRead("ListDeployments", {
+      query: {
+        specific: {
+          states: [
+            Types.DeploymentState.Deploying,
+            Types.DeploymentState.Restarting,
+            Types.DeploymentState.Removing,
+          ],
+        },
+      },
+      limit: 0,
+    }).data ?? [];
   const builds =
-    useRead("ListBuilds", { limit: 0 }).data?.filter(
-      (build) => build.info.state === Types.BuildState.Building,
-    ) ?? [];
+    useRead("ListBuilds", {
+      query: {
+        specific: { states: [Types.BuildState.Building] },
+      },
+      limit: 0,
+    }).data ?? [];
   const repos =
-    useRead("ListRepos", { limit: 0 }).data?.filter((repo) =>
-      [
-        Types.RepoState.Building,
-        Types.RepoState.Cloning,
-        Types.RepoState.Pulling,
-      ].includes(repo.info.state),
-    ) ?? [];
+    useRead("ListRepos", {
+      query: {
+        specific: {
+          states: [
+            Types.RepoState.Building,
+            Types.RepoState.Cloning,
+            Types.RepoState.Pulling,
+          ],
+        },
+      },
+      limit: 0,
+    }).data ?? [];
   const procedures =
-    useRead("ListProcedures", { limit: 0 }).data?.filter(
-      (procedure) => procedure.info.state === Types.ProcedureState.Running,
-    ) ?? [];
+    useRead("ListProcedures", {
+      query: {
+        specific: { states: [Types.ProcedureState.Running] },
+      },
+      limit: 0,
+    }).data ?? [];
   const actions =
-    useRead("ListActions", { limit: 0 }).data?.filter(
-      (action) => action.info.state === Types.ActionState.Running,
-    ) ?? [];
+    useRead("ListActions", {
+      query: {
+        specific: { states: [Types.ActionState.Running] },
+      },
+      limit: 0,
+    }).data ?? [];
   const globalAutoUpdates =
     useRead("ListUpdates", {
       query: {

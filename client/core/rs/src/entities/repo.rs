@@ -60,7 +60,15 @@ pub struct RepoListItemInfo {
 
 #[typeshare]
 #[derive(
-  Debug, Clone, Copy, Default, Serialize, Deserialize, Display,
+  Debug,
+  Clone,
+  Copy,
+  Default,
+  PartialEq,
+  Eq,
+  Serialize,
+  Deserialize,
+  Display,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum RepoState {
@@ -341,7 +349,12 @@ pub type RepoQuery = ResourceQuery<RepoQuerySpecifics>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RepoQuerySpecifics {
   /// Filter repos by their repo.
+  #[serde(default)]
   pub repos: Vec<String>,
+  /// Query only for Repos matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<RepoState>,
 }
 
 impl super::resource::AddFilters for RepoQuerySpecifics {

@@ -43,18 +43,28 @@ impl Resolve<ReadArgs> for ListProcedures {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-    Ok(
-      resource::list_for_user::<Procedure>(
-        self.query,
-        limit as i64,
-        self.page * limit,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-      )
-      .await?,
+    let procedures = resource::list_for_user::<Procedure>(
+      self.query,
+      limit as i64,
+      self.page * limit,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
+    .await?;
+    // The state is not stored on the database,
+    // it can only be filtered after they are attached to list items.
+    let procedures = if states.is_empty() {
+      procedures
+    } else {
+      procedures
+        .into_iter()
+        .filter(|procedure| states.contains(&procedure.info.state))
+        .collect()
+    };
+    Ok(procedures)
   }
 }
 
