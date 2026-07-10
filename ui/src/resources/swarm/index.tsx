@@ -20,8 +20,12 @@ import SwarmHeaderInfo from "./header-info";
 import { HoverError } from "mogh_ui";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useSwarm(id: string | undefined, useName?: boolean) {
-  return useListItem("Swarm", id, useName);
+export function useSwarm(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Swarm", id, useName, refetchInterval);
 }
 
 export function useFullSwarm(id: string) {

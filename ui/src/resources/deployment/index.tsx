@@ -28,8 +28,12 @@ import BatchExecutions from "@/components/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useDeployment(id: string | undefined, useName?: boolean) {
-  return useListItem("Deployment", id, useName);
+export function useDeployment(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Deployment", id, useName, refetchInterval);
 }
 
 export function useFullDeployment(id: string) {

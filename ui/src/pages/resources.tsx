@@ -91,12 +91,16 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         : undefined,
   };
   const _resources =
-    useRead(`List${type}s`, {
-      query,
-      page,
-      sort_by: sort.sort_by as any,
-      sort_desc: sort.sort_desc,
-    }).data ?? [];
+    useRead(
+      `List${type}s`,
+      {
+        query,
+        page,
+        sort_by: sort.sort_by as any,
+        sort_desc: sort.sort_desc,
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
 
   // Debounce: prevents flashing when typing / fetching.
   // Must also set immediately upon change of resource type

@@ -42,13 +42,17 @@ export default function Containers() {
   }, [selectedServers, tags]);
 
   const _containers =
-    useRead("ListAllContainers", {
-      terms: searchTerms,
-      servers: selectedServers,
-      tags,
-      page,
-      limit: RESOURCE_PAGE_SIZE,
-    }).data ?? [];
+    useRead(
+      "ListAllContainers",
+      {
+        terms: searchTerms,
+        servers: selectedServers,
+        tags,
+        page,
+        limit: RESOURCE_PAGE_SIZE,
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
 
   // Prevent flashes during loading
   const containers = useDebounce(_containers, 300);

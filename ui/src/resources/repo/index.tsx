@@ -17,8 +17,12 @@ import ResourceLink from "../link";
 import RepoLink from "@/components/repo-link";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useRepo(id: string | undefined, useName?: boolean) {
-  return useListItem("Repo", id, useName);
+export function useRepo(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Repo", id, useName, refetchInterval);
 }
 
 export function useFullRepo(id: string) {

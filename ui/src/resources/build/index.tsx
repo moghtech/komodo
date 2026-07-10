@@ -26,8 +26,12 @@ import { useState } from "react";
 import ResourceSelector from "../selector";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useBuild(id: string | undefined, useName?: boolean) {
-  return useListItem("Build", id, useName);
+export function useBuild(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Build", id, useName, refetchInterval);
 }
 
 export function useFullBuild(id: string) {

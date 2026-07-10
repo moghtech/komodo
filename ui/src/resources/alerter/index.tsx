@@ -10,8 +10,12 @@ import { hexColorByIntention } from "mogh_ui";
 import BatchExecutions from "@/components/batch-executions";
 import { ConfirmButton } from "mogh_ui";
 
-export function useAlerter(id: string | undefined, useName?: boolean) {
-  return useListItem("Alerter", id, useName);
+export function useAlerter(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Alerter", id, useName, refetchInterval);
 }
 
 export function useFullAlerter(id: string) {

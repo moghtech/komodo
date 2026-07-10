@@ -24,8 +24,12 @@ import ServerDiskUsage from "./diskUsage";
 import ServerCpuUsage from "./stats/current/cpu";
 import { HoverError } from "mogh_ui";
 
-export function useServer(id: string | undefined, useName?: boolean) {
-  return useListItem("Server", id, useName);
+export function useServer(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Server", id, useName, refetchInterval);
 }
 
 export function useFullServer(id: string | undefined) {

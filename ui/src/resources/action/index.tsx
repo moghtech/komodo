@@ -15,8 +15,12 @@ import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import { RunAction } from "./executions";
 
-export function useAction(id: string | undefined, useName?: boolean) {
-  return useListItem("Action", id, useName);
+export function useAction(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Action", id, useName, refetchInterval);
 }
 
 export function useFullAction(id: string) {

@@ -12,8 +12,12 @@ import BatchExecutions from "@/components/batch-executions";
 import { useState } from "react";
 import { Group, Select } from "@mantine/core";
 
-export function useBuilder(id: string | undefined, useName?: boolean) {
-  return useListItem("Builder", id, useName);
+export function useBuilder(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Builder", id, useName, refetchInterval);
 }
 
 export function useFullBuilder(id: string) {
@@ -80,9 +84,13 @@ export const BuilderComponents: RequiredResourceComponents<
       (builder?.info.builder_type === "Server" &&
         builder.info.instance_type?.split(",").map((id) => id.trim())) ||
       [];
-    const servers = useRead("ListServers", {
-      query: { names: configured },
-    }).data?.filter((s) => configured.includes(s.id));
+    const servers = useRead(
+      "ListServers",
+      {
+        query: { names: configured },
+      },
+      { refetchInterval: 15_000 },
+    ).data?.filter((s) => configured.includes(s.id));
     const coreVersion = useRead("GetVersion", {}).data?.version;
     const intent = !servers?.length
       ? "Neutral"

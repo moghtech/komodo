@@ -42,8 +42,12 @@ import BatchExecutions from "@/components/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useStack(id: string | undefined, useName?: boolean) {
-  return useListItem("Stack", id, useName);
+export function useStack(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Stack", id, useName, refetchInterval);
 }
 
 export function useFullStack(id: string) {

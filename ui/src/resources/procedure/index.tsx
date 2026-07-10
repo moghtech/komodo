@@ -16,8 +16,12 @@ import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useProcedure(id: string | undefined, useName?: boolean) {
-  return useListItem("Procedure", id, useName);
+export function useProcedure(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Procedure", id, useName, refetchInterval);
 }
 
 export function useFullProcedure(id: string) {

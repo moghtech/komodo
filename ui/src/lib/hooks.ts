@@ -252,16 +252,23 @@ function batchedListItemFetch(
  * plain `useRead("List<Type>s", { query: { names: [id] } })` call, so cache
  * entries are shared and `useInvalidate(["List<Type>s"])` style prefix
  * invalidations reach these too.
+ *
+ * Polls by default so state colors etc. stay current for passive
+ * state changes (which don't come in over the update websocket).
+ * The refetches re-batch, so this costs one small request
+ * per resource type per interval. Pass `false` to disable.
  */
 export function useListItemQuery(
   type: UsableResource,
   id: string | undefined,
+  refetchInterval: number | false = 15_000,
 ) {
   const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
   return useQuery({
     queryKey: [`List${type}s`, { query: { names: id ? [id] : [] } }],
     queryFn: () => batchedListItemFetch(type, id!),
     enabled: hasJwt && !!id,
+    refetchInterval,
   });
 }
 
@@ -274,8 +281,9 @@ export function useListItem<T extends UsableResource>(
   type: T,
   id: string | undefined,
   useName?: boolean,
+  refetchInterval?: number | false,
 ): ReadResponses[`List${T}s`][number] | undefined {
-  const { data } = useListItemQuery(type, id);
+  const { data } = useListItemQuery(type, id, refetchInterval);
   return (data as Types.ResourceListItem<unknown>[] | undefined)?.find((r) =>
     useName ? r.name === id : r.id === id,
   ) as ReadResponses[`List${T}s`][number] | undefined;

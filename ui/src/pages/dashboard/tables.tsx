@@ -79,12 +79,16 @@ function TableSection({
   }, [terms, tags, templates, sort.sort_by, sort.sort_desc]);
 
   const _resources =
-    useRead(`List${type}s`, {
-      query: { terms, tags, templates },
-      page,
-      sort_by: sort.sort_by as any,
-      sort_desc: sort.sort_desc,
-    }).data ?? [];
+    useRead(
+      `List${type}s`,
+      {
+        query: { terms, tags, templates },
+        page,
+        sort_by: sort.sort_by as any,
+        sort_desc: sort.sort_desc,
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
   // Prevent flashing when typing / fetching
   const resources = useDebounce(_resources, 300);
 

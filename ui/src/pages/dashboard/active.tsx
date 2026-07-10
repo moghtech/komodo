@@ -19,7 +19,9 @@ import { ReactNode } from "react";
 
 export default function DashboardActiveResources() {
   const stacks =
-    useRead("ListStacks", {
+    useRead(
+      "ListStacks",
+      {
       query: {
         specific: {
           states: [
@@ -30,9 +32,13 @@ export default function DashboardActiveResources() {
         },
       },
       limit: 0,
-    }).data ?? [];
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
   const deployments =
-    useRead("ListDeployments", {
+    useRead(
+      "ListDeployments",
+      {
       query: {
         specific: {
           states: [
@@ -43,16 +49,24 @@ export default function DashboardActiveResources() {
         },
       },
       limit: 0,
-    }).data ?? [];
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
   const builds =
-    useRead("ListBuilds", {
+    useRead(
+      "ListBuilds",
+      {
       query: {
         specific: { states: [Types.BuildState.Building] },
       },
       limit: 0,
-    }).data ?? [];
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
   const repos =
-    useRead("ListRepos", {
+    useRead(
+      "ListRepos",
+      {
       query: {
         specific: {
           states: [
@@ -63,21 +77,31 @@ export default function DashboardActiveResources() {
         },
       },
       limit: 0,
-    }).data ?? [];
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
   const procedures =
-    useRead("ListProcedures", {
+    useRead(
+      "ListProcedures",
+      {
       query: {
         specific: { states: [Types.ProcedureState.Running] },
       },
       limit: 0,
-    }).data ?? [];
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
   const actions =
-    useRead("ListActions", {
+    useRead(
+      "ListActions",
+      {
       query: {
         specific: { states: [Types.ActionState.Running] },
       },
       limit: 0,
-    }).data ?? [];
+      },
+      { refetchInterval: 15_000 },
+    ).data ?? [];
   const globalAutoUpdates =
     useRead("ListUpdates", {
       query: {

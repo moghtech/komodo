@@ -16,8 +16,12 @@ import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useResourceSync(id: string | undefined, useName?: boolean) {
-  return useListItem("ResourceSync", id, useName);
+export function useResourceSync(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("ResourceSync", id, useName, refetchInterval);
 }
 
 export function useFullResourceSync(id: string) {
