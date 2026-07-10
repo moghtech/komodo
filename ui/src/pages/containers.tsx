@@ -51,7 +51,7 @@ export default function Containers() {
     }).data ?? [];
 
   // Prevent flashes during loading
-  const containers = useDebounce(_containers, 200);
+  const containers = useDebounce(_containers, 300);
 
   const Table = useMemo(
     () => (

@@ -327,6 +327,8 @@ impl ListResources for ServerListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?;
     let names = parse_wildcards(&filters.names);
@@ -373,6 +375,8 @@ impl ListResources for SwarmListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?;
     let names = parse_wildcards(&filters.names);
@@ -429,6 +433,8 @@ impl ListResources for StackListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false
       })
     )?;
     stacks.iter_mut().for_each(|stack| {
@@ -506,6 +512,8 @@ impl ListResources for DeploymentListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false
       })
     )?;
     deployments.iter_mut().for_each(|deployment| {
@@ -584,6 +592,8 @@ impl ListResources for BuildListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false
       })
     )?;
     builds.iter_mut().for_each(|build| {
@@ -648,6 +658,8 @@ impl ListResources for RepoListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -699,6 +711,8 @@ impl ListResources for ProcedureListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -750,6 +764,8 @@ impl ListResources for ActionListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -801,6 +817,8 @@ impl ListResources for ResourceSyncListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -849,6 +867,8 @@ impl ListResources for BuilderListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -884,6 +904,8 @@ impl ListResources for AlerterListItem {
           .build(),
         limit: Some(100),
         page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()

@@ -103,7 +103,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const [resources, setResources] = useState(_resources);
   useEffect(() => setResources(_resources), [type]);
   useEffect(() => {
-    const handler = setTimeout(() => setResources(_resources), 200);
+    const handler = setTimeout(() => setResources(_resources), 300);
     return () => {
       clearTimeout(handler);
     };

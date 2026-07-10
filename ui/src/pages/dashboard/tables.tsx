@@ -86,7 +86,7 @@ function TableSection({
       sort_desc: sort.sort_desc,
     }).data ?? [];
   // Prevent flashing when typing / fetching
-  const resources = useDebounce(_resources, 200);
+  const resources = useDebounce(_resources, 300);
 
   const Table = useMemo(
     () => show && <RC.Table resources={resources} onServerSort={setSort} />,

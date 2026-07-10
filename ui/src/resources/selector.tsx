@@ -49,14 +49,14 @@ export default function ResourceSelector({
   ...comboboxProps
 }: ResourceSelectorProps) {
   const { search, setSearch, combobox } = useSearchCombobox();
-
+  const debouncedSearch = useDebounce(search, 200);
   const terms = useMemo(
     () =>
-      search
+      debouncedSearch
         .split(" ")
         .map((item) => item.trim())
         .filter((item) => !!item),
-    [search],
+    [debouncedSearch],
   );
 
   const Components = ResourceComponents[type];
@@ -78,7 +78,7 @@ export default function ResourceSelector({
   );
 
   // Prevent flashing when typing / fetching
-  const resources = useDebounce(_resources, 100);
+  const resources = useDebounce(_resources, 300);
 
   const name = selectedResource?.name;
 

@@ -40,7 +40,7 @@ export default function ResourceMultiSelector({
     useRead(`List${type}s`, { query: { templates, terms }, limit: 10 }).data ??
     [];
   // Prevent flashing when typing / fetching
-  const resources = useDebounce(_resources, 200);
+  const resources = useDebounce(_resources, 300);
 
   // Keep the selected names in the options,
   // even when they don't match the current search.
