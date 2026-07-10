@@ -313,7 +313,7 @@ pub async fn list_items_for_user<T: KomodoResource>(
       format!("Failed to query db for {}s", T::resource_type())
     })?;
 
-  let skip = page * limit;
+  let skip = page.saturating_mul(limit);
   let mut skipped = 0;
   let mut items = Vec::new();
 

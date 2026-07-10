@@ -74,7 +74,7 @@ impl Resolve<ReadArgs> for ListFullSwarms {
       resource::list_full_for_user::<Swarm>(
         self.query,
         limit as i64,
-        self.page * limit,
+        self.page.saturating_mul(limit),
         user,
         PermissionLevel::Read.into(),
         &all_tags,

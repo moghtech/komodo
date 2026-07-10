@@ -360,7 +360,7 @@ impl Resolve<ReadArgs> for GetHistoricalServerStats {
       },
       FindOptions::builder()
         .sort(doc! { "ts": -1 })
-        .skip(page as u64 * STATS_PER_PAGE as u64)
+        .skip((page as u64).saturating_mul(STATS_PER_PAGE as u64))
         .limit(STATS_PER_PAGE)
         .build(),
     )

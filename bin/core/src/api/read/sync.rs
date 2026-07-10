@@ -74,7 +74,7 @@ impl Resolve<ReadArgs> for ListFullResourceSyncs {
       resource::list_full_for_user::<ResourceSync>(
         self.query,
         limit as i64,
-        self.page * limit,
+        self.page.saturating_mul(limit),
         user,
         PermissionLevel::Read.into(),
         &all_tags,

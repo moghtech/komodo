@@ -187,7 +187,8 @@ impl Resolve<ReadArgs> for GetBuildMonthlyStats {
     let curr_ts = unix_timestamp_ms() as i64;
     let next_day = curr_ts - curr_ts % ONE_DAY_MS + ONE_DAY_MS;
 
-    let close_ts = next_day - self.page as i64 * 30 * ONE_DAY_MS;
+    let close_ts = next_day
+      - (self.page as i64).saturating_mul(30 * ONE_DAY_MS);
     let open_ts = close_ts - 30 * ONE_DAY_MS;
 
     let mut build_updates = db_client()
