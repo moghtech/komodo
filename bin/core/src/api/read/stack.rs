@@ -82,6 +82,11 @@ impl Resolve<ReadArgs> for ListAllStackServices {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> mogh_error::Result<ListStackServicesResponse> {
+    let all_tags = if self.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
     let stacks = resource::list_for_user::<Stack>(
       StackQuery::builder()
         .names(self.stacks.clone())
@@ -91,7 +96,7 @@ impl Resolve<ReadArgs> for ListAllStackServices {
       None,
       user,
       PermissionLevel::Read.into(),
-      &[],
+      &all_tags,
     )
     .await?;
 
@@ -99,6 +104,14 @@ impl Resolve<ReadArgs> for ListAllStackServices {
     let mut skipped = 0;
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     let limit_usize = limit as usize;
+    // Eg. page 1 skips until after 100 services, page 2 after 200.
+    let skip = limit.saturating_mul(self.page);
+    // Match terms case insensitively.
+    let terms = self
+      .terms
+      .iter()
+      .map(|term| term.to_lowercase())
+      .collect::<Vec<_>>();
 
     for stack in stacks {
       let cache =
@@ -109,13 +122,15 @@ impl Resolve<ReadArgs> for ListAllStackServices {
           // Apply state filter if defined.
           (self.state.is_empty() || self.state.contains(&service.state)) &&
           // Apply terms filter if defined
-          (self.terms.is_empty()
+          (terms.is_empty()
             // Match when all terms contained within a name.
-            || self.terms.iter().all(|term| service.service.contains(term)))
+            || {
+              let name = service.service.to_lowercase();
+              terms.iter().all(|term| name.contains(term))
+            })
         });
       for service in more {
-        if skipped < limit * self.page {
-          // Eg. page 1 skips until after 100 services, page 2 after 200.
+        if skipped < skip {
           skipped += 1;
         } else {
           // push and maybe early return

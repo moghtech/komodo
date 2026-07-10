@@ -26,7 +26,7 @@ use periphery_client::api as periphery;
 
 use crate::{
   api::read::ReadArgs,
-  helpers::periphery_client,
+  helpers::{periphery_client, query::get_all_tags},
   permission::{get_check_permissions, list_resources_for_user},
   resource,
   stack::compose_container_match_regex,
@@ -80,6 +80,11 @@ impl Resolve<ReadArgs> for ListAllContainers {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> mogh_error::Result<ListAllContainersResponse> {
+    let all_tags = if self.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
     let servers = resource::list_for_user::<Server>(
       ServerQuery::builder()
         .names(self.servers.clone())
@@ -89,7 +94,7 @@ impl Resolve<ReadArgs> for ListAllContainers {
       None,
       user,
       PermissionLevel::Read.into(),
-      &[],
+      &all_tags,
     )
     .await?;
 
@@ -97,6 +102,14 @@ impl Resolve<ReadArgs> for ListAllContainers {
     let mut skipped = 0;
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     let limit_usize = limit as usize;
+    // Eg. page 1 skips until after 100 containers, page 2 after 200.
+    let skip = limit.saturating_mul(self.page);
+    // Match terms case insensitively.
+    let terms = self
+      .terms
+      .iter()
+      .map(|term| term.to_lowercase())
+      .collect::<Vec<_>>();
 
     for server in servers {
       let cache = server_status_cache()
@@ -112,13 +125,15 @@ impl Resolve<ReadArgs> for ListAllContainers {
           // Apply state filter if defined.
           (self.state.is_empty() || self.state.contains(&container.state)) &&
           // Apply terms filter if defined
-          (self.terms.is_empty()
+          (terms.is_empty()
             // Match when all terms contained within a name.
-            || self.terms.iter().all(|term| container.name.contains(term)))
+            || {
+              let name = container.name.to_lowercase();
+              terms.iter().all(|term| name.contains(term))
+            })
         });
       for container in more {
-        if skipped < limit * self.page {
-          // Eg. page 1 skips until after 100 containers, page 2 after 200.
+        if skipped < skip {
           skipped += 1;
         } else {
           // push and maybe early return
