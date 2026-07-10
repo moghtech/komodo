@@ -293,6 +293,9 @@ impl ListPermits {
     } else {
       fine.base.clone()
     };
+    // Add in the resource level base permissions,
+    // matching [get_user_permission_on_resource].
+    perm.elevate(&resource.base_permission);
     // Check if already fulfils
     if perm.fulfills(&fine.required) {
       return Ok(true);
