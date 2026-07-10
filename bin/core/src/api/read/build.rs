@@ -55,32 +55,16 @@ impl Resolve<ReadArgs> for ListBuilds {
     };
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-    // When filtering by state, the db level pagination must be
-    // disabled, and applied in memory after the state filter.
-    let (db_limit, db_skip) = if states.is_empty() {
-      (limit, self.page * limit)
-    } else {
-      (0, 0)
-    };
-    let builds = resource::list_for_user::<Build>(
+    let builds = resource::list_items_for_user::<Build>(
       self.query,
-      db_limit as i64,
-      db_skip,
+      limit,
+      self.page,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
+      |build| states.is_empty() || states.contains(&build.info.state),
     )
     .await?;
-    let builds = if states.is_empty() {
-      builds
-    } else {
-      resource::filter_list_items_paginated(
-        builds,
-        |build| states.contains(&build.info.state),
-        limit,
-        self.page,
-      )
-    };
     Ok(builds)
   }
 }

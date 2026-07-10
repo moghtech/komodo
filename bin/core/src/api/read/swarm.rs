@@ -45,13 +45,14 @@ impl Resolve<ReadArgs> for ListSwarms {
     };
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_for_user::<Swarm>(
+      resource::list_items_for_user::<Swarm>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |_| true,
       )
       .await?,
     )

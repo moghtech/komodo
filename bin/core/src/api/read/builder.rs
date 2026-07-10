@@ -47,13 +47,14 @@ impl Resolve<ReadArgs> for ListBuilders {
     };
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_for_user::<Builder>(
+      resource::list_items_for_user::<Builder>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |_| true,
       )
       .await?,
     )

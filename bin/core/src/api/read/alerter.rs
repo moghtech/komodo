@@ -47,13 +47,14 @@ impl Resolve<ReadArgs> for ListAlerters {
     };
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_for_user::<Alerter>(
+      resource::list_items_for_user::<Alerter>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |_| true,
       )
       .await?,
     )
