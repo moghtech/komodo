@@ -9,7 +9,7 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags,
+  helpers::query::{get_all_tags, get_procedure_state},
   permission::get_check_permissions,
   resource,
   state::{action_states, procedure_state_cache},
@@ -71,15 +71,29 @@ impl Resolve<ReadArgs> for ListFullProcedures {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_full_for_user::<Procedure>(
+      resource::list_full_for_user_filtered::<Procedure, _>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |procedure| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states
+                .contains(&get_procedure_state(&procedure.id).await)
+            {
+              Some(procedure)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, future::Future};
 
 use anyhow::{Context, anyhow};
 use database::{
@@ -350,26 +350,35 @@ pub async fn list_resources_for_user<T: KomodoResource>(
     return list_all_resources::<T>(filters, limit, skip).await;
   }
 
-  list_resources_with_permits::<T>(
+  list_resources_with_permits::<T, _>(
     &mut permits,
     filters.into(),
     limit.into(),
     skip.into(),
+    |resource| async move { Some(resource) },
   )
   .await
 }
 
-/// Fine grained permissions: drive the cursor directly, checking
-/// each resource against the user permissions, with limit / skip
-/// applied in memory after the permission filter. Stops pulling
-/// from the cursor as soon as the limit is reached, and avoids
-/// collecting resources the user cannot see.
-async fn list_resources_with_permits<T: KomodoResource>(
+/// Drive the cursor directly, checking each resource against the
+/// user permissions and the additional `filter` (eg. by state
+/// computed from the in memory caches), with limit / skip applied
+/// in memory after the filters. Stops pulling from the cursor as
+/// soon as the limit is reached, and avoids collecting resources
+/// the user cannot see.
+///
+/// `filter` receives each resource by value, and returns
+/// `Some(resource)` to keep it in the results, or `None` to drop it.
+pub async fn list_resources_with_permits<T: KomodoResource, F>(
   permits: &mut ListPermits,
   filters: Option<Document>,
   limit: Option<i64>,
   skip: Option<u64>,
-) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>> {
+  filter: impl Fn(Resource<T::Config, T::Info>) -> F,
+) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>>
+where
+  F: Future<Output = Option<Resource<T::Config, T::Info>>> + Send,
+{
   let mut cursor = T::coll()
     .find(filters.unwrap_or_default())
     .sort(doc! { "name": 1 })
@@ -391,6 +400,9 @@ async fn list_resources_with_permits<T: KomodoResource>(
     if !permits.permitted::<T>(&resource).await? {
       continue;
     }
+    let Some(resource) = filter(resource).await else {
+      continue;
+    };
     if skipped < skip {
       skipped += 1;
       continue;
@@ -418,11 +430,12 @@ pub async fn list_resource_ids_for_user<T: KomodoResource>(
     return Ok(None);
   }
 
-  let ids = list_resources_with_permits::<T>(
+  let ids = list_resources_with_permits::<T, _>(
     &mut permits,
     filters,
     limit.into(),
     skip.into(),
+    |resource| async move { Some(resource) },
   )
   .await?
   .into_iter()

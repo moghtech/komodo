@@ -31,7 +31,9 @@ use crate::{
   config::core_config,
   helpers::{
     periphery_client,
-    query::{get_stack_state, get_swarm_or_server},
+    query::{
+      get_cached_stack_state, get_stack_state, get_swarm_or_server,
+    },
     repo_link,
     swarm::swarm_request,
   },
@@ -95,20 +97,7 @@ impl super::KomodoResource for Stack {
     stack: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = stack_status_cache().get(&stack.id).await;
-    let state = if action_states()
-      .stack
-      .get(&stack.id)
-      .await
-      .map(|s| s.get().map(|s| s.deploying))
-      .transpose()
-      .ok()
-      .flatten()
-      .unwrap_or_default()
-    {
-      StackState::Deploying
-    } else {
-      status.as_ref().map(|s| s.curr.state).unwrap_or_default()
-    };
+    let state = get_cached_stack_state(&stack.id).await;
     let project_name = stack.project_name(false);
     let services = status
       .as_ref()

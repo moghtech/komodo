@@ -271,7 +271,9 @@ async fn validate_config(
   Ok(())
 }
 
-async fn get_repo_state(id: &String) -> RepoState {
+/// The Repo state as computed for the repo list items,
+/// from the in memory action states / state cache.
+pub async fn get_repo_state(id: &String) -> RepoState {
   if let Some(state) = action_states()
     .repo
     .get(id)

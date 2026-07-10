@@ -1,5 +1,6 @@
 use std::{
   collections::{HashMap, HashSet},
+  future::Future,
   str::FromStr,
 };
 
@@ -70,7 +71,8 @@ pub use action::{
   refresh_action_state_cache, spawn_action_state_refresh_loop,
 };
 pub use build::{
-  refresh_build_state_cache, spawn_build_state_refresh_loop,
+  get_build_state, refresh_build_state_cache,
+  spawn_build_state_refresh_loop,
 };
 pub use deployment::setup_deployment_execution;
 pub use procedure::{
@@ -82,7 +84,8 @@ pub use refresh::{
   spawn_resource_refresh_loop,
 };
 pub use repo::{
-  refresh_repo_state_cache, spawn_repo_state_refresh_loop,
+  get_repo_state, refresh_repo_state_cache,
+  spawn_repo_state_refresh_loop,
 };
 pub use server::{rotate_server_keys, update_server_public_key};
 
@@ -443,6 +446,43 @@ pub async fn list_full_for_user_using_pattern<T: KomodoResource>(
       .filter(|resource| names.contains(resource.name.as_str()))
       .collect(),
   )
+}
+
+/// Same as [list_full_for_user], but applies an additional in-memory
+/// `filter` (eg. by state computed from the in memory caches), with
+/// limit / page applied after the filter. Required because such
+/// filters cannot be expressed in the db level query.
+///
+/// `filter` receives each resource by value, and returns
+/// `Some(resource)` to keep it in the results, or `None` to drop it.
+pub async fn list_full_for_user_filtered<T: KomodoResource, F>(
+  mut query: ResourceQuery<T::QuerySpecifics>,
+  limit: u64,
+  page: u64,
+  user: &User,
+  permission: PermissionLevelAndSpecifics,
+  all_tags: &[Tag],
+  filter: impl Fn(Resource<T::Config, T::Info>) -> F,
+) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>>
+where
+  F: Future<
+      Output = Option<Resource<T::Config, T::Info>>,
+    > + Send,
+{
+  validate_resource_query_tags(&mut query, all_tags)?;
+  let mut filters = Document::new();
+  query.add_filters(&mut filters);
+  let mut permits =
+    crate::permission::load_list_permits::<T>(user, permission)
+      .await?;
+  crate::permission::list_resources_with_permits::<T, _>(
+    &mut permits,
+    Some(filters),
+    Some(limit as i64),
+    Some(page.saturating_mul(limit)),
+    filter,
+  )
+  .await
 }
 
 pub async fn list_full_for_user<T: KomodoResource>(

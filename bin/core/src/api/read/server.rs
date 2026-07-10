@@ -28,7 +28,10 @@ use reqwest::StatusCode;
 use tokio::sync::Mutex;
 
 use crate::{
-  helpers::{periphery_client, query::get_all_tags},
+  helpers::{
+    periphery_client,
+    query::{get_all_tags, get_cached_server_state},
+  },
   permission::get_check_permissions,
   resource,
   state::{action_states, db_client, server_status_cache},
@@ -134,15 +137,29 @@ impl Resolve<ReadArgs> for ListFullServers {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_full_for_user::<Server>(
+      resource::list_full_for_user_filtered::<Server, _>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |server| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states
+                .contains(&get_cached_server_state(&server.id).await)
+            {
+              Some(server)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )

@@ -25,7 +25,9 @@ use reqwest::StatusCode;
 
 use crate::{
   helpers::{
-    periphery_client, query::get_all_tags, swarm::swarm_request,
+    periphery_client,
+    query::{get_all_tags, get_deployment_state},
+    swarm::swarm_request,
   },
   permission::get_check_permissions,
   resource::{self, setup_deployment_execution},
@@ -93,15 +95,32 @@ impl Resolve<ReadArgs> for ListFullDeployments {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_full_for_user::<Deployment>(
+      resource::list_full_for_user_filtered::<Deployment, _>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |deployment| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states.contains(
+                &get_deployment_state(&deployment.id)
+                  .await
+                  .unwrap_or_default(),
+              )
+            {
+              Some(deployment)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )

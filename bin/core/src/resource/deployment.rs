@@ -93,20 +93,9 @@ impl super::KomodoResource for Deployment {
     deployment: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = deployment_status_cache().get(&deployment.id).await;
-    let state = if action_states()
-      .deployment
-      .get(&deployment.id)
+    let state = get_deployment_state(&deployment.id)
       .await
-      .map(|s| s.get().map(|s| s.deploying))
-      .transpose()
-      .ok()
-      .flatten()
-      .unwrap_or_default()
-    {
-      DeploymentState::Deploying
-    } else {
-      status.as_ref().map(|s| s.curr.state).unwrap_or_default()
-    };
+      .unwrap_or_default();
     let all = all_resources_cache().load();
     let server_name = all
       .servers

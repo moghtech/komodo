@@ -11,7 +11,7 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags,
+  helpers::query::{get_action_state, get_all_tags},
   permission::get_check_permissions,
   resource,
   state::{action_state_cache, action_states},
@@ -73,15 +73,28 @@ impl Resolve<ReadArgs> for ListFullActions {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_full_for_user::<Action>(
+      resource::list_full_for_user_filtered::<Action, _>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |action| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states.contains(&get_action_state(&action.id).await)
+            {
+              Some(action)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )

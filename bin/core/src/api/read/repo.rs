@@ -69,15 +69,29 @@ impl Resolve<ReadArgs> for ListFullRepos {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_full_for_user::<Repo>(
+      resource::list_full_for_user_filtered::<Repo, _>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |repo| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states
+                .contains(&resource::get_repo_state(&repo.id).await)
+            {
+              Some(repo)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )

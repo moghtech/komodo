@@ -297,7 +297,9 @@ async fn validate_config(
   Ok(())
 }
 
-async fn get_build_state(id: &String) -> BuildState {
+/// The Build state as computed for the build list items,
+/// from the in memory action states / state cache.
+pub async fn get_build_state(id: &String) -> BuildState {
   if action_states()
     .build
     .get(id)

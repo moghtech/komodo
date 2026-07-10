@@ -79,15 +79,29 @@ impl Resolve<ReadArgs> for ListFullBuilds {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
     Ok(
-      resource::list_full_for_user::<Build>(
+      resource::list_full_for_user_filtered::<Build, _>(
         self.query,
-        limit as i64,
-        self.page * limit,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |build| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states
+                .contains(&resource::get_build_state(&build.id).await)
+            {
+              Some(build)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )
