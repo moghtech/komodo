@@ -8,17 +8,36 @@ import { DeploymentComponents } from ".";
 import ResourceLink from "@/resources/link";
 import DeploymentUpdateAvailable from "./update-available";
 
+const SORT_KEYS = ["Name", "Image", "Host", "State"];
+
 export default function DeploymentTable({
   resources,
+  onServerSort,
   ...boxProps
 }: {
   resources: Types.DeploymentListItem[];
+  /** When provided, sorting is handled server side,
+   * and sort updates are passed to this callback. */
+  onServerSort?: (sort: {
+    sort_by?: string;
+    sort_desc?: boolean;
+  }) => void;
 } & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("Deployment");
 
   return (
     <DataTable
       {...boxProps}
+      manualSorting={!!onServerSort}
+      onSortingStateChange={
+        onServerSort &&
+        ((sorting) => {
+          const sort = sorting.find((s) => SORT_KEYS.includes(s.id));
+          onServerSort(
+            sort ? { sort_by: sort.id, sort_desc: sort.desc } : {},
+          );
+        })
+      }
       tableKey="deployments"
       data={resources}
       selectOptions={{
@@ -27,6 +46,7 @@ export default function DeploymentTable({
       }}
       columns={[
         {
+          id: "Name",
           accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
@@ -40,6 +60,7 @@ export default function DeploymentTable({
           size: 200,
         },
         {
+          id: "Image",
           accessorKey: "info.image",
           header: ({ column }) => (
             <SortableHeader column={column} title="Image" />
@@ -57,6 +78,7 @@ export default function DeploymentTable({
           header: ({ column }) => (
             <SortableHeader column={column} title="Host" />
           ),
+          id: "Host",
           accessorKey: "info.server_id",
           sortingFn: (a, b) => {
             const name_a = a.original.info.swarm_id
@@ -83,6 +105,7 @@ export default function DeploymentTable({
           size: 200,
         },
         {
+          id: "State",
           accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />

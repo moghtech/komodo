@@ -67,20 +67,29 @@ function TableSection({
   const [templates] = useTemplatesQueryBehavior();
 
   const [page, setPage] = useState(0);
-  // Set to page 0 whenever any filter changes,
+  // Server side sort, passed up from the table.
+  const [sort, setSort] = useState<{
+    sort_by?: string;
+    sort_desc?: boolean;
+  }>({});
+  // Set to page 0 whenever any filter or the sort changes,
   // otherwise the query can point past the last page and come back empty.
   useEffect(() => {
     setPage(0);
-  }, [terms, tags, templates]);
+  }, [terms, tags, templates, sort.sort_by, sort.sort_desc]);
 
   const _resources =
-    useRead(`List${type}s`, { query: { terms, tags, templates }, page }).data ??
-    [];
+    useRead(`List${type}s`, {
+      query: { terms, tags, templates },
+      page,
+      sort_by: sort.sort_by as any,
+      sort_desc: sort.sort_desc,
+    }).data ?? [];
   // Prevent flashing when typing / fetching
   const resources = useDebounce(_resources, 200);
 
   const Table = useMemo(
-    () => show && <RC.Table resources={resources} />,
+    () => show && <RC.Table resources={resources} onServerSort={setSort} />,
     [resources, show],
   );
 

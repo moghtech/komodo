@@ -99,6 +99,12 @@ export interface RequiredResourceComponents<
   Table: React.FC<
     {
       resources: Types.ResourceListItem<ListItemInfo>[];
+      /** When provided, sorting is handled server side,
+       * and sort updates are passed to this callback. */
+      onServerSort?: (sort: {
+        sort_by?: string;
+        sort_desc?: boolean;
+      }) => void;
       tableProps?: TableProps;
     } & BoxProps
   >;

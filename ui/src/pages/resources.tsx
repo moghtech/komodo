@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useFilterByUpdateAvailable,
   useRead,
@@ -52,11 +52,34 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const tags = useTagsFilter();
   const [templates] = useTemplatesQueryBehavior();
 
-  // Set to page 0 whenever the resource type or any filter changes,
-  // otherwise the query can point past the last page and come back empty.
+  // Server side sort, passed up from the table.
+  // The sort keys are resource type specific, so ignore
+  // any sort captured on a previously selected type.
+  const [_sort, _setSort] = useState<{
+    type: UsableResource;
+    sort_by?: string;
+    sort_desc?: boolean;
+  }>({ type });
+  const sort = _sort.type === type ? _sort : { type };
+  const setSort = useCallback(
+    (sort: { sort_by?: string; sort_desc?: boolean }) =>
+      _setSort({ type, ...sort }),
+    [type],
+  );
+
+  // Set to page 0 whenever the resource type, any filter,
+  // or the sort changes, otherwise the query can point past
+  // the last page and come back empty.
   useEffect(() => {
     setPage(0);
-  }, [type, tags, templates, filterUpdateAvailable]);
+  }, [
+    type,
+    tags,
+    templates,
+    filterUpdateAvailable,
+    sort.sort_by,
+    sort.sort_desc,
+  ]);
 
   const query: Types.ResourceQuery<any> = {
     terms,
@@ -67,7 +90,13 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         ? { update_available: filterUpdateAvailable }
         : undefined,
   };
-  const _resources = useRead(`List${type}s`, { query, page }).data ?? [];
+  const _resources =
+    useRead(`List${type}s`, {
+      query,
+      page,
+      sort_by: sort.sort_by as any,
+      sort_desc: sort.sort_desc,
+    }).data ?? [];
 
   // Debounce: prevents flashing when typing / fetching.
   // Must also set immediately upon change of resource type
@@ -84,8 +113,12 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
 
   const Table = useMemo(
     () =>
-      resources && RC ? <RC.Table resources={resources} /> : <TableSkeleton />,
-    [resources],
+      resources && RC ? (
+        <RC.Table resources={resources} onServerSort={setSort} />
+      ) : (
+        <TableSkeleton />
+      ),
+    [resources, setSort],
   );
 
   if (!RC) {

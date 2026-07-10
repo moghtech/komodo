@@ -8720,6 +8720,15 @@ export interface LatestCommit {
 	message: string;
 }
 
+export enum ActionSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by state. */
+	State = "State",
+	/** Sort by next scheduled run. */
+	NextRun = "NextRun",
+}
+
 /** List actions matching optional query. Response: [ListActionsResponse]. */
 export interface ListActions {
 	/** optional structured query to filter actions. */
@@ -8739,6 +8748,23 @@ export interface ListActions {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: ActionSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
+}
+
+export enum AlerterSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by endpoint type. */
+	Type = "Type",
+	/** Sort by enabled. */
+	Enabled = "Enabled",
 }
 
 /** List alerters matching optional query. Response: [ListAlertersResponse]. */
@@ -8760,6 +8786,14 @@ export interface ListAlerters {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: AlerterSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
 }
 
 /**
@@ -8915,6 +8949,15 @@ export interface ListBuildVersions {
 	limit?: I64;
 }
 
+export enum BuilderSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by builder provider type. */
+	Provider = "Provider",
+	/** Sort by instance type. */
+	InstanceType = "InstanceType",
+}
+
 /** List builders matching structured query. Response: [ListBuildersResponse]. */
 export interface ListBuilders {
 	query?: BuilderQuery;
@@ -8933,6 +8976,23 @@ export interface ListBuilders {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: BuilderSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
+}
+
+export enum BuildSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by source repo. */
+	Source = "Source",
+	/** Sort by state. */
+	State = "State",
 }
 
 /** List builds matching optional query. Response: [ListBuildsResponse]. */
@@ -8954,6 +9014,14 @@ export interface ListBuilds {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: BuildSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
 }
 
 /**
@@ -9012,6 +9080,17 @@ export interface ListContainers {
 	server: string;
 }
 
+export enum DeploymentSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by image. */
+	Image = "Image",
+	/** Sort by host Server / Swarm name. */
+	Host = "Host",
+	/** Sort by state. */
+	State = "State",
+}
+
 /**
  * List deployments matching optional query.
  * Response: [ListDeploymentsResponse].
@@ -9034,6 +9113,14 @@ export interface ListDeployments {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: DeploymentSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
 }
 
 /** List actions matching optional query. Response: [ListFullActionsResponse]. */
@@ -9377,6 +9464,15 @@ export interface ListOnboardingKeys {
 export interface ListPermissions {
 }
 
+export enum ProcedureSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by state. */
+	State = "State",
+	/** Sort by next scheduled run. */
+	NextRun = "NextRun",
+}
+
 /** List procedures matching optional query. Response: [ListProceduresResponse]. */
 export interface ListProcedures {
 	/** optional structured query to filter procedures. */
@@ -9396,6 +9492,25 @@ export interface ListProcedures {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: ProcedureSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
+}
+
+export enum RepoSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by the git repo. */
+	Repo = "Repo",
+	/** Sort by branch. */
+	Branch = "Branch",
+	/** Sort by state. */
+	State = "State",
 }
 
 /** List repos matching optional query. Response: [ListReposResponse]. */
@@ -9417,6 +9532,25 @@ export interface ListRepos {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: RepoSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
+}
+
+export enum ResourceSyncSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by source repo. */
+	Source = "Source",
+	/** Sort by branch. */
+	Branch = "Branch",
+	/** Sort by state. */
+	State = "State",
 }
 
 /** List syncs matching optional query. Response: [ListResourceSyncsResponse]. */
@@ -9438,6 +9572,14 @@ export interface ListResourceSyncs {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: ResourceSyncSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
 }
 
 /**
@@ -9463,6 +9605,17 @@ export interface ListSecrets {
 	target?: ResourceTarget;
 }
 
+export enum ServerSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by region. */
+	Region = "Region",
+	/** Sort by periphery version. */
+	Version = "Version",
+	/** Sort by state. */
+	State = "State",
+}
+
 /** List servers matching optional query. Response: [ListServersResponse]. */
 export interface ListServers {
 	/** optional structured query to filter servers. */
@@ -9482,12 +9635,31 @@ export interface ListServers {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: ServerSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
 }
 
 /** Lists a specific stacks services (the containers). Response: [ListStackServicesResponse]. */
 export interface ListStackServices {
 	/** Id or name */
 	stack: string;
+}
+
+export enum StackSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by source repo. */
+	Source = "Source",
+	/** Sort by host Server / Swarm name. */
+	Host = "Host",
+	/** Sort by state. */
+	State = "State",
 }
 
 /** List stacks matching optional query. Response: [ListStacksResponse]. */
@@ -9509,6 +9681,14 @@ export interface ListStacks {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: StackSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
 }
 
 /**
@@ -9576,6 +9756,13 @@ export interface ListSwarmTasks {
 	swarm: string;
 }
 
+export enum SwarmSortBy {
+	/** Sort by name. Default. */
+	Name = "Name",
+	/** Sort by state. */
+	State = "State",
+}
+
 /** List Swarms matching optional query. Response: [ListSwarmsResponse]. */
 export interface ListSwarms {
 	/** Optional structured query to filter Swarms. */
@@ -9595,6 +9782,14 @@ export interface ListSwarms {
 	 * across queries for more pages.
 	 */
 	limit?: U64;
+	/**
+	 * Sort the results by this field.
+	 * Defaults to Name. Non-Name sorts are applied in memory
+	 * after querying all matching resources.
+	 */
+	sort_by?: SwarmSortBy;
+	/** Reverse the sort direction. */
+	sort_desc?: boolean;
 }
 
 /**

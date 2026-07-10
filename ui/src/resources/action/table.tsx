@@ -6,16 +6,35 @@ import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import ResourceLink from "@/resources/link";
 
+const SORT_KEYS = ["Name", "State", "NextRun"];
+
 export default function ActionTable({
   resources,
+  onServerSort,
   ...boxProps
 }: {
   resources: Types.ActionListItem[];
+  /** When provided, sorting is handled server side,
+   * and sort updates are passed to this callback. */
+  onServerSort?: (sort: {
+    sort_by?: string;
+    sort_desc?: boolean;
+  }) => void;
 } & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("Action");
   return (
     <DataTable
       {...boxProps}
+      manualSorting={!!onServerSort}
+      onSortingStateChange={
+        onServerSort &&
+        ((sorting) => {
+          const sort = sorting.find((s) => SORT_KEYS.includes(s.id));
+          onServerSort(
+            sort ? { sort_by: sort.id, sort_desc: sort.desc } : {},
+          );
+        })
+      }
       tableKey="actions-table"
       data={resources}
       selectOptions={{
@@ -24,6 +43,7 @@ export default function ActionTable({
       }}
       columns={[
         {
+          id: "Name",
           accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
@@ -33,6 +53,7 @@ export default function ActionTable({
           ),
         },
         {
+          id: "State",
           accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
@@ -40,6 +61,7 @@ export default function ActionTable({
           cell: ({ row }) => <ActionComponents.State id={row.original.id} />,
         },
         {
+          id: "NextRun",
           accessorKey: "info.next_scheduled_run",
           header: ({ column }) => (
             <SortableHeader column={column} title="Next Run" />

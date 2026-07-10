@@ -8,17 +8,36 @@ import TableTags from "@/components/tags/table";
 import FileSource from "@/components/file-source";
 import StackUpdateAvailable from "./update-available";
 
+const SORT_KEYS = ["Name", "Source", "Host", "State"];
+
 export default function StackTable({
   resources,
+  onServerSort,
   ...boxProps
 }: {
   resources: Types.StackListItem[];
+  /** When provided, sorting is handled server side,
+   * and sort updates are passed to this callback. */
+  onServerSort?: (sort: {
+    sort_by?: string;
+    sort_desc?: boolean;
+  }) => void;
 } & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("Stack");
 
   return (
     <DataTable
       {...boxProps}
+      manualSorting={!!onServerSort}
+      onSortingStateChange={
+        onServerSort &&
+        ((sorting) => {
+          const sort = sorting.find((s) => SORT_KEYS.includes(s.id));
+          onServerSort(
+            sort ? { sort_by: sort.id, sort_desc: sort.desc } : {},
+          );
+        })
+      }
       tableKey="stack-table"
       data={resources}
       selectOptions={{
@@ -30,6 +49,7 @@ export default function StackTable({
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
           ),
+          id: "Name",
           accessorKey: "name",
           cell: ({ row }) => {
             return (
@@ -45,6 +65,7 @@ export default function StackTable({
           header: ({ column }) => (
             <SortableHeader column={column} title="Source" />
           ),
+          id: "Source",
           accessorKey: "info.repo",
           cell: ({ row }) => <FileSource info={row.original.info} />,
           size: 200,
@@ -53,6 +74,7 @@ export default function StackTable({
           header: ({ column }) => (
             <SortableHeader column={column} title="Host" />
           ),
+          id: "Host",
           accessorKey: "info.server_id",
           sortingFn: (a, b) => {
             const name_a = a.original.info.swarm_id
@@ -79,6 +101,7 @@ export default function StackTable({
           size: 200,
         },
         {
+          id: "State",
           accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />

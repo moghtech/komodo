@@ -819,6 +819,113 @@ export var ContainerTerminalMode;
     ContainerTerminalMode["Exec"] = "exec";
     ContainerTerminalMode["Attach"] = "attach";
 })(ContainerTerminalMode || (ContainerTerminalMode = {}));
+export var ActionSortBy;
+(function (ActionSortBy) {
+    /** Sort by name. Default. */
+    ActionSortBy["Name"] = "Name";
+    /** Sort by state. */
+    ActionSortBy["State"] = "State";
+    /** Sort by next scheduled run. */
+    ActionSortBy["NextRun"] = "NextRun";
+})(ActionSortBy || (ActionSortBy = {}));
+export var AlerterSortBy;
+(function (AlerterSortBy) {
+    /** Sort by name. Default. */
+    AlerterSortBy["Name"] = "Name";
+    /** Sort by endpoint type. */
+    AlerterSortBy["Type"] = "Type";
+    /** Sort by enabled. */
+    AlerterSortBy["Enabled"] = "Enabled";
+})(AlerterSortBy || (AlerterSortBy = {}));
+export var BuilderSortBy;
+(function (BuilderSortBy) {
+    /** Sort by name. Default. */
+    BuilderSortBy["Name"] = "Name";
+    /** Sort by builder provider type. */
+    BuilderSortBy["Provider"] = "Provider";
+    /** Sort by instance type. */
+    BuilderSortBy["InstanceType"] = "InstanceType";
+})(BuilderSortBy || (BuilderSortBy = {}));
+export var BuildSortBy;
+(function (BuildSortBy) {
+    /** Sort by name. Default. */
+    BuildSortBy["Name"] = "Name";
+    /** Sort by source repo. */
+    BuildSortBy["Source"] = "Source";
+    /** Sort by state. */
+    BuildSortBy["State"] = "State";
+})(BuildSortBy || (BuildSortBy = {}));
+export var DeploymentSortBy;
+(function (DeploymentSortBy) {
+    /** Sort by name. Default. */
+    DeploymentSortBy["Name"] = "Name";
+    /** Sort by image. */
+    DeploymentSortBy["Image"] = "Image";
+    /** Sort by host Server / Swarm name. */
+    DeploymentSortBy["Host"] = "Host";
+    /** Sort by state. */
+    DeploymentSortBy["State"] = "State";
+})(DeploymentSortBy || (DeploymentSortBy = {}));
+export var ProcedureSortBy;
+(function (ProcedureSortBy) {
+    /** Sort by name. Default. */
+    ProcedureSortBy["Name"] = "Name";
+    /** Sort by state. */
+    ProcedureSortBy["State"] = "State";
+    /** Sort by next scheduled run. */
+    ProcedureSortBy["NextRun"] = "NextRun";
+})(ProcedureSortBy || (ProcedureSortBy = {}));
+export var RepoSortBy;
+(function (RepoSortBy) {
+    /** Sort by name. Default. */
+    RepoSortBy["Name"] = "Name";
+    /** Sort by the git repo. */
+    RepoSortBy["Repo"] = "Repo";
+    /** Sort by branch. */
+    RepoSortBy["Branch"] = "Branch";
+    /** Sort by state. */
+    RepoSortBy["State"] = "State";
+})(RepoSortBy || (RepoSortBy = {}));
+export var ResourceSyncSortBy;
+(function (ResourceSyncSortBy) {
+    /** Sort by name. Default. */
+    ResourceSyncSortBy["Name"] = "Name";
+    /** Sort by source repo. */
+    ResourceSyncSortBy["Source"] = "Source";
+    /** Sort by branch. */
+    ResourceSyncSortBy["Branch"] = "Branch";
+    /** Sort by state. */
+    ResourceSyncSortBy["State"] = "State";
+})(ResourceSyncSortBy || (ResourceSyncSortBy = {}));
+export var ServerSortBy;
+(function (ServerSortBy) {
+    /** Sort by name. Default. */
+    ServerSortBy["Name"] = "Name";
+    /** Sort by region. */
+    ServerSortBy["Region"] = "Region";
+    /** Sort by periphery version. */
+    ServerSortBy["Version"] = "Version";
+    /** Sort by state. */
+    ServerSortBy["State"] = "State";
+})(ServerSortBy || (ServerSortBy = {}));
+export var StackSortBy;
+(function (StackSortBy) {
+    /** Sort by name. Default. */
+    StackSortBy["Name"] = "Name";
+    /** Sort by source repo. */
+    StackSortBy["Source"] = "Source";
+    /** Sort by host Server / Swarm name. */
+    StackSortBy["Host"] = "Host";
+    /** Sort by state. */
+    StackSortBy["State"] = "State";
+})(StackSortBy || (StackSortBy = {}));
+export var SwarmSortBy;
+(function (SwarmSortBy) {
+    /** Sort by name. Default. */
+    SwarmSortBy["Name"] = "Name";
+    /** Sort by state. */
+    SwarmSortBy["State"] = "State";
+})(SwarmSortBy || (SwarmSortBy = {}));
 export var ServiceUserQueryBehavior;
 (function (ServiceUserQueryBehavior) {
     /** Include service users in results. Default. */
