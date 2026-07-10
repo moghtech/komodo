@@ -11,7 +11,7 @@ use komodo_client::{
     permission::PermissionLevel,
     stack::{
       Stack, StackActionState, StackListItem, StackQuery,
-      StackService, StackState,
+      StackService, StackSortBy, StackState,
     },
   },
 };
@@ -486,10 +486,41 @@ impl Resolve<ReadArgs> for ListStacks {
     let only_update_available = self.query.specific.update_available;
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<StackListItem> =
+      match self.sort_by {
+        StackSortBy::Name => resource::ListItemSort::Name,
+        StackSortBy::Source => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.repo.cmp(&b.info.repo)
+          }))
+        }
+        StackSortBy::Host => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            let host_a = if a.info.swarm_id.is_empty() {
+              &a.info.server_name
+            } else {
+              &a.info.swarm_name
+            };
+            let host_b = if b.info.swarm_id.is_empty() {
+              &b.info.server_name
+            } else {
+              &b.info.swarm_name
+            };
+            host_a.cmp(host_b)
+          }))
+        }
+        StackSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.state.to_string().cmp(&b.info.state.to_string())
+          }))
+        }
+      };
     let stacks = resource::list_items_for_user::<Stack>(
       self.query,
       limit,
       self.page,
+      self.sort_desc,
+      sort_by,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
@@ -500,8 +531,7 @@ impl Resolve<ReadArgs> for ListStacks {
             .services
             .iter()
             .any(|service| service.update_available))
-          && (states.is_empty()
-            || states.contains(&stack.info.state))
+          && (states.is_empty() || states.contains(&stack.info.state))
       },
     )
     .await?;

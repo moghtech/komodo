@@ -3,7 +3,9 @@ use komodo_client::{
   api::read::*,
   entities::{
     permission::PermissionLevel,
-    swarm::{Swarm, SwarmActionState, SwarmListItem, SwarmState},
+    swarm::{
+      Swarm, SwarmActionState, SwarmListItem, SwarmSortBy, SwarmState,
+    },
   },
 };
 use mogh_resolver::Resolve;
@@ -44,11 +46,22 @@ impl Resolve<ReadArgs> for ListSwarms {
       get_all_tags(None).await?
     };
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<SwarmListItem> =
+      match self.sort_by {
+        SwarmSortBy::Name => resource::ListItemSort::Name,
+        SwarmSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.state.to_string().cmp(&b.info.state.to_string())
+          }))
+        }
+      };
     Ok(
       resource::list_items_for_user::<Swarm>(
         self.query,
         limit,
         self.page,
+        self.sort_desc,
+        sort_by,
         user,
         PermissionLevel::Read.into(),
         &all_tags,

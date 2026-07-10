@@ -4,7 +4,7 @@ use database::mungos::mongodb::bson::doc;
 use komodo_client::{
   api::read::*,
   entities::{
-    alerter::{Alerter, AlerterListItem},
+    alerter::{Alerter, AlerterListItem, AlerterSortBy},
     permission::PermissionLevel,
   },
 };
@@ -46,11 +46,23 @@ impl Resolve<ReadArgs> for ListAlerters {
       get_all_tags(None).await?
     };
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<AlerterListItem> =
+      match self.sort_by {
+        AlerterSortBy::Name => resource::ListItemSort::Name,
+        AlerterSortBy::Type => {
+          resource::ListItemSort::DbField("config.endpoint.type")
+        }
+        AlerterSortBy::Enabled => {
+          resource::ListItemSort::DbField("config.enabled")
+        }
+      };
     Ok(
       resource::list_items_for_user::<Alerter>(
         self.query,
         limit,
         self.page,
+        self.sort_desc,
+        sort_by,
         user,
         PermissionLevel::Read.into(),
         &all_tags,

@@ -180,7 +180,7 @@ pub fn delete_image_registry_account() {}
 
 /// **Admin only.** Delete an image registry account.
 /// Response: [ImageRegistryAccount].
-/// 
+///
 /// Pre v2.3.0, called `DeleteDockerRegistryAccount`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]

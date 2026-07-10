@@ -6,7 +6,9 @@ use typeshare::typeshare;
 
 use crate::entities::{
   I64, U64, Version,
-  build::{Build, BuildActionState, BuildListItem, BuildQuery},
+  build::{
+    Build, BuildActionState, BuildListItem, BuildQuery, BuildSortBy,
+  },
 };
 
 use super::KomodoReadRequest;
@@ -80,6 +82,16 @@ pub struct ListBuilds {
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
   pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: BuildSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]

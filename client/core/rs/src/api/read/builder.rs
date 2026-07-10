@@ -4,7 +4,7 @@ use typeshare::typeshare;
 
 use crate::entities::{
   U64,
-  builder::{Builder, BuilderListItem, BuilderQuery},
+  builder::{Builder, BuilderListItem, BuilderQuery, BuilderSortBy},
 };
 
 use super::KomodoReadRequest;
@@ -77,6 +77,16 @@ pub struct ListBuilders {
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
   pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: BuilderSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]

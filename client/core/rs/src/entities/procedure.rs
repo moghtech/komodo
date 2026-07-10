@@ -258,6 +258,21 @@ pub type ProcedureQuery = ResourceQuery<ProcedureQuerySpecifics>;
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ProcedureSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by state.
+  State,
+  /// Sort by next scheduled run.
+  NextRun,
+}
+
+#[typeshare]
+#[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]

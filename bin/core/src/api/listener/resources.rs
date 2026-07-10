@@ -86,7 +86,7 @@ pub async fn handle_build_webhook<B: super::ExtractBranch>(
       })
       .await
       .ok();
-    
+
     poll_build_until_cancelled(&build.id).await?;
   }
 

@@ -16,7 +16,8 @@ use komodo_client::{
   entities::{
     permission::PermissionLevel,
     server::{
-      Server, ServerActionState, ServerListItem, ServerState,
+      Server, ServerActionState, ServerListItem, ServerSortBy,
+      ServerState,
     },
     stats::{SystemInformation, SystemProcess},
   },
@@ -111,10 +112,29 @@ impl Resolve<ReadArgs> for ListServers {
     };
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<ServerListItem> =
+      match self.sort_by {
+        ServerSortBy::Name => resource::ListItemSort::Name,
+        ServerSortBy::Region => {
+          resource::ListItemSort::DbField("config.region")
+        }
+        ServerSortBy::Version => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.version.cmp(&b.info.version)
+          }))
+        }
+        ServerSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.state.to_string().cmp(&b.info.state.to_string())
+          }))
+        }
+      };
     let servers = resource::list_items_for_user::<Server>(
       self.query,
       limit,
       self.page,
+      self.sort_desc,
+      sort_by,
       user,
       PermissionLevel::Read.into(),
       &all_tags,

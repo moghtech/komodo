@@ -5,6 +5,7 @@ use komodo_client::{
     permission::PermissionLevel,
     sync::{
       ResourceSync, ResourceSyncActionState, ResourceSyncListItem,
+      ResourceSyncSortBy,
     },
   },
 };
@@ -44,11 +45,32 @@ impl Resolve<ReadArgs> for ListResourceSyncs {
       get_all_tags(None).await?
     };
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<ResourceSyncListItem> =
+      match self.sort_by {
+        ResourceSyncSortBy::Name => resource::ListItemSort::Name,
+        ResourceSyncSortBy::Source => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.repo.cmp(&b.info.repo)
+          }))
+        }
+        ResourceSyncSortBy::Branch => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.branch.cmp(&b.info.branch)
+          }))
+        }
+        ResourceSyncSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.state.to_string().cmp(&b.info.state.to_string())
+          }))
+        }
+      };
     Ok(
       resource::list_items_for_user::<ResourceSync>(
         self.query,
         limit,
         self.page,
+        self.sort_desc,
+        sort_by,
         user,
         PermissionLevel::Read.into(),
         &all_tags,

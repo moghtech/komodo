@@ -112,7 +112,7 @@ pub struct ListAllContainers {
   /// `limit: 100` is default.
   ///
   /// Passing `limit: 0` returns all results (unlimited).
-  /// 
+  ///
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
   pub limit: Option<U64>,

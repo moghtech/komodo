@@ -3,7 +3,9 @@ use komodo_client::{
   api::read::*,
   entities::{
     permission::PermissionLevel,
-    procedure::{Procedure, ProcedureState},
+    procedure::{
+      Procedure, ProcedureListItem, ProcedureSortBy, ProcedureState,
+    },
   },
 };
 use mogh_resolver::Resolve;
@@ -45,10 +47,26 @@ impl Resolve<ReadArgs> for ListProcedures {
     };
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<ProcedureListItem> =
+      match self.sort_by {
+        ProcedureSortBy::Name => resource::ListItemSort::Name,
+        ProcedureSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.state.to_string().cmp(&b.info.state.to_string())
+          }))
+        }
+        ProcedureSortBy::NextRun => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.next_scheduled_run.cmp(&b.info.next_scheduled_run)
+          }))
+        }
+      };
     let procedures = resource::list_items_for_user::<Procedure>(
       self.query,
       limit,
       self.page,
+      self.sort_desc,
+      sort_by,
       user,
       PermissionLevel::Read.into(),
       &all_tags,

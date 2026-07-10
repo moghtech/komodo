@@ -3,7 +3,8 @@ use komodo_client::{
   api::read::*,
   entities::{
     action::{
-      Action, ActionActionState, ActionListItem, ActionState,
+      Action, ActionActionState, ActionListItem, ActionSortBy,
+      ActionState,
     },
     permission::PermissionLevel,
   },
@@ -47,10 +48,26 @@ impl Resolve<ReadArgs> for ListActions {
     };
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<ActionListItem> =
+      match self.sort_by {
+        ActionSortBy::Name => resource::ListItemSort::Name,
+        ActionSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.state.to_string().cmp(&b.info.state.to_string())
+          }))
+        }
+        ActionSortBy::NextRun => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.next_scheduled_run.cmp(&b.info.next_scheduled_run)
+          }))
+        }
+      };
     let actions = resource::list_items_for_user::<Action>(
       self.query,
       limit,
       self.page,
+      self.sort_desc,
+      sort_by,
       user,
       PermissionLevel::Read.into(),
       &all_tags,

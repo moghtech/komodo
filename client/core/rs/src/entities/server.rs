@@ -460,6 +460,23 @@ pub enum ServerState {
 pub type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 
 #[typeshare]
+#[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ServerSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by region.
+  Region,
+  /// Sort by periphery version.
+  Version,
+  /// Sort by state.
+  State,
+}
+
+#[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerQuerySpecifics {

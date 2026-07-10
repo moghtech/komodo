@@ -6,7 +6,7 @@ use crate::entities::{
   I64, SearchCombinator, U64,
   deployment::{
     Deployment, DeploymentActionState, DeploymentListItem,
-    DeploymentQuery, DeploymentState,
+    DeploymentQuery, DeploymentSortBy, DeploymentState,
   },
   docker::{
     container::{Container, ContainerListItem, ContainerStats},
@@ -87,6 +87,16 @@ pub struct ListDeployments {
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
   pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: DeploymentSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]

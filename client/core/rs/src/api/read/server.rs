@@ -6,7 +6,7 @@ use crate::entities::{
   I64, Timelength, U64,
   server::{
     PeripheryInformation, Server, ServerActionState, ServerListItem,
-    ServerQuery, ServerState,
+    ServerQuery, ServerSortBy, ServerState,
   },
   stats::{
     SystemInformation, SystemProcess, SystemStats, SystemStatsRecord,
@@ -84,6 +84,16 @@ pub struct ListServers {
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
   pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: ServerSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]

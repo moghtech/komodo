@@ -4,7 +4,9 @@ use typeshare::typeshare;
 
 use crate::entities::{
   U64,
-  repo::{Repo, RepoActionState, RepoListItem, RepoQuery},
+  repo::{
+    Repo, RepoActionState, RepoListItem, RepoQuery, RepoSortBy,
+  },
 };
 
 use super::KomodoReadRequest;
@@ -78,6 +80,16 @@ pub struct ListRepos {
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
   pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: RepoSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]

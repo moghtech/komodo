@@ -3,7 +3,9 @@ use komodo_client::{
   api::read::*,
   entities::{
     permission::PermissionLevel,
-    repo::{Repo, RepoActionState, RepoListItem, RepoState},
+    repo::{
+      Repo, RepoActionState, RepoListItem, RepoSortBy, RepoState,
+    },
   },
 };
 use mogh_resolver::Resolve;
@@ -45,10 +47,27 @@ impl Resolve<ReadArgs> for ListRepos {
     };
     let states = self.query.specific.states.clone();
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<RepoListItem> =
+      match self.sort_by {
+        RepoSortBy::Name => resource::ListItemSort::Name,
+        RepoSortBy::Repo => {
+          resource::ListItemSort::DbField("config.repo")
+        }
+        RepoSortBy::Branch => {
+          resource::ListItemSort::DbField("config.branch")
+        }
+        RepoSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.state.to_string().cmp(&b.info.state.to_string())
+          }))
+        }
+      };
     let repos = resource::list_items_for_user::<Repo>(
       self.query,
       limit,
       self.page,
+      self.sort_desc,
+      sort_by,
       user,
       PermissionLevel::Read.into(),
       &all_tags,

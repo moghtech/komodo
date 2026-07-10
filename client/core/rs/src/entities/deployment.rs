@@ -596,6 +596,23 @@ pub type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum DeploymentSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by image.
+  Image,
+  /// Sort by host Server / Swarm name.
+  Host,
+  /// Sort by state.
+  State,
+}
+
+#[typeshare]
+#[derive(
   Debug, Clone, Default, Serialize, Deserialize, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]

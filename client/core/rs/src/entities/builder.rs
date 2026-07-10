@@ -677,6 +677,21 @@ impl utoipa::ToSchema for PartialAwsBuilderConfig {}
 pub type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
 #[typeshare]
+#[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum BuilderSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by builder provider type.
+  Provider,
+  /// Sort by instance type.
+  InstanceType,
+}
+
+#[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuilderQuerySpecifics {}

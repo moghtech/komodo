@@ -4,7 +4,7 @@ use database::mungos::mongodb::bson::doc;
 use komodo_client::{
   api::read::*,
   entities::{
-    builder::{Builder, BuilderListItem},
+    builder::{Builder, BuilderListItem, BuilderSortBy},
     permission::PermissionLevel,
   },
 };
@@ -46,11 +46,25 @@ impl Resolve<ReadArgs> for ListBuilders {
       get_all_tags(None).await?
     };
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<BuilderListItem> =
+      match self.sort_by {
+        BuilderSortBy::Name => resource::ListItemSort::Name,
+        BuilderSortBy::Provider => {
+          resource::ListItemSort::DbField("config.type")
+        }
+        BuilderSortBy::InstanceType => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.instance_type.cmp(&b.info.instance_type)
+          }))
+        }
+      };
     Ok(
       resource::list_items_for_user::<Builder>(
         self.query,
         limit,
         self.page,
+        self.sort_desc,
+        sort_by,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
