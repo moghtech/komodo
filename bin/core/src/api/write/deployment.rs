@@ -303,50 +303,66 @@ impl Resolve<WriteArgs> for RenameDeployment {
     let state = get_deployment_state(&deployment.id).await?;
 
     // When no custom name is configured, the container / service
-    // follows the Deployment name, and must be kept matched
-    // by renaming the container to the new name (Server mode).
-    // Swarm services cannot be renamed, so the rename fails
-    // if the service is deployed.
+    // follows the Deployment name, and must be kept matched:
+    //   - Server mode: rename the container to the new name.
+    //   - Swarm mode: services cannot be renamed, so the current
+    //     service name is pinned in info.deployed_name, and stays
+    //     in use until the next deploy recreates the service.
     // A configured custom name is unaffected by Deployment rename.
-    let rename_container = if deployment.config.custom_name.is_empty()
-      && state != DeploymentState::NotDeployed
-    {
-      if !deployment.config.swarm_id.is_empty() {
-        return Err(
-          anyhow!(
-            "Cannot rename Deployment while the Swarm service is deployed, as services cannot be renamed. Destroy the Deployment first, or configure a custom service name to keep the service name unchanged."
-          )
-          .into(),
-        );
-      }
-      if state == DeploymentState::Unknown
-        && !deployment.config.server_id.is_empty()
-      {
-        return Err(
-          anyhow!(
-            "Cannot rename Deployment when container / service status is unknown"
-          )
-          .into(),
-        );
-      }
-      !deployment.config.server_id.is_empty()
-    } else {
-      false
-    };
+    let follows_name =
+      deployment.config.custom_name.trim().is_empty();
+    let deployed = state != DeploymentState::NotDeployed;
+
+    let rename_container = follows_name
+      && deployed
+      && !deployment.config.server_id.is_empty();
+
+    if rename_container && state == DeploymentState::Unknown {
+      return Err(
+        anyhow!(
+          "Cannot rename Deployment when container status is unknown"
+        )
+        .into(),
+      );
+    }
+
+    // Includes the Unknown state, in case a service
+    // is still running under the current name.
+    let pin_deployed_name = follows_name
+      && deployed
+      && !deployment.config.swarm_id.is_empty()
+      && deployment.info.deployed_name.is_empty();
 
     let mut update =
       make_update(&deployment, Operation::RenameDeployment, user);
 
+    let mut set =
+      doc! { "name": &name, "updated_at": komodo_timestamp() };
+    if rename_container {
+      // Container is renamed to the new name below.
+      set.insert("info.deployed_name", name.as_str());
+    } else if pin_deployed_name {
+      set.insert("info.deployed_name", deployment.deployed_name());
+    }
+
     update_one_by_id(
       &db_client().deployments,
       &deployment.id,
-      database::mungos::update::Update::Set(
-        doc! { "name": &name, "updated_at": komodo_timestamp() },
-      ),
+      database::mungos::update::Update::Set(set),
       None,
     )
     .await
     .context("Failed to update Deployment name on db")?;
+
+    if pin_deployed_name {
+      update.push_simple_log(
+        "Pin Service Name",
+        format!(
+          "Swarm services cannot be renamed, so the current service name '{}' stays in use until the next deploy recreates the service under the new name.",
+          deployment.deployed_name()
+        ),
+      );
+    }
 
     if rename_container {
       let server =
@@ -354,7 +370,7 @@ impl Resolve<WriteArgs> for RenameDeployment {
       let log = periphery_client(&server)
         .await?
         .request(api::container::RenameContainer {
-          curr_name: deployment.name.clone(),
+          curr_name: deployment.deployed_name().to_string(),
           new_name: name.clone(),
         })
         .await
@@ -487,6 +503,7 @@ pub async fn check_deployment_for_update_inner(
     &deployment.id,
     &DeploymentInfo {
       latest_image_digest: latest_digest.clone(),
+      deployed_name: deployment.info.deployed_name.clone(),
     },
   )
   .await?;

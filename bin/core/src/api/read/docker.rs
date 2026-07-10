@@ -216,13 +216,18 @@ impl Resolve<ReadArgs> for GetResourceMatchingContainer {
     )
     .await?;
 
-    // First check deployments with a matching custom container name.
+    // First check deployments with a matching deployed / custom container name.
     // The empty check is required to avoid matching
     // deployments with no custom name configured.
     if !self.container.is_empty()
       && let Ok(Some(deployment)) = db_client()
         .deployments
-        .find_one(doc! { "config.custom_name": &self.container })
+        .find_one(doc! {
+          "$or": [
+            { "info.deployed_name": &self.container },
+            { "config.custom_name": &self.container },
+          ]
+        })
         .await
     {
       return Ok(GetResourceMatchingContainerResponse {

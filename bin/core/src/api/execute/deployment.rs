@@ -201,6 +201,12 @@ impl Resolve<ExecuteArgs> for Deploy {
     update_update(update.clone()).await?;
 
     let deployment_id = deployment.id.clone();
+    // Track the name the container / service is deployed under,
+    // so the Deployment stays matched to it even if the
+    // name configuration changes before the next deploy.
+    let fresh_name = deployment.custom_name().to_string();
+    let prev_deployed_name = deployment.info.deployed_name.clone();
+    let mut deployed = false;
 
     match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -217,6 +223,7 @@ impl Resolve<ExecuteArgs> for Deploy {
         {
           Ok(logs) => {
             refresh_swarm_cache(&swarm, true).await;
+            deployed = logs.iter().all(|log| log.success);
             update.logs.extend(logs)
           }
           Err(e) => {
@@ -241,6 +248,7 @@ impl Resolve<ExecuteArgs> for Deploy {
         {
           Ok(log) => {
             refresh_server_cache(&server, true).await;
+            deployed = log.success;
             update.logs.push(log)
           }
           Err(e) => {
@@ -257,6 +265,11 @@ impl Resolve<ExecuteArgs> for Deploy {
       &deployment_id,
       &DeploymentInfo {
         latest_image_digest: Default::default(),
+        deployed_name: if deployed {
+          fresh_name
+        } else {
+          prev_deployed_name
+        },
       },
     )
     .await
@@ -517,7 +530,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::StartContainer {
-        name: deployment.custom_name().to_string(),
+        name: deployment.deployed_name().to_string(),
       })
       .await
     {
@@ -589,7 +602,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::RestartContainer {
-        name: deployment.custom_name().to_string(),
+        name: deployment.deployed_name().to_string(),
       })
       .await
     {
@@ -663,7 +676,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::PauseContainer {
-        name: deployment.custom_name().to_string(),
+        name: deployment.deployed_name().to_string(),
       })
       .await
     {
@@ -735,7 +748,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::UnpauseContainer {
-        name: deployment.custom_name().to_string(),
+        name: deployment.deployed_name().to_string(),
       })
       .await
     {
@@ -811,7 +824,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::StopContainer {
-        name: deployment.custom_name().to_string(),
+        name: deployment.deployed_name().to_string(),
         signal: self
           .signal
           .unwrap_or(deployment.config.termination_signal)
@@ -926,7 +939,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         match swarm_request(
           &swarm.config.server_ids,
           api::swarm::RemoveSwarmServices {
-            services: vec![deployment.custom_name().to_string()],
+            services: vec![deployment.deployed_name().to_string()],
           },
         )
         .await
@@ -947,7 +960,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         match periphery_client(&server)
           .await?
           .request(api::container::RemoveContainer {
-            name: deployment.custom_name().to_string(),
+            name: deployment.deployed_name().to_string(),
             signal: self
               .signal
               .unwrap_or(deployment.config.termination_signal)
@@ -972,6 +985,27 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         }
       }
     };
+
+    // Clear the tracked deployed name once the container / service
+    // is confirmed removed, so the next deploy uses the fresh name.
+    if log.success
+      && let Err(e) = resource::update_info::<Deployment>(
+        &deployment.id,
+        &DeploymentInfo {
+          latest_image_digest: deployment
+            .info
+            .latest_image_digest
+            .clone(),
+          deployed_name: Default::default(),
+        },
+      )
+      .await
+    {
+      warn!(
+        "Failed to clear deployment {} ({}) deployed name after destroy | {e:#}",
+        deployment.name, deployment.id,
+      );
+    }
 
     update.logs.push(log);
     update.finalize();

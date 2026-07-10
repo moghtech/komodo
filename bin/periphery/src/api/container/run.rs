@@ -93,8 +93,10 @@ impl Resolve<crate::api::Args> for RunContainer {
     let _ = pull_image(image).await;
     debug!("image pulled");
 
+    // Remove the existing container under the previously deployed name,
+    // in case the name configuration changed since the last deploy.
     let _ = (RemoveContainer {
-      name: deployment.custom_name().to_string(),
+      name: deployment.deployed_name().to_string(),
       signal: stop_signal,
       time: stop_time,
     })

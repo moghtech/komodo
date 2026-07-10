@@ -36,9 +36,24 @@ pub type Deployment = Resource<DeploymentConfig, DeploymentInfo>;
 impl Deployment {
   /// Configured custom container / service name,
   /// falling back to deployment name.
+  /// This is the name the next deploy will use.
   pub fn custom_name(&self) -> &str {
     optional_str(self.config.custom_name.trim())
       .unwrap_or(self.name.trim())
+  }
+
+  /// The name of the currently deployed container / service,
+  /// falling back to [Deployment::custom_name].
+  /// May be different than custom_name if the name configuration
+  /// changed since the last deploy. Use this to match the Deployment
+  /// against the existing container / service.
+  pub fn deployed_name(&self) -> &str {
+    let trimmed = self.info.deployed_name.trim();
+    if !trimmed.is_empty() {
+      trimmed
+    } else {
+      self.custom_name()
+    }
   }
 }
 
@@ -63,8 +78,9 @@ pub struct DeploymentListItemInfo {
   pub state: DeploymentState,
   /// The status of the docker container (eg. up 12 hours, exited 5 minutes ago.)
   pub status: Option<String>,
-  /// Custom container / service name, if different
-  /// than deployment name
+  /// The container / service name, if different than
+  /// the deployment name. Uses the currently deployed name
+  /// if deployed, else the configured custom name.
   pub custom_name: String,
   /// The image attached to the deployment.
   pub image: String,
@@ -92,6 +108,11 @@ pub struct DeploymentInfo {
   /// This includes both the image name / tag, and the specific digest hash.
   #[serde(default)]
   pub latest_image_digest: ImageDigest,
+  /// The container / service name used at the time of the last deploy.
+  /// Kept to match the Deployment to its container / service
+  /// even if the name configuration changes before the next deploy.
+  #[serde(default)]
+  pub deployed_name: String,
 }
 
 #[typeshare(serialized_as = "Partial<DeploymentConfig>")]

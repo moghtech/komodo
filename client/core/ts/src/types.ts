@@ -1432,6 +1432,12 @@ export interface DeploymentInfo {
 	 * This includes both the image name / tag, and the specific digest hash.
 	 */
 	latest_image_digest?: ImageDigest;
+	/**
+	 * The container / service name used at the time of the last deploy.
+	 * Kept to match the Deployment to its container / service
+	 * even if the name configuration changes before the next deploy.
+	 */
+	deployed_name?: string;
 }
 
 export type Deployment = Resource<DeploymentConfig, DeploymentInfo>;
@@ -1477,8 +1483,9 @@ export interface DeploymentListItemInfo {
 	/** The status of the docker container (eg. up 12 hours, exited 5 minutes ago.) */
 	status?: string;
 	/**
-	 * Custom container / service name, if different
-	 * than deployment name
+	 * The container / service name, if different than
+	 * the deployment name. Uses the currently deployed name
+	 * if deployed, else the configured custom name.
 	 */
 	custom_name: string;
 	/** The image attached to the deployment. */

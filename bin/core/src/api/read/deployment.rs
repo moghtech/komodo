@@ -208,7 +208,7 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
       SwarmOrServer::Swarm(swarm) => swarm_request(
         &swarm.config.server_ids,
         periphery_client::api::swarm::GetSwarmServiceLog {
-          service: deployment.custom_name().to_string(),
+          service: deployment.deployed_name().to_string(),
           tail,
           timestamps,
           no_task_ids: false,
@@ -221,7 +221,7 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
       SwarmOrServer::Server(server) => periphery_client(&server)
         .await?
         .request(api::container::GetContainerLog {
-          name: deployment.custom_name().to_string(),
+          name: deployment.deployed_name().to_string(),
           tail: cmp::min(tail, MAX_LOG_LENGTH),
           timestamps,
         })
@@ -260,7 +260,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       SwarmOrServer::Swarm(swarm) => swarm_request(
         &swarm.config.server_ids,
         periphery_client::api::swarm::GetSwarmServiceLogSearch {
-          service: deployment.custom_name().to_string(),
+          service: deployment.deployed_name().to_string(),
           terms,
           combinator,
           invert,
@@ -275,7 +275,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       SwarmOrServer::Server(server) => periphery_client(&server)
         .await?
         .request(api::container::GetContainerLogSearch {
-          name: deployment.custom_name().to_string(),
+          name: deployment.deployed_name().to_string(),
           terms,
           combinator,
           invert,
@@ -328,7 +328,7 @@ impl Resolve<ReadArgs> for InspectDeploymentContainer {
     periphery_client(&server)
       .await?
       .request(InspectContainer {
-        name: deployment.custom_name().to_string(),
+        name: deployment.deployed_name().to_string(),
       })
       .await
       .context("Failed to inspect container on server")
@@ -361,7 +361,7 @@ impl Resolve<ReadArgs> for InspectDeploymentSwarmService {
     swarm_request(
       &swarm.config.server_ids,
       periphery_client::api::swarm::InspectSwarmService {
-        service: deployment.custom_name().to_string(),
+        service: deployment.deployed_name().to_string(),
       },
     )
     .await
@@ -391,7 +391,7 @@ impl Resolve<ReadArgs> for GetDeploymentStats {
     let res = periphery_client(&server)
       .await?
       .request(api::container::GetContainerStats {
-        name: deployment.custom_name().to_string(),
+        name: deployment.deployed_name().to_string(),
       })
       .await
       .context("failed to get stats from periphery")?;

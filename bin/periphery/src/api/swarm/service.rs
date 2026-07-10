@@ -268,8 +268,10 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
       }
     };
 
+    // Remove the existing service under the previously deployed name,
+    // in case the name configuration changed since the last deploy.
     let log = (RemoveSwarmServices {
-      services: vec![deployment.custom_name().to_string()],
+      services: vec![deployment.deployed_name().to_string()],
     })
     .resolve(args)
     .await;
