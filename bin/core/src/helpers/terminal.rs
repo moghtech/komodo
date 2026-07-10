@@ -332,7 +332,7 @@ pub async fn get_deployment_periphery_container(
 
   let periphery = periphery_client(&server).await?;
 
-  let container = deployment.name.clone();
+  let container = deployment.custom_name().to_string();
 
   Ok((
     TerminalTarget::Deployment {

@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { useDeployment } from ".";
+import { deploymentContainerName, useDeployment } from ".";
 import SwarmServiceTasksSection, {
   SwarmServiceTasksSectionProps,
 } from "@/pages/swarm/service/tasks";
@@ -24,7 +24,9 @@ export default function DeploymentTasksSection({
     "ListSwarmServices",
     { swarm: swarmId! },
     { enabled: !!swarmId },
-  ).data?.find((service) => service.Name === deployment?.name);
+  ).data?.find(
+    (service) => service.Name === deploymentContainerName(deployment),
+  );
   const _search = useState("");
 
   if (!swarmId || !service) {

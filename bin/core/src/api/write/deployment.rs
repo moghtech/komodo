@@ -300,17 +300,39 @@ impl Resolve<WriteArgs> for RenameDeployment {
 
     let name = to_container_compatible_name(&self.name);
 
-    let container_state =
-      get_deployment_state(&deployment.id).await?;
+    let state = get_deployment_state(&deployment.id).await?;
 
-    if container_state == DeploymentState::Unknown {
-      return Err(
-        anyhow!(
-          "Cannot rename Deployment when container status is unknown"
-        )
-        .into(),
-      );
-    }
+    // When no custom name is configured, the container / service
+    // follows the Deployment name, and must be kept matched
+    // by renaming the container to the new name (Server mode).
+    // Swarm services cannot be renamed, so the rename fails
+    // if the service is deployed.
+    // A configured custom name is unaffected by Deployment rename.
+    let rename_container = if deployment.config.custom_name.is_empty()
+      && state != DeploymentState::NotDeployed
+    {
+      if !deployment.config.swarm_id.is_empty() {
+        return Err(
+          anyhow!(
+            "Cannot rename Deployment while the Swarm service is deployed, as services cannot be renamed. Destroy the Deployment first, or configure a custom service name to keep the service name unchanged."
+          )
+          .into(),
+        );
+      }
+      if state == DeploymentState::Unknown
+        && !deployment.config.server_id.is_empty()
+      {
+        return Err(
+          anyhow!(
+            "Cannot rename Deployment when container / service status is unknown"
+          )
+          .into(),
+        );
+      }
+      !deployment.config.server_id.is_empty()
+    } else {
+      false
+    };
 
     let mut update =
       make_update(&deployment, Operation::RenameDeployment, user);
@@ -326,7 +348,7 @@ impl Resolve<WriteArgs> for RenameDeployment {
     .await
     .context("Failed to update Deployment name on db")?;
 
-    if container_state != DeploymentState::NotDeployed {
+    if rename_container {
       let server =
         resource::get::<Server>(&deployment.config.server_id).await?;
       let log = periphery_client(&server)

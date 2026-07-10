@@ -269,7 +269,7 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
     };
 
     let log = (RemoveSwarmServices {
-      services: vec![deployment.name.clone()],
+      services: vec![deployment.custom_name().to_string()],
     })
     .resolve(args)
     .await;
@@ -310,24 +310,21 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
 }
 
 fn docker_service_create_command(
-  Deployment {
-    name,
-    config:
-      DeploymentConfig {
-        volumes,
-        ports,
-        network,
-        command,
-        environment,
-        labels,
-        extra_args,
-        ..
-      },
-    ..
-  }: &Deployment,
+  deployment: &Deployment,
   image: &str,
   use_with_registry_auth: bool,
 ) -> anyhow::Result<String> {
+  let name = deployment.custom_name();
+  let DeploymentConfig {
+    volumes,
+    ports,
+    network,
+    command,
+    environment,
+    labels,
+    extra_args,
+    ..
+  } = &deployment.config;
   let mut res = format!(
     "docker service create --name {name} --network {network}"
   );

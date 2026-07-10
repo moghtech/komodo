@@ -247,7 +247,7 @@ pub async fn update_swarm_deployment_cache(
         service
           .name
           .as_ref()
-          .map(|name| name == &deployment.name)
+          .map(|name| name == deployment.custom_name())
           .unwrap_or_default()
       })
       .cloned();
@@ -301,7 +301,7 @@ pub async fn update_server_deployment_cache(
   for deployment in deployments {
     let container = containers
       .iter()
-      .find(|container| container.name == deployment.name)
+      .find(|container| container.name == deployment.custom_name())
       .cloned();
 
     let image_digests = container

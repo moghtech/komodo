@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use database::mungos::mongodb::Collection;
 use formatting::format_serror;
 use indexmap::IndexSet;
@@ -23,7 +23,8 @@ use komodo_client::entities::{
   user::User,
 };
 use periphery_client::api::{
-  container::RemoveContainer, swarm::RemoveSwarmServices,
+  container::{RemoveContainer, RenameContainer},
+  swarm::RemoveSwarmServices,
 };
 
 use crate::{
@@ -171,6 +172,7 @@ impl super::KomodoResource for Deployment {
         status: status.as_ref().and_then(|s| {
           s.curr.container.as_ref().and_then(|c| c.status.to_owned())
         }),
+        custom_name: deployment.config.custom_name,
         image,
         update_available,
         swarm_id: deployment.config.swarm_id,
@@ -249,11 +251,12 @@ impl super::KomodoResource for Deployment {
   }
 
   async fn validate_update_config(
-    _id: &str,
+    id: &str,
     config: &mut Self::PartialConfig,
     user: &User,
   ) -> anyhow::Result<()> {
-    validate_config(config, user).await
+    validate_config(config, user).await?;
+    handle_custom_name_update(id, config).await
   }
 
   async fn post_update(
@@ -319,7 +322,7 @@ impl super::KomodoResource for Deployment {
       SwarmOrServer::Swarm(swarm) => match swarm_request(
         &swarm.config.server_ids,
         RemoveSwarmServices {
-          services: vec![deployment.name.clone()],
+          services: vec![deployment.custom_name().to_string()],
         },
       )
       .await
@@ -357,7 +360,7 @@ impl super::KomodoResource for Deployment {
         };
         match periphery
           .request(RemoveContainer {
-            name: deployment.name.clone(),
+            name: deployment.custom_name().to_string(),
             signal: deployment.config.termination_signal.into(),
             time: deployment.config.termination_timeout.into(),
           })
@@ -441,8 +444,71 @@ async fn validate_config(
     environment_vars_from_str(environment)
       .context("Invalid environment")?;
   }
+  if let Some(custom_name) = &config.custom_name
+    && !custom_name.is_empty()
+  {
+    config.custom_name =
+      Some(to_container_compatible_name(custom_name));
+  }
   if let Some(extra_args) = &mut config.extra_args {
     extra_args.retain(|v| !empty_or_only_spaces(v))
+  }
+  Ok(())
+}
+
+/// If a config update changes the custom container name,
+/// the container is renamed to keep the Deployment matched to it.
+/// This runs before the update is written to the database,
+/// so a failed rename rejects the update and nothing is left mismatched.
+/// Swarm services cannot be renamed, so the update is rejected
+/// while the service is deployed.
+async fn handle_custom_name_update(
+  id: &str,
+  config: &PartialDeploymentConfig,
+) -> anyhow::Result<()> {
+  let Some(custom_name) = &config.custom_name else {
+    return Ok(());
+  };
+  let deployment = super::get::<Deployment>(id).await?;
+  // custom_name is already made container compatible by validate_config.
+  let new_container_name = if custom_name.is_empty() {
+    deployment.name.as_str()
+  } else {
+    custom_name.as_str()
+  };
+  if deployment.custom_name() == new_container_name {
+    return Ok(());
+  }
+  if !deployment.config.server_id.is_empty() {
+    let container_state =
+      get_deployment_state(&deployment.id).await?;
+    if container_state == DeploymentState::Unknown {
+      return Err(anyhow!(
+        "Cannot change custom container name when container status is unknown"
+      ));
+    }
+    if container_state == DeploymentState::NotDeployed {
+      return Ok(());
+    }
+    let server =
+      super::get::<Server>(&deployment.config.server_id).await?;
+    periphery_client(&server)
+      .await?
+      .request(RenameContainer {
+        curr_name: deployment.custom_name().to_string(),
+        new_name: new_container_name.to_string(),
+      })
+      .await
+      .context("Failed to rename container to the new custom name")?;
+  } else if !deployment.config.swarm_id.is_empty()
+    && get_deployment_state(&deployment.id).await?
+      != DeploymentState::NotDeployed
+  {
+    // Also rejects Unknown state, as it cannot be verified
+    // that no service is left behind under the old name.
+    return Err(anyhow!(
+      "Cannot change custom service name while the service is deployed. Destroy the Deployment first."
+    ));
   }
   Ok(())
 }

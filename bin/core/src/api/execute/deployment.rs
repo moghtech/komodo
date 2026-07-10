@@ -517,7 +517,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::StartContainer {
-        name: deployment.name,
+        name: deployment.custom_name().to_string(),
       })
       .await
     {
@@ -589,7 +589,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::RestartContainer {
-        name: deployment.name,
+        name: deployment.custom_name().to_string(),
       })
       .await
     {
@@ -663,7 +663,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::PauseContainer {
-        name: deployment.name,
+        name: deployment.custom_name().to_string(),
       })
       .await
     {
@@ -735,7 +735,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::UnpauseContainer {
-        name: deployment.name,
+        name: deployment.custom_name().to_string(),
       })
       .await
     {
@@ -811,7 +811,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::StopContainer {
-        name: deployment.name,
+        name: deployment.custom_name().to_string(),
         signal: self
           .signal
           .unwrap_or(deployment.config.termination_signal)
@@ -926,7 +926,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         match swarm_request(
           &swarm.config.server_ids,
           api::swarm::RemoveSwarmServices {
-            services: vec![deployment.name],
+            services: vec![deployment.custom_name().to_string()],
           },
         )
         .await
@@ -947,7 +947,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         match periphery_client(&server)
           .await?
           .request(api::container::RemoveContainer {
-            name: deployment.name,
+            name: deployment.custom_name().to_string(),
             signal: self
               .signal
               .unwrap_or(deployment.config.termination_signal)

@@ -8,13 +8,7 @@ use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::{
-  deserializers::{
-    conversions_deserializer, env_vars_deserializer,
-    labels_deserializer, option_conversions_deserializer,
-    option_env_vars_deserializer, option_labels_deserializer,
-    option_string_list_deserializer, option_term_labels_deserializer,
-    string_list_deserializer, term_labels_deserializer,
-  },
+  deserializers::*,
   entities::{
     EnvironmentVar, ImageDigest, environment_vars_from_str,
     optional_str,
@@ -39,9 +33,27 @@ pub struct DeploymentSchema(
 #[typeshare]
 pub type Deployment = Resource<DeploymentConfig, DeploymentInfo>;
 
+impl Deployment {
+  /// Configured custom container / service name,
+  /// falling back to deployment name.
+  pub fn custom_name(&self) -> &str {
+    optional_str(self.config.custom_name.trim())
+      .unwrap_or(self.name.trim())
+  }
+}
+
 #[typeshare]
 pub type DeploymentListItem =
   ResourceListItem<DeploymentListItemInfo>;
+
+impl DeploymentListItem {
+  /// Configured custom container / service name,
+  /// falling back to deployment name.
+  pub fn custom_name(&self) -> &str {
+    optional_str(self.info.custom_name.trim())
+      .unwrap_or(self.name.trim())
+  }
+}
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -51,6 +63,9 @@ pub struct DeploymentListItemInfo {
   pub state: DeploymentState,
   /// The status of the docker container (eg. up 12 hours, exited 5 minutes ago.)
   pub status: Option<String>,
+  /// Custom container / service name, if different
+  /// than deployment name
+  pub custom_name: String,
   /// The image attached to the deployment.
   pub image: String,
   /// Whether there is a newer image available at the same tag.
@@ -118,6 +133,12 @@ pub struct DeploymentConfig {
   )]
   #[builder(default)]
   pub server_id: String,
+
+  /// Specify a custom container / service name,
+  /// if different from Deployment name.
+  #[serde(default)]
+  #[builder(default)]
+  pub custom_name: String,
 
   /// The image which the deployment deploys.
   /// Can either be a user inputted image, or a Komodo Build.
@@ -305,6 +326,7 @@ impl Default for DeploymentConfig {
     Self {
       swarm_id: Default::default(),
       server_id: Default::default(),
+      custom_name: Default::default(),
       image: Default::default(),
       image_registry_account: Default::default(),
       skip_secret_interp: Default::default(),

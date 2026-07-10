@@ -44,6 +44,15 @@ export function useFullDeployment(id: string) {
   ).data;
 }
 
+/** The container / service name for the deployment,
+ * ie the configured custom name if set, otherwise the deployment name. */
+export function deploymentContainerName(
+  deployment: Types.DeploymentListItem | undefined,
+) {
+  if (!deployment) return undefined;
+  return deployment.info.custom_name || deployment.name;
+}
+
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
   Types.DeploymentInfo,
@@ -193,11 +202,12 @@ export const DeploymentComponents: RequiredResourceComponents<
     },
     DockerResource: ({ id }) => {
       const deployment = useDeployment(id);
+      const containerName = deploymentContainerName(deployment);
       const service = useRead(
         "ListSwarmServices",
         { swarm: deployment?.info.swarm_id! },
         { enabled: !!deployment?.info.swarm_id },
-      ).data?.find((service) => service.Name === deployment?.name);
+      ).data?.find((service) => service.Name === containerName);
       if (
         !deployment ||
         [
@@ -213,8 +223,8 @@ export const DeploymentComponents: RequiredResourceComponents<
             <SwarmResourceLink
               type="Service"
               swarmId={deployment.info.swarm_id}
-              resourceId={deployment.name}
-              name={deployment.name}
+              resourceId={containerName!}
+              name={containerName!}
             />
             {service?.Configs.map((config) => (
               <SwarmResourceLink
@@ -240,7 +250,7 @@ export const DeploymentComponents: RequiredResourceComponents<
         return (
           <DockerResourceLink
             type="Container"
-            name={deployment.name}
+            name={containerName!}
             serverId={deployment.info.server_id}
           />
         );
@@ -248,13 +258,14 @@ export const DeploymentComponents: RequiredResourceComponents<
     },
     Ports: ({ id }) => {
       const deployment = useDeployment(id);
+      const containerName = deploymentContainerName(deployment);
       const container = useRead(
         "ListContainers",
         {
           server: deployment?.info.server_id!,
         },
         { refetchInterval: 10_000, enabled: !!deployment?.info.server_id },
-      ).data?.find((container) => container.name === deployment?.name);
+      ).data?.find((container) => container.name === containerName);
       if (!container) return null;
       return (
         <ContainerPorts

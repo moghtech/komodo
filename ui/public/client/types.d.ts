@@ -1478,6 +1478,11 @@ export interface DeploymentConfig {
      */
     server_id?: string;
     /**
+     * Specify a custom container / service name,
+     * if different from Deployment name.
+     */
+    custom_name?: string;
+    /**
      * The image which the deployment deploys.
      * Can either be a user inputted image, or a Komodo Build.
      */
@@ -1615,6 +1620,11 @@ export interface DeploymentListItemInfo {
     state: DeploymentState;
     /** The status of the docker container (eg. up 12 hours, exited 5 minutes ago.) */
     status?: string;
+    /**
+     * Custom container / service name, if different
+     * than deployment name
+     */
+    custom_name: string;
     /** The image attached to the deployment. */
     image: string;
     /** Whether there is a newer image available at the same tag. */

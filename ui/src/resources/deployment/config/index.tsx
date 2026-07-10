@@ -299,6 +299,18 @@ export default function DeploymentConfig({
         ],
         advanced: [
           {
+            label: "Custom Name",
+            labelHidden: true,
+            fields: {
+              custom_name: {
+                placeholder: `Custom ${currServerId ? "service" : "container"} name`,
+                description: currSwarmId
+                  ? "Optionally set a custom service name, if different from the Deployment name."
+                  : "Optionally set a custom container name, if different from the Deployment name.",
+              },
+            },
+          },
+          {
             label: "Command",
             labelHidden: true,
             fields: {

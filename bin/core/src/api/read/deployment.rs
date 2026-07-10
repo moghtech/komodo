@@ -6,8 +6,8 @@ use komodo_client::{
   entities::{
     SwarmOrServer,
     deployment::{
-      Deployment, DeploymentActionState, DeploymentConfig,
-      DeploymentListItem, DeploymentSortBy, DeploymentState,
+      Deployment, DeploymentActionState, DeploymentListItem,
+      DeploymentSortBy, DeploymentState,
     },
     docker::{
       container::{Container, ContainerStats},
@@ -208,7 +208,7 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
       SwarmOrServer::Swarm(swarm) => swarm_request(
         &swarm.config.server_ids,
         periphery_client::api::swarm::GetSwarmServiceLog {
-          service: deployment.name,
+          service: deployment.custom_name().to_string(),
           tail,
           timestamps,
           no_task_ids: false,
@@ -221,7 +221,7 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
       SwarmOrServer::Server(server) => periphery_client(&server)
         .await?
         .request(api::container::GetContainerLog {
-          name: deployment.name,
+          name: deployment.custom_name().to_string(),
           tail: cmp::min(tail, MAX_LOG_LENGTH),
           timestamps,
         })
@@ -260,7 +260,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       SwarmOrServer::Swarm(swarm) => swarm_request(
         &swarm.config.server_ids,
         periphery_client::api::swarm::GetSwarmServiceLogSearch {
-          service: deployment.name,
+          service: deployment.custom_name().to_string(),
           terms,
           combinator,
           invert,
@@ -275,7 +275,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       SwarmOrServer::Server(server) => periphery_client(&server)
         .await?
         .request(api::container::GetContainerLogSearch {
-          name: deployment.name,
+          name: deployment.custom_name().to_string(),
           terms,
           combinator,
           invert,
@@ -328,7 +328,7 @@ impl Resolve<ReadArgs> for InspectDeploymentContainer {
     periphery_client(&server)
       .await?
       .request(InspectContainer {
-        name: deployment.name,
+        name: deployment.custom_name().to_string(),
       })
       .await
       .context("Failed to inspect container on server")
@@ -361,7 +361,7 @@ impl Resolve<ReadArgs> for InspectDeploymentSwarmService {
     swarm_request(
       &swarm.config.server_ids,
       periphery_client::api::swarm::InspectSwarmService {
-        service: deployment.name,
+        service: deployment.custom_name().to_string(),
       },
     )
     .await
@@ -375,25 +375,24 @@ impl Resolve<ReadArgs> for GetDeploymentStats {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> mogh_error::Result<ContainerStats> {
-    let Deployment {
-      name,
-      config: DeploymentConfig { server_id, .. },
-      ..
-    } = get_check_permissions::<Deployment>(
+    let deployment = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
       PermissionLevel::Read.into(),
     )
     .await?;
-    if server_id.is_empty() {
+    if deployment.config.server_id.is_empty() {
       return Err(
-        anyhow!("deployment has no server attached").into(),
+        anyhow!("Deployment has no Server attached").into(),
       );
     }
-    let server = resource::get::<Server>(&server_id).await?;
+    let server =
+      resource::get::<Server>(&deployment.config.server_id).await?;
     let res = periphery_client(&server)
       .await?
-      .request(api::container::GetContainerStats { name })
+      .request(api::container::GetContainerStats {
+        name: deployment.custom_name().to_string(),
+      })
       .await
       .context("failed to get stats from periphery")?;
     Ok(res)

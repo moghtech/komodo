@@ -30,7 +30,7 @@ use crate::{
   permission::{get_check_permissions, list_resources_for_user},
   resource,
   stack::compose_container_match_regex,
-  state::server_status_cache,
+  state::{db_client, server_status_cache},
 };
 
 impl Resolve<ReadArgs> for GetContainersSummary {
@@ -215,9 +215,22 @@ impl Resolve<ReadArgs> for GetResourceMatchingContainer {
       PermissionLevel::Read.into(),
     )
     .await?;
-    // first check deployments
+
+    // First check deployments with a matching custom container name
+    if let Ok(Some(deployment)) = db_client()
+      .deployments
+      .find_one(doc! { "config.custom_name": &self.container })
+      .await
+    {
+      return Ok(GetResourceMatchingContainerResponse {
+        resource: ResourceTarget::Deployment(deployment.id).into(),
+      });
+    }
+
+    // Then check deployments matching by name
     if let Ok(deployment) =
       resource::get::<Deployment>(&self.container).await
+      && deployment.custom_name() == self.container
     {
       return Ok(GetResourceMatchingContainerResponse {
         resource: ResourceTarget::Deployment(deployment.id).into(),

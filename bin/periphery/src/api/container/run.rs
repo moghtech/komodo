@@ -94,7 +94,7 @@ impl Resolve<crate::api::Args> for RunContainer {
     debug!("image pulled");
 
     let _ = (RemoveContainer {
-      name: deployment.name.clone(),
+      name: deployment.custom_name().to_string(),
       signal: stop_signal,
       time: stop_time,
     })
@@ -126,24 +126,21 @@ impl Resolve<crate::api::Args> for RunContainer {
 }
 
 fn docker_run_command(
-  Deployment {
-    name,
-    config:
-      DeploymentConfig {
-        volumes,
-        ports,
-        network,
-        command,
-        restart,
-        environment,
-        labels,
-        extra_args,
-        ..
-      },
-    ..
-  }: &Deployment,
+  deployment: &Deployment,
   image: &str,
 ) -> anyhow::Result<String> {
+  let name = deployment.custom_name();
+  let DeploymentConfig {
+    volumes,
+    ports,
+    network,
+    command,
+    restart,
+    environment,
+    labels,
+    extra_args,
+    ..
+  } = &deployment.config;
   let mut res =
     format!("docker run -d --name {name} --network {network}");
 
