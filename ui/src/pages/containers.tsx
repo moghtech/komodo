@@ -138,7 +138,7 @@ export default function Containers() {
             ),
             cell: ({ row }) =>
               (row.original.networks?.length ?? 0) > 0 ? (
-                <DividedChildren>
+                <DividedChildren wrap="nowrap" gap="xs">
                   {row.original.networks?.map((network) => (
                     <DockerResourceLink
                       key={network}
@@ -195,7 +195,7 @@ export default function Containers() {
               <SortableHeader column={column} title="Volumes" />
             ),
             cell: ({ row }) => (
-              <DividedChildren>
+              <DividedChildren wrap="nowrap" gap="xs">
                 {row.original.volumes?.map((volume) => (
                   <DockerResourceLink
                     key={volume}
