@@ -5863,6 +5863,11 @@ export interface BatchBuildRepo {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Checks for newer image than what is deployed. Response: [BatchCheckDeploymentForUpdateResponse] */
 export interface BatchCheckDeploymentForUpdate {
@@ -5879,6 +5884,11 @@ export interface BatchCheckDeploymentForUpdate {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
     /**
      * Normally resources with 'auto_update' will be
      * redeployed immediately if updates are found.
@@ -5907,6 +5917,11 @@ export interface BatchCheckStackForUpdate {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
     /**
      * Normally resources with 'auto_update' will be
      * redeployed immediately if updates are found.
@@ -5940,6 +5955,11 @@ export interface BatchCloneRepo {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /**
  * Delete all terminals on many or all Servers.
@@ -5964,6 +5984,11 @@ export interface BatchDeploy {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Deploys multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchDeployStack {
@@ -5980,6 +6005,11 @@ export interface BatchDeployStack {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Deploys multiple Stacks if changed in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchDeployStackIfChanged {
@@ -5996,6 +6026,11 @@ export interface BatchDeployStackIfChanged {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Destroys multiple Deployments in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchDestroyDeployment {
@@ -6012,6 +6047,11 @@ export interface BatchDestroyDeployment {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Destroys multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchDestroyStack {
@@ -6028,6 +6068,11 @@ export interface BatchDestroyStack {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 export interface BatchExecutionResponseItemErr {
     name: string;
@@ -6048,6 +6093,11 @@ export interface BatchPullRepo {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Pulls multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchPullStack {
@@ -6064,6 +6114,11 @@ export interface BatchPullStack {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Runs multiple Actions in parallel that match pattern. Response: [BatchExecutionResponse] */
 export interface BatchRunAction {
@@ -6080,6 +6135,11 @@ export interface BatchRunAction {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Runs multiple builds in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchRunBuild {
@@ -6096,6 +6156,11 @@ export interface BatchRunBuild {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Runs multiple Procedures in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchRunProcedure {
@@ -6112,6 +6177,11 @@ export interface BatchRunProcedure {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /**
  * Builds the target repo, using the attached builder. Response: [Update].

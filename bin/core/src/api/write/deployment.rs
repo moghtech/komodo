@@ -15,6 +15,7 @@ use komodo_client::{
     docker::container::RestartPolicyNameEnum,
     komodo_timestamp, optional_string,
     permission::PermissionLevel,
+    resource::ResourceQuery,
     server::{Server, ServerState},
     to_container_compatible_name,
     update::Update,
@@ -30,7 +31,9 @@ use crate::{
   api::execute::{self, ExecuteRequest, ExecutionResult},
   helpers::{
     periphery_client,
-    query::{get_deployment_state, get_swarm_or_server},
+    query::{
+      get_all_tags, get_deployment_state, get_swarm_or_server,
+    },
     registry_token,
     update::{add_update, make_update, poll_update_until_complete},
   },
@@ -660,6 +663,7 @@ impl Resolve<WriteArgs> for BatchCheckDeploymentForUpdate {
     fields(
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
       skip_auto_update = self.skip_auto_update,
       wait_for_auto_update = self.wait_for_auto_update,
     )
@@ -668,14 +672,23 @@ impl Resolve<WriteArgs> for BatchCheckDeploymentForUpdate {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> Result<Self::Response, Self::Error> {
+    let all_tags = if self.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+
     let deployments = list_full_for_user_using_pattern::<Deployment>(
       &self.pattern,
-      Default::default(),
+      ResourceQuery {
+        tags: self.tags,
+        ..Default::default()
+      },
       None,
       None,
       user,
       PermissionLevel::Execute.into(),
-      &[],
+      &all_tags,
     )
     .await?;
 

@@ -51,8 +51,12 @@ impl Resolve<ExecuteArgs> for BatchRunProcedure {
     ExecuteArgs { user, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchRunProcedure>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchRunProcedure>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }

@@ -187,7 +187,7 @@ pub enum ListPermits {
   Unrestricted,
   /// Visibility must be checked per-resource
   /// against the permissions table.
-  Fine(FineListPermits),
+  Fine(Box<FineListPermits>),
 }
 
 pub struct FineListPermits {
@@ -267,13 +267,16 @@ pub async fn load_list_permits<T: KomodoResource>(
     })
     .collect::<HashMap<_, _>>();
 
-  Ok(ListPermits::Fine(FineListPermits {
-    required,
-    base,
-    permission_by_resource_id,
-    additional_specific_cache: Default::default(),
-    user: user.clone(),
-  }))
+  Ok(ListPermits::Fine(
+    FineListPermits {
+      required,
+      base,
+      permission_by_resource_id,
+      additional_specific_cache: Default::default(),
+      user: user.clone(),
+    }
+    .into(),
+  ))
 }
 
 impl ListPermits {

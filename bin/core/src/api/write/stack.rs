@@ -19,6 +19,7 @@ use komodo_client::{
     all_logs_success, komodo_timestamp,
     permission::PermissionLevel,
     repo::Repo,
+    resource::ResourceQuery,
     stack::{Stack, StackInfo, StackServiceWithUpdate, StackState},
     update::Update,
     user::{auto_redeploy_user, stack_user, system_user},
@@ -36,7 +37,7 @@ use crate::{
   api::execute::{self, ExecuteRequest, ExecutionResult},
   config::core_config,
   helpers::{
-    query::get_swarm_or_server,
+    query::{get_all_tags, get_swarm_or_server},
     stack_git_token, swarm_or_server_request,
     update::{add_update, make_update, poll_update_until_complete},
   },
@@ -1040,6 +1041,7 @@ impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
     fields(
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
       skip_auto_update = self.skip_auto_update,
       wait_for_auto_update = self.wait_for_auto_update,
     )
@@ -1048,14 +1050,23 @@ impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> Result<Self::Response, Self::Error> {
+    let all_tags = if self.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+
     let stacks = list_full_for_user_using_pattern::<Stack>(
       &self.pattern,
-      Default::default(),
+      ResourceQuery {
+        tags: self.tags,
+        ..Default::default()
+      },
       None,
       None,
       user,
       PermissionLevel::Execute.into(),
-      &[],
+      &all_tags,
     )
     .await?;
 

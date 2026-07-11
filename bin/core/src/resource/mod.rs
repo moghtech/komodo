@@ -396,8 +396,11 @@ pub enum ListItemSort<I> {
   /// from the in memory caches (eg. state), or which diverge
   /// from the db field (eg. linked repo sources).
   /// Collects all matching items before applying pagination.
-  InMemory(Box<dyn Fn(&I, &I) -> std::cmp::Ordering + Send>),
+  InMemory(InMemoryListItemSortFn<I>),
 }
+
+pub type InMemoryListItemSortFn<I> =
+  Box<dyn Fn(&I, &I) -> std::cmp::Ordering + Send>;
 
 pub async fn list_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,

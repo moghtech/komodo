@@ -78,6 +78,7 @@ impl Resolve<ExecuteArgs> for BatchRunBuild {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -85,8 +86,12 @@ impl Resolve<ExecuteArgs> for BatchRunBuild {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchRunBuild>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchRunBuild>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }

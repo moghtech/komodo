@@ -58,6 +58,7 @@ impl Resolve<ExecuteArgs> for BatchCloneRepo {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -65,8 +66,12 @@ impl Resolve<ExecuteArgs> for BatchCloneRepo {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchCloneRepo>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchCloneRepo>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }
@@ -192,7 +197,8 @@ impl Resolve<ExecuteArgs> for BatchPullRepo {
     fields(
       task_id = task_id.to_string(),
       operator = user.id,
-      pattern = self.pattern
+      pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -200,8 +206,12 @@ impl Resolve<ExecuteArgs> for BatchPullRepo {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchPullRepo>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchPullRepo>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }
@@ -374,6 +384,7 @@ impl Resolve<ExecuteArgs> for BatchBuildRepo {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -381,8 +392,12 @@ impl Resolve<ExecuteArgs> for BatchBuildRepo {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchBuildRepo>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchBuildRepo>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }

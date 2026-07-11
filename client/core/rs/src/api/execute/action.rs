@@ -85,6 +85,11 @@ pub struct BatchRunAction {
   /// extra-action-1, extra-action-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }
 
 //
