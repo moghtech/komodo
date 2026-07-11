@@ -51,6 +51,104 @@ pub type GetStackResponse = Stack;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
+  path = "/ListStacks",
+  description = "List stacks matching optional query.",
+  request_body(content = ListStacks),
+  responses(
+    (status = 200, description = "The list of stacks", body = ListStacksResponse),
+  ),
+)]
+pub fn list_stacks() {}
+
+/// List stacks matching optional query. Response: [ListStacksResponse].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoReadRequest)]
+#[response(ListStacksResponse)]
+#[error(mogh_error::Error)]
+pub struct ListStacks {
+  /// optional structured query to filter stacks.
+  #[serde(default)]
+  pub query: StackQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// `limit: 100` is default.
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: StackSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
+}
+
+#[typeshare]
+pub type ListStacksResponse = Vec<StackListItem>;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListFullStacks",
+  description = "List stacks matching optional query.",
+  request_body(content = ListFullStacks),
+  responses(
+    (status = 200, description = "The list of stacks", body = ListFullStacksResponse),
+  ),
+)]
+pub fn list_full_stacks() {}
+
+/// List stacks matching optional query. Response: [ListFullStacksResponse].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoReadRequest)]
+#[response(ListFullStacksResponse)]
+#[error(mogh_error::Error)]
+pub struct ListFullStacks {
+  /// optional structured query to filter stacks.
+  #[serde(default)]
+  pub query: StackQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// `limit: 100` is default.
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
+}
+
+#[typeshare]
+pub type ListFullStacksResponse = Vec<Stack>;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
   path = "/ListStackServices",
   description = "Lists a specific stacks services (the containers).",
   request_body(content = ListStackServices),
@@ -389,104 +487,6 @@ pub struct ListCommonStackBuildExtraArgs {
 
 #[typeshare]
 pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
-
-//
-
-#[cfg(feature = "utoipa")]
-#[utoipa::path(
-  post,
-  path = "/ListStacks",
-  description = "List stacks matching optional query.",
-  request_body(content = ListStacks),
-  responses(
-    (status = 200, description = "The list of stacks", body = ListStacksResponse),
-  ),
-)]
-pub fn list_stacks() {}
-
-/// List stacks matching optional query. Response: [ListStacksResponse].
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[empty_traits(KomodoReadRequest)]
-#[response(ListStacksResponse)]
-#[error(mogh_error::Error)]
-pub struct ListStacks {
-  /// optional structured query to filter stacks.
-  #[serde(default)]
-  pub query: StackQuery,
-
-  /// Retrieve more results by incrementing the page.
-  /// `page: 0` is default.
-  #[serde(default)]
-  pub page: U64,
-
-  /// Set the limit for number of resources per-page.
-  /// `limit: 100` is default.
-  ///
-  /// Passing `limit: 0` returns all results (unlimited).
-  ///
-  /// Note: the page logic relies on this being consistent
-  /// across queries for more pages.
-  pub limit: Option<U64>,
-
-  /// Sort the results by this field.
-  /// Defaults to Name. Non-Name sorts are applied in memory
-  /// after querying all matching resources.
-  #[serde(default)]
-  pub sort_by: StackSortBy,
-
-  /// Reverse the sort direction.
-  #[serde(default)]
-  pub sort_desc: bool,
-}
-
-#[typeshare]
-pub type ListStacksResponse = Vec<StackListItem>;
-
-//
-
-#[cfg(feature = "utoipa")]
-#[utoipa::path(
-  post,
-  path = "/ListFullStacks",
-  description = "List stacks matching optional query.",
-  request_body(content = ListFullStacks),
-  responses(
-    (status = 200, description = "The list of stacks", body = ListFullStacksResponse),
-  ),
-)]
-pub fn list_full_stacks() {}
-
-/// List stacks matching optional query. Response: [ListFullStacksResponse].
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[empty_traits(KomodoReadRequest)]
-#[response(ListFullStacksResponse)]
-#[error(mogh_error::Error)]
-pub struct ListFullStacks {
-  /// optional structured query to filter stacks.
-  #[serde(default)]
-  pub query: StackQuery,
-
-  /// Retrieve more results by incrementing the page.
-  /// `page: 0` is default.
-  #[serde(default)]
-  pub page: U64,
-
-  /// Set the limit for number of resources per-page.
-  /// `limit: 100` is default.
-  ///
-  /// Passing `limit: 0` returns all results (unlimited).
-  ///
-  /// Note: the page logic relies on this being consistent
-  /// across queries for more pages.
-  pub limit: Option<U64>,
-}
-
-#[typeshare]
-pub type ListFullStacksResponse = Vec<Stack>;
 
 //
 

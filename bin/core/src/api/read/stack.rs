@@ -53,6 +53,113 @@ impl Resolve<ReadArgs> for GetStack {
   }
 }
 
+impl Resolve<ReadArgs> for ListStacks {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Vec<StackListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+    let only_update_available = self.query.specific.update_available;
+    let states = self.query.specific.states.clone();
+    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let sort_by: resource::ListItemSort<StackListItem> =
+      match self.sort_by {
+        StackSortBy::Name => resource::ListItemSort::Name,
+        StackSortBy::Source => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.repo.cmp(&b.info.repo)
+          }))
+        }
+        StackSortBy::Host => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            let host_a = if a.info.swarm_id.is_empty() {
+              &a.info.server_name
+            } else {
+              &a.info.swarm_name
+            };
+            let host_b = if b.info.swarm_id.is_empty() {
+              &b.info.server_name
+            } else {
+              &b.info.swarm_name
+            };
+            host_a.cmp(host_b)
+          }))
+        }
+        StackSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info.state.cmp(&b.info.state)
+          }))
+        }
+      };
+    let stacks = resource::list_items_for_user::<Stack>(
+      self.query,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
+      |stack| {
+        (!only_update_available
+          || stack
+            .info
+            .services
+            .iter()
+            .any(|service| service.update_available))
+          && (states.is_empty() || states.contains(&stack.info.state))
+      },
+    )
+    .await?;
+    Ok(stacks)
+  }
+}
+
+impl Resolve<ReadArgs> for ListFullStacks {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListFullStacksResponse> {
+    let all_tags = if self.query.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+    let states = self.query.specific.states.clone();
+    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    Ok(
+      resource::list_full_for_user_filtered::<Stack, _>(
+        self.query,
+        limit,
+        self.page,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
+        |stack| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states
+                .contains(&get_cached_stack_state(&stack.id).await)
+            {
+              Some(stack)
+            } else {
+              None
+            }
+          }
+        },
+      )
+      .await?,
+    )
+  }
+}
+
 impl Resolve<ReadArgs> for ListStackServices {
   async fn resolve(
     self,
@@ -470,113 +577,6 @@ impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
     let mut res = res.into_iter().collect::<Vec<_>>();
     res.sort();
     Ok(res)
-  }
-}
-
-impl Resolve<ReadArgs> for ListStacks {
-  async fn resolve(
-    self,
-    ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<Vec<StackListItem>> {
-    let all_tags = if self.query.tags.is_empty() {
-      vec![]
-    } else {
-      get_all_tags(None).await?
-    };
-    let only_update_available = self.query.specific.update_available;
-    let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-    let sort_by: resource::ListItemSort<StackListItem> =
-      match self.sort_by {
-        StackSortBy::Name => resource::ListItemSort::Name,
-        StackSortBy::Source => {
-          resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.repo.cmp(&b.info.repo)
-          }))
-        }
-        StackSortBy::Host => {
-          resource::ListItemSort::InMemory(Box::new(|a, b| {
-            let host_a = if a.info.swarm_id.is_empty() {
-              &a.info.server_name
-            } else {
-              &a.info.swarm_name
-            };
-            let host_b = if b.info.swarm_id.is_empty() {
-              &b.info.server_name
-            } else {
-              &b.info.swarm_name
-            };
-            host_a.cmp(host_b)
-          }))
-        }
-        StackSortBy::State => {
-          resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.state.cmp(&b.info.state)
-          }))
-        }
-      };
-    let stacks = resource::list_items_for_user::<Stack>(
-      self.query,
-      resource::ListItemsQueryOptions {
-        limit,
-        page: self.page,
-        sort_desc: self.sort_desc,
-        sort_by,
-      },
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-      |stack| {
-        (!only_update_available
-          || stack
-            .info
-            .services
-            .iter()
-            .any(|service| service.update_available))
-          && (states.is_empty() || states.contains(&stack.info.state))
-      },
-    )
-    .await?;
-    Ok(stacks)
-  }
-}
-
-impl Resolve<ReadArgs> for ListFullStacks {
-  async fn resolve(
-    self,
-    ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<ListFullStacksResponse> {
-    let all_tags = if self.query.tags.is_empty() {
-      vec![]
-    } else {
-      get_all_tags(None).await?
-    };
-    let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-    Ok(
-      resource::list_full_for_user_filtered::<Stack, _>(
-        self.query,
-        limit,
-        self.page,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-        |stack| {
-          let states = states.clone();
-          async move {
-            if states.is_empty()
-              || states
-                .contains(&get_cached_stack_state(&stack.id).await)
-            {
-              Some(stack)
-            } else {
-              None
-            }
-          }
-        },
-      )
-      .await?,
-    )
   }
 }
 
