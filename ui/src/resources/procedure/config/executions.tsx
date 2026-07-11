@@ -95,15 +95,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match procedures by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -144,15 +146,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match actions by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -181,15 +185,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match builds by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -231,15 +237,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match deployments by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -333,15 +341,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match deployments by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -391,15 +401,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match stacks by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -427,15 +439,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match stacks by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -484,15 +498,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match stacks by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -701,15 +717,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match stacks by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -1001,15 +1019,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match repos by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -1037,15 +1057,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match repos by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
@@ -1073,15 +1095,17 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             "# Match repos by name, id, wildcard, or \\regex\\.\n"
           }
           onUpdate={(pattern) =>
-            setParams((params) => ({ ...params, pattern }))
+            setParams({ ...params, pattern })
           }
           disabled={disabled}
           useMonaco
           monacoLanguage="string_list"
         />
         <TagMultiSelector
+          title="Match Tags"
           value={params.tags ?? []}
-          onChange={(tags) => setParams((params) => ({ ...params, tags }))}
+          onChange={(tags) => setParams({ ...params, tags })}
+          disabled={disabled}
           useName
         />
       </Group>
