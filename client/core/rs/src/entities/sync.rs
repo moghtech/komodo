@@ -36,6 +36,9 @@ pub struct ResourceSyncListItemInfo {
   pub resource_path: Vec<String>,
   /// Linked repo, if one is attached.
   pub linked_repo: String,
+  /// The name of the linked repo, if one is attached.
+  #[serde(default)]
+  pub linked_repo_name: String,
   /// The git provider domain.
   pub git_provider: String,
   /// The Github repo used as the source of the sync resources
