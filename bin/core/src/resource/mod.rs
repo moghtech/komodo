@@ -279,6 +279,13 @@ pub async fn list_all_resources<T: KomodoResource>(
     })
 }
 
+pub struct ListItemsQueryOptions<T: KomodoResource> {
+  pub limit: u64,
+  pub page: u64,
+  pub sort_desc: bool,
+  pub sort_by: ListItemSort<T::ListItem>,
+}
+
 /// List item pagination for the `List<Resource>` apis, driving the
 /// mongo cursor directly instead of collecting the full resource
 /// list in memory. Each resource pulled from the cursor is checked
@@ -290,10 +297,12 @@ pub async fn list_all_resources<T: KomodoResource>(
 /// Stops pulling from the cursor as soon as the page is full.
 pub async fn list_items_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,
-  limit: u64,
-  page: u64,
-  sort_desc: bool,
-  sort_by: ListItemSort<T::ListItem>,
+  ListItemsQueryOptions {
+    limit,
+    page,
+    sort_desc,
+    sort_by,
+  }: ListItemsQueryOptions<T>,
   user: &User,
   permission: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
@@ -418,26 +427,6 @@ pub async fn list_for_user<T: KomodoResource>(
   )
   .await
 }
-
-// // pub async fn list_for_user_using_pattern<T: KomodoResource>(
-//   pattern: &str,
-//   query: ResourceQuery<T::QuerySpecifics>,
-//   user: &User,
-//   permissions: PermissionLevelAndSpecifics,
-//   all_tags: &[Tag],
-// ) -> anyhow::Result<Vec<T::ListItem>> {
-//   let list = list_full_for_user_using_pattern::<T>(
-//     pattern,
-//     query,
-//     user,
-//     permissions,
-//     all_tags,
-//   )
-//   .await?
-//   .into_iter()
-//   .map(|resource| T::to_list_item(resource));
-//   Ok(join_all(list).await)
-// }
 
 pub async fn list_for_user_using_document<T: KomodoResource>(
   filters: Document,

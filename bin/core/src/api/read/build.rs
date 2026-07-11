@@ -73,10 +73,12 @@ impl Resolve<ReadArgs> for ListBuilds {
       };
     let builds = resource::list_items_for_user::<Build>(
       self.query,
-      limit,
-      self.page,
-      self.sort_desc,
-      sort_by,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
       user,
       PermissionLevel::Read.into(),
       &all_tags,

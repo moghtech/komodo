@@ -64,10 +64,12 @@ impl Resolve<ReadArgs> for ListActions {
       };
     let actions = resource::list_items_for_user::<Action>(
       self.query,
-      limit,
-      self.page,
-      self.sort_desc,
-      sort_by,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
       user,
       PermissionLevel::Read.into(),
       &all_tags,

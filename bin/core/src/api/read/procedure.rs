@@ -63,10 +63,12 @@ impl Resolve<ReadArgs> for ListProcedures {
       };
     let procedures = resource::list_items_for_user::<Procedure>(
       self.query,
-      limit,
-      self.page,
-      self.sort_desc,
-      sort_by,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
       user,
       PermissionLevel::Read.into(),
       &all_tags,

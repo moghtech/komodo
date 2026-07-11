@@ -61,10 +61,12 @@ impl Resolve<ReadArgs> for ListBuilders {
     Ok(
       resource::list_items_for_user::<Builder>(
         self.query,
-        limit,
-        self.page,
-        self.sort_desc,
-        sort_by,
+        resource::ListItemsQueryOptions {
+          limit,
+          page: self.page,
+          sort_desc: self.sort_desc,
+          sort_by,
+        },
         user,
         PermissionLevel::Read.into(),
         &all_tags,

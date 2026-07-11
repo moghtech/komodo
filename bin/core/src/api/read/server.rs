@@ -131,10 +131,12 @@ impl Resolve<ReadArgs> for ListServers {
       };
     let servers = resource::list_items_for_user::<Server>(
       self.query,
-      limit,
-      self.page,
-      self.sort_desc,
-      sort_by,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
       user,
       PermissionLevel::Read.into(),
       &all_tags,

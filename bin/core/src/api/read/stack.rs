@@ -517,10 +517,12 @@ impl Resolve<ReadArgs> for ListStacks {
       };
     let stacks = resource::list_items_for_user::<Stack>(
       self.query,
-      limit,
-      self.page,
-      self.sort_desc,
-      sort_by,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
       user,
       PermissionLevel::Read.into(),
       &all_tags,
