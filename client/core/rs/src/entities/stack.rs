@@ -194,6 +194,12 @@ pub struct StackListItemInfo {
   pub latest_hash: Option<String>,
 }
 
+impl StackListItemInfo {
+  pub fn update_available(&self) -> bool {
+    self.services.iter().any(|s| s.update_available)
+  }
+}
+
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]

@@ -92,7 +92,10 @@ impl Resolve<ReadArgs> for ListDeployments {
         }
         DeploymentSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.state.cmp(&b.info.state)
+            // Use ! with update available to order 'true' first
+            (!a.info.update_available)
+              .cmp(&!b.info.update_available)
+              .then_with(|| a.info.state.cmp(&b.info.state))
           }))
         }
       };
