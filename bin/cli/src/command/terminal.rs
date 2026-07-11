@@ -134,6 +134,8 @@ async fn get_server(
       state: Default::default(),
       limit: Some(0),
       page: 0,
+      sort_by: Default::default(),
+      sort_desc: false,
     })
     .await?;
 

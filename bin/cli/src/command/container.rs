@@ -14,7 +14,9 @@ use komodo_client::{
     },
     docker::{
       self,
-      container::{ContainerListItem, ContainerStateStatusEnum},
+      container::{
+        ContainerListItem, ContainerSortBy, ContainerStateStatusEnum,
+      },
     },
   },
 };
@@ -67,6 +69,8 @@ async fn list_containers(
       limit: Some(100),
       // Page is more naturally given starting as 1, 2, 3.
       page: if *page == 0 { 0 } else { *page - 1 },
+      sort_by: ContainerSortBy::Server,
+      sort_desc: false,
     }),
   )?;
 
@@ -154,6 +158,8 @@ pub async fn inspect_container(
       state: Default::default(),
       limit: Some(300),
       page: 0,
+      sort_by: ContainerSortBy::Server,
+      sort_desc: false,
     }),
   )?;
 
