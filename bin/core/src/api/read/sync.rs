@@ -50,17 +50,26 @@ impl Resolve<ReadArgs> for ListResourceSyncs {
         ResourceSyncSortBy::Name => resource::ListItemSort::Name,
         ResourceSyncSortBy::Source => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.repo.cmp(&b.info.repo)
+            a.info
+              .repo
+              .cmp(&b.info.repo)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
         ResourceSyncSortBy::Branch => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.branch.cmp(&b.info.branch)
+            a.info
+              .branch
+              .cmp(&b.info.branch)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
         ResourceSyncSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.state.cmp(&b.info.state)
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
       };

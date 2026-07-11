@@ -52,12 +52,18 @@ impl Resolve<ReadArgs> for ListProcedures {
         ProcedureSortBy::Name => resource::ListItemSort::Name,
         ProcedureSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.state.cmp(&b.info.state)
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
         ProcedureSortBy::NextRun => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.next_scheduled_run.cmp(&b.info.next_scheduled_run)
+            a.info
+              .next_scheduled_run
+              .cmp(&b.info.next_scheduled_run)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
       };

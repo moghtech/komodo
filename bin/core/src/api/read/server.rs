@@ -120,12 +120,18 @@ impl Resolve<ReadArgs> for ListServers {
         }
         ServerSortBy::Version => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.version.cmp(&b.info.version)
+            a.info
+              .version
+              .cmp(&b.info.version)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
         ServerSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.state.cmp(&b.info.state)
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
       };

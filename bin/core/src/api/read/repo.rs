@@ -58,7 +58,10 @@ impl Resolve<ReadArgs> for ListRepos {
         }
         RepoSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.state.cmp(&b.info.state)
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
       };

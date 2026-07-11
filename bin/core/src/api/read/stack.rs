@@ -71,7 +71,10 @@ impl Resolve<ReadArgs> for ListStacks {
         StackSortBy::Name => resource::ListItemSort::Name,
         StackSortBy::Source => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.repo.cmp(&b.info.repo)
+            a.info
+              .repo
+              .cmp(&b.info.repo)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
         StackSortBy::Host => {
@@ -86,15 +89,20 @@ impl Resolve<ReadArgs> for ListStacks {
             } else {
               &b.info.swarm_name
             };
-            host_a.cmp(host_b)
+            host_a.cmp(host_b).then_with(|| a.name.cmp(&b.name))
           }))
         }
         StackSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            // Use ! with update available to order 'true' first
-            (!a.info.update_available())
-              .cmp(&!b.info.update_available())
-              .then_with(|| a.info.state.cmp(&b.info.state))
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| {
+                // Use ! with update available to order 'true' first
+                (!a.info.update_available())
+                  .cmp(&!b.info.update_available())
+              })
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
       };

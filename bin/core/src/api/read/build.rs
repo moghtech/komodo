@@ -62,12 +62,18 @@ impl Resolve<ReadArgs> for ListBuilds {
         BuildSortBy::Name => resource::ListItemSort::Name,
         BuildSortBy::Source => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.repo.cmp(&b.info.repo)
+            a.info
+              .repo
+              .cmp(&b.info.repo)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
         BuildSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.state.cmp(&b.info.state)
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
       };

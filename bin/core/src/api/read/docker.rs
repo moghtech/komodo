@@ -137,10 +137,8 @@ impl Resolve<ReadArgs> for ListAllContainers {
     // The containers all come from the in memory status cache,
     // so all matching containers are collected and sorted
     // before applying pagination.
-    let compare =
-      |a: &ContainerListItem, b: &ContainerListItem| match self
-        .sort_by
-      {
+    let compare = |a: &ContainerListItem, b: &ContainerListItem| {
+      match self.sort_by {
         ContainerSortBy::Name => a.name.cmp(&b.name),
         ContainerSortBy::Server => a.server_name.cmp(&b.server_name),
         ContainerSortBy::State => a.state.cmp(&b.state),
@@ -156,15 +154,16 @@ impl Resolve<ReadArgs> for ListAllContainers {
         ContainerSortBy::Volumes => {
           a.volumes.first().cmp(&b.volumes.first())
         }
-      };
+      }
+      // Fall back to name based sorting for equal sort keys.
+      // Inside `compare`, so descending sorts are fully descending,
+      // matching the List<Resource> apis.
+      .then_with(|| a.name.cmp(&b.name))
+    };
     if self.sort_desc {
-      containers.sort_by(|a, b| {
-        compare(b, a).then_with(|| a.name.cmp(&b.name))
-      });
+      containers.sort_by(|a, b| compare(b, a));
     } else {
-      containers.sort_by(|a, b| {
-        compare(a, b).then_with(|| a.name.cmp(&b.name))
-      });
+      containers.sort_by(|a, b| compare(a, b));
     }
 
     let skip = limit.saturating_mul(self.page) as usize;

@@ -54,7 +54,10 @@ impl Resolve<ReadArgs> for ListBuilders {
         }
         BuilderSortBy::InstanceType => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.instance_type.cmp(&b.info.instance_type)
+            a.info
+              .instance_type
+              .cmp(&b.info.instance_type)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
       };

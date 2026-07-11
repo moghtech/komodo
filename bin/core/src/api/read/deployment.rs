@@ -72,7 +72,10 @@ impl Resolve<ReadArgs> for ListDeployments {
         DeploymentSortBy::Name => resource::ListItemSort::Name,
         DeploymentSortBy::Image => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.image.cmp(&b.info.image)
+            a.info
+              .image
+              .cmp(&b.info.image)
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
         DeploymentSortBy::Host => {
@@ -87,15 +90,20 @@ impl Resolve<ReadArgs> for ListDeployments {
             } else {
               &b.info.swarm_name
             };
-            host_a.cmp(host_b)
+            host_a.cmp(host_b).then_with(|| a.name.cmp(&b.name))
           }))
         }
         DeploymentSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            // Use ! with update available to order 'true' first
-            (!a.info.update_available)
-              .cmp(&!b.info.update_available)
-              .then_with(|| a.info.state.cmp(&b.info.state))
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| {
+                // Use ! with update available to order 'true' first
+                (!a.info.update_available)
+                  .cmp(&!b.info.update_available)
+              })
+              .then_with(|| a.name.cmp(&b.name))
           }))
         }
       };
