@@ -6,7 +6,8 @@ use crate::entities::{
   ResourceTarget, SearchCombinator, U64,
   docker::{
     container::{
-      Container, ContainerListItem, ContainerStateStatusEnum,
+      Container, ContainerListItem, ContainerSortBy,
+      ContainerStateStatusEnum,
     },
     image::{Image, ImageHistoryResponseItem, ImageListItem},
     network::{Network, NetworkListItem},
@@ -116,6 +117,15 @@ pub struct ListAllContainers {
   /// Note: the page logic relies on this being consistent
   /// across queries for more pages.
   pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name.
+  #[serde(default)]
+  pub sort_by: ContainerSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]

@@ -140,14 +140,14 @@ export interface ResourceListItem<Info> {
     info: Info;
 }
 export declare enum ActionState {
-    /** Unknown case */
-    Unknown = "Unknown",
+    /** Currently running */
+    Running = "Running",
     /** Last clone / pull successful (or never cloned) */
     Ok = "Ok",
     /** Last clone / pull failed */
     Failed = "Failed",
-    /** Currently running */
-    Running = "Running"
+    /** Unknown case */
+    Unknown = "Unknown"
 }
 export interface ActionListItemInfo {
     /** Whether last action run successful */
@@ -3158,11 +3158,11 @@ export type GetVariableResponse = Variable;
 export declare enum ContainerStateStatusEnum {
     Running = "running",
     Created = "created",
-    Paused = "paused",
     Restarting = "restarting",
-    Exited = "exited",
     Stopping = "stopping",
     Removing = "removing",
+    Paused = "paused",
+    Exited = "exited",
     Dead = "dead",
     Empty = ""
 }
@@ -5222,18 +5222,18 @@ export interface ProcedureListItemInfo {
 export type ProcedureListItem = ResourceListItem<ProcedureListItemInfo>;
 export type ListProceduresResponse = ProcedureListItem[];
 export declare enum RepoState {
-    /** Unknown case */
-    Unknown = "Unknown",
-    /** Last clone / pull successful (or never cloned) */
-    Ok = "Ok",
-    /** Last clone / pull failed */
-    Failed = "Failed",
     /** Currently cloning */
     Cloning = "Cloning",
     /** Currently pulling */
     Pulling = "Pulling",
     /** Currently building */
-    Building = "Building"
+    Building = "Building",
+    /** Last clone / pull successful (or never cloned) */
+    Ok = "Ok",
+    /** Last clone / pull failed */
+    Failed = "Failed",
+    /** Unknown case */
+    Unknown = "Unknown"
 }
 export interface RepoListItemInfo {
     /** The server that repo sits on. */
@@ -8520,6 +8520,22 @@ export interface ListAlertsResponse {
      */
     next_page?: I64;
 }
+export declare enum ContainerSortBy {
+    /** Sort by container name. Default. */
+    Name = "Name",
+    /** Sort by host Server name. */
+    Server = "Server",
+    /** Sort by container state. */
+    State = "State",
+    /** Sort by image. */
+    Image = "Image",
+    /** Sort by first network. */
+    Networks = "Networks",
+    /** Sort by first port. */
+    Ports = "Ports",
+    /** Sort by first volume. */
+    Volumes = "Volumes"
+}
 /**
  * List all containers on the target servers.
  * Response: [ListAllContainersResponse].
@@ -8553,6 +8569,13 @@ export interface ListAllContainers {
      * across queries for more pages.
      */
     limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name.
+     */
+    sort_by?: ContainerSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * List all stack services part of the target stacks.

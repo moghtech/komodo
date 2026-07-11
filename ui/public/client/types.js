@@ -27,14 +27,14 @@ export var FileFormat;
 })(FileFormat || (FileFormat = {}));
 export var ActionState;
 (function (ActionState) {
-    /** Unknown case */
-    ActionState["Unknown"] = "Unknown";
+    /** Currently running */
+    ActionState["Running"] = "Running";
     /** Last clone / pull successful (or never cloned) */
     ActionState["Ok"] = "Ok";
     /** Last clone / pull failed */
     ActionState["Failed"] = "Failed";
-    /** Currently running */
-    ActionState["Running"] = "Running";
+    /** Unknown case */
+    ActionState["Unknown"] = "Unknown";
 })(ActionState || (ActionState = {}));
 export var TagQueryBehavior;
 (function (TagQueryBehavior) {
@@ -419,11 +419,11 @@ export var ContainerStateStatusEnum;
 (function (ContainerStateStatusEnum) {
     ContainerStateStatusEnum["Running"] = "running";
     ContainerStateStatusEnum["Created"] = "created";
-    ContainerStateStatusEnum["Paused"] = "paused";
     ContainerStateStatusEnum["Restarting"] = "restarting";
-    ContainerStateStatusEnum["Exited"] = "exited";
     ContainerStateStatusEnum["Stopping"] = "stopping";
     ContainerStateStatusEnum["Removing"] = "removing";
+    ContainerStateStatusEnum["Paused"] = "paused";
+    ContainerStateStatusEnum["Exited"] = "exited";
     ContainerStateStatusEnum["Dead"] = "dead";
     ContainerStateStatusEnum["Empty"] = "";
 })(ContainerStateStatusEnum || (ContainerStateStatusEnum = {}));
@@ -737,18 +737,18 @@ export var ProcedureState;
 })(ProcedureState || (ProcedureState = {}));
 export var RepoState;
 (function (RepoState) {
-    /** Unknown case */
-    RepoState["Unknown"] = "Unknown";
-    /** Last clone / pull successful (or never cloned) */
-    RepoState["Ok"] = "Ok";
-    /** Last clone / pull failed */
-    RepoState["Failed"] = "Failed";
     /** Currently cloning */
     RepoState["Cloning"] = "Cloning";
     /** Currently pulling */
     RepoState["Pulling"] = "Pulling";
     /** Currently building */
     RepoState["Building"] = "Building";
+    /** Last clone / pull successful (or never cloned) */
+    RepoState["Ok"] = "Ok";
+    /** Last clone / pull failed */
+    RepoState["Failed"] = "Failed";
+    /** Unknown case */
+    RepoState["Unknown"] = "Unknown";
 })(RepoState || (RepoState = {}));
 export var ResourceSyncState;
 (function (ResourceSyncState) {
@@ -837,6 +837,23 @@ export var AlerterSortBy;
     /** Sort by enabled. */
     AlerterSortBy["Enabled"] = "Enabled";
 })(AlerterSortBy || (AlerterSortBy = {}));
+export var ContainerSortBy;
+(function (ContainerSortBy) {
+    /** Sort by container name. Default. */
+    ContainerSortBy["Name"] = "Name";
+    /** Sort by host Server name. */
+    ContainerSortBy["Server"] = "Server";
+    /** Sort by container state. */
+    ContainerSortBy["State"] = "State";
+    /** Sort by image. */
+    ContainerSortBy["Image"] = "Image";
+    /** Sort by first network. */
+    ContainerSortBy["Networks"] = "Networks";
+    /** Sort by first port. */
+    ContainerSortBy["Ports"] = "Ports";
+    /** Sort by first volume. */
+    ContainerSortBy["Volumes"] = "Volumes";
+})(ContainerSortBy || (ContainerSortBy = {}));
 export var BuilderSortBy;
 (function (BuilderSortBy) {
     /** Sort by name. Default. */

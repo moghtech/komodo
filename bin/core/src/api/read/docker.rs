@@ -9,7 +9,8 @@ use komodo_client::{
     deployment::Deployment,
     docker::{
       container::{
-        Container, ContainerListItem, ContainerStateStatusEnum,
+        Container, ContainerListItem, ContainerSortBy,
+        ContainerStateStatusEnum,
       },
       image::{Image, ImageHistoryResponseItem},
       network::Network,
@@ -99,11 +100,7 @@ impl Resolve<ReadArgs> for ListAllContainers {
     .await?;
 
     let mut containers = Vec::<ContainerListItem>::new();
-    let mut skipped = 0;
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-    let limit_usize = limit as usize;
-    // Eg. page 1 skips until after 100 containers, page 2 after 200.
-    let skip = limit.saturating_mul(self.page);
     // Match terms case insensitively.
     let terms = self
       .terms
@@ -118,34 +115,65 @@ impl Resolve<ReadArgs> for ListAllContainers {
       let Some(docker) = &cache.docker else {
         continue;
       };
-      let more = docker
-        .containers
-        .iter()
-        .filter(|container| {
-          // Apply state filter if defined.
-          (self.state.is_empty() || self.state.contains(&container.state)) &&
-          // Apply terms filter if defined
-          (terms.is_empty()
-            // Match when all terms contained within a name.
-            || {
-              let name = container.name.to_lowercase();
-              terms.iter().all(|term| name.contains(term))
-            })
-        });
-      for container in more {
-        if skipped < skip {
-          skipped += 1;
-        } else {
-          // push and maybe early return
-          containers.push(container.clone());
-          if limit > 0 && containers.len() >= limit_usize {
-            return Ok(containers);
-          }
-        }
-      }
+      containers.extend(
+        docker
+          .containers
+          .iter()
+          .filter(|container| {
+            // Apply state filter if defined.
+            (self.state.is_empty() || self.state.contains(&container.state)) &&
+            // Apply terms filter if defined
+            (terms.is_empty()
+              // Match when all terms contained within a name.
+              || {
+                let name = container.name.to_lowercase();
+                terms.iter().all(|term| name.contains(term))
+              })
+          })
+          .cloned(),
+      );
     }
 
-    Ok(containers)
+    // The containers all come from the in memory status cache,
+    // so all matching containers are collected and sorted
+    // before applying pagination.
+    let compare =
+      |a: &ContainerListItem, b: &ContainerListItem| match self
+        .sort_by
+      {
+        ContainerSortBy::Name => a.name.cmp(&b.name),
+        ContainerSortBy::Server => a.server_name.cmp(&b.server_name),
+        ContainerSortBy::State => a.state.cmp(&b.state),
+        ContainerSortBy::Image => a.image.cmp(&b.image),
+        ContainerSortBy::Networks => {
+          a.networks.first().cmp(&b.networks.first())
+        }
+        ContainerSortBy::Ports => a
+          .ports
+          .first()
+          .map(|port| port.private_port)
+          .cmp(&b.ports.first().map(|port| port.private_port)),
+        ContainerSortBy::Volumes => {
+          a.volumes.first().cmp(&b.volumes.first())
+        }
+      };
+    if self.sort_desc {
+      containers.sort_by(|a, b| {
+        compare(b, a).then_with(|| a.name.cmp(&b.name))
+      });
+    } else {
+      containers.sort_by(|a, b| {
+        compare(a, b).then_with(|| a.name.cmp(&b.name))
+      });
+    }
+
+    let skip = limit.saturating_mul(self.page) as usize;
+    let take = if limit == 0 {
+      usize::MAX
+    } else {
+      limit as usize
+    };
+    Ok(containers.into_iter().skip(skip).take(take).collect())
   }
 }
 

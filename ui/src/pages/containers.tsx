@@ -2,6 +2,7 @@ import ContainerPorts from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
 import { containerStateIntention } from "@/lib/color";
 import { useRead, useTagsFilter } from "@/lib/hooks";
+import { Types } from "komodo_client";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader, useDebounce } from "mogh_ui";
 import { Page } from "mogh_ui";
@@ -16,6 +17,8 @@ import ResourceMultiSelector from "@/resources/multi-selector";
 import ListPagination, {
   RESOURCE_PAGE_SIZE,
 } from "@/components/list-pagination";
+
+const CONTAINER_SORT_KEYS = Object.values(Types.ContainerSortBy);
 
 export default function Containers() {
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
@@ -35,11 +38,17 @@ export default function Containers() {
 
   const tags = useTagsFilter();
 
-  // Set to page 0 whenever any filter changes,
+  // Server side sort, passed up from the table.
+  const [sort, setSort] = useState<{
+    sort_by?: Types.ContainerSortBy;
+    sort_desc?: boolean;
+  }>({});
+
+  // Set to page 0 whenever any filter or the sort changes,
   // otherwise the query can point past the last page and come back empty.
   useEffect(() => {
     setPage(0);
-  }, [selectedServers, tags]);
+  }, [selectedServers, tags, sort.sort_by, sort.sort_desc]);
 
   const _containers =
     useRead(
@@ -50,6 +59,8 @@ export default function Containers() {
         tags,
         page,
         limit: RESOURCE_PAGE_SIZE,
+        sort_by: sort.sort_by,
+        sort_desc: sort.sort_desc,
       },
       { refetchInterval: 15_000 },
     ).data ?? [];
@@ -62,8 +73,23 @@ export default function Containers() {
       <DataTable
         data={containers}
         tableKey="containers-page-v1"
+        manualSorting
+        onSortingStateChange={(sorting) => {
+          const sort = sorting.find((s) =>
+            CONTAINER_SORT_KEYS.includes(s.id as Types.ContainerSortBy),
+          );
+          setSort(
+            sort
+              ? {
+                  sort_by: sort.id as Types.ContainerSortBy,
+                  sort_desc: sort.desc,
+                }
+              : {},
+          );
+        }}
         columns={[
           {
+            id: "Name",
             accessorKey: "name",
             size: 260,
             header: ({ column }) => (
@@ -78,6 +104,7 @@ export default function Containers() {
             ),
           },
           {
+            id: "Server",
             accessorKey: "server_id",
             size: 200,
             sortingFn: (a, b) => {
@@ -100,6 +127,7 @@ export default function Containers() {
             ),
           },
           {
+            id: "State",
             accessorKey: "state",
             size: 160,
             header: ({ column }) => (
@@ -116,6 +144,7 @@ export default function Containers() {
             },
           },
           {
+            id: "Image",
             accessorKey: "image",
             size: 300,
             header: ({ column }) => (
@@ -131,6 +160,7 @@ export default function Containers() {
             ),
           },
           {
+            id: "Networks",
             accessorKey: "networks.0",
             size: 200,
             header: ({ column }) => (
@@ -159,6 +189,7 @@ export default function Containers() {
               ),
           },
           {
+            id: "Ports",
             accessorKey: "ports.0",
             size: 200,
             sortingFn: (a, b) => {
@@ -189,6 +220,7 @@ export default function Containers() {
             ),
           },
           {
+            id: "Volumes",
             accessorKey: "volumes.0",
             size: 200,
             header: ({ column }) => (

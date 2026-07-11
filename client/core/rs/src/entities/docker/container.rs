@@ -276,6 +276,29 @@ pub struct ContainerState {
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ContainerSortBy {
+  /// Sort by container name. Default.
+  #[default]
+  Name,
+  /// Sort by host Server name.
+  Server,
+  /// Sort by container state.
+  State,
+  /// Sort by image.
+  Image,
+  /// Sort by first network.
+  Networks,
+  /// Sort by first port.
+  Ports,
+  /// Sort by first volume.
+  Volumes,
+}
+
+#[typeshare]
+#[derive(
   Debug,
   Clone,
   Copy,
@@ -294,11 +317,11 @@ pub struct ContainerState {
 pub enum ContainerStateStatusEnum {
   Running,
   Created,
-  Paused,
   Restarting,
-  Exited,
   Stopping,
   Removing,
+  Paused,
+  Exited,
   Dead,
   #[default]
   #[serde(rename = "")]
