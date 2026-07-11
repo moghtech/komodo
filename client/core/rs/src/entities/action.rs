@@ -53,15 +53,15 @@ pub struct ActionListItemInfo {
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ActionState {
-  /// Unknown case
-  #[default]
-  Unknown,
+  /// Currently running
+  Running,
   /// Last clone / pull successful (or never cloned)
   Ok,
   /// Last clone / pull failed
   Failed,
-  /// Currently running
-  Running,
+  /// Unknown case
+  #[default]
+  Unknown,
 }
 
 #[cfg(feature = "utoipa")]

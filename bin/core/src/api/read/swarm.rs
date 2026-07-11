@@ -51,7 +51,7 @@ impl Resolve<ReadArgs> for ListSwarms {
         SwarmSortBy::Name => resource::ListItemSort::Name,
         SwarmSortBy::State => {
           resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info.state.to_string().cmp(&b.info.state.to_string())
+            a.info.state.cmp(&b.info.state)
           }))
         }
       };

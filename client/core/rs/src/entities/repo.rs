@@ -66,25 +66,27 @@ pub struct RepoListItemInfo {
   Default,
   PartialEq,
   Eq,
+  PartialOrd,
+  Ord,
   Serialize,
   Deserialize,
   Display,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum RepoState {
-  /// Unknown case
-  #[default]
-  Unknown,
-  /// Last clone / pull successful (or never cloned)
-  Ok,
-  /// Last clone / pull failed
-  Failed,
   /// Currently cloning
   Cloning,
   /// Currently pulling
   Pulling,
   /// Currently building
   Building,
+  /// Last clone / pull successful (or never cloned)
+  Ok,
+  /// Last clone / pull failed
+  Failed,
+  /// Unknown case
+  #[default]
+  Unknown,
 }
 
 #[cfg(feature = "utoipa")]
