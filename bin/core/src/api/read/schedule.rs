@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use futures_util::future::join_all;
 use komodo_client::{
   api::read::*,
@@ -116,23 +118,30 @@ impl Resolve<ReadArgs> for ListSchedules {
     // The schedules are composed in memory across resource types,
     // so all matching schedules are collected and sorted
     // before applying pagination.
-    let compare = |a: &Schedule, b: &Schedule| {
+    // All comparators fall back to name based sorting for equal
+    // sort keys, inside `compare`, so descending sorts are fully
+    // descending, matching the List<Resource> apis.
+    let compare: fn(&Schedule, &Schedule) -> Ordering =
       match self.sort_by {
-        ScheduleSortBy::Name => a.name.cmp(&b.name),
-        ScheduleSortBy::Schedule => a.schedule.cmp(&b.schedule),
+        ScheduleSortBy::Name => |a, b| a.name.cmp(&b.name),
+        ScheduleSortBy::Schedule => |a, b| {
+          a.schedule
+            .cmp(&b.schedule)
+            .then_with(|| a.name.cmp(&b.name))
+        },
         // Order unscheduled (None) last, matching the UI.
-        ScheduleSortBy::NextRun => {
-          (a.next_scheduled_run.is_none(), a.next_scheduled_run).cmp(
-            &(b.next_scheduled_run.is_none(), b.next_scheduled_run),
-          )
-        }
-        ScheduleSortBy::Enabled => a.enabled.cmp(&b.enabled),
-      }
-      // Fall back to name based sorting for equal sort keys.
-      // Inside `compare`, so descending sorts are fully descending,
-      // matching the List<Resource> apis.
-      .then_with(|| a.name.cmp(&b.name))
-    };
+        ScheduleSortBy::NextRun => |a, b| {
+          (a.next_scheduled_run.is_none(), a.next_scheduled_run)
+            .cmp(&(
+              b.next_scheduled_run.is_none(),
+              b.next_scheduled_run,
+            ))
+            .then_with(|| a.name.cmp(&b.name))
+        },
+        ScheduleSortBy::Enabled => |a, b| {
+          a.enabled.cmp(&b.enabled).then_with(|| a.name.cmp(&b.name))
+        },
+      };
     if self.sort_desc {
       schedules.sort_by(|a, b| compare(b, a));
     } else {
