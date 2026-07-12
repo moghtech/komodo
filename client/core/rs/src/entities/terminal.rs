@@ -31,6 +31,25 @@ pub struct Terminal {
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum TerminalSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by target.
+  Target,
+  /// Sort by init command.
+  Command,
+  /// Sort by stored size.
+  Size,
+  /// Sort by created timestamp.
+  Created,
+}
+
+#[typeshare]
+#[derive(
   Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]

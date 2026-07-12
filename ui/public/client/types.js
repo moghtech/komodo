@@ -954,6 +954,19 @@ export var SwarmSortBy;
     /** Sort by state. */
     SwarmSortBy["State"] = "State";
 })(SwarmSortBy || (SwarmSortBy = {}));
+export var TerminalSortBy;
+(function (TerminalSortBy) {
+    /** Sort by name. Default. */
+    TerminalSortBy["Name"] = "Name";
+    /** Sort by target. */
+    TerminalSortBy["Target"] = "Target";
+    /** Sort by init command. */
+    TerminalSortBy["Command"] = "Command";
+    /** Sort by stored size. */
+    TerminalSortBy["Size"] = "Size";
+    /** Sort by created timestamp. */
+    TerminalSortBy["Created"] = "Created";
+})(TerminalSortBy || (TerminalSortBy = {}));
 export var ServiceUserQueryBehavior;
 (function (ServiceUserQueryBehavior) {
     /** Include service users in results. Default. */

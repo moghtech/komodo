@@ -88,21 +88,21 @@ export function useOmniSearch(opened: boolean): {
     enabled: opened && !!debouncedTerms.length,
   }).data;
 
-  const _terminals = useRead(
-    "ListTerminals",
-    {},
-    { refetchInterval: 15_000, enabled: opened },
-  ).data;
-  const terminals = useMemo(() => {
-    return _terminals?.filter((c) => {
-      if (searchTerms.length === 0) return true;
-      const lower = c.name.toLowerCase();
-      return searchTerms.every(
-        (term) =>
-          lower.includes(term) || termMatchesTypeKeyword("terminals", term),
-      );
-    });
-  }, [_terminals, searchTerms]);
+  const terminalsQuery: Types.ListTerminals = useMemo(
+    () => ({
+      terms: debouncedTerms
+        // Allows search like 'term my name' to return terminals matching 'my name'
+        .filter((term) => !termMatchesTypeKeyword("terminals", term)),
+      limit: 10,
+      page: 0,
+    }),
+    [debouncedTerms],
+  );
+
+  const terminals = useRead("ListTerminals", terminalsQuery, {
+    refetchInterval: 15_000,
+    enabled: opened,
+  }).data;
 
   const user = useUser().data;
   const resources = useAllResources(debouncedTerms, 10, 15_000, opened);

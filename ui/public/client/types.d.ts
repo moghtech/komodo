@@ -202,6 +202,11 @@ export interface ActionQuerySpecifics {
      * If empty, does not filter by state.
      */
     states?: ActionState[];
+    /**
+     * Query only for Actions with (or without)
+     * a schedule configured.
+     */
+    scheduled?: boolean;
 }
 export type ActionQuery = ResourceQuery<ActionQuerySpecifics>;
 export type AlerterEndpoint = 
@@ -5680,6 +5685,11 @@ export interface ProcedureQuerySpecifics {
      * If empty, does not filter by state.
      */
     states?: ProcedureState[];
+    /**
+     * Query only for Procedures with (or without)
+     * a schedule configured.
+     */
+    scheduled?: boolean;
 }
 export type ProcedureQuery = ResourceQuery<ProcedureQuerySpecifics>;
 export type PushRecentlyViewedResponse = NoData;
@@ -9493,6 +9503,18 @@ export interface ListSystemProcesses {
 export interface ListTags {
     query?: MongoDocument;
 }
+export declare enum TerminalSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by target. */
+    Target = "Target",
+    /** Sort by init command. */
+    Command = "Command",
+    /** Sort by stored size. */
+    Size = "Size",
+    /** Sort by created timestamp. */
+    Created = "Created"
+}
 /**
  * List Terminals.
  * Response: [ListTerminalsResponse].
@@ -9502,6 +9524,33 @@ export interface ListTerminals {
     target?: TerminalTarget;
     /** Return results with resource names instead of ids. */
     use_names?: boolean;
+    /**
+     * Filter by terminal name.
+     * Returned terminals have names which contain all terms.
+     */
+    terms?: string[];
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of terminals per-page.
+     * `limit: 100` is default.
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name.
+     */
+    sort_by?: TerminalSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * Paginated endpoint for updates matching optional query.
