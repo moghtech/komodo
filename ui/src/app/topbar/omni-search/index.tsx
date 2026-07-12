@@ -1,5 +1,5 @@
 import { ActionIcon, Badge, Button, Group, Switch, Text } from "@mantine/core";
-import { Spotlight, spotlight } from "@mantine/spotlight";
+import { Spotlight } from "@mantine/spotlight";
 import { useOmniSearch } from "./hooks";
 import { ICONS } from "@/lib/icons";
 import { useShiftKeyListener } from "mogh_ui";
@@ -8,10 +8,9 @@ import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
 
 export default function OmniSearch({}: {}) {
-  // Gates all omni search queries, so nothing is fetched / polled
-  // until the spotlight is actually opened.
   const [opened, setOpened] = useState(false);
-  const { search, setSearch, actions } = useOmniSearch(opened);
+  const { search, setSearch, actions, spotlight, spotlightStore } =
+    useOmniSearch(opened);
   useShiftKeyListener("S", () => spotlight.open());
   const [clearOnClose, setClearOnClose] = useLocalStorage({
     key: "omnisearch.clearOnClose",
@@ -46,6 +45,7 @@ export default function OmniSearch({}: {}) {
       </Button>
 
       <Spotlight.Root
+        store={spotlightStore}
         query={search}
         onQueryChange={setSearch}
         clearQueryOnClose={clearOnClose}

@@ -13,11 +13,11 @@ import {
 } from "@/lib/utils";
 import { RESOURCE_TARGETS, ResourceComponents } from "@/resources";
 import {
-  spotlight,
+  createSpotlight,
   SpotlightActionData,
   SpotlightActionGroupData,
 } from "@mantine/spotlight";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TemplateMarker } from "@/components/template-marker";
 import { DOCKER_LINK_ICONS } from "@/components/docker/link";
@@ -28,11 +28,10 @@ import { keepPreviousData } from "@tanstack/react-query";
 
 const ITEM_LIMIT = 7;
 
-export function useOmniSearch(opened: boolean): {
-  search: string;
-  setSearch: (value: string) => void;
-  actions: SpotlightActionGroupData[];
-} {
+// Use a dedicated store to allow selection control below.
+const [spotlightStore, spotlight] = createSpotlight();
+
+export function useOmniSearch(opened: boolean) {
   const navigate = useNavigate();
   const nav = useCallback(
     (to: string) => {
@@ -303,6 +302,26 @@ export function useOmniSearch(opened: boolean): {
     setSettingsView,
   ]);
 
+  useEffect(() => {
+    // Mantine only auto selects the first action when the query changes,
+    // but the omni search actions settle later (debounce + fetch),
+    // which can leave nothing selected. Select the first action
+    // whenever newly settled actions render.
+    const { listId } = spotlightStore.getState();
+    const list = listId ? document.getElementById(listId) : null;
+    if (!list) return;
+    list.querySelector("[data-selected]")?.removeAttribute("data-selected");
+    const first = list.querySelector("[data-action]");
+    if (first) {
+      first.setAttribute("data-selected", "true");
+      first.scrollIntoView({ block: "nearest" });
+    }
+    spotlightStore.updateState((state) => ({
+      ...state,
+      selected: first ? 0 : -1,
+    }));
+  }, [_actions]);
+
   // LIMIT the action count for performance.
   let count = 0;
   const actions: SpotlightActionGroupData[] = [];
@@ -327,6 +346,8 @@ export function useOmniSearch(opened: boolean): {
     search,
     setSearch,
     actions,
+    spotlight,
+    spotlightStore,
   };
 }
 
