@@ -17,7 +17,7 @@ use crate::{
   state::db_client,
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetBuilder {
   async fn resolve(
@@ -45,7 +45,7 @@ impl Resolve<ReadArgs> for ListBuilders {
     } else {
       get_all_tags(None).await?
     };
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let sort_by: resource::ListItemSort<BuilderListItem> =
       match self.sort_by {
         BuilderSortBy::Name => resource::ListItemSort::Name,
@@ -90,7 +90,7 @@ impl Resolve<ReadArgs> for ListFullBuilders {
     } else {
       get_all_tags(None).await?
     };
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user::<Builder>(
         self.query,

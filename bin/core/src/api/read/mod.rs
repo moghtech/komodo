@@ -67,6 +67,12 @@ pub struct ReadArgs {
   pub user: User,
 }
 
+/// Resolve the page limit for List apis, falling back to the
+/// configured `default_pagination_limit` when not provided.
+fn list_limit(limit: Option<u64>) -> u64 {
+  limit.unwrap_or(core_config().default_pagination_limit)
+}
+
 #[typeshare]
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
@@ -370,6 +376,7 @@ impl Resolve<ReadArgs> for GetCoreInfo {
       disable_websocket_reconnect: config.disable_websocket_reconnect,
       enable_fancy_toml: config.enable_fancy_toml,
       timezone: config.timezone.clone(),
+      default_pagination_limit: config.default_pagination_limit,
       public_key: core_keys().load().public.to_string(),
     };
     Ok(info)

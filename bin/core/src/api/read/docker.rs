@@ -26,7 +26,7 @@ use mogh_resolver::Resolve;
 use periphery_client::api as periphery;
 
 use crate::{
-  api::read::ReadArgs,
+  api::read::{ReadArgs, list_limit},
   helpers::{periphery_client, query::get_all_tags},
   permission::{get_check_permissions, list_resources_for_user},
   resource,
@@ -100,7 +100,7 @@ impl Resolve<ReadArgs> for ListAllContainers {
     .await?;
 
     let mut containers = Vec::<ContainerListItem>::new();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     // Match terms case insensitively.
     let terms = self
       .terms

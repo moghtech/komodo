@@ -5,9 +5,7 @@ use futures_util::{
   FutureExt, StreamExt as _, stream::FuturesUnordered,
 };
 use komodo_client::{
-  api::read::{
-    DEFAULT_LIST_LIMIT, ListTerminals, ListTerminalsResponse,
-  },
+  api::read::{ListTerminals, ListTerminalsResponse},
   entities::{
     deployment::Deployment,
     permission::PermissionLevel,
@@ -26,7 +24,7 @@ use crate::{
   resource,
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 //
 
@@ -132,7 +130,7 @@ impl Resolve<ReadArgs> for ListTerminals {
       terminals.sort_by(compare);
     }
 
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let skip = limit.saturating_mul(self.page) as usize;
     let take = if limit == 0 {
       usize::MAX

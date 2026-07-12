@@ -38,7 +38,7 @@ use crate::{
   state::{action_states, db_client, server_status_cache},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetServersSummary {
   async fn resolve(
@@ -111,7 +111,7 @@ impl Resolve<ReadArgs> for ListServers {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let sort_by: resource::ListItemSort<ServerListItem> =
       match self.sort_by {
         ServerSortBy::Name => resource::ListItemSort::Name,
@@ -166,7 +166,7 @@ impl Resolve<ReadArgs> for ListFullServers {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user_filtered::<Server, _>(
         self.query,

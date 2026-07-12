@@ -74,7 +74,8 @@ pub struct ListProcedures {
   pub page: U64,
 
   /// Set the limit for number of resources per-page.
-  /// `limit: 100` is default.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
   ///
   /// Passing `limit: 0` returns all results (unlimited).
   ///
@@ -128,7 +129,8 @@ pub struct ListFullProcedures {
   pub page: U64,
 
   /// Set the limit for number of resources per-page.
-  /// `limit: 100` is default.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
   ///
   /// Passing `limit: 0` returns all results (unlimited).
   ///

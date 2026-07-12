@@ -36,7 +36,7 @@ use crate::{
   },
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetDeployment {
   async fn resolve(
@@ -66,7 +66,7 @@ impl Resolve<ReadArgs> for ListDeployments {
     };
     let only_update_available = self.query.specific.update_available;
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let sort_by: resource::ListItemSort<DeploymentListItem> =
       match self.sort_by {
         DeploymentSortBy::Name => resource::ListItemSort::Name,
@@ -140,7 +140,7 @@ impl Resolve<ReadArgs> for ListFullDeployments {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user_filtered::<Deployment, _>(
         self.query,

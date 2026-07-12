@@ -18,7 +18,7 @@ use crate::{
   state::{action_state_cache, action_states},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetAction {
   async fn resolve(
@@ -47,7 +47,7 @@ impl Resolve<ReadArgs> for ListActions {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let sort_by: resource::ListItemSort<ActionListItem> =
       match self.sort_by {
         ActionSortBy::Name => resource::ListItemSort::Name,
@@ -99,7 +99,7 @@ impl Resolve<ReadArgs> for ListFullActions {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user_filtered::<Action, _>(
         self.query,

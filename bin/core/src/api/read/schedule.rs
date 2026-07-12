@@ -20,7 +20,7 @@ use crate::{
   schedule::get_schedule_item_info,
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for ListSchedules {
   async fn resolve(
@@ -148,7 +148,7 @@ impl Resolve<ReadArgs> for ListSchedules {
       schedules.sort_by(compare);
     }
 
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let skip = limit.saturating_mul(self.page) as usize;
     let take = if limit == 0 {
       usize::MAX

@@ -118,6 +118,8 @@ pub struct Env {
 
   /// Override `transparent_mode`
   pub komodo_transparent_mode: Option<bool>,
+  /// Override `default_pagination_limit`
+  pub komodo_default_pagination_limit: Option<u64>,
   /// Override `ui_write_disabled`
   pub komodo_ui_write_disabled: Option<bool>,
   /// Override `enable_new_users`
@@ -396,6 +398,12 @@ pub struct CoreConfig {
   /// This will be populated by TZ env variable in addition to KOMODO_TIMEZONE.
   #[serde(default)]
   pub timezone: String,
+
+  /// Set the default pagination limit for the API and UI to use.
+  /// Default: 30
+  /// Recommended: 100 or less
+  #[serde(default = "default_default_pagination_limit")]
+  pub default_pagination_limit: u64,
 
   /// Disable user ability to use the UI to update resource configuration.
   #[serde(default)]
@@ -814,6 +822,10 @@ fn default_private_key() -> String {
   String::from("file:/config/keys/core.key")
 }
 
+fn default_default_pagination_limit() -> u64 {
+  30
+}
+
 fn default_ui_path() -> String {
   "/app/ui".to_string()
 }
@@ -894,10 +906,11 @@ impl Default for CoreConfig {
       port: default_core_port(),
       bind_ip: default_core_bind_ip(),
       internet_interface: Default::default(),
-      private_key: Default::default(),
+      private_key: default_private_key(),
       periphery_public_keys: Default::default(),
       passkey: Default::default(),
       timezone: Default::default(),
+      default_pagination_limit: default_default_pagination_limit(),
       ui_write_disabled: Default::default(),
       disable_confirm_dialog: Default::default(),
       disable_websocket_reconnect: Default::default(),
@@ -983,6 +996,7 @@ impl CoreConfig {
       periphery_public_keys: config.periphery_public_keys,
       passkey: config.passkey.as_deref().map(empty_or_redacted),
       timezone: config.timezone,
+      default_pagination_limit: config.default_pagination_limit,
       first_server_address: config.first_server_address,
       first_server_name: config.first_server_name,
       jwt_secret: empty_or_redacted(&config.jwt_secret),

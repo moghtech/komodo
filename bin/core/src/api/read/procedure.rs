@@ -17,7 +17,7 @@ use crate::{
   state::{action_states, procedure_state_cache},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetProcedure {
   async fn resolve(
@@ -46,7 +46,7 @@ impl Resolve<ReadArgs> for ListProcedures {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let sort_by: resource::ListItemSort<ProcedureListItem> =
       match self.sort_by {
         ProcedureSortBy::Name => resource::ListItemSort::Name,
@@ -98,7 +98,7 @@ impl Resolve<ReadArgs> for ListFullProcedures {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user_filtered::<Procedure, _>(
         self.query,

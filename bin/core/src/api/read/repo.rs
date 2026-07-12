@@ -17,7 +17,7 @@ use crate::{
   state::{action_states, repo_state_cache},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetRepo {
   async fn resolve(
@@ -46,7 +46,7 @@ impl Resolve<ReadArgs> for ListRepos {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let sort_by: resource::ListItemSort<RepoListItem> =
       match self.sort_by {
         RepoSortBy::Name => resource::ListItemSort::Name,
@@ -94,7 +94,7 @@ impl Resolve<ReadArgs> for ListFullRepos {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user_filtered::<Repo, _>(
         self.query,

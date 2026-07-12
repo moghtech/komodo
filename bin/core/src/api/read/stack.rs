@@ -35,7 +35,7 @@ use crate::{
   state::{action_states, stack_status_cache},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetStack {
   async fn resolve(
@@ -65,7 +65,7 @@ impl Resolve<ReadArgs> for ListStacks {
     };
     let only_update_available = self.query.specific.update_available;
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let sort_by: resource::ListItemSort<StackListItem> =
       match self.sort_by {
         StackSortBy::Name => resource::ListItemSort::Name,
@@ -147,7 +147,7 @@ impl Resolve<ReadArgs> for ListFullStacks {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user_filtered::<Stack, _>(
         self.query,
@@ -224,7 +224,7 @@ impl Resolve<ReadArgs> for ListAllStackServices {
 
     let mut services = Vec::<StackService>::new();
     let mut skipped = 0;
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let limit_usize = limit as usize;
     // Eg. page 1 skips until after 100 services, page 2 after 200.
     let skip = limit.saturating_mul(self.page);

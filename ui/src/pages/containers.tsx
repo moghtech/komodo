@@ -15,9 +15,7 @@ import ResourceLink from "@/resources/link";
 import { SearchInput } from "mogh_ui";
 import TagsFilter from "@/components/tags/filter";
 import ResourceMultiSelector from "@/resources/multi-selector";
-import ListPagination, {
-  RESOURCE_PAGE_SIZE,
-} from "@/components/list-pagination";
+import ListPagination from "@/components/list-pagination";
 
 const CONTAINER_SORT_KEYS = Object.values(Types.ContainerSortBy);
 
@@ -59,7 +57,6 @@ export default function Containers() {
         servers: selectedServers,
         tags,
         page,
-        limit: RESOURCE_PAGE_SIZE,
         sort_by: sort.sort_by,
         sort_desc: sort.sort_desc,
       },

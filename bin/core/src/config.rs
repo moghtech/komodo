@@ -348,6 +348,9 @@ pub fn core_config() -> &'static CoreConfig {
       transparent_mode: env
         .komodo_transparent_mode
         .unwrap_or(config.transparent_mode),
+      default_pagination_limit: env
+        .komodo_default_pagination_limit
+        .unwrap_or(config.default_pagination_limit),
       ui_write_disabled: env
         .komodo_ui_write_disabled
         .unwrap_or(config.ui_write_disabled),

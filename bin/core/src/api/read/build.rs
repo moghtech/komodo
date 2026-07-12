@@ -27,7 +27,7 @@ use crate::{
   state::{action_states, build_state_cache, db_client},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetBuild {
   async fn resolve(
@@ -56,7 +56,7 @@ impl Resolve<ReadArgs> for ListBuilds {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     let sort_by: resource::ListItemSort<BuildListItem> =
       match self.sort_by {
         BuildSortBy::Name => resource::ListItemSort::Name,
@@ -110,7 +110,7 @@ impl Resolve<ReadArgs> for ListFullBuilds {
       get_all_tags(None).await?
     };
     let states = self.query.specific.states.clone();
-    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user_filtered::<Build, _>(
         self.query,
