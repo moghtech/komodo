@@ -122,6 +122,16 @@ export function hasMinimumPermissions(
   return true;
 }
 
+/**
+ * Returns true if the search term is shorthand for the given resource type keyword,
+ * eg. term 'cont' matches keyword 'containers'. This lets searches like 'cont my-name'
+ * scope to containers matching 'my-name'. Requires at least 3 characters so short
+ * terms like 'on' are still used to search by name.
+ */
+export function termMatchesTypeKeyword(keyword: string, term: string) {
+  return term.length >= 3 && keyword.startsWith(term);
+}
+
 export function usableResourcePath(resource: UsableResource) {
   if (resource === "ResourceSync") return "resource-syncs";
   return `${resource.toLowerCase()}s`;

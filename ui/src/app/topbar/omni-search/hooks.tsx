@@ -6,7 +6,11 @@ import {
   useUser,
 } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { terminalLink, usableResourcePath } from "@/lib/utils";
+import {
+  terminalLink,
+  termMatchesTypeKeyword,
+  usableResourcePath,
+} from "@/lib/utils";
 import { RESOURCE_TARGETS, ResourceComponents } from "@/resources";
 import {
   spotlight,
@@ -22,7 +26,6 @@ import { hexColorByIntention, useDebounce } from "mogh_ui";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 
 const ITEM_LIMIT = 7;
-let count = 0;
 
 export function useOmniSearch(opened: boolean): {
   search: string;
@@ -55,7 +58,7 @@ export function useOmniSearch(opened: boolean): {
     () => ({
       terms: debouncedTerms
         // Allows search like 'cont my name' to return containers matching 'my name'
-        .filter((term) => !"container".includes(term)),
+        .filter((term) => !termMatchesTypeKeyword("containers", term)),
       limit: 10,
       page: 0,
     }),
@@ -72,7 +75,7 @@ export function useOmniSearch(opened: boolean): {
     () => ({
       terms: debouncedTerms
         // Allows search like 'serv my name' to return services matching 'my name'
-        .filter((term) => !"service".includes(term)),
+        .filter((term) => !termMatchesTypeKeyword("services", term)),
       limit: 10,
       page: 0,
     }),
@@ -95,7 +98,8 @@ export function useOmniSearch(opened: boolean): {
       if (searchTerms.length === 0) return true;
       const lower = c.name.toLowerCase();
       return searchTerms.every(
-        (term) => lower.includes(term) || "terminals".includes(term),
+        (term) =>
+          lower.includes(term) || termMatchesTypeKeyword("terminals", term),
       );
     });
   }, [_terminals, searchTerms]);
@@ -182,7 +186,8 @@ export function useOmniSearch(opened: boolean): {
 
       ...RESOURCE_TARGETS.map((_type) => {
         const type = _type === "ResourceSync" ? "Sync" : _type;
-        const lowerType = type.toLowerCase();
+        // Matches the server side term stripping in useAllResources
+        const typeKeyword = type.toLowerCase() + "s";
         const Components = ResourceComponents[_type];
         return {
           group: type + "s",
@@ -194,7 +199,8 @@ export function useOmniSearch(opened: boolean): {
                   searchTerms.length === 0 ||
                   searchTerms.every(
                     (term) =>
-                      lowerName.includes(term) || lowerType.includes(term),
+                      lowerName.includes(term) ||
+                      termMatchesTypeKeyword(typeKeyword, term),
                   )
                 );
               })
@@ -249,7 +255,7 @@ export function useOmniSearch(opened: boolean): {
         group: "Containers",
         actions:
           containers?.map((container) => ({
-            id: container.server_id ?? "" + " " + container.name,
+            id: (container.server_id ?? "") + " " + container.name,
             label: container.name,
             description: "Server: " + container.server_name,
             onClick: () =>
@@ -281,25 +287,33 @@ export function useOmniSearch(opened: boolean): {
           })) ?? [],
       },
     ];
-  }, [resources, containers, services, terminals, searchTerms]);
+  }, [
+    resources,
+    containers,
+    services,
+    terminals,
+    searchTerms,
+    user,
+    nav,
+    setSettingsView,
+  ]);
 
   // LIMIT the action count for performance.
-  // Reset count on render before creating actual actions.
-  count = 0;
+  let count = 0;
   const actions: SpotlightActionGroupData[] = [];
   for (const group of _actions) {
     const groupActions = [];
     for (const action of group.actions) {
-      groupActions.push(action);
-      count += 1;
-      if (count > ITEM_LIMIT) {
+      if (count >= ITEM_LIMIT) {
         break;
       }
+      groupActions.push(action);
+      count += 1;
     }
     if (groupActions.length) {
       actions.push({ group: group.group, actions: groupActions });
     }
-    if (count > ITEM_LIMIT) {
+    if (count >= ITEM_LIMIT) {
       break;
     }
   }

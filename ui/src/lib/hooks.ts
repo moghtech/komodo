@@ -21,6 +21,7 @@ import { UsableResource, RESOURCE_TARGETS } from "@/resources";
 import {
   hasMinimumPermissions,
   resourceTargetFromTerminalTarget,
+  termMatchesTypeKeyword,
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
 
@@ -303,7 +304,11 @@ export function useAllResources(
     Swarm: useRead(
       "ListSwarms",
       {
-        query: { terms: terms?.filter((term) => !"swarm".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("swarms", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -311,7 +316,11 @@ export function useAllResources(
     Server: useRead(
       "ListServers",
       {
-        query: { terms: terms?.filter((term) => !"server".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("servers", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -319,7 +328,11 @@ export function useAllResources(
     Stack: useRead(
       "ListStacks",
       {
-        query: { terms: terms?.filter((term) => !"stack".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("stacks", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -327,7 +340,11 @@ export function useAllResources(
     Deployment: useRead(
       "ListDeployments",
       {
-        query: { terms: terms?.filter((term) => !"deployment".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("deployments", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -335,7 +352,11 @@ export function useAllResources(
     Build: useRead(
       "ListBuilds",
       {
-        query: { terms: terms?.filter((term) => !"build".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("builds", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -343,7 +364,11 @@ export function useAllResources(
     Repo: useRead(
       "ListRepos",
       {
-        query: { terms: terms?.filter((term) => !"repo".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("repos", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -351,7 +376,11 @@ export function useAllResources(
     Procedure: useRead(
       "ListProcedures",
       {
-        query: { terms: terms?.filter((term) => !"procedure".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("procedures", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -359,7 +388,11 @@ export function useAllResources(
     Action: useRead(
       "ListActions",
       {
-        query: { terms: terms?.filter((term) => !"action".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("actions", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -367,7 +400,11 @@ export function useAllResources(
     Builder: useRead(
       "ListBuilders",
       {
-        query: { terms: terms?.filter((term) => !"builder".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("builders", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -375,7 +412,11 @@ export function useAllResources(
     Alerter: useRead(
       "ListAlerters",
       {
-        query: { terms: terms?.filter((term) => !"alerter".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("alerters", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },
@@ -383,7 +424,11 @@ export function useAllResources(
     ResourceSync: useRead(
       "ListResourceSyncs",
       {
-        query: { terms: terms?.filter((term) => !"sync".includes(term)) },
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("syncs", term),
+          ),
+        },
         limit,
       },
       { refetchInterval, enabled },

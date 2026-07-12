@@ -67,7 +67,8 @@ export default function OmniSearch({}: {}) {
             <Text>Clear on close</Text>
             <Switch
               checked={clearOnClose}
-              onClick={() => setClearOnClose((v) => !v)}
+              onClick={(e) => e.stopPropagation()}
+              onChange={() => setClearOnClose((v) => !v)}
             />
           </Group>
         </Group>
