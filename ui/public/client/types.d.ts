@@ -9243,6 +9243,16 @@ export interface ListResourceSyncs {
     /** Reverse the sort direction. */
     sort_desc?: boolean;
 }
+export declare enum ScheduleSortBy {
+    /** Sort by target name. Default. */
+    Name = "Name",
+    /** Sort by the schedule expression. */
+    Schedule = "Schedule",
+    /** Sort by next scheduled run. */
+    NextRun = "NextRun",
+    /** Sort by enabled. */
+    Enabled = "Enabled"
+}
 /**
  * List configured schedules.
  * Response: [ListSchedulesResponse].
@@ -9252,6 +9262,33 @@ export interface ListSchedules {
     tags?: string[];
     /** 'All' or 'Any' */
     tag_behavior?: TagQueryBehavior;
+    /**
+     * Filter by target name.
+     * Returned schedules have names which contain all terms.
+     */
+    terms?: string[];
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of schedules per-page.
+     * `limit: 100` is default.
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name.
+     */
+    sort_by?: ScheduleSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * List the secret keys (not values) in the core configuration file.

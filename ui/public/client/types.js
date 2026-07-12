@@ -914,6 +914,17 @@ export var ResourceSyncSortBy;
     /** Sort by state. */
     ResourceSyncSortBy["State"] = "State";
 })(ResourceSyncSortBy || (ResourceSyncSortBy = {}));
+export var ScheduleSortBy;
+(function (ScheduleSortBy) {
+    /** Sort by target name. Default. */
+    ScheduleSortBy["Name"] = "Name";
+    /** Sort by the schedule expression. */
+    ScheduleSortBy["Schedule"] = "Schedule";
+    /** Sort by next scheduled run. */
+    ScheduleSortBy["NextRun"] = "NextRun";
+    /** Sort by enabled. */
+    ScheduleSortBy["Enabled"] = "Enabled";
+})(ScheduleSortBy || (ScheduleSortBy = {}));
 export var ServerSortBy;
 (function (ServerSortBy) {
     /** Sort by name. Default. */

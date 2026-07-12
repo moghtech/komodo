@@ -281,8 +281,26 @@ pub struct ActionQuerySpecifics {
   /// If empty, does not filter by state.
   #[serde(default)]
   pub states: Vec<ActionState>,
+  /// Query only for Actions with (or without)
+  /// a schedule configured.
+  #[serde(default)]
+  pub scheduled: Option<bool>,
 }
 
 impl super::resource::AddFilters for ActionQuerySpecifics {
-  fn add_filters(&self, _filters: &mut Document) {}
+  fn add_filters(&self, filters: &mut Document) {
+    if let Some(scheduled) = self.scheduled {
+      if scheduled {
+        filters.insert(
+          "config.schedule",
+          bson::doc! { "$nin": ["", null] },
+        );
+      } else {
+        filters.insert(
+          "config.schedule",
+          bson::doc! { "$in": ["", null] },
+        );
+      }
+    }
+  }
 }

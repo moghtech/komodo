@@ -3,11 +3,11 @@ use komodo_client::{
   api::read::*,
   entities::{
     ResourceTarget,
-    action::Action,
+    action::{Action, ActionQuerySpecifics},
     permission::PermissionLevel,
-    procedure::Procedure,
+    procedure::{Procedure, ProcedureQuerySpecifics},
     resource::{ResourceQuery, TemplatesQueryBehavior},
-    schedule::Schedule,
+    schedule::{Schedule, ScheduleSortBy},
   },
 };
 use mogh_resolver::Resolve;
@@ -32,6 +32,11 @@ impl Resolve<ReadArgs> for ListSchedules {
           templates: TemplatesQueryBehavior::Include,
           tag_behavior: self.tag_behavior,
           tags: self.tags.clone(),
+          terms: self.terms.clone(),
+          specific: ActionQuerySpecifics {
+            scheduled: Some(true),
+            ..Default::default()
+          },
           ..Default::default()
         },
         None,
@@ -45,6 +50,11 @@ impl Resolve<ReadArgs> for ListSchedules {
           templates: TemplatesQueryBehavior::Include,
           tag_behavior: self.tag_behavior,
           tags: self.tags.clone(),
+          terms: self.terms,
+          specific: ProcedureQuerySpecifics {
+            scheduled: Some(true),
+            ..Default::default()
+          },
           ..Default::default()
         },
         None,
@@ -98,12 +108,44 @@ impl Resolve<ReadArgs> for ListSchedules {
     let (actions, procedures) =
       tokio::join!(join_all(actions), join_all(procedures));
 
-    Ok(
-      actions
-        .into_iter()
-        .chain(procedures)
-        .filter(|s| !s.schedule.is_empty())
-        .collect(),
-    )
+    // The terms / scheduled filters are already applied
+    // at the db level by the queries above.
+    let mut schedules =
+      actions.into_iter().chain(procedures).collect::<Vec<_>>();
+
+    // The schedules are composed in memory across resource types,
+    // so all matching schedules are collected and sorted
+    // before applying pagination.
+    let compare = |a: &Schedule, b: &Schedule| {
+      match self.sort_by {
+        ScheduleSortBy::Name => a.name.cmp(&b.name),
+        ScheduleSortBy::Schedule => a.schedule.cmp(&b.schedule),
+        // Order unscheduled (None) last, matching the UI.
+        ScheduleSortBy::NextRun => {
+          (a.next_scheduled_run.is_none(), a.next_scheduled_run).cmp(
+            &(b.next_scheduled_run.is_none(), b.next_scheduled_run),
+          )
+        }
+        ScheduleSortBy::Enabled => a.enabled.cmp(&b.enabled),
+      }
+      // Fall back to name based sorting for equal sort keys.
+      // Inside `compare`, so descending sorts are fully descending,
+      // matching the List<Resource> apis.
+      .then_with(|| a.name.cmp(&b.name))
+    };
+    if self.sort_desc {
+      schedules.sort_by(|a, b| compare(b, a));
+    } else {
+      schedules.sort_by(|a, b| compare(a, b));
+    }
+
+    let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
+    let skip = limit.saturating_mul(self.page) as usize;
+    let take = if limit == 0 {
+      usize::MAX
+    } else {
+      limit as usize
+    };
+    Ok(schedules.into_iter().skip(skip).take(take).collect())
   }
 }
