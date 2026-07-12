@@ -24,6 +24,7 @@ import { DOCKER_LINK_ICONS } from "@/components/docker/link";
 import { Types } from "komodo_client";
 import { hexColorByIntention, useDebounce } from "mogh_ui";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
+import { keepPreviousData } from "@tanstack/react-query";
 
 const ITEM_LIMIT = 7;
 
@@ -69,6 +70,9 @@ export function useOmniSearch(opened: boolean): {
     refetchInterval: 15_000,
     // Only fetch when open and there is query typed
     enabled: opened && !!debouncedTerms.length,
+    // Keep the previous results visible while fetching after a search
+    // change to prevent resource flashing.
+    placeholderData: keepPreviousData,
   }).data;
 
   const servicesQuery: Types.ListAllStackServices = useMemo(
@@ -84,8 +88,8 @@ export function useOmniSearch(opened: boolean): {
 
   const services = useRead("ListAllStackServices", servicesQuery, {
     refetchInterval: 15_000,
-    // Only fetch when open and there is query typed
     enabled: opened && !!debouncedTerms.length,
+    placeholderData: keepPreviousData,
   }).data;
 
   const terminalsQuery: Types.ListTerminals = useMemo(
@@ -102,6 +106,7 @@ export function useOmniSearch(opened: boolean): {
   const terminals = useRead("ListTerminals", terminalsQuery, {
     refetchInterval: 15_000,
     enabled: opened,
+    placeholderData: keepPreviousData,
   }).data;
 
   const user = useUser().data;

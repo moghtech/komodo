@@ -8,6 +8,7 @@ import {
 import {
   UseMutationOptions,
   UseQueryOptions,
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -311,7 +312,13 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      {
+        refetchInterval,
+        enabled,
+        // Keep the previous results visible while fetching after a search
+        // change to prevent resource flashing.
+        placeholderData: keepPreviousData,
+      },
     ).data,
     Server: useRead(
       "ListServers",
@@ -323,7 +330,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     Stack: useRead(
       "ListStacks",
@@ -335,7 +342,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     Deployment: useRead(
       "ListDeployments",
@@ -347,7 +354,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     Build: useRead(
       "ListBuilds",
@@ -359,7 +366,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     Repo: useRead(
       "ListRepos",
@@ -371,7 +378,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     Procedure: useRead(
       "ListProcedures",
@@ -383,7 +390,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     Action: useRead(
       "ListActions",
@@ -395,7 +402,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     Builder: useRead(
       "ListBuilders",
@@ -407,7 +414,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     Alerter: useRead(
       "ListAlerters",
@@ -419,7 +426,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
     ResourceSync: useRead(
       "ListResourceSyncs",
@@ -431,7 +438,7 @@ export function useAllResources(
         },
         limit,
       },
-      { refetchInterval, enabled },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
     ).data,
   };
 }
