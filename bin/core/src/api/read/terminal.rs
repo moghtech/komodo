@@ -129,7 +129,7 @@ impl Resolve<ReadArgs> for ListTerminals {
     if self.sort_desc {
       terminals.sort_by(|a, b| compare(b, a));
     } else {
-      terminals.sort_by(|a, b| compare(a, b));
+      terminals.sort_by(compare);
     }
 
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);

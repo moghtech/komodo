@@ -145,7 +145,7 @@ impl Resolve<ReadArgs> for ListSchedules {
     if self.sort_desc {
       schedules.sort_by(|a, b| compare(b, a));
     } else {
-      schedules.sort_by(|a, b| compare(a, b));
+      schedules.sort_by(compare);
     }
 
     let limit = self.limit.unwrap_or(DEFAULT_LIST_LIMIT);
