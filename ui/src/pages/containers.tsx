@@ -2,6 +2,7 @@ import ContainerPorts from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
 import { containerStateIntention } from "@/lib/color";
 import { useRead, useTagsFilter } from "@/lib/hooks";
+import { keepPreviousData } from "@tanstack/react-query";
 import { Types } from "komodo_client";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader, useDebounce } from "mogh_ui";
@@ -50,7 +51,7 @@ export default function Containers() {
     setPage(0);
   }, [selectedServers, tags, sort.sort_by, sort.sort_desc]);
 
-  const _containers =
+  const containers =
     useRead(
       "ListAllContainers",
       {
@@ -62,11 +63,13 @@ export default function Containers() {
         sort_by: sort.sort_by,
         sort_desc: sort.sort_desc,
       },
-      { refetchInterval: 15_000 },
+      {
+        refetchInterval: 15_000,
+        // Keep the previous rows visible while fetching after a query key
+        // change (page / sort / search / filters) to prevent table flashing.
+        placeholderData: keepPreviousData,
+      },
     ).data ?? [];
-
-  // Prevent flashes during loading
-  const containers = useDebounce(_containers, 300);
 
   const Table = useMemo(
     () => (

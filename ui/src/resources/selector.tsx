@@ -15,6 +15,7 @@ import { ChevronsUpDown } from "lucide-react";
 import { fmtResourceType } from "@/lib/formatting";
 import { ICONS } from "@/lib/icons";
 import { useDebounce, useSearchCombobox } from "mogh_ui";
+import { keepPreviousData } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useRead } from "@/lib/hooks";
 
@@ -62,12 +63,18 @@ export default function ResourceSelector({
   const Components = ResourceComponents[type];
   const selectedResource = Components.useListItem(selected);
 
-  const { data: __resources } = useRead(`List${type}s`, {
-    query: { templates, terms },
-    limit: 10,
-  });
+  const { data: __resources } = useRead(
+    `List${type}s`,
+    {
+      query: { templates, terms },
+      limit: 10,
+    },
+    // Keep the previous options visible while the
+    // next search fetches, to prevent flashing.
+    { placeholderData: keepPreviousData },
+  );
 
-  const _resources = useMemo(
+  const resources = useMemo(
     () =>
       (__resources?.filter(
         (r) =>
@@ -76,9 +83,6 @@ export default function ResourceSelector({
       ) ?? []) as Array<Types.ResourceListItem<any>>,
     [__resources],
   );
-
-  // Prevent flashing when typing / fetching
-  const resources = useDebounce(_resources, 300);
 
   const name = selectedResource?.name;
 

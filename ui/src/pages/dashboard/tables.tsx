@@ -1,4 +1,5 @@
 import TagsFilter from "@/components/tags/filter";
+import { keepPreviousData } from "@tanstack/react-query";
 import { useRead, useTagsFilter, useTemplatesQueryBehavior } from "@/lib/hooks";
 import { usableResourcePath } from "@/lib/utils";
 import {
@@ -78,7 +79,7 @@ function TableSection({
     setPage(0);
   }, [terms, tags, templates, sort.sort_by, sort.sort_desc]);
 
-  const _resources =
+  const resources =
     useRead(
       `List${type}s`,
       {
@@ -87,10 +88,13 @@ function TableSection({
         sort_by: sort.sort_by as any,
         sort_desc: sort.sort_desc,
       },
-      { refetchInterval: 15_000 },
+      {
+        refetchInterval: 15_000,
+        // Keep the previous rows visible while fetching after a query key
+        // change (page / sort / search / filters) to prevent table flashing.
+        placeholderData: keepPreviousData,
+      },
     ).data ?? [];
-  // Prevent flashing when typing / fetching
-  const resources = useDebounce(_resources, 300);
 
   const Table = useMemo(
     () => show && <RC.Table resources={resources} onServerSort={setSort} />,

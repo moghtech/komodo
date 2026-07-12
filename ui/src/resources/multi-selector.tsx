@@ -1,4 +1,5 @@
 import { useRead } from "@/lib/hooks";
+import { keepPreviousData } from "@tanstack/react-query";
 import { MultiSelect } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useDebounce } from "mogh_ui";
@@ -36,11 +37,14 @@ export default function ResourceMultiSelector({
     [debouncedSearch],
   );
 
-  const _resources =
-    useRead(`List${type}s`, { query: { templates, terms }, limit: 10 }).data ??
-    [];
-  // Prevent flashing when typing / fetching
-  const resources = useDebounce(_resources, 300);
+  const resources =
+    useRead(
+      `List${type}s`,
+      { query: { templates, terms }, limit: 10 },
+      // Keep the previous options visible while the
+      // next search fetches, to prevent flashing.
+      { placeholderData: keepPreviousData },
+    ).data ?? [];
 
   // Keep the selected names in the options,
   // even when they don't match the current search.

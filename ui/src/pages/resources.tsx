@@ -90,7 +90,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         ? { update_available: filterUpdateAvailable }
         : undefined,
   };
-  const _resources =
+  const resources =
     useRead(
       `List${type}s`,
       {
@@ -99,19 +99,15 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         sort_by: sort.sort_by as any,
         sort_desc: sort.sort_desc,
       },
-      { refetchInterval: 15_000 },
+      {
+        refetchInterval: 15_000,
+        // Keep the previous rows visible while fetching after a query key
+        // change (page / sort / search / filters) to prevent table flashing.
+        // Must NOT keep them across a change of resource type.
+        placeholderData: (prev, prevQuery) =>
+          prevQuery?.queryKey[0] === `List${type}s` ? prev : undefined,
+      },
     ).data ?? [];
-
-  // Debounce: prevents flashing when typing / fetching.
-  // Must also set immediately upon change of resource type
-  const [resources, setResources] = useState(_resources);
-  useEffect(() => setResources(_resources), [type]);
-  useEffect(() => {
-    const handler = setTimeout(() => setResources(_resources), 300);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [_resources]);
 
   const RC = ResourceComponents[type];
 
