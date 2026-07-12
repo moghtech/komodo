@@ -228,6 +228,8 @@ async fn list_terminals(
     .read(ListTerminals {
       target: None,
       use_names: true,
+      limit: Some(0),
+      ..Default::default()
     })
     .await?;
   if !terminals.is_empty() {
@@ -245,6 +247,8 @@ async fn list_schedules(
       .read(ListSchedules {
         tags: filters.tags.clone(),
         tag_behavior: Default::default(),
+        limit: Some(0),
+        ..Default::default()
       })
       .map(|res| res.map(|res| res
         .into_iter()

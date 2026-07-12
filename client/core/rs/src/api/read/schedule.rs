@@ -30,7 +30,7 @@ pub fn list_schedules() {}
 /// List configured schedules.
 /// Response: [ListSchedulesResponse].
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSchedulesResponse)]
