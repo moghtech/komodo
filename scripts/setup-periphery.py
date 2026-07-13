@@ -64,6 +64,12 @@ def parse_args():
 		help="Use alternate binary source"
 	)
 
+	p.add_argument(
+		"--core-public-keys",
+		default="",
+		help="Trust Komodo Core public keys. Comma separated list of base58 encoded public keys."
+	)
+
 	return p.parse_args()
 
 def load_paths(args):
@@ -143,6 +149,9 @@ def map_config_line(args, home_dir, line):
 	## Handle onboarding key
 	if line.startswith("# onboarding_key =") and args.onboarding_key != None:
 		return f'onboarding_key = "{args.onboarding_key}"'
+	## Handle core public keys
+	if line.startswith("# core_public_keys =") and args.core_public_keys:
+		return f'core_public_keys = "{args.core_public_keys}"'
 	return line
 
 def write_config(args, home_dir, config_dir):
@@ -232,6 +241,7 @@ def main():
 	print(f'bin dir: {bin_dir}')
 	print(f'config dir: {config_dir}')
 	print(f'service file dir: {service_dir}')
+	print(f'core public keys: {args.core_public_keys}')
 
 	download_binary(args, bin_dir)
 	write_config(args, home_dir, config_dir)
