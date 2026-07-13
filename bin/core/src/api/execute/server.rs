@@ -56,7 +56,7 @@ impl Resolve<ExecuteArgs> for StartContainer {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard = action_state
+    let action_guard = action_state
       .update(|state| state.starting_containers = true)?;
 
     let mut update = update.clone();
@@ -83,6 +83,10 @@ impl Resolve<ExecuteArgs> for StartContainer {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -124,7 +128,7 @@ impl Resolve<ExecuteArgs> for RestartContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard = action_state
+    let action_guard = action_state
       .update(|state| state.restarting_containers = true)?;
 
     let mut update = update.clone();
@@ -153,6 +157,10 @@ impl Resolve<ExecuteArgs> for RestartContainer {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -194,7 +202,7 @@ impl Resolve<ExecuteArgs> for PauseContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pausing_containers = true)?;
 
     let mut update = update.clone();
@@ -221,6 +229,10 @@ impl Resolve<ExecuteArgs> for PauseContainer {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -262,7 +274,7 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard = action_state
+    let action_guard = action_state
       .update(|state| state.unpausing_containers = true)?;
 
     let mut update = update.clone();
@@ -291,6 +303,10 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -334,7 +350,7 @@ impl Resolve<ExecuteArgs> for StopContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard = action_state
+    let action_guard = action_state
       .update(|state| state.stopping_containers = true)?;
 
     let mut update = update.clone();
@@ -363,6 +379,10 @@ impl Resolve<ExecuteArgs> for StopContainer {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -412,7 +432,7 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pruning_containers = true)?;
 
     let mut update = update.clone();
@@ -443,6 +463,10 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -483,7 +507,7 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard = action_state
+    let action_guard = action_state
       .update(|state| state.starting_containers = true)?;
 
     let mut update = update.clone();
@@ -507,6 +531,10 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
 
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -547,7 +575,7 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard = action_state
+    let action_guard = action_state
       .update(|state| state.restarting_containers = true)?;
 
     let mut update = update.clone();
@@ -573,6 +601,10 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
 
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -613,7 +645,7 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pausing_containers = true)?;
 
     let mut update = update.clone();
@@ -637,6 +669,10 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
 
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -677,7 +713,7 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard = action_state
+    let action_guard = action_state
       .update(|state| state.unpausing_containers = true)?;
 
     let mut update = update.clone();
@@ -703,6 +739,10 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
 
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -743,7 +783,7 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard = action_state
+    let action_guard = action_state
       .update(|state| state.stopping_containers = true)?;
 
     let mut update = update.clone();
@@ -767,6 +807,10 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
 
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -807,7 +851,7 @@ impl Resolve<ExecuteArgs> for PruneContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pruning_containers = true)?;
 
     let mut update = update.clone();
@@ -836,6 +880,10 @@ impl Resolve<ExecuteArgs> for PruneContainers {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -941,7 +989,7 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pruning_networks = true)?;
 
     let mut update = update.clone();
@@ -968,6 +1016,10 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -1070,7 +1122,7 @@ impl Resolve<ExecuteArgs> for PruneImages {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pruning_images = true)?;
 
     let mut update = update.clone();
@@ -1095,6 +1147,10 @@ impl Resolve<ExecuteArgs> for PruneImages {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -1200,7 +1256,7 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pruning_volumes = true)?;
 
     let mut update = update.clone();
@@ -1225,6 +1281,10 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -1265,7 +1325,7 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pruning_builders = true)?;
 
     let mut update = update.clone();
@@ -1290,6 +1350,10 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -1330,7 +1394,7 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pruning_buildx = true)?;
 
     let mut update = update.clone();
@@ -1355,6 +1419,10 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -1395,7 +1463,7 @@ impl Resolve<ExecuteArgs> for PruneSystem {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pruning_system = true)?;
 
     let mut update = update.clone();
@@ -1419,6 +1487,10 @@ impl Resolve<ExecuteArgs> for PruneSystem {
     refresh_server_cache(&server, true).await;
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)

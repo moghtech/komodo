@@ -125,7 +125,7 @@ impl Resolve<ExecuteArgs> for RunAction {
 
     // This will set action state back to default when dropped.
     // Will also check to ensure action not already busy before updating.
-    let _action_guard = action_state.update_custom(
+    let action_guard = action_state.update_custom(
       |state| state.running += 1,
       |state| state.running -= 1,
       false,
@@ -247,6 +247,10 @@ impl Resolve<ExecuteArgs> for RunAction {
     };
 
     action_cancel_cache().remove(&update.id).await;
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
 
     res?;
 

@@ -33,7 +33,7 @@ export default function DashboardActiveResources() {
       },
       limit: 0,
       },
-      { refetchInterval: 15_000 },
+      { refetchInterval: 10_000 },
     ).data ?? [];
   const deployments =
     useRead(
@@ -50,7 +50,7 @@ export default function DashboardActiveResources() {
       },
       limit: 0,
       },
-      { refetchInterval: 15_000 },
+      { refetchInterval: 10_000 },
     ).data ?? [];
   const builds =
     useRead(
@@ -61,7 +61,7 @@ export default function DashboardActiveResources() {
       },
       limit: 0,
       },
-      { refetchInterval: 15_000 },
+      { refetchInterval: 10_000 },
     ).data ?? [];
   const repos =
     useRead(
@@ -78,7 +78,7 @@ export default function DashboardActiveResources() {
       },
       limit: 0,
       },
-      { refetchInterval: 15_000 },
+      { refetchInterval: 10_000 },
     ).data ?? [];
   const procedures =
     useRead(
@@ -89,7 +89,7 @@ export default function DashboardActiveResources() {
       },
       limit: 0,
       },
-      { refetchInterval: 15_000 },
+      { refetchInterval: 10_000 },
     ).data ?? [];
   const actions =
     useRead(
@@ -100,7 +100,7 @@ export default function DashboardActiveResources() {
       },
       limit: 0,
       },
-      { refetchInterval: 15_000 },
+      { refetchInterval: 10_000 },
     ).data ?? [];
   const globalAutoUpdates =
     useRead("ListUpdates", {

@@ -153,7 +153,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
 
     // This will set action state back to default when dropped.
     // Will also check to ensure build not already busy before updating.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.building = true)?;
 
     if build.config.auto_increment_version {
@@ -375,6 +375,10 @@ impl Resolve<ExecuteArgs> for RunBuild {
     // this will terminate the server.
     cleanup_builder_instance(periphery, cleanup_data, &mut update)
       .await;
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
 
     // Need to manually update the update before cache refresh,
     // and before broadcast with add_update.

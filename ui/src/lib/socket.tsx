@@ -201,6 +201,7 @@ function onUpdate(
     if (["Server", "Deployment", "Stack"].includes(update.target.type)) {
       invalidate(
         ["ListContainers"],
+        ["ListAllContainers"],
         ["InspectContainer"],
         ["ListNetworks"],
         ["InspectNetwork"],
@@ -265,6 +266,7 @@ function onUpdate(
     if (update.target.type === "Deployment") {
       invalidate(
         ["ListDeployments"],
+        ["ListFullDeployments"],
         ["GetDeploymentsSummary"],
         ["ListContainers"],
         ["ListNetworks"],
