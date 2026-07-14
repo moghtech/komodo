@@ -242,7 +242,7 @@ export default function Containers() {
     <Page
       title="Containers"
       icon={ICONS.Container}
-      description="See all containers across all servers."
+      description="See containers across all servers."
     >
       <Stack>
         <Group justify="space-between">

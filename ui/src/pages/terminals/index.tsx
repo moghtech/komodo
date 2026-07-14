@@ -62,7 +62,7 @@ export default function Terminals() {
     <Page
       title="Terminals"
       icon={ICONS.Terminal}
-      description="Manage Terminals across all your Servers."
+      description="Manage terminals across all servers."
     >
       <Stack>
         <Group justify="space-between">
