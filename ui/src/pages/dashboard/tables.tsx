@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import DashboardNoResources from "./no-resources";
 import { ShowHideButton } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
+import TemplateQuerySelector from "@/components/template-query-selector";
 
 export default function DashboardTables() {
   const { search, setSearch, terms } = useDebouncedTermSearch();
@@ -40,6 +41,7 @@ export default function DashboardTables() {
   return (
     <Stack gap="xl">
       <Group justify="end">
+        <TemplateQuerySelector />
         <TagsFilter />
         <SearchInput value={search} onSearch={setSearch} />
       </Group>
