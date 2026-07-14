@@ -13,7 +13,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { atomWithHash } from "jotai-location";
@@ -25,6 +25,7 @@ import {
   termMatchesTypeKeyword,
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
+import { useDebounce } from "mogh_ui";
 
 export function komodo_client() {
   return KomodoClient(KOMODO_BASE_URL, {
@@ -180,6 +181,28 @@ export function atomWithStorage<T>(key: string, init: T) {
       localStorage.setItem(key, JSON.stringify(newValue));
     },
   );
+}
+
+export function useDebouncedTermSearch(props?: {
+  debounce?: number;
+  onUpdate?: () => void;
+}) {
+  const { debounce = 200, onUpdate } = props ?? {};
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, debounce);
+  const terms = useMemo(() => {
+    onUpdate?.();
+    return debouncedSearch
+      .toLowerCase()
+      .split(" ")
+      .map((term) => term.trim())
+      .filter((term) => term);
+  }, [debouncedSearch]);
+  return {
+    search,
+    setSearch,
+    terms,
+  };
 }
 
 export function useResourceParamType() {

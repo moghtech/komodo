@@ -2,42 +2,38 @@ import TagsFilter from "@/components/tags/filter";
 import TableTags from "@/components/tags/table";
 import ListPagination from "@/components/list-pagination";
 import {
+  useDebouncedTermSearch,
   usePermissions,
   useRead,
   useSetTitle,
-  useTags,
+  useTagsFilter,
   useWrite,
 } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { ICONS } from "@/lib/icons";
-import { DataTable, SortableHeader, useDebounce } from "mogh_ui";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { Page } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
 import { Group, Stack, Switch } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { keepPreviousData } from "@tanstack/react-query";
 import { Types } from "komodo_client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const SCHEDULE_SORT_KEYS = Object.values(Types.ScheduleSortBy);
 
 export default function Schedules() {
   useSetTitle("Schedules");
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 200);
-  const terms = useMemo(
-    () =>
-      debouncedSearch
-        .toLowerCase()
-        .split(" ")
-        .map((term) => term.trim())
-        .filter((term) => term),
-    [debouncedSearch],
-  );
-  const { tags } = useTags();
 
   const [page, setPage] = useState(0);
+
+  const { search, setSearch, terms } = useDebouncedTermSearch({
+    onUpdate: () => setPage(0),
+  });
+
+  const tags = useTagsFilter();
+
   // Server side sort, passed up from the table.
   const [sort, setSort] = useState<{
     sort_by?: Types.ScheduleSortBy;

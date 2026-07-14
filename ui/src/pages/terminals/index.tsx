@@ -1,19 +1,14 @@
 import TerminalTargetLink from "@/pages/terminals/target-link";
 import ListPagination from "@/components/list-pagination";
-import { useRead, useSetTitle } from "@/lib/hooks";
+import { useDebouncedTermSearch, useRead, useSetTitle } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { terminalLink } from "@/lib/utils";
-import {
-  DataTable,
-  fmtDateWithMinutes,
-  SortableHeader,
-  useDebounce,
-} from "mogh_ui";
+import { DataTable, fmtDateWithMinutes, SortableHeader } from "mogh_ui";
 import { Page } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { keepPreviousData } from "@tanstack/react-query";
 import { Types } from "komodo_client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DeleteTerminal from "./delete";
 import BatchDeleteAllTerminals from "./batch-delete";
@@ -24,19 +19,13 @@ const TERMINAL_SORT_KEYS = Object.values(Types.TerminalSortBy);
 
 export default function Terminals() {
   useSetTitle("Terminals");
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 200);
-  const terms = useMemo(
-    () =>
-      debouncedSearch
-        .toLowerCase()
-        .split(" ")
-        .map((term) => term.trim())
-        .filter((term) => term),
-    [debouncedSearch],
-  );
 
   const [page, setPage] = useState(0);
+
+  const { search, setSearch, terms } = useDebouncedTermSearch({
+    onUpdate: () => setPage(0),
+  });
+
   // Server side sort, passed up from the table.
   const [sort, setSort] = useState<{
     sort_by?: Types.TerminalSortBy;

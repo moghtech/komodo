@@ -1,6 +1,11 @@
 import TagsFilter from "@/components/tags/filter";
 import { keepPreviousData } from "@tanstack/react-query";
-import { useRead, useTagsFilter, useTemplatesQueryBehavior } from "@/lib/hooks";
+import {
+  useDebouncedTermSearch,
+  useRead,
+  useTagsFilter,
+  useTemplatesQueryBehavior,
+} from "@/lib/hooks";
 import { usableResourcePath } from "@/lib/utils";
 import {
   RequiredResourceComponents,
@@ -8,7 +13,7 @@ import {
   UsableResource,
 } from "@/resources";
 import { ICONS } from "@/lib/icons";
-import { Section, useDebounce } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 import ListPagination from "@/components/list-pagination";
@@ -18,15 +23,7 @@ import { ShowHideButton } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
 
 export default function DashboardTables() {
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 200);
-  const terms = useMemo(() => {
-    return debouncedSearch
-      .toLowerCase()
-      .split(" ")
-      .map((term) => term.trim())
-      .filter((term) => term);
-  }, [debouncedSearch]);
+  const { search, setSearch, terms } = useDebouncedTermSearch();
 
   const Tables = useMemo(
     () =>

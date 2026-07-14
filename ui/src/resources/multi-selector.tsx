@@ -1,9 +1,8 @@
-import { useRead } from "@/lib/hooks";
+import { useDebouncedTermSearch, useRead } from "@/lib/hooks";
 import { keepPreviousData } from "@tanstack/react-query";
 import { MultiSelect } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useDebounce } from "mogh_ui";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { UsableResource } from ".";
 import { fmtResourceType } from "@/lib/formatting";
 
@@ -25,17 +24,7 @@ export default function ResourceMultiSelector({
   templates?: Types.TemplatesQueryBehavior;
   placeholder?: string;
 }) {
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 200);
-  const terms = useMemo(
-    () =>
-      debouncedSearch
-        .toLowerCase()
-        .split(" ")
-        .map((term) => term.trim())
-        .filter((term) => term),
-    [debouncedSearch],
-  );
+  const { search, setSearch, terms } = useDebouncedTermSearch();
 
   const resources =
     useRead(

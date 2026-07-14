@@ -1,11 +1,11 @@
 import ContainerPorts from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
 import { containerStateIntention } from "@/lib/color";
-import { useRead, useTagsFilter } from "@/lib/hooks";
+import { useDebouncedTermSearch, useRead, useTagsFilter } from "@/lib/hooks";
 import { keepPreviousData } from "@tanstack/react-query";
 import { Types } from "komodo_client";
 import { ICONS } from "@/lib/icons";
-import { DataTable, SortableHeader, useDebounce } from "mogh_ui";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { Page } from "mogh_ui";
 import { StatusBadge } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
@@ -23,17 +23,10 @@ export default function Containers() {
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
 
   const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 200);
-  const searchTerms = useMemo(() => {
-    // back to first page if search changes
-    setPage(0);
-    return debouncedSearch
-      .toLowerCase()
-      .split(" ")
-      .map((term) => term.trim())
-      .filter((term) => term);
-  }, [debouncedSearch]);
+
+  const { search, setSearch, terms } = useDebouncedTermSearch({
+    onUpdate: () => setPage(0),
+  });
 
   const tags = useTagsFilter();
 
@@ -53,7 +46,7 @@ export default function Containers() {
     useRead(
       "ListAllContainers",
       {
-        terms: searchTerms,
+        terms,
         servers: selectedServers,
         tags,
         page,

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  useDebouncedTermSearch,
   useFilterByUpdateAvailable,
   useRead,
   useResourceParamType,
@@ -10,7 +11,7 @@ import {
 } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
-import { Page, useDebounce } from "mogh_ui";
+import { Page } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
 import ListPagination from "@/components/list-pagination";
 import { TableSkeleton } from "mogh_ui";
@@ -34,17 +35,10 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   useSetTitle(name + "s");
 
   const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 200);
-  const terms = useMemo(() => {
-    // Set to page 0 whenever search changes
-    setPage(0);
-    return debouncedSearch
-      .toLowerCase()
-      .split(" ")
-      .map((term) => term.trim())
-      .filter((term) => term);
-  }, [debouncedSearch]);
+
+  const { search, setSearch, terms } = useDebouncedTermSearch({
+    onUpdate: () => setPage(0),
+  });
 
   const [filterUpdateAvailable, toggleFilterUpdateAvailable] =
     useFilterByUpdateAvailable();
