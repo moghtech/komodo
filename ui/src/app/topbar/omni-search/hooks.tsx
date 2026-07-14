@@ -155,6 +155,12 @@ export function useOmniSearch(opened: boolean) {
             onClick: () => nav("/terminals"),
           },
           {
+            id: "Stats",
+            label: "Stats",
+            leftSection: <ICONS.Stats size="1.3rem" />,
+            onClick: () => nav("/stats"),
+          },
+          {
             id: "Schedules",
             label: "Schedules",
             leftSection: <ICONS.Schedule size="1.3rem" />,

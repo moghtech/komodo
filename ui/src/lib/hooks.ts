@@ -26,6 +26,7 @@ import {
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
 import { useDebounce } from "mogh_ui";
+import { useLocalStorage } from "@mantine/hooks";
 
 export function komodo_client() {
   return KomodoClient(KOMODO_BASE_URL, {
@@ -186,9 +187,12 @@ export function atomWithStorage<T>(key: string, init: T) {
 export function useDebouncedTermSearch(props?: {
   debounce?: number;
   onUpdate?: () => void;
+  localStorageKey?: string;
 }) {
-  const { debounce = 200, onUpdate } = props ?? {};
-  const [search, setSearch] = useState("");
+  const { debounce = 200, onUpdate, localStorageKey } = props ?? {};
+  const [search, setSearch] = localStorageKey
+    ? useLocalStorage({ key: localStorageKey, defaultValue: "" })
+    : useState("");
   const debouncedSearch = useDebounce(search, debounce);
   const terms = useMemo(() => {
     onUpdate?.();
