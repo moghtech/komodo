@@ -400,8 +400,7 @@ pub struct CoreConfig {
   pub timezone: String,
 
   /// Set the default pagination limit for the API and UI to use.
-  /// Default: 30
-  /// Recommended: 100 or less
+  /// Default: 50
   #[serde(default = "default_default_pagination_limit")]
   pub default_pagination_limit: u64,
 
@@ -823,7 +822,7 @@ fn default_private_key() -> String {
 }
 
 fn default_default_pagination_limit() -> u64 {
-  30
+  50
 }
 
 fn default_ui_path() -> String {

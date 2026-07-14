@@ -81,8 +81,8 @@ private_key = "file:/config/keys/core.key"
 
 ## Set the default pagination limit for the API and UI to use.
 ## Env: KOMODO_DEFAULT_PAGINATION_LIMIT
-## Default: 30
-default_pagination_limit = 30
+## Default: 50
+default_pagination_limit = 50
 
 ## Disables write support on resources in the UI.
 ## This protects users that that would normally have write priviledges during their UI usage,

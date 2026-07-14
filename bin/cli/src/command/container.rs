@@ -156,7 +156,7 @@ pub async fn inspect_container(
       tags: Default::default(),
       terms: vec![inspect.container.clone()],
       state: Default::default(),
-      limit: Some(300),
+      limit: Some(0),
       page: 0,
       sort_by: ContainerSortBy::Server,
       sort_desc: false,
