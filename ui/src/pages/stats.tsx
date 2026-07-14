@@ -463,6 +463,10 @@ function MultiServerStatChart({
               width={isNetwork ? 70 : 42}
               domain={isPercent ? [0, 100] : ["auto", "auto"]}
             />
+            <Legend
+              iconType="line"
+              wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+            />
             <Tooltip
               contentStyle={{
                 backgroundColor: "var(--mantine-color-dark-7)",
@@ -484,12 +488,6 @@ function MultiServerStatChart({
                 return [formatted, name];
               }}
             />
-            {series.length > 1 && (
-              <Legend
-                iconType="line"
-                wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
-              />
-            )}
             {series.map(({ name, color }) => (
               <Line
                 key={name}
