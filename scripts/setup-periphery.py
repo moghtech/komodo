@@ -235,13 +235,15 @@ def main():
 	
 	print(f'version: {args.version}')
 	print(f'core address: {args.core_address}')
+	if args.core_public_keys:
+		print(f'core public keys: {args.core_public_keys}')
+	
 	print(f'connect as: {args.connect_as}')
 	print(f'user install: {args.user}')
 	print(f'home dir: {home_dir}')
 	print(f'bin dir: {bin_dir}')
 	print(f'config dir: {config_dir}')
 	print(f'service file dir: {service_dir}')
-	print(f'core public keys: {args.core_public_keys}')
 
 	download_binary(args, bin_dir)
 	write_config(args, home_dir, config_dir)
