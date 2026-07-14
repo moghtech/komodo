@@ -1,73 +1,105 @@
 # Resources
 
-Komodo is extendible through the **Resource** abstraction. Entities like `Server`, `Deployment`, and `Stack` are all **Komodo Resources**.
+Komodo models managed objects as resources. `Server`, `Deployment`, and `Stack` are resource types.
+For the execution model behind them, see [What Is Komodo](./intro.md).
 
-All resources have common traits, such as a unique `name` and `id` amongst all other resources of the same resource type.
-All resources can be assigned `tags`, which can be used to group related resources.
+All resources have a type-local `name` and `id`. Resources can also be grouped with `tags`.
 
 :::note
-Many resources need access to git repos / docker registries. There is an in-built token management system (managed in UI or in config file) to give resources access to credentials.
-All resources which depend on git repos / docker registries are able to use these credentials to access private repos.
+
+Some resources need access to git repositories or container registries. Resources that work with
+private repos or registries can use configured
+[provider credentials](./configuration/providers.md).
+
 :::
 
-## [Server](setup/connect-servers)
+## [Server](./server.md)
 
 - Configure the connection to periphery agents.
 - Set alerting thresholds.
-- Can be attached to by **Deployments**, **Stacks**, **Repos**, and **Builders**.
+- Used by **Deployments**, **Stacks**, **Repos**, and **Builders**.
 
-## [Swarm](swarm)
+See [Server](./server.md) for the concept page and
+[Connection Model](./connection-model.md) and [Connect More Servers](./setup/connect-servers.mdx)
+for identity and installation.
+
+## [Swarm](./swarm.md)
 
 - Configure the manager nodes to control the Swarm through.
 - Manage swarm nodes, stacks, services, tasks, configs, and secrets.
 - Can be attached to by **Deployments** and **Stacks**.
 
-## [Deployment](deploy/containers)
+## [Deployment](./deploy/containers.md)
 
-- Deploy a docker container on the attached Server.
-- Manage services at the container level, perform orchestration using **Procedures** and **ResourceSyncs**.
+- Deploy one container on an attached Server, or one service in Swarm mode.
+- Use this when the workload maps cleanly to one container rather than a Compose project.
+- Supports direct-image deploys, [Build](./build.md)-based deploys, lifecycle actions, and
+  registry-driven updates through [Automatic Updates](./deploy/auto-update.md).
 
-## [Stack](deploy/compose)
+## [Stack](./deploy/compose.md)
 
-- Deploy with docker compose.
-- Provide the compose file in UI, or move the files to a git repo and use a webhook for auto redeploy on push.
-- Supports composing multiple compose files using `docker compose -f ... -f ...`.
-- Pass environment variables usable within the compose file. Interpolate in app-wide variables / secrets.
+- Deploy a Compose project on a Server, or a stack in Swarm mode.
+- Source files from the UI, files already on the host, a direct git repository, or a linked
+  [Repo](./repo.md).
+- Supports multi-file Compose deploys, generated env files, wrapper commands, and git or
+  registry-driven updates through [Webhooks](./automate/webhooks.md) and
+  [Automatic Updates](./deploy/auto-update.md).
 
-## Repo
+## [Repo](./repo.md)
 
-- Put scripts in git repos, and run them on a Server, or using a Builder.
-- Can build binaries, perform automation, really whatever you can think of.
+- Clone a git repository onto a Server or Builder and keep that checkout managed in Komodo.
+- Run host-side commands after clone or pull.
+- Support webhook-driven clone, pull, and build execution.
+- Use configured provider credentials for private git access.
 
-## [Build](build)
+See [Repo](./repo.md), [Providers](./configuration/providers.md), and
+[Webhooks](./automate/webhooks.md).
 
-- Build application source into docker images, and push them to the configured registry.
-- The source can be any git repo containing a Dockerfile.
+## [Build](./build.md)
 
-## [Builder](build#builders)
+- Build container images on an attached Builder and push them to one or more registries.
+- Source the Dockerfile and build context from the UI, files on the host, a direct git repo, or a
+  linked [Repo](./repo.md).
+- Controls image naming, tagging, build args, secret args, and Buildx usage.
+- Feeds [Deployment](./deploy/containers.md) resources directly and can also support Compose-based
+  workflows that build on the host.
 
-- Either points to a connected server, or holds configuration to launch a single-use AWS instance to build the image.
-- Can be attached to **Builds** and **Repos**.
+## [Builder](./build.md#builders)
 
-## [Procedure](automate/procedures#procedures)
+- Either points to a connected Server, a direct Periphery URL, or holds configuration to launch a
+  single-use AWS instance for builds.
+- Can be attached to [Build](./build.md) and [Repo](./repo.md) resources.
 
-- Compose many actions on other resource type, like `RunBuild` or `DeployStack`, and run it on button push (or with a webhook).
-- Can run one or more actions in parallel "stages", and compose a series of parallel stages to run sequentially.
+## [Procedure](./automate/procedures.md#procedures)
 
-## [Action](automate/procedures#actions)
+- Compose built-in executions such as `RunBuild`, `DeployStack`, or `PullRepo` into staged
+  automation.
+- Run manually, on a [schedule](./automate/schedules.md), or through a
+  [webhook](./automate/webhooks.md).
 
-- Write scripts calling the Komodo API in Typescript
-- Use a pre-initialized Komodo client within the script, no api keys necessary.
-- Type aware in UI editor. Get suggestions and see in depth docs as you type.
-- The Typescript client is also [published on NPM](https://www.npmjs.com/package/komodo_client).
+## [Action](./automate/procedures.md#actions)
 
-## [Resource Sync](automate/sync-resources)
+- Write TypeScript scripts that call the Komodo API from inside Komodo.
+- Use a pre-initialized Komodo client in the script, with no separate API-key setup.
+- Type-aware in the UI editor.
+- The TypeScript client is also [published on NPM](https://www.npmjs.com/package/komodo_client).
 
-- Orchestrate all your configuration declaratively by defining it in `toml` files, which are checked into a git repo.
+See [Write And Debug Actions](./how-to/write-and-debug-actions.md) for the scripting and
+debugging path.
+
+## [Resource Sync](./automate/sync-resources.md)
+
+- Orchestrate resource configuration declaratively from `toml` files, often in git.
 - Can deploy **Deployments** and **Stacks** if changes are suggested.
-- Specify deploy ordering with `after` array. (like docker compose `depends_on` but can span across servers.).
+- Specify deploy ordering with `after` across resources.
 
-## Alerter
+See [Configure Git-Backed Workflows](./how-to/git-backed-workflows.md) for where Resource Sync fits
+relative to [Repo](./repo.md), [Build](./build.md), and git-backed Stacks.
 
-- Route alerts to various endpoints.
-- Can configure rules on each Alerter, such as resource whitelist, blacklist, or alert type filter.
+## [Alerter](./alerter.md)
+
+- Route alerts to external endpoints such as Slack, Discord, ntfy, Pushover, or a custom HTTP
+  endpoint.
+- Filter by alert type, resource include list, resource exclude list, and maintenance windows.
+- Used by alert-producing features such as [Automatic Updates](./deploy/auto-update.md),
+  [Schedules](./automate/schedules.md), and [Swarm](./swarm.md).

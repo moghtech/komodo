@@ -1,50 +1,101 @@
 # Development
 
-If you are looking to contribute to Komodo, this page is a launching point for setting up your Komodo development environment.
+Komodo can be developed from a devcontainer, from a local host toolchain with Docker for the
+database, or through the compose-based development stack.
+
+## Development Paths
+
+There are three development paths:
+
+- **Devcontainer**: full environment in a container, with the database started through
+  `.devcontainer/dev.compose.yaml`
+- **Local Rust and UI, Docker database**: run Core, Periphery, and the UI on the host, and run the
+  database in Docker
+- **Compose-based dev stack**: rebuild and start the development Compose stack for integrated local
+  testing
 
 ## Dependencies
 
-Running Komodo from [source](https://github.com/moghtech/komodo) requires either [Docker](https://www.docker.com/) (and can use the included [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)), or can have the development dependencies installed locally:
+Running Komodo from [source](https://github.com/moghtech/komodo) needs either Docker with the
+included devcontainer, or a local toolchain with these pieces installed:
 
-* Backend (Core / Periphery APIs)
-    * [Rust](https://www.rust-lang.org/) stable via [rustup installer](https://rustup.rs/)
-    * [MongoDB](https://www.mongodb.com/) or [FerretDB](https://www.ferretdb.com/) available locally.
-    * On Debian/Ubuntu: `apt install build-essential pkg-config libssl-dev` required to build the rust source.
-* Web UI
-    * [Node](https://nodejs.org/en) >= 18.18 + NPM
-        * [Yarn](https://yarnpkg.com/) - (Tip: use `corepack enable` after installing `node` to use `yarn`)
-    * [typeshare](https://github.com/1password/typeshare)
-    * [Deno](https://deno.com/) >= 2.0.2
+- **Backend**
+  - [Rust](https://www.rust-lang.org/) stable via [rustup](https://rustup.rs/)
+  - [MongoDB](https://www.mongodb.com/) or [FerretDB](https://www.ferretdb.com/), either local or
+    in Docker
+  - on Debian or Ubuntu: `build-essential`, `pkg-config`, and `libssl-dev`
+- **Web UI and generated client**
+  - [Node](https://nodejs.org/en) 18.18 or newer
+  - [Yarn](https://yarnpkg.com/) via `corepack enable` or another local install
+  - [Deno](https://deno.com/) 2.0.2 or newer
+  - [`typeshare-cli`](https://github.com/1Password/typeshare)
 
-### runnables-cli
+## Project Task Runner
 
-[mbecker20/runnables-cli](https://github.com/mbecker20/runnables-cli) can be used as a convience CLI for running common project tasks found in `runfile.toml`. Otherwise, you can create your own project tasks by references the `cmd`s found in `runfile.toml`. All instructions below will use runnables-cli v1.3.7+.
+This repo uses [runnables-cli](https://github.com/mbecker20/runnables-cli) for common project
+tasks defined in `runfile.toml`.
 
-## Docker
+The docs below use `run ...` commands from that file, such as:
 
-After making changes to the project, run `run dev-compose-build` to rebuild Komodo and then `run dev-compose-exposed` to start a Komodo container with the UI accessible at `localhost:9120`. Any changes made to source files will require re-running the `dev-compose-build` and `dev-compose-exposed` commands.
+- `run dev-core`
+- `run dev-periphery`
+- `run dev-ui`
+- `run gen-client`
+- `run dev-compose-build`
+- `run dev-compose-exposed`
+- `run dev-docsite`
+
+If you do not want to use `runnables-cli`, the underlying commands are in `runfile.toml`.
 
 ## Devcontainer
 
-Use the included `.devcontainer.json` with VSCode or other compatible IDE to stand-up a full environment, including database, with one click.
+The repo includes `.devcontainer/devcontainer.json` and `.devcontainer/dev.compose.yaml`.
 
-[VSCode Tasks](https://code.visualstudio.com/Docs/editor/tasks) are provided for building and running Komodo.
+This path:
 
-After opening the repository with the devcontainer run the task `Init` to build the ui/backend. Then, the task `Run Komodo` can be used to run ui/backend. Other tasks for rebuilding/running just one component of the stack (Core API, Periphery API, UI) are also provided.
+- starts the database service from `.devcontainer/dev.compose.yaml`
+- mounts the repo into `/workspace`
+- forwards ports `5173` and `9120`
+- runs `./.devcontainer/postCreate.sh` after the container is created
 
-## Local
+Inside the container, VS Code tasks are already defined for the common flow:
 
-You can also run the components locally, using Docker only for the database.
+1. run `Init`
+2. run `Run Komodo`
 
-### Initial One-time Setup
+There are also separate tasks for Core, Periphery, and the UI if you only need one part of the
+stack.
 
-Create the local config directories.
+## Compose-Based Development Stack
 
-```sh
+Use the Compose-based path when you want to rebuild and run the integrated development stack.
+
+The main commands are:
+
+```bash
+run dev-compose-build
+run dev-compose-exposed
+```
+
+This rebuilds the development images and starts the stack with the UI exposed on `localhost:9120`.
+
+Any source change that should affect the Compose-based stack requires rebuilding and restarting the
+relevant services.
+
+## Local Development
+
+You can also run Core, Periphery, and the UI directly on the host and use Docker only for the
+database.
+
+### Initial Setup
+
+Create the local config directories:
+
+```bash
 mkdir -p .dev/keys .dev/periphery
 ```
 
-Add `.dev/core.config.toml` with the following contents:
+Add `.dev/core.config.toml`:
 
 ```toml
 host = "http://localhost:9120"
@@ -69,57 +120,74 @@ ssl_enabled = false
 root_directory = ".dev/periphery"
 ```
 
-Create `ui/.env.development` with the following:
+Add `ui/.env.development`:
 
-```
+```bash
 VITE_KOMODO_HOST=http://localhost:9120
 ```
 
-Make sure your Rust toolchain is up to date and install the CLI tools:
+Install the development tools and link the generated TypeScript client into the UI:
 
-```sh
+```bash
 rustup update
 cargo install typeshare-cli runnables-cli
 run link-client
 ```
 
-### Starting the services
+### Start The Database
 
-Start a Mongo instance in Docker:
+Start MongoDB in Docker:
 
-```sh
+```bash
 docker run -d --name komodo-mongo \
--p 27017:27017 \
--v komodo-mongo-data:/data/db \
--v komodo-mongo-config:/data/configdb \
--e MONGO_INITDB_ROOT_USERNAME=komodo \
--e MONGO_INITDB_ROOT_PASSWORD=komodo \
-mongo
+  -p 27017:27017 \
+  -v komodo-mongo-data:/data/db \
+  -v komodo-mongo-config:/data/configdb \
+  -e MONGO_INITDB_ROOT_USERNAME=komodo \
+  -e MONGO_INITDB_ROOT_PASSWORD=komodo \
+  mongo
 ```
 
-In separate terminals, run Core, Periphery, and UI.
+### Start Core, Periphery, And UI
 
-```sh
+Run these in separate terminals:
+
+```bash
 run dev-core
 ```
 
-```sh
+```bash
 run dev-periphery
-
-```sh
-run dev-ui      # Start in dev (watch) mode
 ```
-
-Once everything is running, open `http://localhost:5173` and create a user account.
-
-### Rebuilding the frontend client
-
-After API changes, rebuild the client with
 
 ```bash
-run gen-client  # Rebuild client (after API changes)
+run dev-ui
 ```
+
+Then open `http://localhost:5173`.
+
+### Regenerate The TypeScript Client
+
+After API changes, rebuild the generated client:
+
+```bash
+run gen-client
+```
+
+This regenerates the types and rebuilds the TypeScript package used by the UI.
 
 ## Docsite Development
 
-Use `run dev-docsite` to start the [Docusaurus](https://docusaurus.io/) Komodo docs site in development mode. Changes made to files in `./docsite` will be automatically reloaded by the server.
+Use:
+
+```bash
+run dev-docsite
+```
+
+That starts the Docusaurus docs site in development mode with live reload for changes under
+`docsite/`.
+
+## Related Pages
+
+- [API and Clients](./api.md)
+- [Writing Guidelines](./writing-guidelines.md)

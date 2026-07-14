@@ -1,177 +1,181 @@
+<!-- markdownlint-disable no-inline-html -->
+
 # Komodo CLI
 
-The Komodo CLI, `km`, can be used to:
-  - Quickly **run executions** and update **resources** and **variables**.
-  - **Reset user passwords** and elevate users to **Super Admin**.
-  - Perform Database **backup**, **restore**, and **copy**.
-  - **Connect to server / container shell** via Komodo Terminals.
-
-The Komodo Core image comes packaged with the Komodo CLI,
-and is available for usage inside running container with `docker exec -it komodo-core km ...`.
-This way, it inherits the Core database config in order to easily perform backups with `km db backup -y`.
-
-### Examples
-
-  - `km --help`
-  - `km deploy stack my-stack`
-  - `km run action my-action -y`
-  - `km database backup`
-  - `km db restore`
-  - `km set var MY_VAR my_value -y`
-  - `km update build my-build "version=1.19.0&branch=release"`
-  - `km x commit my-sync`
-  - `km set user mbecks super-admin true`
-  - `km set user mbecks password "temp-password"`
-  - `km ssh my-server`
-  - `km connect my-server bash -n my-session`
-  - `km exec my-container bash`
-  - `km attach my-container -s my-server`
-
-### Terminals
-
-All terminal commands share the same disconnect shortcut: press **Alt+Q** to end the session.
-The session itself stays running and will keep the history if you connect again, or connect from a
-different device.
-
-#### SSH / Connect
-
-The `km ssh` command (alias for `km connect`) opens an interactive shell on a server managed by Komodo Periphery. Analogous to `ssh`.
-
+```mdx-code-block
+import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
 ```
+
+The Komodo CLI, `km`, runs executions, updates resources and variables, opens server and container
+terminals, and performs database backup or restore operations.
+
+The Core container image also includes `km`. Running it inside the Core container lets the CLI use
+the same database configuration as Core for database operations such as `km database backup -y`.
+
+## Common Commands
+
+```bash
+km --help
+km deploy stack my-stack
+km run action my-action -y
+km database backup
+km db restore
+km set var MY_VAR my_value -y
+km update build my-build "version=1.19.0&branch=release"
+km x commit my-sync
+km set user mbecks super-admin true
+km set user mbecks password "temp-password"
+km ssh my-server
+km connect my-server bash -n my-session
+km exec my-container bash
+km attach my-container -s my-server
+```
+
+## Terminals
+
+All terminal commands share the same disconnect shortcut: press **Alt+Q** to end the session. The
+session keeps running and preserves its history.
+
+### SSH / Connect
+
+`km ssh` is an alias for `km connect`. It opens an interactive shell on a server managed by
+Komodo Periphery.
+
+```text
 km ssh <server> [command] [options]
 km connect <server> [command] [options]
 ```
 
 | Argument | Description |
-|---|---|
-| `server` | Server name (required) |
-| `command` | Shell command to start, e.g. `bash` (optional, defaults to Periphery default) |
-| `-n`, `--name` | Terminal session name (default: `ssh`) |
-| `-r`, `--recreate` | Force a fresh terminal, replacing any existing session with the same name |
+| --- | --- |
+| `server` | Server name. |
+| `command` | Shell command to start, such as `bash`. Defaults to the Periphery default shell. |
+| `-n`, `--name` | Terminal session name. Defaults to `ssh`. |
+| `-r`, `--recreate` | Replace any existing session with the same name. |
 
-#### Exec
+### Exec
 
-The `km exec` command opens an interactive shell inside a running container. Analogous to `docker exec`.
+`km exec` opens an interactive shell inside a running container.
 
-```
+```text
 km exec <container> <shell> [options]
 ```
 
 | Argument | Description |
-|---|---|
-| `container` | Container name (required) |
-| `shell` | Shell to use, e.g. `bash` or `sh` (required) |
-| `-s`, `--server` | Server name — required if multiple servers have a container with the same name |
-| `-r`, `--recreate` | Force a fresh terminal, replacing any existing session |
+| --- | --- |
+| `container` | Container name. |
+| `shell` | Shell to use, such as `bash` or `sh`. |
+| `-s`, `--server` | Server name when multiple servers have a container with the same name. |
+| `-r`, `--recreate` | Replace any existing session with the same name. |
 
-#### Attach
+### Attach
 
-The `km attach` command attaches to a running container's main process stdio. Analogous to `docker attach`.
+`km attach` attaches to the stdio of a running container's main process.
 
-```
+```text
 km attach <container> [options]
 ```
 
 | Argument | Description |
-|---|---|
-| `container` | Container name (required) |
-| `-s`, `--server` | Server name — required if multiple servers have a container with the same name |
-| `-r`, `--recreate` | Force a fresh terminal, replacing any existing session |
+| --- | --- |
+| `container` | Container name. |
+| `-s`, `--server` | Server name when multiple servers have a container with the same name. |
+| `-r`, `--recreate` | Replace any existing session with the same name. |
 
-### Install
+## Install
 
-There are binaries available for **Linux** (x86_64 / aarch64), **MacOS** (apple silicon), as
-well as a distroless image: **`ghcr.io/moghtech/komodo-cli`**.
+CLI binaries are available for Linux (`x86_64`, `aarch64`) and macOS (`apple silicon`). A
+distroless image is also published as `ghcr.io/moghtech/komodo-cli`.
 
-#### Linux
+### Linux
 
-You can install the binary using the following command:
+Install system-wide to `/usr/local/bin/km`:
 
-System-wide, as root, to `/usr/local/bin/km`:
 ```bash
 curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/install-cli.py | python3
 ```
 
-Or as non-root, to `${HOME}/.local/bin/km`:
+Install as the current user to `${HOME}/.local/bin/km`:
+
 ```bash
-curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/install-cli.py | python3 - --user
+curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/install-cli.py \
+  | python3 - --user
 ```
 
-#### MacOS (Homebrew)
+### macOS
 
-Add the `moghtech/komodo` tap, then install `km`:
+Install through Homebrew:
+
 ```bash
-brew tap moghtech/komodo && \
-  brew install km
+brew tap moghtech/komodo
+brew install km
 ```
 
-#### Container
+### Container
 
-You can alias a docker run command:
+Run the published CLI image:
+
 ```bash
 alias km='docker run --rm -v $HOME/.config/komodo:/config ghcr.io/moghtech/komodo-cli:2 km'
 km config
 ```
 
-### Configure
+## Configuration
 
-The CLI uses a configuration file to pass the Komodo host / api keys, database address and credentials,
-and configure some other behaviors. Additionally, all configuration fields can be individually overridden
-using **CLI arguments** or **environment variables**, with CLI arguments having top priority.
+The CLI reads configuration for the Komodo host, API keys, database access, and profile selection.
+CLI arguments override environment variables, and environment variables override file values.
 
-Whenever you want to check how config will be loaded, you can use the `km config` command
-to print it out.
+To inspect the effective configuration, run:
 
-#### File detection
-
-When run, CLI will scan the **current working directory** in addition to `${HOME}/.config/komodo` for any files matching the wildcard pattern **`*komodo.cli*.*`**,
-parse them into a general representation, and then merge them together. Files which are detected later are merged later,
-meaning they will override on conflicting fields. By default, files in `${HOME}/.config/komodo` come first
-in the merge ordering, meaning they are **lower priority** than those detected in the current working directory.
-You can also override these default paths by passing `km -c /path/to/1/base.config.yaml -c ./overrides ...`.
-
-If you want `km` to find configuration files in another directory,
-you can make a `.kminclude` file inside one of the configured directories.
-
+```bash
+km config
 ```
+
+### File Detection
+
+The CLI scans the current working directory and `${HOME}/.config/komodo` for files matching
+`*komodo.cli*.*`. It parses them into one representation and merges them in discovery order.
+Files found later override earlier values.
+
+Use `-c` to pass one or more explicit config files:
+
+```bash
+km -c /path/to/base.config.yaml -c ./overrides.toml config
+```
+
+You can also add a `.kminclude` file inside one of the configured directories:
+
+```text
 # Supports comments
 
-./.komodo    # relative to directory containing `.kminclude`
-
-/etc/komodo/komodo.cli.toml  # also supports absolute path
+./.komodo
+/etc/komodo/komodo.cli.toml
 ```
 
-Note that wildcards in these paths are **not supported**.
+Wildcards are not supported in `.kminclude`.
 
-#### Profiles
+### Profiles
 
-In the files, you can configure multiple profiles, each with a name / aliases. Then you
-choose which config profile to use with `km -p <profile> ...`. This allows you to easily switch between
-multiple Cores you want to connect to, or different database backup / restore options.
+Configuration files can define multiple profiles. Select one with `km -p <profile> ...`.
+`default_profile` chooses the profile used when `-p` is omitted.
 
-In order to avoid passing `-p <profile>` every time, you can set a
-`default_profile` at the top level of the configuration file. Additionally,
-any fields you would like to be the "default" across all profiles can be 
-set at the top level of the file.
+Top-level fields outside a profile act as shared defaults across profiles.
 
-#### Example File
+## Example Configuration File
 
-The configuration can also be passed as **YAML** or **JSON**.
-You can use it-tools to convert this TOML file to your preferred format:
-  - YAML: https://it-tools.tech/toml-to-yaml
-  - JSON: https://it-tools.tech/toml-to-json
+The CLI also accepts YAML and JSON. These converters can help when you want another file format:
 
-Quick download to `./komodo/komodo.cli.toml`:
+- [TOML to YAML](https://it-tools.tech/toml-to-yaml)
+- [TOML to JSON](https://it-tools.tech/toml-to-json)
+
+Download the sample file to `./komodo/komodo.cli.toml`:
+
 ```bash
 wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/config/komodo.cli.toml
 ```
 
-```mdx-code-block
-import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
-
 <RemoteCodeFile
-	title="https://github.com/moghtech/komodo/blob/main/config/komodo.cli.toml"
-	url="https://raw.githubusercontent.com/moghtech/komodo/main/config/komodo.cli.toml"
-	language="toml"
+  title="https://github.com/moghtech/komodo/blob/main/config/komodo.cli.toml"
+  url="https://raw.githubusercontent.com/moghtech/komodo/main/config/komodo.cli.toml"
+  language="toml"
 />
-```

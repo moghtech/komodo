@@ -3,14 +3,33 @@ import OriginalSearchBar from "@easyops-cn/docusaurus-search-local/dist/client/c
 import styles from "./styles.module.css";
 
 const quickLinks = [
-  { label: "Getting Started", to: "/docs/intro" },
-  { label: "Setup Komodo Core", to: "/docs/setup" },
+  { label: "Docs Home", to: "/docs" },
+  { label: "What Is Komodo", to: "/docs/intro" },
+  { label: "Setup", to: "/docs/setup" },
+  { label: "How-To", to: "/docs/how-to" },
+  { label: "Connection Model", to: "/docs/connection-model" },
+  { label: "Install Komodo", to: "/docs/setup/install-core" },
   { label: "Connect Servers", to: "/docs/setup/connect-servers" },
+  { label: "Onboarding Keys", to: "/docs/setup/onboarding-keys" },
+  {
+    label: "After First Server",
+    to: "/docs/setup/after-first-server",
+  },
+  { label: "Back Up And Restore", to: "/docs/setup/backup" },
+  { label: "Add Another Server", to: "/docs/how-to/add-another-server" },
+  {
+    label: "Use A Reverse Proxy",
+    to: "/docs/how-to/reverse-proxy-and-periphery-access",
+  },
+  { label: "Git-Backed Workflows", to: "/docs/how-to/git-backed-workflows" },
+  { label: "Install The Komodo CLI", to: "/docs/how-to/komodo-cli" },
+  { label: "Repo", to: "/docs/repo" },
+  { label: "Alerter", to: "/docs/alerter" },
   { label: "Docker Compose", to: "/docs/deploy/compose" },
   { label: "Deploy Containers", to: "/docs/deploy/containers" },
   { label: "Docker Swarm", to: "/docs/swarm" },
   { label: "Build Images", to: "/docs/build" },
-  { label: "Procedures and Actions", to: "/docs/automate/procedures" },
+  { label: "Procedures And Actions", to: "/docs/automate/procedures" },
   { label: "Sync Resources", to: "/docs/automate/sync-resources" },
 ];
 

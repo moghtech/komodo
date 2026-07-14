@@ -1,0 +1,69 @@
+---
+sidebar_label: Use Mounted Config Files
+---
+
+<!-- markdownlint-disable-file first-line-heading -->
+import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
+
+# Use Mounted Config Files
+
+Mounted config files keep sensitive settings out of environment variables. Write a config file on
+the host and mount it into the Komodo container at `/config/config.toml`.
+
+Komodo accepts configuration as TOML, YAML, or JSON. Environment variables still take precedence
+over values loaded from the file.
+
+## Core Config
+
+Mount a Core config file into the Core container:
+
+```yaml
+services:
+  core:
+    volumes:
+      - /path/to/core.config.toml:/config/config.toml
+```
+
+Quick download to `./komodo/core.config.toml`:
+
+```bash
+wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/config/core.config.toml
+```
+
+```mdx-code-block
+<RemoteCodeFile
+  title="https://github.com/moghtech/komodo/blob/main/config/core.config.toml"
+  url="https://raw.githubusercontent.com/moghtech/komodo/main/config/core.config.toml"
+  language="toml"
+/>
+```
+
+## Periphery Config
+
+Mount a Periphery config file into the Periphery container or service:
+
+```yaml
+services:
+  periphery:
+    volumes:
+      - /path/to/periphery.config.toml:/config/config.toml
+```
+
+## When To Use This
+
+Mounted config files are useful when:
+
+- you want provider credentials, secrets, or auth settings outside `compose.env`
+- you want to keep a larger block of configuration together in one file
+- you want different config ownership for Core and Periphery
+
+If you only need to move a few secret values out of `compose.env`, see
+[Docker Secrets And `_FILE` Variables](./docker-secrets-files.md).
+
+## Related Pages
+
+- [Install Komodo](../setup/install-komodo.mdx)
+- [Connect More Servers](../setup/connect-servers.mdx)
+- [Docker Secrets And `_FILE` Variables](./docker-secrets-files.md)
+- [Providers](../configuration/providers.md)
+- [Variables and Secrets](../configuration/variables.md)
