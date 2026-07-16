@@ -10,6 +10,12 @@ const ENDPOINT_TYPES: Types.AlerterEndpoint["type"][] = [
   "Pushover",
 ] as const;
 
+const CONTENT_TYPES = [
+  { value: "application/json", label: "application/json" },
+  { value: "text/plain", label: "text/plain" },
+  { value: "text/plain; pretty", label: "text/plain (pretty printed)" },
+] as const;
+
 export default function AlerterConfigEndpoint({
   endpoint,
   set,
@@ -49,6 +55,44 @@ export default function AlerterConfigEndpoint({
           readOnly={disabled}
         />
       </ConfigItem>
+      {endpoint.type === "Custom" && (
+      <>
+        <ConfigItem
+            label="Content Type"
+            description="The Content-Type header sent with the request."
+          >
+            <Select
+              value={endpoint.params.content_type ?? "application/json"}
+              onChange={(content_type) =>
+                content_type &&
+                set({
+                  ...endpoint,
+                  params: { ...endpoint.params, content_type },
+                })
+              }
+              disabled={disabled}
+              data={[...CONTENT_TYPES]}
+              w={{ base: "85%", lg: 400 }}
+            />
+          </ConfigItem>
+          <ConfigItem
+            label="Body Template"
+            description='Optional. Use {{variable}} placeholders, eg. {{alert}}. Leave empty to send the full alert as JSON.'
+          >
+            <MonacoEditor
+              value={endpoint.params.body_template ?? ""}
+              language="json"
+              onValueChange={(body_template) =>
+                set({
+                  ...endpoint,
+                  params: { ...endpoint.params, body_template },
+                })
+              }
+              readOnly={disabled}
+            />
+          </ConfigItem>
+      </>
+      )}
       {endpoint.type === "Ntfy" && (
         <ConfigInput
           label="Email"
