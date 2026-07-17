@@ -56,8 +56,11 @@ impl Resolve<ExecuteArgs> for StartContainer {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard = action_state
-      .update(|state| state.starting_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.starting_containers += 1,
+      |state| state.starting_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -128,8 +131,11 @@ impl Resolve<ExecuteArgs> for RestartContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard = action_state
-      .update(|state| state.restarting_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.restarting_containers += 1,
+      |state| state.restarting_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -202,8 +208,11 @@ impl Resolve<ExecuteArgs> for PauseContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard =
-      action_state.update(|state| state.pausing_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.pausing_containers += 1,
+      |state| state.pausing_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -274,8 +283,11 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard = action_state
-      .update(|state| state.unpausing_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.unpausing_containers += 1,
+      |state| state.unpausing_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -350,8 +362,11 @@ impl Resolve<ExecuteArgs> for StopContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard = action_state
-      .update(|state| state.stopping_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.stopping_containers += 1,
+      |state| state.stopping_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -507,8 +522,11 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard = action_state
-      .update(|state| state.starting_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.starting_containers += 1,
+      |state| state.starting_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -575,8 +593,11 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard = action_state
-      .update(|state| state.restarting_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.restarting_containers += 1,
+      |state| state.restarting_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -645,8 +666,11 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard =
-      action_state.update(|state| state.pausing_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.pausing_containers += 1,
+      |state| state.pausing_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -713,8 +737,11 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard = action_state
-      .update(|state| state.unpausing_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.unpausing_containers += 1,
+      |state| state.unpausing_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
@@ -783,8 +810,11 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard = action_state
-      .update(|state| state.stopping_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.stopping_containers += 1,
+      |state| state.stopping_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 
