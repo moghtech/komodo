@@ -1,4 +1,4 @@
-import { useRead, useSelectedResources } from "@/lib/hooks";
+import { useRead, useResourceSelectionState } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Types } from "komodo_client";
@@ -6,8 +6,6 @@ import { useCallback } from "react";
 import { ServerComponents } from "..";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
-import { RowSelectionState } from "@tanstack/react-table";
-import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Region", "Version", "State"];
 
@@ -24,12 +22,7 @@ export default function StandardServerTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [selectedResources, setSelectedResources] =
-    useSelectedResources("Server");
-  const selectionState = selectedResources.reduce((state, item) => {
-    state[item] = true;
-    return state;
-  }, {} as RowSelectionState);
+  const selectionState = useResourceSelectionState("Server");
   const deployments = useRead("ListDeployments", { limit: 0 }).data;
   const stacks = useRead("ListStacks", { limit: 0 }).data;
   const repos = useRead("ListRepos", { limit: 0 }).data;
@@ -61,15 +54,7 @@ export default function StandardServerTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        state: [
-          selectionState,
-          (state) =>
-            setSelectedStateHandler(
-              state,
-              selectionState,
-              setSelectedResources,
-            ),
-        ],
+        state: selectionState,
       }}
       columns={[
         {

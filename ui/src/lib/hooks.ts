@@ -13,7 +13,15 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { RowSelectionState } from "@tanstack/react-table";
 import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { atomWithHash } from "jotai-location";
@@ -22,6 +30,7 @@ import { UsableResource, RESOURCE_TARGETS } from "@/resources";
 import {
   hasMinimumPermissions,
   resourceTargetFromTerminalTarget,
+  setSelectedStateHandler,
   termMatchesTypeKeyword,
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
@@ -586,6 +595,16 @@ export function useSelectedResources(type: UsableResource) {
   return useAtom(selectedResources(type));
 }
 
+/** Controlled DataTable `selectOptions.state` backed by
+ * the selected resources atom, so batch executions
+ * (eg. Delete) can clear the table selection state. */
+export function useResourceSelectionState(
+  type: UsableResource,
+): [RowSelectionState, Dispatch<SetStateAction<RowSelectionState>>] {
+  const [selected, setSelected] = useSelectedResources(type);
+  return useSelectionState(selected, setSelected);
+}
+
 const selectedDockerResources = atomFamily((_: DockerResourceType) =>
   atom<string[]>([]),
 );
@@ -594,6 +613,40 @@ const selectedDockerResources = atomFamily((_: DockerResourceType) =>
  */
 export function useSelectedDockerResources(type: DockerResourceType) {
   return useAtom(selectedDockerResources(type));
+}
+
+/** Controlled DataTable `selectOptions.state` backed by
+ * the selected docker resources atom, so batch executions
+ * (eg. Delete) can clear the table selection state. */
+export function useDockerSelectionState(
+  type: DockerResourceType,
+): [RowSelectionState, Dispatch<SetStateAction<RowSelectionState>>] {
+  const [selected, setSelected] = useSelectedDockerResources(type);
+  return useSelectionState(selected, setSelected);
+}
+
+function useSelectionState(
+  selected: string[],
+  setSelected: (list: string[]) => void,
+): [RowSelectionState, Dispatch<SetStateAction<RowSelectionState>>] {
+  const selectionState = useMemo(
+    () =>
+      selected.reduce((state, item) => {
+        state[item] = true;
+        return state;
+      }, {} as RowSelectionState),
+    [selected],
+  );
+  const setSelectionState = useCallback(
+    (state: SetStateAction<RowSelectionState>) =>
+      setSelectedStateHandler(state, selectionState, setSelected),
+    [selectionState, setSelected],
+  );
+  // Stable tuple so it can be used in memo dependencies (eg. Containers page).
+  return useMemo(
+    () => [selectionState, setSelectionState],
+    [selectionState, setSelectionState],
+  );
 }
 
 const filterByUpdateAvailable = atomWithHash<boolean>(

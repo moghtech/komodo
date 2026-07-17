@@ -1,12 +1,10 @@
 import { Types } from "komodo_client";
 import { DataTable, SortableHeader } from "mogh_ui";
-import { useSelectedResources } from "@/lib/hooks";
+import { useResourceSelectionState } from "@/lib/hooks";
 import { ActionComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import ResourceLink from "@/resources/link";
-import { RowSelectionState } from "@tanstack/react-table";
-import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "State", "NextRun"];
 
@@ -20,12 +18,7 @@ export default function ActionTable({
    * and sort updates are passed to this callback. */
   onServerSort?: (sort: { sort_by?: string; sort_desc?: boolean }) => void;
 } & BoxProps) {
-  const [selectedResources, setSelectedResources] =
-    useSelectedResources("Action");
-  const selectionState = selectedResources.reduce((state, item) => {
-    state[item] = true;
-    return state;
-  }, {} as RowSelectionState);
+  const selectionState = useResourceSelectionState("Action");
   return (
     <DataTable
       {...boxProps}
@@ -41,15 +34,7 @@ export default function ActionTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        state: [
-          selectionState,
-          (state) =>
-            setSelectedStateHandler(
-              state,
-              selectionState,
-              setSelectedResources,
-            ),
-        ],
+        state: selectionState,
       }}
       columns={[
         {

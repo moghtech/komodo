@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useServerDockerSearch } from ".";
-import { useRead } from "@/lib/hooks";
+import { useDockerSelectionState, useRead } from "@/lib/hooks";
+import DockerBatchExecutions from "@/components/docker/batch-executions";
 import { filterBySplit } from "mogh_ui";
 import { Section } from "mogh_ui";
 import { Prune } from "../executions";
@@ -17,6 +18,7 @@ export default function ServerVolumes({
   titleOther: ReactNode;
 }) {
   const [search, setSearch] = useServerDockerSearch();
+  const selectionState = useDockerSelectionState("Volume");
   const volumes =
     useRead("ListVolumes", { server: id }, { refetchInterval: 10_000 })
       .data ?? [];
@@ -29,7 +31,8 @@ export default function ServerVolumes({
     <Section
       titleOther={titleOther}
       actions={
-        <Group>
+        <Group wrap="nowrap">
+          <DockerBatchExecutions type="Volume" />
           {!allInUse && <Prune serverId={id} type="Volumes" />}
           <SearchInput value={search} onSearch={setSearch} />
         </Group>
@@ -39,6 +42,10 @@ export default function ServerVolumes({
         mih="60vh"
         tableKey="server-volumes"
         data={filtered}
+        selectOptions={{
+          selectKey: ({ name }) => `${id} ${name}`,
+          state: selectionState,
+        }}
         columns={[
           {
             accessorKey: "name",

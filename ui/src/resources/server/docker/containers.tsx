@@ -22,6 +22,7 @@ export default function ServerContainers({
       _search={_search}
       pruneButton
       forceTall
+      selectable
     />
   );
 }

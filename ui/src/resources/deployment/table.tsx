@@ -1,4 +1,4 @@
-import { useSelectedResources } from "@/lib/hooks";
+import { useResourceSelectionState } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { ICONS } from "@/lib/icons";
 import { Group, BoxProps } from "@mantine/core";
@@ -7,8 +7,6 @@ import { DataTable, SortableHeader } from "mogh_ui";
 import { DeploymentComponents } from ".";
 import ResourceLink from "@/resources/link";
 import DeploymentUpdateAvailable from "./update-available";
-import { RowSelectionState } from "@tanstack/react-table";
-import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Image", "Host", "State"];
 
@@ -25,12 +23,7 @@ export default function DeploymentTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [selectedResources, setSelectedResources] =
-    useSelectedResources("Deployment");
-  const selectionState = selectedResources.reduce((state, item) => {
-    state[item] = true;
-    return state;
-  }, {} as RowSelectionState);
+  const selectionState = useResourceSelectionState("Deployment");
 
   return (
     <DataTable
@@ -49,15 +42,7 @@ export default function DeploymentTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        state: [
-          selectionState,
-          (state) =>
-            setSelectedStateHandler(
-              state,
-              selectionState,
-              setSelectedResources,
-            ),
-        ],
+        state: selectionState,
       }}
       columns={[
         {

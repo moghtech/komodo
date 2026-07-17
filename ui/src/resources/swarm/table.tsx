@@ -1,12 +1,10 @@
-import { useSelectedResources } from "@/lib/hooks";
+import { useResourceSelectionState } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Types } from "komodo_client";
 import { SwarmComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
-import { RowSelectionState } from "@tanstack/react-table";
-import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "State"];
 
@@ -23,12 +21,7 @@ export default function SwarmTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [selectedResources, setSelectedResources] =
-    useSelectedResources("Swarm");
-  const selectionState = selectedResources.reduce((state, item) => {
-    state[item] = true;
-    return state;
-  }, {} as RowSelectionState);
+  const selectionState = useResourceSelectionState("Swarm");
 
   return (
     <DataTable
@@ -47,15 +40,7 @@ export default function SwarmTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        state: [
-          selectionState,
-          (state) =>
-            setSelectedStateHandler(
-              state,
-              selectionState,
-              setSelectedResources,
-            ),
-        ],
+        state: selectionState,
       }}
       columns={[
         {

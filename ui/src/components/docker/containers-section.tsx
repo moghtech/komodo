@@ -1,6 +1,7 @@
-import { useRead } from "@/lib/hooks";
+import { useDockerSelectionState, useRead } from "@/lib/hooks";
 import { filterBySplit } from "mogh_ui";
 import { Prune } from "@/resources/server/executions";
+import DockerBatchExecutions from "./batch-executions";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Section, SectionProps } from "mogh_ui";
@@ -22,6 +23,8 @@ export interface ContainersSectionProps extends SectionProps {
   pruneButton?: boolean;
   forceTall?: boolean;
   _search?: [string, (search: string) => void];
+  /** Enables multi select of containers for batch executions. */
+  selectable?: boolean;
 }
 
 export default function ContainersSection({
@@ -32,9 +35,11 @@ export default function ContainersSection({
   pruneButton,
   forceTall,
   _search,
+  selectable,
   titleOther,
   ...sectionProps
 }: ContainersSectionProps) {
+  const selectionState = useDockerSelectionState("Container");
   const allRunning = useRead("ListContainers", {
     server: serverId,
   }).data?.every(
@@ -50,8 +55,9 @@ export default function ContainersSection({
       title={!titleOther ? "Containers" : undefined}
       icon={!titleOther ? <ICONS.Container size="1.3rem" /> : undefined}
       actions={
-        (pruneButton && !allRunning) || _search || setShow ? (
+        selectable || (pruneButton && !allRunning) || _search || setShow ? (
           <Group wrap="nowrap">
+            {selectable && <DockerBatchExecutions type="Container" />}
             {pruneButton && !allRunning && (
               <Prune serverId={serverId} type="Containers" />
             )}
@@ -69,6 +75,14 @@ export default function ContainersSection({
           mih={forceTall ? "60vh" : undefined}
           tableKey="server-containers"
           data={filtered}
+          selectOptions={
+            selectable
+              ? {
+                  selectKey: ({ name }) => `${serverId} ${name}`,
+                  state: selectionState,
+                }
+              : undefined
+          }
           columns={[
             {
               accessorKey: "name",

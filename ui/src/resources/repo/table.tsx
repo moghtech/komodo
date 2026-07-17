@@ -1,13 +1,11 @@
 import { Types } from "komodo_client";
-import { useSelectedResources } from "@/lib/hooks";
+import { useResourceSelectionState } from "@/lib/hooks";
 import { DataTable, SortableHeader } from "mogh_ui";
 import ResourceLink from "@/resources/link";
 import { RepoComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import RepoLink from "@/components/repo-link";
-import { RowSelectionState } from "@tanstack/react-table";
-import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Repo", "Branch", "State"];
 
@@ -24,12 +22,7 @@ export default function RepoTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [selectedResources, setSelectedResources] =
-    useSelectedResources("Repo");
-  const selectionState = selectedResources.reduce((state, item) => {
-    state[item] = true;
-    return state;
-  }, {} as RowSelectionState);
+  const selectionState = useResourceSelectionState("Repo");
 
   return (
     <DataTable
@@ -48,15 +41,7 @@ export default function RepoTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        state: [
-          selectionState,
-          (state) =>
-            setSelectedStateHandler(
-              state,
-              selectionState,
-              setSelectedResources,
-            ),
-        ],
+        state: selectionState,
       }}
       columns={[
         {

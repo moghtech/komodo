@@ -1,4 +1,4 @@
-import { useSelectedResources } from "@/lib/hooks";
+import { useResourceSelectionState } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { DataTable, fmtRateBytes, SortableHeader } from "mogh_ui";
 import { BoxProps, Group, Text } from "@mantine/core";
@@ -7,8 +7,6 @@ import { useServerStats, useServerThresholds } from "@/resources/server/hooks";
 import { StatCell } from "mogh_ui";
 import ServerVersion from "@/resources/server/version";
 import ServerDiskUsage from "../diskUsage";
-import { RowSelectionState } from "@tanstack/react-table";
-import { setSelectedStateHandler } from "@/lib/utils";
 
 export default function StatsServerTable({
   resources,
@@ -16,12 +14,7 @@ export default function StatsServerTable({
 }: {
   resources: Types.ServerListItem[];
 } & BoxProps) {
-  const [selectedResources, setSelectedResources] =
-    useSelectedResources("Server");
-  const selectionState = selectedResources.reduce((state, item) => {
-    state[item] = true;
-    return state;
-  }, {} as RowSelectionState);
+  const selectionState = useResourceSelectionState("Server");
   return (
     <DataTable
       {...boxProps}
@@ -29,15 +22,7 @@ export default function StatsServerTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        state: [
-          selectionState,
-          (state) =>
-            setSelectedStateHandler(
-              state,
-              selectionState,
-              setSelectedResources,
-            ),
-        ],
+        state: selectionState,
       }}
       columns={[
         {

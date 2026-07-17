@@ -3,8 +3,8 @@ import DockerResourceLink from "@/components/docker/link";
 import { containerStateIntention } from "@/lib/color";
 import {
   useDebouncedTermSearch,
+  useDockerSelectionState,
   useRead,
-  useSelectedDockerResources,
   useTagsFilter,
 } from "@/lib/hooks";
 import { keepPreviousData } from "@tanstack/react-query";
@@ -22,16 +22,13 @@ import TagsFilter from "@/components/tags/filter";
 import ResourceMultiSelector from "@/resources/multi-selector";
 import ListPagination from "@/components/list-pagination";
 import DockerBatchExecutions from "@/components/docker/batch-executions";
-import { RowSelectionState } from "@tanstack/react-table";
-import { setSelectedStateHandler } from "@/lib/utils";
 
 const CONTAINER_SORT_KEYS = Object.values(Types.ContainerSortBy);
 
 export default function Containers() {
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
 
-  const [selectedContainers, setSelectedContainers] =
-    useSelectedDockerResources("Container");
+  const selectionState = useDockerSelectionState("Container");
 
   const [page, setPage] = useState(0);
 
@@ -73,10 +70,6 @@ export default function Containers() {
     ).data ?? [];
 
   const Table = useMemo(() => {
-    const selectionState = selectedContainers.reduce((state, item) => {
-      state[item] = true;
-      return state;
-    }, {} as RowSelectionState);
     return (
       <DataTable
         data={containers}
@@ -97,15 +90,7 @@ export default function Containers() {
         }}
         selectOptions={{
           selectKey: ({ server_id, name }) => `${server_id} ${name}`,
-          state: [
-            selectionState,
-            (state) =>
-              setSelectedStateHandler(
-                state,
-                selectionState,
-                setSelectedContainers,
-              ),
-          ],
+          state: selectionState,
         }}
         columns={[
           {
@@ -262,7 +247,7 @@ export default function Containers() {
         ]}
       />
     );
-  }, [containers, selectedContainers]);
+  }, [containers, selectionState]);
 
   return (
     <Page

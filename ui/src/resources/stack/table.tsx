@@ -1,4 +1,4 @@
-import { useSelectedResources } from "@/lib/hooks";
+import { useResourceSelectionState } from "@/lib/hooks";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Group, BoxProps } from "@mantine/core";
 import { Types } from "komodo_client";
@@ -7,8 +7,6 @@ import { StackComponents } from ".";
 import TableTags from "@/components/tags/table";
 import FileSource from "@/components/file-source";
 import StackUpdateAvailable from "./update-available";
-import { RowSelectionState } from "@tanstack/react-table";
-import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Source", "Host", "State"];
 
@@ -25,12 +23,7 @@ export default function StackTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [selectedResources, setSelectedResources] =
-    useSelectedResources("Stack");
-  const selectionState = selectedResources.reduce((state, item) => {
-    state[item] = true;
-    return state;
-  }, {} as RowSelectionState);
+  const selectionState = useResourceSelectionState("Stack");
 
   return (
     <DataTable
@@ -49,15 +42,7 @@ export default function StackTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        state: [
-          selectionState,
-          (state) =>
-            setSelectedStateHandler(
-              state,
-              selectionState,
-              setSelectedResources,
-            ),
-        ],
+        state: selectionState,
       }}
       columns={[
         {

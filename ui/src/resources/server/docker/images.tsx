@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useServerDockerSearch } from ".";
-import { useRead } from "@/lib/hooks";
+import { useDockerSelectionState, useRead } from "@/lib/hooks";
+import DockerBatchExecutions from "@/components/docker/batch-executions";
 import { filterBySplit } from "mogh_ui";
 import { fmtSizeBytes, Section } from "mogh_ui";
 import { Badge, Group } from "@mantine/core";
@@ -17,6 +18,7 @@ export default function ServerImages({
   titleOther: ReactNode;
 }) {
   const [search, setSearch] = useServerDockerSearch();
+  const selectionState = useDockerSelectionState("Image");
   const images =
     useRead("ListImages", { server: id }, { refetchInterval: 10_000 }).data ??
     [];
@@ -29,7 +31,8 @@ export default function ServerImages({
     <Section
       titleOther={titleOther}
       actions={
-        <Group>
+        <Group wrap="nowrap">
+          <DockerBatchExecutions type="Image" />
           {!allInUse && <Prune serverId={id} type="Images" />}
           <SearchInput value={search} onSearch={setSearch} />
         </Group>
@@ -39,6 +42,10 @@ export default function ServerImages({
         mih="60vh"
         tableKey="server-images"
         data={filtered}
+        selectOptions={{
+          selectKey: ({ name }) => `${id} ${name}`,
+          state: selectionState,
+        }}
         columns={[
           {
             accessorKey: "name",
