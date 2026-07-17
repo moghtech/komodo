@@ -9,7 +9,7 @@ import NewResource from "@/resources/new";
 import ProcedureConfig from "./config";
 import { RunProcedure } from "./executions";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";

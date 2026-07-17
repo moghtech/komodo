@@ -27,6 +27,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useDebounce } from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
+import { DockerResourceType } from "@/components/docker";
 
 export function komodo_client() {
   return KomodoClient(KOMODO_BASE_URL, {
@@ -583,6 +584,16 @@ export function useWebhookIdOrName() {
 const selectedResources = atomFamily((_: UsableResource) => atom<string[]>([]));
 export function useSelectedResources(type: UsableResource) {
   return useAtom(selectedResources(type));
+}
+
+const selectedDockerResources = atomFamily((_: DockerResourceType) =>
+  atom<string[]>([]),
+);
+/** Holds list of `${server_id} ${resource_name}`
+ * (concatenated with a space)
+ */
+export function useSelectedDockerResources(type: DockerResourceType) {
+  return useAtom(selectedDockerResources(type));
 }
 
 const filterByUpdateAvailable = atomWithHash<boolean>(

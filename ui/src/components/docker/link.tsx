@@ -6,8 +6,7 @@ import { containerStateIntention } from "@/lib/color";
 import { Box, Group, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { hexColorByIntention } from "mogh_ui";
-
-export type DockerResourceType = "Container" | "Network" | "Image" | "Volume";
+import { DockerResourceType } from ".";
 
 export interface DockerResourceLinkProps {
   type: DockerResourceType;

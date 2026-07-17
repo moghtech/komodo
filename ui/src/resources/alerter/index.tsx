@@ -7,7 +7,7 @@ import AlerterTable from "./table";
 import ResourceHeader from "../header";
 import AlerterConfig from "./config";
 import { hexColorByIntention } from "mogh_ui";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { ConfirmButton } from "mogh_ui";
 
 export function useAlerter(

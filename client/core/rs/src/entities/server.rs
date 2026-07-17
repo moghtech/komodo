@@ -426,6 +426,8 @@ pub struct ServerActionState {
   pub unpausing_containers: u32,
   /// Server currently stopping containers.
   pub stopping_containers: u32,
+  /// Server currently destroying containers.
+  pub destroying_containers: u32,
 }
 
 #[typeshare]

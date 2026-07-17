@@ -24,7 +24,7 @@ import SwarmResourceLink from "@/components/swarm/link";
 import ContainerPorts from "@/components/docker/container-ports";
 import DeploymentUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 

@@ -15,7 +15,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Box, Button, Modal, Text } from "@mantine/core";
 import JoinSwarmCommands from "./join-commands";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import SwarmHeaderInfo from "./header-info";
 import { HoverError } from "mogh_ui";
 import { hexColorByIntention } from "mogh_ui";

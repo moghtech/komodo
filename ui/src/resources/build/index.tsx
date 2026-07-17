@@ -21,7 +21,7 @@ import ResourceLink from "../link";
 import FileSource from "@/components/file-source";
 import HashCompare from "@/components/hash-compare";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { useState } from "react";
 import ResourceSelector from "../selector";
 import { hexColorByIntention } from "mogh_ui";

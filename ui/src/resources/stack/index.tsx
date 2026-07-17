@@ -38,7 +38,7 @@ import ResourceLink from "@/resources/link";
 import HashCompare from "@/components/hash-compare";
 import StackUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 

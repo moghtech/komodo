@@ -8,7 +8,7 @@ import RepoTable from "./table";
 import NewResource from "@/resources/new";
 import ResourceHeader from "@/resources/header";
 import RepoTabs from "./tabs";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { BuildRepo, CloneRepo, PullRepo } from "./executions";
 import { useServer } from "../server";
 import { useBuilder } from "../builder";

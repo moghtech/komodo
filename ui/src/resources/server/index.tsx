@@ -17,7 +17,7 @@ import { fmtUpperCamelcase } from "mogh_ui";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import ResourceHeader from "../header";
 import { useIsServerAvailable } from "./hooks";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { ServerLoadAverage } from "./stats/current/load-average";
 import { ServerRamUsage } from "./stats/current/ram";
 import ServerDiskUsage from "./diskUsage";

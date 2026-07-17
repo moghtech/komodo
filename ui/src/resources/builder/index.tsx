@@ -8,7 +8,7 @@ import BuilderTable from "./table";
 import { serverStateIntention } from "@/lib/color";
 import ResourceHeader from "../header";
 import BuilderConfig from "./config";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { useState } from "react";
 import { Group, Select } from "@mantine/core";
 

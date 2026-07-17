@@ -13,7 +13,7 @@ import { Box, Group } from "@mantine/core";
 import HashCompare from "@/components/hash-compare";
 import ResourceSyncTabs from "./tabs";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useResourceSync(

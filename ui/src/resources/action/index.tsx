@@ -12,7 +12,7 @@ import NewResource from "@/resources/new";
 import ActionConfig from "./config";
 import ActionTable from "./table";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { RunAction } from "./executions";
 
 export function useAction(

@@ -447,8 +447,11 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
 
     // Will check to ensure server not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let action_guard =
-      action_state.update(|state| state.pruning_containers = true)?;
+    let action_guard = action_state.update_custom(
+      |state| state.destroying_containers += 1,
+      |state| state.destroying_containers -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 

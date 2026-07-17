@@ -27,6 +27,7 @@ impl Busy for ServerActionState {
       || self.pausing_containers > 0
       || self.unpausing_containers > 0
       || self.stopping_containers > 0
+      || self.destroying_containers > 0
   }
 }
 
