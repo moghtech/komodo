@@ -20,24 +20,24 @@ export default function ServerVolumes({
   const [search, setSearch] = useServerDockerSearch();
   const selectionState = useDockerSelectionState("Volume");
   const volumes =
-    useRead("ListVolumes", { server: id }, { refetchInterval: 10_000 })
-      .data ?? [];
+    useRead("ListVolumes", { server: id }, { refetchInterval: 10_000 }).data ??
+    [];
 
   const allInUse = volumes.every((volume) => volume.in_use);
 
   const filtered = filterBySplit(volumes, search, (volume) => volume.name);
 
   return (
-    <Section
-      titleOther={titleOther}
-      actions={
-        <Group wrap="nowrap">
+    <Section titleOther={titleOther}>
+      <Group justify="space-between">
+        <Group>
           <DockerBatchExecutions type="Volume" />
           {!allInUse && <Prune serverId={id} type="Volumes" />}
-          <SearchInput value={search} onSearch={setSearch} />
         </Group>
-      }
-    >
+
+        <SearchInput value={search} onSearch={setSearch} />
+      </Group>
+
       <DataTable
         mih="60vh"
         tableKey="server-volumes"

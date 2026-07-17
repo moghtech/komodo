@@ -20,8 +20,8 @@ export default function ServerNetworks({
   const [search, setSearch] = useServerDockerSearch();
   const selectionState = useDockerSelectionState("Network");
   const networks =
-    useRead("ListNetworks", { server: id }, { refetchInterval: 10_000 })
-      .data ?? [];
+    useRead("ListNetworks", { server: id }, { refetchInterval: 10_000 }).data ??
+    [];
 
   const allInUse = networks.every((network) =>
     // this ignores networks that come in with no name, but they should all come in with name
@@ -39,16 +39,16 @@ export default function ServerNetworks({
   );
 
   return (
-    <Section
-      titleOther={titleOther}
-      actions={
-        <Group wrap="nowrap">
+    <Section titleOther={titleOther}>
+      <Group justify="space-between">
+        <Group>
           <DockerBatchExecutions type="Network" />
           {!allInUse && <Prune serverId={id} type="Networks" />}
-          <SearchInput value={search} onSearch={setSearch} />
         </Group>
-      }
-    >
+
+        <SearchInput value={search} onSearch={setSearch} />
+      </Group>
+
       <DataTable
         mih="60vh"
         tableKey="server-networks"

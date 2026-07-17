@@ -28,16 +28,16 @@ export default function ServerImages({
   const filtered = filterBySplit(images, search, (image) => image.name);
 
   return (
-    <Section
-      titleOther={titleOther}
-      actions={
-        <Group wrap="nowrap">
+    <Section titleOther={titleOther}>
+      <Group justify="space-between">
+        <Group>
           <DockerBatchExecutions type="Image" />
           {!allInUse && <Prune serverId={id} type="Images" />}
-          <SearchInput value={search} onSearch={setSearch} />
         </Group>
-      }
-    >
+
+        <SearchInput value={search} onSearch={setSearch} />
+      </Group>
+
       <DataTable
         mih="60vh"
         tableKey="server-images"
