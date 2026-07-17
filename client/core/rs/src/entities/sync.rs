@@ -457,13 +457,25 @@ pub enum ResourceSyncSortBy {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceSyncQuerySpecifics {
   /// Filter syncs by their repo.
+  #[serde(default)]
   pub repos: Vec<String>,
+
+  /// Query only for Builds with these linked repos.
+  /// Only accepts Repo id (not name).
+  #[serde(default)]
+  pub linked_repos: Vec<String>,
 }
 
 impl super::resource::AddFilters for ResourceSyncQuerySpecifics {
   fn add_filters(&self, filters: &mut Document) {
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });
+    }
+    if !self.linked_repos.is_empty() {
+      filters.insert(
+        "config.linked_repo",
+        doc! { "$in": &self.linked_repos },
+      );
     }
   }
 }

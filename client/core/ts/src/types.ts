@@ -837,6 +837,11 @@ export interface BuildQuerySpecifics {
 	builder_ids?: string[];
 	repos?: string[];
 	/**
+	 * Query only for Builds with these linked repos.
+	 * Only accepts Repo id (not name).
+	 */
+	linked_repos?: string[];
+	/**
 	 * query for builds last built more recently than this timestamp
 	 * defaults to 0 which is a no op
 	 */
@@ -5843,6 +5848,12 @@ export interface RepoQuerySpecifics {
 	/** Filter repos by their repo. */
 	repos?: string[];
 	/**
+	 * Query only for Repos on these Servers.
+	 * If empty, does not filter by Server.
+	 * Only accepts Server id (not name).
+	 */
+	server_ids?: string[];
+	/**
 	 * Query only for Repos matching these states.
 	 * If empty, does not filter by state.
 	 */
@@ -5853,7 +5864,12 @@ export type RepoQuery = ResourceQuery<RepoQuerySpecifics>;
 
 export interface ResourceSyncQuerySpecifics {
 	/** Filter syncs by their repo. */
-	repos: string[];
+	repos?: string[];
+	/**
+	 * Query only for Builds with these linked repos.
+	 * Only accepts Repo id (not name).
+	 */
+	linked_repos?: string[];
 }
 
 export type ResourceSyncQuery = ResourceQuery<ResourceSyncQuerySpecifics>;

@@ -738,6 +738,11 @@ pub struct BuildQuerySpecifics {
   #[serde(default)]
   pub repos: Vec<String>,
 
+  /// Query only for Builds with these linked repos.
+  /// Only accepts Repo id (not name).
+  #[serde(default)]
+  pub linked_repos: Vec<String>,
+
   /// query for builds last built more recently than this timestamp
   /// defaults to 0 which is a no op
   #[serde(default)]
@@ -759,6 +764,12 @@ impl super::resource::AddFilters for BuildQuerySpecifics {
     }
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });
+    }
+    if !self.linked_repos.is_empty() {
+      filters.insert(
+        "config.linked_repo",
+        doc! { "$in": &self.linked_repos },
+      );
     }
     if self.built_since > 0 {
       filters.insert(

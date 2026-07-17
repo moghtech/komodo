@@ -20,18 +20,20 @@ export default function RepoTabs({ id }: { id: string }) {
   const stacks =
     useRead("ListStacks", {
       query: { specific: { linked_repos: [id] } },
-      limit: 0,
+      limit: 1,
     }).data ?? [];
   const noStacks = stacks.length === 0;
   const builds =
-    useRead("ListBuilds", { limit: 0 }).data?.filter(
-      (build) => build.info.linked_repo === id,
-    ) ?? [];
+    useRead("ListBuilds", {
+      query: { specific: { linked_repos: [id] } },
+      limit: 1,
+    }).data ?? [];
   const noBuilds = builds.length === 0;
   const syncs =
-    useRead("ListResourceSyncs", { limit: 0 }).data?.filter(
-      (sync) => sync.info.linked_repo === id,
-    ) ?? [];
+    useRead("ListResourceSyncs", {
+      query: { specific: { linked_repos: [id] } },
+      limit: 1,
+    }).data ?? [];
   const noSyncs = syncs.length === 0;
 
   const noResources = noStacks && noBuilds && noSyncs;
@@ -65,14 +67,7 @@ export default function RepoTabs({ id }: { id: string }) {
       View = <RepoConfig id={id} titleOther={Selector} />;
       break;
     case "Resources":
-      View = (
-        <RepoLinkedResourcesSection
-          stacks={stacks}
-          builds={builds}
-          syncs={syncs}
-          titleOther={Selector}
-        />
-      );
+      View = <RepoLinkedResourcesSection repoId={id} titleOther={Selector} />;
       break;
   }
 

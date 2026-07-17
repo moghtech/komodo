@@ -75,7 +75,13 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   Description: () => <>Declare resources in TOML files.</>,
 
-  New: () => <NewResource type="ResourceSync" readableType="Sync" />,
+  New: ({ repoId }) => (
+    <NewResource
+      type="ResourceSync"
+      readableType="Sync"
+      config={() => ({ linked_repo: repoId })}
+    />
+  ),
 
   BatchExecutions: () => (
     <BatchExecutions

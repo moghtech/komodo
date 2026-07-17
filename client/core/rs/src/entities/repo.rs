@@ -370,6 +370,13 @@ pub struct RepoQuerySpecifics {
   /// Filter repos by their repo.
   #[serde(default)]
   pub repos: Vec<String>,
+
+  /// Query only for Repos on these Servers.
+  /// If empty, does not filter by Server.
+  /// Only accepts Server id (not name).
+  #[serde(default)]
+  pub server_ids: Vec<String>,
+
   /// Query only for Repos matching these states.
   /// If empty, does not filter by state.
   #[serde(default)]
@@ -380,6 +387,10 @@ impl super::resource::AddFilters for RepoQuerySpecifics {
   fn add_filters(&self, filters: &mut Document) {
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });
+    }
+    if !self.server_ids.is_empty() {
+      filters
+        .insert("config.server_id", doc! { "$in": &self.server_ids });
     }
   }
 }

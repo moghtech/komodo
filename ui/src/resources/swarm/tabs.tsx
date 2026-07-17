@@ -26,14 +26,14 @@ export default function SwarmTabs({ id }: { id: string }) {
   const stacks =
     useRead("ListStacks", {
       query: { specific: { swarm_ids: [id] } },
-      limit: 0,
-    }).data?.filter((stack) => stack.info.swarm_id === id) ?? [];
+      limit: 1,
+    }).data ?? [];
   const noStacks = stacks.length === 0;
   const deployments =
     useRead("ListDeployments", {
       query: { specific: { swarm_ids: [id] } },
-      limit: 0,
-    }).data?.filter((deployment) => deployment.info.swarm_id === id) ?? [];
+      limit: 1,
+    }).data ?? [];
   const noDeployments = deployments.length === 0;
   const noResources = noDeployments && noStacks;
 
@@ -89,14 +89,7 @@ export default function SwarmTabs({ id }: { id: string }) {
       );
       break;
     case "Resources":
-      View = (
-        <SwarmHostedResourcesSection
-          swarmId={id}
-          stacks={stacks}
-          deployments={deployments}
-          titleOther={Selector}
-        />
-      );
+      View = <SwarmHostedResourcesSection swarmId={id} titleOther={Selector} />;
       break;
   }
 

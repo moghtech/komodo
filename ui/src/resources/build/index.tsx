@@ -79,12 +79,15 @@ export const BuildComponents: RequiredResourceComponents<
 
   Description: () => <>Build container images.</>,
 
-  New: ({ builderId: _builderId }) => {
+  New: ({ builderId: _builderId, repoId }) => {
     const [builderId, setBuilderId] = useState("");
     return (
       <NewResource<Types.BuildConfig>
         type="Build"
-        config={() => ({ builder_id: _builderId ?? builderId })}
+        config={() => ({
+          builder_id: _builderId ?? builderId,
+          linked_repo: repoId,
+        })}
         extraInputs={
           !_builderId && (
             <ResourceSelector

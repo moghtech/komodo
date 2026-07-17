@@ -93,6 +93,7 @@ export interface RequiredResourceComponents<
     serverId?: string;
     builderId?: string;
     buildId?: string;
+    repoId?: string;
   }>;
 
   /** A table component to view resource list */
@@ -101,10 +102,7 @@ export interface RequiredResourceComponents<
       resources: Types.ResourceListItem<ListItemInfo>[];
       /** When provided, sorting is handled server side,
        * and sort updates are passed to this callback. */
-      onServerSort?: (sort: {
-        sort_by?: string;
-        sort_desc?: boolean;
-      }) => void;
+      onServerSort?: (sort: { sort_by?: string; sort_desc?: boolean }) => void;
       tableProps?: TableProps;
     } & BoxProps
   >;
