@@ -57,7 +57,9 @@ pub async fn handle_build_webhook<B: super::ExtractBranch>(
       .branch
   };
 
-  B::verify_branch(&body, &branch)?;
+  if !B::branch_matches(&body, &branch)? {
+    return Ok(());
+  }
 
   // Cancel if currently building
   if action_states()
@@ -265,7 +267,9 @@ async fn handle_repo_webhook_inner<
   let lock = repo_locks().get_or_insert_default(&repo.id).await;
   let _lock = lock.lock().await;
 
-  B::verify_branch(&body, &repo.config.branch)?;
+  if !B::branch_matches(&body, &repo.config.branch)? {
+    return Ok(());
+  }
 
   E::resolve(repo).await
 }
@@ -396,7 +400,9 @@ pub async fn handle_stack_webhook_inner<
       .branch
   };
 
-  B::verify_branch(&body, &branch)?;
+  if !B::branch_matches(&body, &branch)? {
+    return Ok(());
+  }
 
   E::resolve(stack).await.map_err(|e| e.error)
 }
@@ -509,7 +515,9 @@ async fn handle_sync_webhook_inner<
       .branch
   };
 
-  B::verify_branch(&body, &branch)?;
+  if !B::branch_matches(&body, &branch)? {
+    return Ok(());
+  }
 
   E::resolve(sync).await
 }
@@ -546,8 +554,10 @@ pub async fn handle_procedure_webhook<B: super::ExtractBranch>(
     procedure_locks().get_or_insert_default(&procedure.id).await;
   let _lock = lock.lock().await;
 
-  if target_branch != ANY_BRANCH {
-    B::verify_branch(&body, target_branch)?;
+  if target_branch != ANY_BRANCH
+    && !B::branch_matches(&body, target_branch)?
+  {
+    return Ok(());
   }
 
   let user = git_webhook_user().to_owned();
@@ -602,7 +612,10 @@ pub async fn handle_action_webhook<B: super::ExtractBranch>(
   let branch = B::extract_branch(&body)?;
 
   if target_branch != ANY_BRANCH && branch != target_branch {
-    return Err(anyhow!("request branch does not match expected"));
+    debug!(
+      "Ignoring webhook | push to branch '{branch}' does not match expected branch '{target_branch}'"
+    );
+    return Ok(());
   }
 
   let user = git_webhook_user().to_owned();
