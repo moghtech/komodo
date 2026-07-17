@@ -2,6 +2,7 @@ import { UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
+import { RowSelectionState } from "@tanstack/react-table";
 
 export function objectKeys<T extends object>(o: T): (keyof T)[] {
   return Object.keys(o) as (keyof T)[];
@@ -280,4 +281,27 @@ export function listsEqual(a: string[], b: string[]) {
     }
   }
   return true;
+}
+
+export function setSelectedStateHandler(
+  state: React.SetStateAction<RowSelectionState>,
+  selectionState: RowSelectionState,
+  setSelectedList: (list: string[]) => void,
+) {
+  switch (typeof state) {
+    case "function":
+      setSelectedList(
+        Object.entries(state(selectionState))
+          .filter((item) => item[1])
+          .map((item) => item[0]),
+      );
+      break;
+    case "object":
+      setSelectedList(
+        Object.entries(state)
+          .filter((item) => item[1])
+          .map((item) => item[0]),
+      );
+      break;
+  }
 }

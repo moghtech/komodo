@@ -7,6 +7,8 @@ import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import ResourceLink from "@/resources/link";
 import FileSource from "@/components/file-source";
+import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Source", "State"];
 
@@ -23,7 +25,12 @@ export default function BuildTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Build");
+  const [selectedResources, setSelectedResources] =
+    useSelectedResources("Build");
+  const selectionState = selectedResources.reduce((state, item) => {
+    state[item] = true;
+    return state;
+  }, {} as RowSelectionState);
 
   return (
     <DataTable
@@ -42,7 +49,15 @@ export default function BuildTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: [
+          selectionState,
+          (state) =>
+            setSelectedStateHandler(
+              state,
+              selectionState,
+              setSelectedResources,
+            ),
+        ],
       }}
       columns={[
         {

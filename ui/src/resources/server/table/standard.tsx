@@ -6,6 +6,8 @@ import { useCallback } from "react";
 import { ServerComponents } from "..";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
+import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Region", "Version", "State"];
 
@@ -22,7 +24,12 @@ export default function StandardServerTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Server");
+  const [selectedResources, setSelectedResources] =
+    useSelectedResources("Server");
+  const selectionState = selectedResources.reduce((state, item) => {
+    state[item] = true;
+    return state;
+  }, {} as RowSelectionState);
   const deployments = useRead("ListDeployments", { limit: 0 }).data;
   const stacks = useRead("ListStacks", { limit: 0 }).data;
   const repos = useRead("ListRepos", { limit: 0 }).data;
@@ -54,7 +61,15 @@ export default function StandardServerTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: [
+          selectionState,
+          (state) =>
+            setSelectedStateHandler(
+              state,
+              selectionState,
+              setSelectedResources,
+            ),
+        ],
       }}
       columns={[
         {

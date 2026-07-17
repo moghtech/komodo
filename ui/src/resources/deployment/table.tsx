@@ -7,6 +7,8 @@ import { DataTable, SortableHeader } from "mogh_ui";
 import { DeploymentComponents } from ".";
 import ResourceLink from "@/resources/link";
 import DeploymentUpdateAvailable from "./update-available";
+import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Image", "Host", "State"];
 
@@ -23,7 +25,12 @@ export default function DeploymentTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Deployment");
+  const [selectedResources, setSelectedResources] =
+    useSelectedResources("Deployment");
+  const selectionState = selectedResources.reduce((state, item) => {
+    state[item] = true;
+    return state;
+  }, {} as RowSelectionState);
 
   return (
     <DataTable
@@ -42,7 +49,15 @@ export default function DeploymentTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: [
+          selectionState,
+          (state) =>
+            setSelectedStateHandler(
+              state,
+              selectionState,
+              setSelectedResources,
+            ),
+        ],
       }}
       columns={[
         {

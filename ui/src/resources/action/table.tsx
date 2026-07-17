@@ -5,6 +5,8 @@ import { ActionComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import ResourceLink from "@/resources/link";
+import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "State", "NextRun"];
 
@@ -16,12 +18,14 @@ export default function ActionTable({
   resources: Types.ActionListItem[];
   /** When provided, sorting is handled server side,
    * and sort updates are passed to this callback. */
-  onServerSort?: (sort: {
-    sort_by?: string;
-    sort_desc?: boolean;
-  }) => void;
+  onServerSort?: (sort: { sort_by?: string; sort_desc?: boolean }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Action");
+  const [selectedResources, setSelectedResources] =
+    useSelectedResources("Action");
+  const selectionState = selectedResources.reduce((state, item) => {
+    state[item] = true;
+    return state;
+  }, {} as RowSelectionState);
   return (
     <DataTable
       {...boxProps}
@@ -30,16 +34,22 @@ export default function ActionTable({
         onServerSort &&
         ((sorting) => {
           const sort = sorting.find((s) => SORT_KEYS.includes(s.id));
-          onServerSort(
-            sort ? { sort_by: sort.id, sort_desc: sort.desc } : {},
-          );
+          onServerSort(sort ? { sort_by: sort.id, sort_desc: sort.desc } : {});
         })
       }
       tableKey="actions-table"
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: [
+          selectionState,
+          (state) =>
+            setSelectedStateHandler(
+              state,
+              selectionState,
+              setSelectedResources,
+            ),
+        ],
       }}
       columns={[
         {

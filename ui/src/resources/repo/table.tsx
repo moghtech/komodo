@@ -6,6 +6,8 @@ import { RepoComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import RepoLink from "@/components/repo-link";
+import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Repo", "Branch", "State"];
 
@@ -22,7 +24,12 @@ export default function RepoTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Repo");
+  const [selectedResources, setSelectedResources] =
+    useSelectedResources("Repo");
+  const selectionState = selectedResources.reduce((state, item) => {
+    state[item] = true;
+    return state;
+  }, {} as RowSelectionState);
 
   return (
     <DataTable
@@ -41,7 +48,15 @@ export default function RepoTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: [
+          selectionState,
+          (state) =>
+            setSelectedStateHandler(
+              state,
+              selectionState,
+              setSelectedResources,
+            ),
+        ],
       }}
       columns={[
         {

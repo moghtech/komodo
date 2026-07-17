@@ -7,6 +7,8 @@ import { useServerStats, useServerThresholds } from "@/resources/server/hooks";
 import { StatCell } from "mogh_ui";
 import ServerVersion from "@/resources/server/version";
 import ServerDiskUsage from "../diskUsage";
+import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 export default function StatsServerTable({
   resources,
@@ -14,7 +16,12 @@ export default function StatsServerTable({
 }: {
   resources: Types.ServerListItem[];
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Server");
+  const [selectedResources, setSelectedResources] =
+    useSelectedResources("Server");
+  const selectionState = selectedResources.reduce((state, item) => {
+    state[item] = true;
+    return state;
+  }, {} as RowSelectionState);
   return (
     <DataTable
       {...boxProps}
@@ -22,7 +29,15 @@ export default function StatsServerTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: [
+          selectionState,
+          (state) =>
+            setSelectedStateHandler(
+              state,
+              selectionState,
+              setSelectedResources,
+            ),
+        ],
       }}
       columns={[
         {

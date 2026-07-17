@@ -6,6 +6,8 @@ import { ResourceSyncComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import FileSource from "@/components/file-source";
+import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "Source", "Branch", "State"];
 
@@ -22,7 +24,12 @@ export default function ResourceSyncTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("ResourceSync");
+  const [selectedResources, setSelectedResources] =
+    useSelectedResources("ResourceSync");
+  const selectionState = selectedResources.reduce((state, item) => {
+    state[item] = true;
+    return state;
+  }, {} as RowSelectionState);
   return (
     <DataTable
       {...boxProps}
@@ -40,7 +47,15 @@ export default function ResourceSyncTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: [
+          selectionState,
+          (state) =>
+            setSelectedStateHandler(
+              state,
+              selectionState,
+              setSelectedResources,
+            ),
+        ],
       }}
       columns={[
         {

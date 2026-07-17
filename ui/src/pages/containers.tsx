@@ -23,6 +23,7 @@ import ResourceMultiSelector from "@/resources/multi-selector";
 import ListPagination from "@/components/list-pagination";
 import DockerBatchExecutions from "@/components/docker/batch-executions";
 import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 const CONTAINER_SORT_KEYS = Object.values(Types.ContainerSortBy);
 
@@ -98,24 +99,12 @@ export default function Containers() {
           selectKey: ({ server_id, name }) => `${server_id} ${name}`,
           state: [
             selectionState,
-            (state) => {
-              switch (typeof state) {
-                case "function":
-                  setSelectedContainers(
-                    Object.entries(state(selectionState))
-                      .filter((item) => item[1])
-                      .map((item) => item[0]),
-                  );
-                  break;
-                case "object":
-                  setSelectedContainers(
-                    Object.entries(state)
-                      .filter((item) => item[1])
-                      .map((item) => item[0]),
-                  );
-                  break;
-              }
-            },
+            (state) =>
+              setSelectedStateHandler(
+                state,
+                selectionState,
+                setSelectedContainers,
+              ),
           ],
         }}
         columns={[

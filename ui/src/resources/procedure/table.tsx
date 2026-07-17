@@ -5,6 +5,8 @@ import ResourceLink from "@/resources/link";
 import { ProcedureComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
+import { RowSelectionState } from "@tanstack/react-table";
+import { setSelectedStateHandler } from "@/lib/utils";
 
 const SORT_KEYS = ["Name", "State", "NextRun"];
 
@@ -21,7 +23,12 @@ export default function ProcedureTable({
     sort_desc?: boolean;
   }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Procedure");
+  const [selectedResources, setSelectedResources] =
+    useSelectedResources("Procedure");
+  const selectionState = selectedResources.reduce((state, item) => {
+    state[item] = true;
+    return state;
+  }, {} as RowSelectionState);
 
   return (
     <DataTable
@@ -40,7 +47,15 @@ export default function ProcedureTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: [
+          selectionState,
+          (state) =>
+            setSelectedStateHandler(
+              state,
+              selectionState,
+              setSelectedResources,
+            ),
+        ],
       }}
       columns={[
         {
