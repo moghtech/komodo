@@ -20,7 +20,7 @@ export default function DeploymentNetworkSelector({
 }: DeploymentNetworkSelectorProps) {
   const _networks =
     useRead(
-      swarmId ? "ListSwarmNetworks" : "ListDockerNetworks",
+      swarmId ? "ListSwarmNetworks" : "ListNetworks",
       { swarm: swarmId, server: serverId! },
       { enabled: !!swarmId || !!serverId },
     )

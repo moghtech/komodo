@@ -4,7 +4,7 @@ use database::mungos::mongodb::bson::doc;
 use komodo_client::{
   api::read::*,
   entities::{
-    builder::{Builder, BuilderListItem},
+    builder::{Builder, BuilderListItem, BuilderSortBy},
     permission::PermissionLevel,
   },
 };
@@ -17,7 +17,7 @@ use crate::{
   state::db_client,
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetBuilder {
   async fn resolve(
@@ -45,12 +45,35 @@ impl Resolve<ReadArgs> for ListBuilders {
     } else {
       get_all_tags(None).await?
     };
+    let limit = list_limit(self.limit);
+    let sort_by: resource::ListItemSort<BuilderListItem> =
+      match self.sort_by {
+        BuilderSortBy::Name => resource::ListItemSort::Name,
+        BuilderSortBy::Provider => {
+          resource::ListItemSort::DbField("config.type")
+        }
+        BuilderSortBy::InstanceType => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .instance_type
+              .cmp(&b.info.instance_type)
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+      };
     Ok(
-      resource::list_for_user::<Builder>(
+      resource::list_items_for_user::<Builder>(
         self.query,
+        resource::ListItemsQueryOptions {
+          limit,
+          page: self.page,
+          sort_desc: self.sort_desc,
+          sort_by,
+        },
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |_| true,
       )
       .await?,
     )
@@ -67,9 +90,12 @@ impl Resolve<ReadArgs> for ListFullBuilders {
     } else {
       get_all_tags(None).await?
     };
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user::<Builder>(
         self.query,
+        limit as i64,
+        self.page.saturating_mul(limit),
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -85,6 +111,8 @@ impl Resolve<ReadArgs> for GetBuildersSummary {
     ReadArgs { user }: &ReadArgs,
   ) -> mogh_error::Result<GetBuildersSummaryResponse> {
     let query = match list_resource_ids_for_user::<Builder>(
+      None,
+      None,
       None,
       user,
       PermissionLevel::Read.into(),

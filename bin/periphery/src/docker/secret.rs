@@ -3,7 +3,8 @@ use std::fmt::Write;
 use anyhow::Context;
 use bollard::query_parameters::ListSecretsOptions;
 use command::{
-  run_komodo_shell_command, run_komodo_standard_command,
+  CommandOptions, run_komodo_shell_command,
+  run_komodo_standard_command,
 };
 use futures_util::{TryStreamExt as _, stream::FuturesUnordered};
 use komodo_client::entities::{
@@ -149,8 +150,12 @@ EOF"#,
 EOF"#
   )?;
 
-  let mut log =
-    run_komodo_shell_command("Create Secret", None, command).await;
+  let mut log = run_komodo_shell_command(
+    "Create Secret",
+    command,
+    CommandOptions::default(),
+  )
+  .await;
 
   log.command = sanitized_command;
 
@@ -165,8 +170,12 @@ pub async fn remove_swarm_secrets(
     command += " ";
     command += secret;
   }
-  run_komodo_standard_command("Remove Swarm Secrets", None, command)
-    .await
+  run_komodo_standard_command(
+    "Remove Swarm Secrets",
+    command,
+    CommandOptions::default(),
+  )
+  .await
 }
 
 pub async fn recreate_swarm_secret(
@@ -344,8 +353,8 @@ async fn switch_service_secret(
 
   let log = run_komodo_standard_command(
     "Switch Service Secret",
-    None,
     command,
+    CommandOptions::default(),
   )
   .await;
 

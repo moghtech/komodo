@@ -23,7 +23,9 @@ export default function ServerVersion({ id }: { id: string }) {
           ) : (
             <ICONS.Check size="1rem" color={hexColorByIntention("Good")} />
           )}
-          <Text>{serverVersion ?? "Unknown"}</Text>
+          <Text style={{ textWrap: "nowrap" }}>
+            {serverVersion ?? "Unknown"}
+          </Text>
         </Group>
       </HoverCard.Target>
       <HoverCard.Dropdown>

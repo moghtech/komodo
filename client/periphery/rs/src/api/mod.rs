@@ -1,6 +1,6 @@
 use komodo_client::entities::{
   FileContents,
-  config::{DockerRegistry, GitProvider},
+  config::{GitProvider, ImageRegistry},
   stack::{StackRemoteFileContents, StackServiceNames},
   update::Log,
 };
@@ -66,11 +66,11 @@ pub type ListGitProvidersResponse = Vec<GitProvider>;
 //
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(ListDockerRegistriesResponse)]
+#[response(ListImageRegistriesResponse)]
 #[error(anyhow::Error)]
-pub struct ListDockerRegistries {}
+pub struct ListImageRegistries {}
 
-pub type ListDockerRegistriesResponse = Vec<DockerRegistry>;
+pub type ListImageRegistriesResponse = Vec<ImageRegistry>;
 
 //
 

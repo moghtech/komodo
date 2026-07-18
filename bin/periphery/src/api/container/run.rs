@@ -2,7 +2,8 @@ use std::fmt::Write;
 
 use anyhow::Context;
 use command::{
-  KomodoCommandMode, run_komodo_command_with_sanitization,
+  CommandOptions, KomodoCommandMode,
+  run_komodo_command_with_sanitization,
 };
 use formatting::format_serror;
 use interpolate::Interpolator;
@@ -92,8 +93,10 @@ impl Resolve<crate::api::Args> for RunContainer {
     let _ = pull_image(image).await;
     debug!("image pulled");
 
+    // Remove the existing container under the previously deployed name,
+    // in case the name configuration changed since the last deploy.
     let _ = (RemoveContainer {
-      name: deployment.name.clone(),
+      name: deployment.deployed_name().to_string(),
       signal: stop_signal,
       time: stop_time,
     })
@@ -107,8 +110,8 @@ impl Resolve<crate::api::Args> for RunContainer {
     let span = info_span!("ExecuteDockerRun");
     let Some(log) = run_komodo_command_with_sanitization(
       "Docker Run",
-      None,
       command,
+      CommandOptions::default(),
       KomodoCommandMode::Shell,
       &replacers,
     )
@@ -125,24 +128,21 @@ impl Resolve<crate::api::Args> for RunContainer {
 }
 
 fn docker_run_command(
-  Deployment {
-    name,
-    config:
-      DeploymentConfig {
-        volumes,
-        ports,
-        network,
-        command,
-        restart,
-        environment,
-        labels,
-        extra_args,
-        ..
-      },
-    ..
-  }: &Deployment,
+  deployment: &Deployment,
   image: &str,
 ) -> anyhow::Result<String> {
+  let name = deployment.custom_name();
+  let DeploymentConfig {
+    volumes,
+    ports,
+    network,
+    command,
+    restart,
+    environment,
+    labels,
+    extra_args,
+    ..
+  } = &deployment.config;
   let mut res =
     format!("docker run -d --name {name} --network {network}");
 

@@ -1,6 +1,8 @@
+use std::time::Duration;
+
 use anyhow::Context;
 use bollard::query_parameters::ListImagesOptions;
-use command::run_komodo_standard_command;
+use command::{CommandOptions, run_komodo_standard_command};
 use komodo_client::entities::docker::{
   GraphDriverData, HealthConfig, container::ContainerListItem,
   image::*,
@@ -193,7 +195,12 @@ pub async fn get_image_digest_from_registry(
   let command = String::from(
     r#"docker buildx imagetools inspect --format "{{json .Manifest}}" "#,
   ) + image;
-  let log = run_komodo_standard_command("", None, command).await;
+  let log = run_komodo_standard_command(
+    "",
+    command,
+    CommandOptions::default().timeout(Duration::from_secs(10)),
+  )
+  .await;
   if !log.success {
     return Err(anyhow::Error::msg(log.combined()));
   }

@@ -1,0 +1,590 @@
+use std::cmp;
+
+use anyhow::{Context as _, anyhow};
+use database::bson::doc;
+use komodo_client::{
+  api::read::*,
+  entities::{
+    ResourceTarget,
+    deployment::Deployment,
+    docker::{
+      container::{
+        Container, ContainerListItem, ContainerSortBy,
+        ContainerStateStatusEnum,
+      },
+      image::{Image, ImageHistoryResponseItem},
+      network::Network,
+      volume::Volume,
+    },
+    permission::PermissionLevel,
+    server::{Server, ServerQuery, ServerState},
+    stack::{Stack, StackServiceNames},
+    update::Log,
+  },
+};
+use mogh_resolver::Resolve;
+use periphery_client::api as periphery;
+
+use crate::{
+  api::read::{ReadArgs, list_limit},
+  helpers::{periphery_client, query::get_all_tags},
+  permission::{get_check_permissions, list_resources_for_user},
+  resource,
+  stack::compose_container_match_regex,
+  state::{db_client, server_status_cache},
+};
+
+impl Resolve<ReadArgs> for GetContainersSummary {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<GetContainersSummaryResponse> {
+    let servers = resource::list_full_for_user::<Server>(
+      Default::default(),
+      None,
+      None,
+      user,
+      PermissionLevel::Read.into(),
+      &[],
+    )
+    .await
+    .context("failed to get servers from db")?;
+
+    let mut res = GetContainersSummaryResponse::default();
+
+    for server in servers {
+      let cache = server_status_cache()
+        .get_or_insert_default(&server.id)
+        .await;
+
+      if let Some(docker) = &cache.docker {
+        for container in &docker.containers {
+          res.total += 1;
+          match container.state {
+            ContainerStateStatusEnum::Created
+            | ContainerStateStatusEnum::Paused
+            | ContainerStateStatusEnum::Exited => res.stopped += 1,
+            ContainerStateStatusEnum::Running => res.running += 1,
+            ContainerStateStatusEnum::Empty => res.unknown += 1,
+            _ => res.unhealthy += 1,
+          }
+        }
+      }
+    }
+
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for ListAllContainers {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListAllContainersResponse> {
+    let all_tags = if self.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+    let servers = resource::list_for_user::<Server>(
+      ServerQuery::builder()
+        .names(self.servers.clone())
+        .tags(self.tags)
+        .build(),
+      None,
+      None,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
+    )
+    .await?;
+
+    let mut containers = Vec::<ContainerListItem>::new();
+    let limit = list_limit(self.limit);
+    // Match terms case insensitively.
+    let terms = self
+      .terms
+      .iter()
+      .map(|term| term.to_lowercase())
+      .collect::<Vec<_>>();
+
+    for server in servers {
+      let cache = server_status_cache()
+        .get_or_insert_default(&server.id)
+        .await;
+      let Some(docker) = &cache.docker else {
+        continue;
+      };
+      containers.extend(
+        docker
+          .containers
+          .iter()
+          .filter(|container| {
+            // Apply state filter if defined.
+            (self.state.is_empty() || self.state.contains(&container.state)) &&
+            // Apply terms filter if defined
+            (terms.is_empty()
+              // Match when all terms contained within a name.
+              || {
+                let name = container.name.to_lowercase();
+                terms.iter().all(|term| name.contains(term))
+              })
+          })
+          .cloned(),
+      );
+    }
+
+    // The containers all come from the in memory status cache,
+    // so all matching containers are collected and sorted
+    // before applying pagination.
+    let compare = |a: &ContainerListItem, b: &ContainerListItem| {
+      match self.sort_by {
+        ContainerSortBy::Name => a.name.cmp(&b.name),
+        ContainerSortBy::Server => a.server_name.cmp(&b.server_name),
+        ContainerSortBy::State => a.state.cmp(&b.state),
+        ContainerSortBy::Image => a.image.cmp(&b.image),
+        ContainerSortBy::Networks => {
+          a.networks.first().cmp(&b.networks.first())
+        }
+        ContainerSortBy::Ports => a
+          .ports
+          .first()
+          .map(|port| port.private_port)
+          .cmp(&b.ports.first().map(|port| port.private_port)),
+        ContainerSortBy::Volumes => {
+          a.volumes.first().cmp(&b.volumes.first())
+        }
+      }
+      // Fall back to name based sorting for equal sort keys.
+      // Inside `compare`, so descending sorts are fully descending,
+      // matching the List<Resource> apis.
+      .then_with(|| a.name.cmp(&b.name))
+    };
+    if self.sort_desc {
+      containers.sort_by(|a, b| compare(b, a));
+    } else {
+      containers.sort_by(|a, b| compare(a, b));
+    }
+
+    let skip = limit.saturating_mul(self.page) as usize;
+    let take = if limit == 0 {
+      usize::MAX
+    } else {
+      limit as usize
+    };
+    Ok(containers.into_iter().skip(skip).take(take).collect())
+  }
+}
+
+impl Resolve<ReadArgs> for ListContainers {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListContainersResponse> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if let Some(docker) = &cache.docker {
+      Ok(docker.containers.clone())
+    } else {
+      Ok(Vec::new())
+    }
+  }
+}
+
+impl Resolve<ReadArgs> for InspectContainer {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Container> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.inspect(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if cache.state != ServerState::Ok {
+      return Err(
+        anyhow!(
+          "Cannot inspect container: server is {:?}",
+          cache.state
+        )
+        .into(),
+      );
+    }
+    let res = periphery_client(&server)
+      .await?
+      .request(periphery::container::InspectContainer {
+        name: self.container,
+      })
+      .await?;
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for GetResourceMatchingContainer {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<GetResourceMatchingContainerResponse> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+
+    // First check deployments with a matching deployed / custom container name.
+    // The empty check is required to avoid matching
+    // deployments with no custom name configured.
+    if !self.container.is_empty()
+      && let Ok(Some(deployment)) = db_client()
+        .deployments
+        .find_one(doc! {
+          "$or": [
+            { "info.deployed_name": &self.container },
+            { "config.custom_name": &self.container },
+          ]
+        })
+        .await
+    {
+      return Ok(GetResourceMatchingContainerResponse {
+        resource: ResourceTarget::Deployment(deployment.id).into(),
+      });
+    }
+
+    // Then check deployments matching by name
+    if let Ok(deployment) =
+      resource::get::<Deployment>(&self.container).await
+      && deployment.custom_name() == self.container
+    {
+      return Ok(GetResourceMatchingContainerResponse {
+        resource: ResourceTarget::Deployment(deployment.id).into(),
+      });
+    }
+
+    // then check stacks
+    let stacks = list_resources_for_user::<Stack>(
+      doc! { "config.server_id": &server.id },
+      None,
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+
+    // check matching stack
+    for stack in stacks {
+      for StackServiceNames {
+        service_name,
+        container_name,
+        ..
+      } in stack
+        .info
+        .deployed_services
+        .unwrap_or(stack.info.latest_services)
+      {
+        let is_match = match compose_container_match_regex(&container_name)
+          .with_context(|| format!("failed to construct container name matching regex for service {service_name}")) 
+        {
+          Ok(regex) => regex,
+          Err(e) => {
+            warn!("{e:#}");
+            continue;
+          }
+        }.is_match(&self.container);
+
+        if is_match {
+          return Ok(GetResourceMatchingContainerResponse {
+            resource: ResourceTarget::Stack(stack.id).into(),
+          });
+        }
+      }
+    }
+
+    Ok(GetResourceMatchingContainerResponse { resource: None })
+  }
+}
+
+const MAX_LOG_LENGTH: u64 = 5000;
+
+impl Resolve<ReadArgs> for GetContainerLog {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Log> {
+    let GetContainerLog {
+      server,
+      container,
+      tail,
+      timestamps,
+    } = self;
+    let server = get_check_permissions::<Server>(
+      &server,
+      user,
+      PermissionLevel::Read.logs(),
+    )
+    .await?;
+    let res = periphery_client(&server)
+      .await?
+      .request(periphery::container::GetContainerLog {
+        name: container,
+        tail: cmp::min(tail, MAX_LOG_LENGTH),
+        timestamps,
+      })
+      .await
+      .context("failed at call to periphery")?;
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for SearchContainerLog {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Log> {
+    let SearchContainerLog {
+      server,
+      container,
+      terms,
+      combinator,
+      invert,
+      timestamps,
+    } = self;
+    let server = get_check_permissions::<Server>(
+      &server,
+      user,
+      PermissionLevel::Read.logs(),
+    )
+    .await?;
+    let res = periphery_client(&server)
+      .await?
+      .request(periphery::container::GetContainerLogSearch {
+        name: container,
+        terms,
+        combinator,
+        invert,
+        timestamps,
+      })
+      .await
+      .context("failed at call to periphery")?;
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for ListComposeProjects {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListComposeProjectsResponse> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if let Some(docker) = &cache.docker {
+      Ok(docker.projects.clone())
+    } else {
+      Ok(Vec::new())
+    }
+  }
+}
+
+impl Resolve<ReadArgs> for ListNetworks {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListNetworksResponse> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if let Some(docker) = &cache.docker {
+      Ok(docker.networks.clone())
+    } else {
+      Ok(Vec::new())
+    }
+  }
+}
+
+impl Resolve<ReadArgs> for InspectNetwork {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Network> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if cache.state != ServerState::Ok {
+      return Err(
+        anyhow!(
+          "Cannot inspect network: server is {:?}",
+          cache.state
+        )
+        .into(),
+      );
+    }
+    let res = periphery_client(&server)
+      .await?
+      .request(periphery::docker::InspectNetwork {
+        name: self.network,
+      })
+      .await?;
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for ListImages {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListImagesResponse> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if let Some(docker) = &cache.docker {
+      Ok(docker.images.clone())
+    } else {
+      Ok(Vec::new())
+    }
+  }
+}
+
+impl Resolve<ReadArgs> for InspectImage {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Image> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if cache.state != ServerState::Ok {
+      return Err(
+        anyhow!("Cannot inspect image: server is {:?}", cache.state)
+          .into(),
+      );
+    }
+    let res = periphery_client(&server)
+      .await?
+      .request(periphery::docker::InspectImage { name: self.image })
+      .await?;
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for ListImageHistory {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Vec<ImageHistoryResponseItem>> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if cache.state != ServerState::Ok {
+      return Err(
+        anyhow!(
+          "Cannot get image history: server is {:?}",
+          cache.state
+        )
+        .into(),
+      );
+    }
+    let res = periphery_client(&server)
+      .await?
+      .request(periphery::docker::ImageHistory { name: self.image })
+      .await?;
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for ListVolumes {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListVolumesResponse> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if let Some(docker) = &cache.docker {
+      Ok(docker.volumes.clone())
+    } else {
+      Ok(Vec::new())
+    }
+  }
+}
+
+impl Resolve<ReadArgs> for InspectVolume {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Volume> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if cache.state != ServerState::Ok {
+      return Err(
+        anyhow!("Cannot inspect volume: server is {:?}", cache.state)
+          .into(),
+      );
+    }
+    let res = periphery_client(&server)
+      .await?
+      .request(periphery::docker::InspectVolume { name: self.volume })
+      .await?;
+    Ok(res)
+  }
+}

@@ -185,7 +185,7 @@ export default function StackConfig({
     {
       label: "Server",
       labelHidden: true,
-      hidden: !!currSwarmId,
+      hidden: swarmsExist && !!currSwarmId,
       fields: {
         server_id: (server_id, set) => {
           return (

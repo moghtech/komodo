@@ -23,12 +23,12 @@ export default function SettingsProviders() {
   return (
     <Stack gap="xl">
       <Providers type="GitProvider" />
-      <Providers type="DockerRegistry" />
+      <Providers type="ImageRegistry" />
     </Stack>
   );
 }
 
-function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
+function Providers({ type }: { type: "GitProvider" | "ImageRegistry" }) {
   const user = useUser().data;
   const disabled = !user?.admin;
   useSetTitle("Providers");
@@ -62,9 +62,9 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
   return (
     <>
       <Section
-        title={type === "DockerRegistry" ? "Registry Accounts" : "Git Accounts"}
+        title={type === "ImageRegistry" ? "Registry Accounts" : "Git Accounts"}
         icon={
-          type === "DockerRegistry" ? (
+          type === "ImageRegistry" ? (
             <ICONS.Image size="1.3rem" />
           ) : (
             <ICONS.Repo size="1.3rem" />

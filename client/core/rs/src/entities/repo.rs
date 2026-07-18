@@ -29,6 +29,9 @@ pub type RepoListItem = ResourceListItem<RepoListItemInfo>;
 pub struct RepoListItemInfo {
   /// The server that repo sits on.
   pub server_id: String,
+  /// The name of the server that repo sits on.
+  #[serde(default)]
+  pub server_name: String,
   /// The builder that builds the repo.
   pub builder_id: String,
   /// Repo last cloned / pulled timestamp in ms.
@@ -57,23 +60,33 @@ pub struct RepoListItemInfo {
 
 #[typeshare]
 #[derive(
-  Debug, Clone, Copy, Default, Serialize, Deserialize, Display,
+  Debug,
+  Clone,
+  Copy,
+  Default,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Serialize,
+  Deserialize,
+  Display,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum RepoState {
-  /// Unknown case
-  #[default]
-  Unknown,
-  /// Last clone / pull successful (or never cloned)
-  Ok,
-  /// Last clone / pull failed
-  Failed,
   /// Currently cloning
   Cloning,
   /// Currently pulling
   Pulling,
   /// Currently building
   Building,
+  /// Last clone / pull successful (or never cloned)
+  Ok,
+  /// Last clone / pull failed
+  Failed,
+  /// Unknown case
+  #[default]
+  Unknown,
 }
 
 #[cfg(feature = "utoipa")]
@@ -333,18 +346,51 @@ pub type RepoQuery = ResourceQuery<RepoQuerySpecifics>;
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum RepoSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by the git repo.
+  Repo,
+  /// Sort by branch.
+  Branch,
+  /// Sort by state.
+  State,
+}
+
+#[typeshare]
+#[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RepoQuerySpecifics {
   /// Filter repos by their repo.
+  #[serde(default)]
   pub repos: Vec<String>,
+
+  /// Query only for Repos on these Servers.
+  /// If empty, does not filter by Server.
+  /// Only accepts Server id (not name).
+  #[serde(default)]
+  pub server_ids: Vec<String>,
+
+  /// Query only for Repos matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<RepoState>,
 }
 
 impl super::resource::AddFilters for RepoQuerySpecifics {
   fn add_filters(&self, filters: &mut Document) {
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });
+    }
+    if !self.server_ids.is_empty() {
+      filters
+        .insert("config.server_id", doc! { "$in": &self.server_ids });
     }
   }
 }

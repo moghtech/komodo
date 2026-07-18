@@ -50,7 +50,7 @@ function NetworkInner({
     data: network,
     isPending,
     isError,
-  } = useRead("InspectDockerNetwork", {
+  } = useRead("InspectNetwork", {
     server: serverId,
     network: networkName,
   });

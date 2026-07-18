@@ -49,7 +49,7 @@ function VolumeInner({
     data: volume,
     isPending,
     isError,
-  } = useRead("InspectDockerVolume", {
+  } = useRead("InspectVolume", {
     server: serverId,
     volume: volumeName,
   });
@@ -62,7 +62,7 @@ function VolumeInner({
   );
 
   const containers = useRead(
-    "ListDockerContainers",
+    "ListContainers",
     {
       server: serverId,
     },

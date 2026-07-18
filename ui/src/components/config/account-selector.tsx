@@ -28,10 +28,10 @@ export default function AccountSelector({
 }: AccountSelectorProps) {
   const [dbRequest, configRequest]:
     | ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-    | ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"] =
+    | ["ListImageRegistryAccounts", "ListImageRegistriesFromConfig"] =
     accountType === "git"
       ? ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-      : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
+      : ["ListImageRegistryAccounts", "ListImageRegistriesFromConfig"];
   const dbAccounts = useRead(dbRequest, {}).data?.filter(
     (account) => account.domain === provider,
   );
