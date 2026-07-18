@@ -203,6 +203,13 @@ impl Log {
       (true, true) => String::from("No log"),
     }
   }
+
+  #[cfg(feature = "svi")]
+  pub fn sanitize(&mut self, replacers: &Vec<(String, String)>) {
+    self.command = svi::replace_in_string(&self.command, replacers);
+    self.stdout = svi::replace_in_string(&self.stdout, replacers);
+    self.stderr = svi::replace_in_string(&self.stderr, replacers);
+  }
 }
 
 /// An update's status

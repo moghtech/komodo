@@ -33,6 +33,7 @@ git.workspace = true
 mogh_error = { workspace = true, features = ["axum"] }
 async_timing_util.workspace = true
 mogh_resolver.workspace = true
+svi.workspace = true
 # external
 hickory-resolver.workspace = true
 serde_yaml_ng.workspace = true

@@ -61,13 +61,6 @@ pub enum KomodoCommandMode {
   Multiline,
 }
 
-pub fn sanitize_string(
-  s: &str,
-  replacers: &[(String, String)],
-) -> String {
-  svi::replace_in_string(s, replacers)
-}
-
 /// Executes the command, and sanitizes the output to avoid exposing secrets in the log.
 ///
 /// Checks to make sure the command is non-empty after being multiline-parsed.
@@ -100,9 +93,9 @@ pub async fn run_komodo_command_with_sanitization(
   }?;
 
   // Sanitize the command and output
-  log.command = sanitize_string(&log.command, replacers);
-  log.stdout = sanitize_string(&log.stdout, replacers);
-  log.stderr = sanitize_string(&log.stderr, replacers);
+  log.command = svi::replace_in_string(&log.command, replacers);
+  log.stdout = svi::replace_in_string(&log.stdout, replacers);
+  log.stderr = svi::replace_in_string(&log.stderr, replacers);
 
   Some(log)
 }
