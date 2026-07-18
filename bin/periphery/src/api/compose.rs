@@ -4,6 +4,7 @@ use anyhow::{Context, anyhow};
 use command::{
   KomodoCommandMode, run_komodo_command_with_sanitization,
   run_komodo_shell_command, run_komodo_standard_command,
+  sanitize_string,
 };
 use formatting::format_serror;
 use git::write_commit_file;
@@ -559,70 +560,48 @@ impl Resolve<crate::api::Args> for ComposeUp {
           return Ok(res);
         }
       };
-      let mode = if wrapped {
-        KomodoCommandMode::Shell
-      } else {
-        KomodoCommandMode::Standard
-      };
       let span = info_span!("GetComposeConfig", command);
-      let Some(config_log) = run_komodo_command_with_sanitization(
-        "Compose Config",
-        run_directory.as_path(),
-        command,
-        mode,
-        &replacers,
-      )
-      .instrument(span)
-      .await
-      else {
-        unreachable!()
+      let mut config_log = if wrapped {
+        run_komodo_shell_command(
+          "Compose Config",
+          run_directory.as_path(),
+          command,
+        )
+        .instrument(span)
+        .await
+      } else {
+        run_komodo_standard_command(
+          "Compose Config",
+          run_directory.as_path(),
+          command,
+        )
+        .instrument(span)
+        .await
       };
       if !config_log.success {
+        config_log.command =
+          sanitize_string(&config_log.command, &replacers);
+        config_log.stdout =
+          sanitize_string(&config_log.stdout, &replacers);
+        config_log.stderr =
+          sanitize_string(&config_log.stderr, &replacers);
         res.logs.push(config_log);
         return Ok(res);
       }
-      let compose =
-        serde_yaml_ng::from_str::<ComposeFile>(&config_log.stdout)
-          .context("Failed to parse compose contents")?;
-      // Store sanitized compose config output
-      res.merged_config = Some(config_log.stdout);
-      for (
-        service_name,
-        ComposeService {
-          container_name,
-          deploy,
-          image,
-        },
-      ) in compose.services
-      {
-        let image = image.unwrap_or_default();
-        match deploy {
-          Some(ComposeServiceDeploy {
-            replicas: Some(replicas),
-          }) if replicas > 1 => {
-            for i in 1..1 + replicas {
-              res.services.push(StackServiceNames {
-                container_name: format!(
-                  "{project_name}-{service_name}-{i}"
-                ),
-                service_name: format!("{service_name}-{i}"),
-                image: image.clone(),
-                image_digest: None,
-              });
-            }
-          }
-          _ => {
-            res.services.push(StackServiceNames {
-              container_name: container_name.unwrap_or_else(|| {
-                format!("{project_name}-{service_name}")
-              }),
-              service_name,
-              image,
-              image_digest: None,
-            });
-          }
-        }
-      }
+      let (services, merged_config) =
+        parse_services_and_sanitized_config(
+          &config_log.stdout,
+          &project_name,
+          &replacers,
+        )?;
+      config_log.command =
+        sanitize_string(&config_log.command, &replacers);
+      config_log.stdout = merged_config.clone();
+      config_log.stderr =
+        sanitize_string(&config_log.stderr, &replacers);
+      res.merged_config = Some(merged_config);
+      res.services.extend(services);
+      res.logs.push(config_log);
     }
 
     if stack.config.run_build {
@@ -779,6 +758,140 @@ impl Resolve<crate::api::Args> for ComposeUp {
     }
 
     Ok(res)
+  }
+}
+
+fn parse_services_and_sanitized_config(
+  raw_config: &str,
+  project_name: &str,
+  replacers: &[(String, String)],
+) -> anyhow::Result<(Vec<StackServiceNames>, String)> {
+  let compose = serde_yaml_ng::from_str::<ComposeFile>(raw_config)
+    .context("Failed to parse compose contents")?;
+  let mut services = Vec::new();
+
+  for (
+    service_name,
+    ComposeService {
+      container_name,
+      deploy,
+      image,
+    },
+  ) in compose.services
+  {
+    let image = image.unwrap_or_default();
+    match deploy {
+      Some(ComposeServiceDeploy {
+        replicas: Some(replicas),
+      }) if replicas > 1 => {
+        for i in 1..1 + replicas {
+          services.push(StackServiceNames {
+            container_name: format!(
+              "{project_name}-{service_name}-{i}"
+            ),
+            service_name: format!("{service_name}-{i}"),
+            image: image.clone(),
+            image_digest: None,
+          });
+        }
+      }
+      _ => {
+        services.push(StackServiceNames {
+          container_name: container_name.unwrap_or_else(|| {
+            format!("{project_name}-{service_name}")
+          }),
+          service_name,
+          image,
+          image_digest: None,
+        });
+      }
+    }
+  }
+
+  Ok((services, sanitize_string(raw_config, replacers)))
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn parses_services_before_sanitizing_compose_config() {
+    let raw_config = r#"
+name: semaphore
+services:
+  semaphore:
+    image: semaphoreui/semaphore:v2.10.35
+    container_name: semaphore
+    environment:
+      SEMAPHORE_DB_USER: semaphore
+"#;
+    let replacers = vec![(
+      String::from("semaphore"),
+      String::from("<SEMAPHORE__SEMAPHORE_DB_USER>"),
+    )];
+
+    let (services, sanitized_config) =
+      parse_services_and_sanitized_config(
+        raw_config,
+        "semaphore",
+        &replacers,
+      )
+      .unwrap();
+
+    assert_eq!(services.len(), 1);
+    assert_eq!(services[0].service_name, "semaphore");
+    assert_eq!(services[0].image, "semaphoreui/semaphore:v2.10.35");
+    assert_eq!(services[0].container_name, "semaphore");
+    assert!(
+      sanitized_config.contains("<SEMAPHORE__SEMAPHORE_DB_USER>")
+    );
+  }
+
+  #[test]
+  fn expands_replicas_from_raw_compose_config() {
+    let raw_config = r#"
+services:
+  worker:
+    image: example/worker:latest
+    environment:
+      SECRET: hunter2
+    deploy:
+      replicas: 2
+"#;
+
+    let replacers = vec![(
+      String::from("hunter2"),
+      String::from("<STACK__SECRET>"),
+    )];
+    let (services, sanitized_config) =
+      parse_services_and_sanitized_config(
+        raw_config, "stack", &replacers,
+      )
+      .unwrap();
+
+    assert_eq!(services.len(), 2);
+    assert_eq!(services[0].service_name, "worker-1");
+    assert_eq!(services[0].container_name, "stack-worker-1");
+    assert_eq!(services[1].service_name, "worker-2");
+    assert_eq!(services[1].container_name, "stack-worker-2");
+    assert!(sanitized_config.contains("<STACK__SECRET>"));
+  }
+
+  #[test]
+  fn rejects_malformed_compose_config() {
+    let error = parse_services_and_sanitized_config(
+      "services: [",
+      "stack",
+      &[],
+    )
+    .unwrap_err();
+
+    assert!(
+      error
+        .to_string()
+        .contains("Failed to parse compose contents")
+    );
   }
 }
 
