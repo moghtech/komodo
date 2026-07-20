@@ -228,7 +228,7 @@ pub async fn commit_all(
   res
 }
 
-async fn ensure_global_git_config_set() {
+pub(crate) async fn ensure_global_git_config_set() {
   let res = run_standard_command(
     "git config --global --get user.email",
     CommandOptions::default(),

@@ -446,6 +446,9 @@ export enum Operation {
 	DestroyStack = "DestroyStack",
 	RunStackService = "RunStackService",
 	CheckStackForUpdate = "CheckStackForUpdate",
+	CreateStackEditBranch = "CreateStackEditBranch",
+	MergeStackEditBranch = "MergeStackEditBranch",
+	DiscardStackEditBranch = "DiscardStackEditBranch",
 	DeployStackService = "DeployStackService",
 	PullStackService = "PullStackService",
 	StartStackService = "StartStackService",
@@ -2439,6 +2442,11 @@ export interface StackActionState {
 	unpausing: boolean;
 	stopping: boolean;
 	destroying: boolean;
+	/**
+	 * An Edit Branch operation (create / merge / discard)
+	 * is running git commands for this Stack.
+	 */
+	editing_branch?: boolean;
 }
 
 export type GetStackActionStateResponse = StackActionState;
@@ -2572,6 +2580,23 @@ export interface StackConfig {
 	repo?: string;
 	/** The branch of the repo. */
 	branch: string;
+	/**
+	 * When set, the Stack is in Edit Branch mode:
+	 * `branch` currently points to a Komodo managed edit branch,
+	 * and this field holds the base branch to squash merge back into.
+	 * Managed by [CreateStackEditBranch][crate::api::write::CreateStackEditBranch] /
+	 * [MergeStackEditBranch][crate::api::write::MergeStackEditBranch] /
+	 * [DiscardStackEditBranch][crate::api::write::DiscardStackEditBranch].
+	 */
+	edit_base_branch?: string;
+	/**
+	 * When set (together with `edit_base_branch`), the Stack was in
+	 * Linked Repo mode before entering Edit Branch mode.
+	 * The linked Repo's git config was copied onto the inline
+	 * git fields for the session, and this holds the Repo id
+	 * to restore on exit.
+	 */
+	edit_linked_repo?: string;
 	/** Optionally set a specific commit hash. */
 	commit?: string;
 	/** Optionally set a specific clone path */
@@ -7197,6 +7222,24 @@ export interface CreateStack {
 	config?: _PartialStackConfig;
 }
 
+/**
+ * Enter Edit Branch mode for a Git Repo stack:
+ * create a new branch on the remote pointing at the current
+ * tip of the configured branch, and switch the stack to it.
+ * Subsequent file saves commit to the edit branch,
+ * keeping the base branch history clean until
+ * [MergeStackEditBranch]. Response: [Update].
+ */
+export interface CreateStackEditBranch {
+	/** The name or id of the target Stack. */
+	stack: string;
+	/**
+	 * Optionally override the edit branch name.
+	 * Default: `komodo/edit/{stack_name}`.
+	 */
+	branch?: string;
+}
+
 /** Create a Swarm. Response: [Swarm]. */
 export interface CreateSwarm {
 	/** The name given to newly created swarm. */
@@ -7637,6 +7680,17 @@ export interface DestroyStack {
 	remove_orphans?: boolean;
 	/** Override the default termination max time. */
 	stop_time?: number;
+}
+
+/**
+ * Exit Edit Branch mode by switching the stack back
+ * to the base branch and deleting the edit branch
+ * on the remote. All commits on the edit branch are discarded.
+ * Response: [Update].
+ */
+export interface DiscardStackEditBranch {
+	/** The name or id of the target Stack. */
+	stack: string;
 }
 
 /** Configuration for a Discord alerter. */
@@ -10194,6 +10248,25 @@ export interface ListVolumes {
 	server: string;
 }
 
+/**
+ * Exit Edit Branch mode by squash merging the edit branch
+ * back into the base branch as a single commit,
+ * switching the stack back to the base branch,
+ * and deleting the edit branch on the remote.
+ * On merge conflict, the stack stays in Edit Branch mode.
+ * Response: [Update].
+ */
+export interface MergeStackEditBranch {
+	/** The name or id of the target Stack. */
+	stack: string;
+	/**
+	 * Optional custom message for the squash commit,
+	 * used as `[Komodo] {username}: {message}`.
+	 * Default: `Merge Stack Edits: update {changed files}`.
+	 */
+	message?: string;
+}
+
 export interface NameAndId {
 	name: string;
 	id: string;
@@ -12113,6 +12186,9 @@ export type WriteRequest =
 	| { type: "UpdateStack", params: UpdateStack }
 	| { type: "RenameStack", params: RenameStack }
 	| { type: "WriteStackFileContents", params: WriteStackFileContents }
+	| { type: "CreateStackEditBranch", params: CreateStackEditBranch }
+	| { type: "MergeStackEditBranch", params: MergeStackEditBranch }
+	| { type: "DiscardStackEditBranch", params: DiscardStackEditBranch }
 	| { type: "RefreshStackCache", params: RefreshStackCache }
 	| { type: "CheckStackForUpdate", params: CheckStackForUpdate }
 	| { type: "BatchCheckStackForUpdate", params: BatchCheckStackForUpdate }

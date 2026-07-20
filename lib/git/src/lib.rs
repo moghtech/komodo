@@ -7,6 +7,7 @@ use komodo_client::entities::{
   LatestCommit, komodo_timestamp, update::Log,
 };
 
+mod branch;
 mod clone;
 mod commit;
 mod init;
@@ -15,6 +16,10 @@ mod pull;
 mod pull_or_clone;
 
 pub use crate::{
+  branch::{
+    delete_remote_branch, push_new_branch, squash_merge,
+    validate_branch_name,
+  },
   clone::clone,
   commit::{commit_all, commit_file, write_commit_file},
   init::init_folder_as_repo,

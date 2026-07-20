@@ -43,7 +43,7 @@ mod variable;
 
 pub use {
   deployment::check_deployment_for_update_inner,
-  stack::check_stack_for_update_inner,
+  stack::{check_stack_for_update_inner, cleanup_stack_edit_branch},
 };
 
 pub struct WriteArgs {
@@ -93,6 +93,9 @@ pub enum WriteRequest {
   UpdateStack(UpdateStack),
   RenameStack(RenameStack),
   WriteStackFileContents(WriteStackFileContents),
+  CreateStackEditBranch(CreateStackEditBranch),
+  MergeStackEditBranch(MergeStackEditBranch),
+  DiscardStackEditBranch(DiscardStackEditBranch),
   RefreshStackCache(RefreshStackCache),
   CheckStackForUpdate(CheckStackForUpdate),
   BatchCheckStackForUpdate(BatchCheckStackForUpdate),

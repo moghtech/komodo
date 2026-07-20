@@ -1263,6 +1263,9 @@ pub enum Operation {
   DestroyStack,
   RunStackService,
   CheckStackForUpdate,
+  CreateStackEditBranch,
+  MergeStackEditBranch,
+  DiscardStackEditBranch,
 
   // Stack (Service)
   DeployStackService,

@@ -53,6 +53,7 @@ impl Busy for StackActionState {
       || self.unpausing
       || self.stopping
       || self.destroying
+      || self.editing_branch
   }
 }
 

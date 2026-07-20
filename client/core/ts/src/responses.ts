@@ -225,6 +225,9 @@ export type WriteResponses = {
   UpdateStack: Types.Stack;
   RenameStack: Types.Update;
   WriteStackFileContents: Types.Update;
+  CreateStackEditBranch: Types.Update;
+  MergeStackEditBranch: Types.Update;
+  DiscardStackEditBranch: Types.Update;
   RefreshStackCache: Types.NoData;
   CheckStackForUpdate: Types.CheckStackForUpdateResponse;
   BatchCheckStackForUpdate: Types.BatchCheckStackForUpdateResponse;

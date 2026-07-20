@@ -459,6 +459,12 @@ impl super::KomodoResource for Stack {
     _update: &mut Update,
   ) -> anyhow::Result<()> {
     stack_status_cache().remove(&resource.id).await;
+    // Best effort cleanup of a leftover remote edit branch.
+    if !resource.config.edit_base_branch.is_empty() {
+      tokio::spawn(crate::api::write::cleanup_stack_edit_branch(
+        resource.clone(),
+      ));
+    }
     Ok(())
   }
 }

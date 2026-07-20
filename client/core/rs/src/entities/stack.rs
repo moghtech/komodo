@@ -464,6 +464,25 @@ pub struct StackConfig {
   #[partial_default(default_branch())]
   pub branch: String,
 
+  /// When set, the Stack is in Edit Branch mode:
+  /// `branch` currently points to a Komodo managed edit branch,
+  /// and this field holds the base branch to squash merge back into.
+  /// Managed by [CreateStackEditBranch][crate::api::write::CreateStackEditBranch] /
+  /// [MergeStackEditBranch][crate::api::write::MergeStackEditBranch] /
+  /// [DiscardStackEditBranch][crate::api::write::DiscardStackEditBranch].
+  #[serde(default)]
+  #[builder(default)]
+  pub edit_base_branch: String,
+
+  /// When set (together with `edit_base_branch`), the Stack was in
+  /// Linked Repo mode before entering Edit Branch mode.
+  /// The linked Repo's git config was copied onto the inline
+  /// git fields for the session, and this holds the Repo id
+  /// to restore on exit.
+  #[serde(default)]
+  #[builder(default)]
+  pub edit_linked_repo: String,
+
   /// Optionally set a specific commit hash.
   #[serde(default)]
   #[builder(default)]
@@ -751,6 +770,8 @@ impl Default for StackConfig {
       git_https: default_git_https(),
       repo: Default::default(),
       branch: default_branch(),
+      edit_base_branch: Default::default(),
+      edit_linked_repo: Default::default(),
       commit: Default::default(),
       clone_path: Default::default(),
       reclone: Default::default(),
@@ -937,6 +958,10 @@ pub struct StackActionState {
   pub unpausing: bool,
   pub stopping: bool,
   pub destroying: bool,
+  /// An Edit Branch operation (create / merge / discard)
+  /// is running git commands for this Stack.
+  #[serde(default)]
+  pub editing_branch: bool,
 }
 
 #[typeshare]

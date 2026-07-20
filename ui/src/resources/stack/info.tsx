@@ -1,13 +1,21 @@
-import { usePermissions, useWrite } from "@/lib/hooks";
+import { useInvalidate, usePermissions, useWrite } from "@/lib/hooks";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
 import { DEFAULT_STACK_FILE_CONTENTS, useFullStack, useStack } from ".";
 import { Types } from "komodo_client";
 import { Section } from "mogh_ui";
-import { Button, Code, Group, Stack, Text } from "@mantine/core";
+import {
+  Badge,
+  Button,
+  Code,
+  Group,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
 import { ConfirmButton } from "mogh_ui";
-import { FilePlus } from "lucide-react";
+import { FilePlus, GitBranchPlus, GitMerge, Trash2 } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
 import { CopyButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
@@ -45,6 +53,56 @@ export default function StackInfo({
   const filesOnHost = stack?.config?.files_on_host ?? false;
   const gitRepo = !!(stack?.config?.repo || stack?.config?.linked_repo);
   const canEdit = canWrite && (filesOnHost || gitRepo);
+
+  const invalidate = useInvalidate();
+  const [squashMessage, setSquashMessage] = useState("");
+  const editBaseBranch = stack?.config?.edit_base_branch;
+  const editMode = !!editBaseBranch;
+  const editLinkedRepo = stack?.config?.edit_linked_repo;
+  const canEnterEditMode =
+    !filesOnHost &&
+    (!!stack?.config?.linked_repo ||
+      (!!stack?.config?.repo && !stack?.config?.commit));
+
+  const editBranchNotify =
+    (success_message: string, failure_message: string) =>
+    (res: Types.Update) => {
+      notifications.show({
+        message: res.success ? success_message : failure_message,
+        color: res.success ? "green" : "red",
+      });
+      invalidate(["GetStack"], ["ListStacks"]);
+    };
+  const { mutate: createEditBranch, isPending: createPending } = useWrite(
+    "CreateStackEditBranch",
+    {
+      onSuccess: editBranchNotify(
+        "Created edit branch.",
+        "Failed to create edit branch.",
+      ),
+    },
+  );
+  const { mutate: mergeEditBranch, isPending: mergePending } = useWrite(
+    "MergeStackEditBranch",
+    {
+      onSuccess: (res) => {
+        editBranchNotify(
+          "Squash merged edit branch.",
+          "Failed to merge edit branch.",
+        )(res);
+        if (res.success) setSquashMessage("");
+      },
+    },
+  );
+  const { mutate: discardEditBranch, isPending: discardPending } = useWrite(
+    "DiscardStackEditBranch",
+    {
+      onSuccess: editBranchNotify(
+        "Discarded edit branch.",
+        "Failed to discard edit branch.",
+      ),
+    },
+  );
   const editFileCallback = (path: string) => (contents: string) =>
     setEdits({ ...edits, [path]: contents });
 
@@ -56,6 +114,86 @@ export default function StackInfo({
 
   return (
     <Section titleOther={titleOther}>
+      {/* Edit Branch mode controls */}
+      {canWrite && (editMode || canEnterEditMode) && (
+        <Group
+          justify="space-between"
+          className="bordered-light"
+          bdrs="md"
+          p="md"
+        >
+          {editMode ? (
+            <>
+              <Group>
+                <Badge color="yellow" variant="light" size="lg">
+                  Editing on {stack?.config?.branch}
+                </Badge>
+                <Text c="dimmed" fz="sm">
+                  base: {editBaseBranch}
+                  {editLinkedRepo && " · linked repo restores on exit"}
+                </Text>
+              </Group>
+              <Group>
+                <TextInput
+                  placeholder="Squash commit message (optional)"
+                  value={squashMessage}
+                  onChange={(e) => setSquashMessage(e.currentTarget.value)}
+                  w={280}
+                />
+                <ConfirmButton
+                  loading={mergePending}
+                  disabled={discardPending}
+                  icon={<GitMerge size="1rem" />}
+                  onClick={() => {
+                    if (stack) {
+                      mergeEditBranch({
+                        stack: stack.name,
+                        message: squashMessage || undefined,
+                      });
+                    }
+                  }}
+                >
+                  Squash & Merge
+                </ConfirmButton>
+                <ConfirmButton
+                  color="red"
+                  variant="outline"
+                  loading={discardPending}
+                  disabled={mergePending}
+                  icon={<Trash2 size="1rem" />}
+                  onClick={() => {
+                    if (stack) {
+                      discardEditBranch({ stack: stack.name });
+                    }
+                  }}
+                >
+                  Discard Branch
+                </ConfirmButton>
+              </Group>
+            </>
+          ) : (
+            <>
+              <Text c="dimmed" fz="sm">
+                Edit on a temporary branch, keeping debug commits off the
+                base branch.
+              </Text>
+              <ConfirmButton
+                variant="outline"
+                loading={createPending}
+                icon={<GitBranchPlus size="1rem" />}
+                onClick={() => {
+                  if (stack) {
+                    createEditBranch({ stack: stack.name });
+                  }
+                }}
+              >
+                Edit on Branch
+              </ConfirmButton>
+            </>
+          )}
+        </Group>
+      )}
+
       {/* Errors */}
       {latestErrors &&
         latestErrors.length > 0 &&

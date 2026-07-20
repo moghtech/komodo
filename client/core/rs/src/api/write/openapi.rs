@@ -33,6 +33,9 @@ use crate::api::write;
     write::update_stack,
     write::rename_stack,
     write::write_stack_file_contents,
+    write::create_stack_edit_branch,
+    write::merge_stack_edit_branch,
+    write::discard_stack_edit_branch,
     write::refresh_stack_cache,
     write::check_stack_for_update,
     // deployment
