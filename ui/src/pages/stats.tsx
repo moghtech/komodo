@@ -73,10 +73,10 @@ type StatType =
   | "Network Egress";
 
 const STAT_TYPES: [StatType, ReactNode][] = [
+  ["Load Average", <ICONS.LoadAvg size="1.1rem" />],
   ["Cpu", <ICONS.Cpu size="1.1rem" />],
   ["Memory", <ICONS.Memory size="1.1rem" />],
   ["Disk", <ICONS.Disk size="1.1rem" />],
-  ["Load Average", <ICONS.LoadAvg size="1.1rem" />],
   ["Network Ingress", <Download size="1.1rem" />],
   ["Network Egress", <Upload size="1.1rem" />],
 ];
