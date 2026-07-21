@@ -374,7 +374,7 @@ impl Resolve<ReadArgs> for GetHistoricalServerStats {
     let curr_ts = unix_timestamp_ms() as i64;
     let mut curr_ts = curr_ts
       - curr_ts % granularity
-      - granularity * STATS_PER_PAGE * page as i64;
+      - granularity * (page as i64).saturating_mul(STATS_PER_PAGE);
     for _ in 0..STATS_PER_PAGE {
       ts_vec.push(curr_ts);
       curr_ts -= granularity;
@@ -388,7 +388,6 @@ impl Resolve<ReadArgs> for GetHistoricalServerStats {
       },
       FindOptions::builder()
         .sort(doc! { "ts": -1 })
-        .skip((page as u64).saturating_mul(STATS_PER_PAGE as u64))
         .limit(STATS_PER_PAGE)
         .build(),
     )
