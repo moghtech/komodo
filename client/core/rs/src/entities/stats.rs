@@ -140,6 +140,76 @@ pub struct SystemStats {
   pub refresh_list_ts: I64,
 }
 
+/// Realtime minimal system stats data (zero allocation)
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct MinimalSystemStats {
+  /// Cpu usage percentage
+  pub cpu_perc: f32,
+  ///  Load average (1m, 5m, 15m)
+  pub load_average: SystemLoadAverage,
+  /// This is really the 'Free' memory, not the 'Available' memory.
+  /// It may be different than mem_total_gb - mem_used_gb.
+  pub mem_free_gb: f64,
+  /// Used memory in GB. 'Total' - 'Available' (not free) memory,
+  /// with the (reclaimable) ZFS ARC cache subtracted out.
+  pub mem_used_gb: f64,
+  /// Total memory in GB
+  pub mem_total_gb: f64,
+  /// Reclaimable page cache + buffers in GB.
+  pub mem_buff_cache_gb: f64,
+  /// ZFS ARC cache in GB. 0 when ZFS is not present.
+  pub mem_zfs_arc_gb: f64,
+  /// Total swap in GB.
+  pub swap_total_gb: f64,
+  /// Used swap in GB.
+  pub swap_used_gb: f64,
+  /// Total size of all disks combined in GB
+  pub disk_total_gb: f64,
+  /// Used portion of all disks combined in GB
+  pub disk_used_gb: f64,
+  /// Network ingress usage in MB
+  pub network_ingress_bytes: f64,
+  /// Network egress usage in MB
+  pub network_egress_bytes: f64,
+  /// The rate the system stats are being polled from the system
+  pub polling_rate: Timelength,
+  /// Unix timestamp in milliseconds when stats were last polled
+  pub refresh_ts: I64,
+  /// Unix timestamp in milliseconds when disk list was last refreshed
+  pub refresh_list_ts: I64,
+}
+
+impl From<&SystemStats> for MinimalSystemStats {
+  fn from(value: &SystemStats) -> Self {
+    Self {
+      cpu_perc: value.cpu_perc,
+      load_average: value.load_average,
+      mem_free_gb: value.mem_free_gb,
+      mem_used_gb: value.mem_used_gb,
+      mem_total_gb: value.mem_total_gb,
+      mem_buff_cache_gb: value.mem_buff_cache_gb,
+      mem_zfs_arc_gb: value.mem_zfs_arc_gb,
+      swap_total_gb: value.swap_total_gb,
+      swap_used_gb: value.swap_used_gb,
+      disk_total_gb: value
+        .disks
+        .iter()
+        .fold(0.0, |total, disk| total + disk.total_gb),
+      disk_used_gb: value
+        .disks
+        .iter()
+        .fold(0.0, |used, disk| used + disk.used_gb),
+      network_ingress_bytes: value.network_ingress_bytes,
+      network_egress_bytes: value.network_egress_bytes,
+      polling_rate: value.polling_rate,
+      refresh_ts: value.refresh_ts,
+      refresh_list_ts: value.refresh_list_ts,
+    }
+  }
+}
+
 /// Info for a single disk mounted on the system.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -220,7 +290,7 @@ pub struct SystemProcess {
 }
 
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SystemLoadAverage {
   /// 1m load average

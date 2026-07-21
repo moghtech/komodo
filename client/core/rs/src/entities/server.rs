@@ -10,7 +10,9 @@ use crate::{
   deserializers::{
     option_string_list_deserializer, string_list_deserializer,
   },
-  entities::{_Serror, MaintenanceWindow, Timelength},
+  entities::{
+    _Serror, MaintenanceWindow, Timelength, stats::MinimalSystemStats,
+  },
 };
 
 use super::{
@@ -40,6 +42,8 @@ pub struct ServerListItemInfo {
   /// If there is an error reaching
   /// the server, message will be given here.
   pub err: Option<_Serror>,
+  /// System stats, if available
+  pub stats: Option<MinimalSystemStats>,
   /// Region of the server.
   pub region: String,
   /// Address of the server, or null if empty.
@@ -476,6 +480,16 @@ pub enum ServerSortBy {
   Version,
   /// Sort by state.
   State,
+  /// Sort by current cpu usage percentage.
+  Cpu,
+  /// Sort by current memory usage percentage.
+  Memory,
+  /// Sort by current disk usage percentage.
+  Disk,
+  /// Sort by current 1m load average.
+  LoadAverage,
+  /// Sort by current network usage (ingress + egress).
+  Network,
 }
 
 #[typeshare]

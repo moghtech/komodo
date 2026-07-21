@@ -1,4 +1,5 @@
 use std::{
+  cmp::Ordering,
   collections::HashMap,
   sync::{Arc, OnceLock},
 };
@@ -19,7 +20,7 @@ use komodo_client::{
       Server, ServerActionState, ServerListItem, ServerSortBy,
       ServerState,
     },
-    stats::{SystemInformation, SystemProcess},
+    stats::{MinimalSystemStats, SystemInformation, SystemProcess},
   },
 };
 use mogh_error::AddStatusCode;
@@ -112,29 +113,43 @@ impl Resolve<ReadArgs> for ListServers {
     };
     let states = self.query.specific.states.clone();
     let limit = list_limit(self.limit);
-    let sort_by: resource::ListItemSort<ServerListItem> =
-      match self.sort_by {
-        ServerSortBy::Name => resource::ListItemSort::Name,
-        ServerSortBy::Region => {
-          resource::ListItemSort::DbField("config.region")
-        }
-        ServerSortBy::Version => {
-          resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info
-              .version
-              .cmp(&b.info.version)
-              .then_with(|| a.name.cmp(&b.name))
-          }))
-        }
-        ServerSortBy::State => {
-          resource::ListItemSort::InMemory(Box::new(|a, b| {
-            a.info
-              .state
-              .cmp(&b.info.state)
-              .then_with(|| a.name.cmp(&b.name))
-          }))
-        }
-      };
+    let sort_by: resource::ListItemSort<ServerListItem> = match self
+      .sort_by
+    {
+      ServerSortBy::Name => resource::ListItemSort::Name,
+      ServerSortBy::Region => {
+        resource::ListItemSort::DbField("config.region")
+      }
+      ServerSortBy::Version => {
+        resource::ListItemSort::InMemory(Box::new(|a, b| {
+          a.info
+            .version
+            .cmp(&b.info.version)
+            .then_with(|| a.name.cmp(&b.name))
+        }))
+      }
+      ServerSortBy::State => {
+        resource::ListItemSort::InMemory(Box::new(|a, b| {
+          a.info
+            .state
+            .cmp(&b.info.state)
+            .then_with(|| a.name.cmp(&b.name))
+        }))
+      }
+      ServerSortBy::Cpu => stats_sort(|stats| stats.cpu_perc as f64),
+      ServerSortBy::Memory => stats_sort(|stats| {
+        usage_percent(stats.mem_used_gb, stats.mem_total_gb)
+      }),
+      ServerSortBy::Disk => stats_sort(|stats| {
+        usage_percent(stats.disk_used_gb, stats.disk_total_gb)
+      }),
+      ServerSortBy::LoadAverage => {
+        stats_sort(|stats| stats.load_average.one)
+      }
+      ServerSortBy::Network => stats_sort(|stats| {
+        stats.network_ingress_bytes + stats.network_egress_bytes
+      }),
+    };
     let servers = resource::list_items_for_user::<Server>(
       self.query,
       resource::ListItemsQueryOptions {
@@ -152,6 +167,33 @@ impl Resolve<ReadArgs> for ListServers {
     )
     .await?;
     Ok(servers)
+  }
+}
+
+/// Build an in memory sort on the list item stats,
+/// matching the stats displayed on the server stats table.
+/// Servers without stats (unreachable / disabled) order last.
+fn stats_sort(
+  metric: fn(&MinimalSystemStats) -> f64,
+) -> resource::ListItemSort<ServerListItem> {
+  resource::ListItemSort::InMemory(Box::new(move |a, b| {
+    match (a.info.stats.as_ref(), b.info.stats.as_ref()) {
+      (Some(a_stats), Some(b_stats)) => {
+        metric(a_stats).total_cmp(&metric(b_stats))
+      }
+      (Some(_), None) => Ordering::Greater,
+      (None, Some(_)) => Ordering::Less,
+      (None, None) => Ordering::Equal,
+    }
+    .then_with(|| a.name.cmp(&b.name))
+  }))
+}
+
+fn usage_percent(used: f64, total: f64) -> f64 {
+  if total > 0.0 {
+    100.0 * used / total
+  } else {
+    0.0
   }
 }
 

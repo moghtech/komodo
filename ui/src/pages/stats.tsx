@@ -25,6 +25,7 @@ import { Types } from "komodo_client";
 import { ChartLine, Download, Upload } from "lucide-react";
 import {
   fmtSizeBytes,
+  fmtUpperCamelcase,
   InfoCard,
   Page,
   SearchInput,
@@ -67,9 +68,9 @@ type StatType =
   | "Cpu"
   | "Memory"
   | "Disk"
+  | "Load Average"
   | "Network Ingress"
-  | "Network Egress"
-  | "Load Average";
+  | "Network Egress";
 
 const STAT_TYPES: [StatType, ReactNode][] = [
   ["Cpu", <ICONS.Cpu size="1.1rem" />],
@@ -94,10 +95,21 @@ export default function Stats() {
   });
   const tags = useTagsFilter();
 
+  // Server side sort, passed up from the table.
+  const [sortBy, setSortBy] = useLocalStorage<Types.ServerSortBy>({
+    key: "stats.sort.v1",
+    defaultValue: Types.ServerSortBy.LoadAverage,
+  });
+
   const servers =
     useRead(
       "ListServers",
-      { query: { terms, tags }, limit: 0 },
+      {
+        query: { terms, tags },
+        limit: 0,
+        sort_by: sortBy,
+        sort_desc: true,
+      },
       { refetchInterval: 30_000, placeholderData: keepPreviousData },
     ).data ?? [];
 
@@ -131,7 +143,7 @@ export default function Stats() {
             serverColors={serverColors}
           />
           <Section title="Servers" icon={<ICONS.Server size="1.3rem" />}>
-            <StatsServerTable resources={filteredServers} />
+            <StatsServerTable resources={filteredServers} disableSorting />
           </Section>
         </>
       ),
@@ -146,11 +158,32 @@ export default function Stats() {
     >
       <Stack>
         <Group justify="space-between">
-          <ResourceMultiSelector
-            type="Server"
-            value={selectedServers}
-            onChange={setSelectedServers}
-          />
+          <Group w={{ base: "100%", xs: "fit-content" }}>
+            <ResourceMultiSelector
+              type="Server"
+              value={selectedServers}
+              onChange={setSelectedServers}
+            />
+            <Select
+              value={sortBy}
+              onChange={(s) => setSortBy(s ?? Types.ServerSortBy.LoadAverage)}
+              data={[
+                Types.ServerSortBy.LoadAverage,
+                Types.ServerSortBy.Cpu,
+                Types.ServerSortBy.Memory,
+                Types.ServerSortBy.Disk,
+                Types.ServerSortBy.Network,
+              ].map((s) => ({ value: s, label: fmtUpperCamelcase(s) }))}
+              allowDeselect={false}
+              leftSection={
+                <Text c="dimmed" size="sm" ml="2">
+                  Sort By:
+                </Text>
+              }
+              leftSectionWidth={64}
+              leftSectionPointerEvents="none"
+            />
+          </Group>
 
           <Group w={{ base: "100%", xs: "fit-content" }}>
             <TagsFilter />
@@ -165,18 +198,6 @@ export default function Stats() {
 }
 
 function CurrentStatsSummary({ servers }: { servers: Types.ServerListItem[] }) {
-  const statsQueries = useQueries({
-    queries: servers.map((server) => ({
-      // Matches the useRead("GetSystemStats", ...) query key,
-      // so the cache is shared with the server table cells below.
-      queryKey: ["GetSystemStats", { server: server.id }],
-      queryFn: () =>
-        komodo_client().read("GetSystemStats", { server: server.id }),
-      enabled: server.info.state === Types.ServerState.Ok,
-      refetchInterval: 10_000,
-    })),
-  });
-
   const okCount = servers.filter(
     (server) => server.info.state === Types.ServerState.Ok,
   ).length;
@@ -185,21 +206,17 @@ function CurrentStatsSummary({ servers }: { servers: Types.ServerListItem[] }) {
   ).length;
   const unreachableCount = servers.length - okCount - disabledCount;
 
-  const stats = statsQueries.flatMap((query) => query.data ?? []);
+  // The list items already carry the latest stats,
+  // no per server stats queries needed.
+  const stats = servers.flatMap((server) => server.info.stats ?? []);
   const cpu =
     stats.length > 0
       ? stats.reduce((acc, s) => acc + s.cpu_perc, 0) / stats.length
       : 0;
   const memUsed = stats.reduce((acc, s) => acc + s.mem_used_gb, 0);
   const memTotal = stats.reduce((acc, s) => acc + s.mem_total_gb, 0);
-  const diskUsed = stats.reduce(
-    (acc, s) => acc + s.disks.reduce((acc, disk) => acc + disk.used_gb, 0),
-    0,
-  );
-  const diskTotal = stats.reduce(
-    (acc, s) => acc + s.disks.reduce((acc, disk) => acc + disk.total_gb, 0),
-    0,
-  );
+  const diskUsed = stats.reduce((acc, s) => acc + s.disk_used_gb, 0);
+  const diskTotal = stats.reduce((acc, s) => acc + s.disk_total_gb, 0);
 
   return (
     <Section>

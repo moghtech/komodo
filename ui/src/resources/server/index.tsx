@@ -325,7 +325,7 @@ export const ServerComponents: RequiredResourceComponents<
       if (dontShow) {
         return null;
       }
-      const pending = isPending || starting;
+      const pending = isPending || !!starting;
       return (
         server && (
           <ConfirmButton
@@ -349,7 +349,7 @@ export const ServerComponents: RequiredResourceComponents<
         { server: id },
         { refetchInterval: 5_000 },
       ).data?.restarting_containers;
-      const pending = isPending || restarting;
+      const pending = isPending || !!restarting;
       return (
         server && (
           <ConfirmModalWithDisable
@@ -383,7 +383,7 @@ export const ServerComponents: RequiredResourceComponents<
       if (dontShow) {
         return null;
       }
-      const pending = isPending || pausing;
+      const pending = isPending || !!pausing;
       return (
         server && (
           <ConfirmModalWithDisable
@@ -418,7 +418,7 @@ export const ServerComponents: RequiredResourceComponents<
       if (dontShow) {
         return null;
       }
-      const pending = isPending || unpausing;
+      const pending = isPending || !!unpausing;
       return (
         server && (
           <ConfirmButton
@@ -440,7 +440,7 @@ export const ServerComponents: RequiredResourceComponents<
         { server: id },
         { refetchInterval: 5_000 },
       ).data?.stopping_containers;
-      const pending = isPending || stopping;
+      const pending = isPending || !!stopping;
       return (
         server && (
           <ConfirmModalWithDisable

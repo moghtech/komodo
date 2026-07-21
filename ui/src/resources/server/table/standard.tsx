@@ -17,10 +17,7 @@ export default function StandardServerTable({
   resources: Types.ServerListItem[];
   /** When provided, sorting is handled server side,
    * and sort updates are passed to this callback. */
-  onServerSort?: (sort: {
-    sort_by?: string;
-    sort_desc?: boolean;
-  }) => void;
+  onServerSort?: (sort: { sort_by?: string; sort_desc?: boolean }) => void;
 } & BoxProps) {
   const selectionState = useResourceSelectionState("Server");
   const deployments = useRead("ListDeployments", { limit: 0 }).data;
@@ -45,9 +42,7 @@ export default function StandardServerTable({
         onServerSort &&
         ((sorting) => {
           const sort = sorting.find((s) => SORT_KEYS.includes(s.id));
-          onServerSort(
-            sort ? { sort_by: sort.id, sort_desc: sort.desc } : {},
-          );
+          onServerSort(sort ? { sort_by: sort.id, sort_desc: sort.desc } : {});
         })
       }
       tableKey="standard-server-table"

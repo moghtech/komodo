@@ -750,10 +750,10 @@ domhandler@^5.0.2, domhandler@^5.0.3:
   dependencies:
     domelementtype "^2.3.0"
 
-dompurify@3.2.7:
-  version "3.2.7"
-  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.2.7.tgz#721d63913db5111dd6dfda8d3a748cfd7982d44a"
-  integrity sha512-WhL/YuveyGXJaerVlMYGWhvQswa7myDG17P7Vu65EWC05o8vfeNbvNf4d/BOvH99+ZW+LlQsc1GDKMa1vNK6dw==
+dompurify@3.4.8:
+  version "3.4.8"
+  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.4.8.tgz#6c54f8c207160e7f83fcb7f4fd05a82ac36b1cdc"
+  integrity sha512-yb1cEmaOum7wFvOCSQxyfgVlv5D47Rc30iZWoMpbDIWTnJ6grDDQyu2KFJzB2k7u0pMuJcQ1zphH//fFnw2tjQ==
   optionalDependencies:
     "@types/trusted-types" "^2.0.7"
 
@@ -1013,17 +1013,17 @@ mogh_auth_client@^1.7.0:
   dependencies:
     jwt-decode "^4.0.0"
 
-mogh_ui@^0.7.3:
-  version "0.7.3"
-  resolved "https://registry.yarnpkg.com/mogh_ui/-/mogh_ui-0.7.3.tgz#7aea4de43d2dc91c93fab09bd2a179f7ef434ac7"
-  integrity sha512-wVwkatCKmX/WB3lpowEPOy4q3o9o3hvG4rhiqdXyp/zyC7B14Bi5yT2BFiEcbzZ9jGx2/fC4c5SBCQYGGFyr0A==
+mogh_ui@^0.7.5:
+  version "0.7.5"
+  resolved "https://registry.yarnpkg.com/mogh_ui/-/mogh_ui-0.7.5.tgz#93efc0a9902332de76e6b820f23107c6c7a447d2"
+  integrity sha512-5Qszs5AlgYojPmQhYlSk4inRnuDwX1qUsERF7di5WkrfHwyEdf7FE7/DxQ2g8BJAP13SjibQ73mHSNilb1jRzA==
 
-monaco-editor@^0.55.1:
-  version "0.55.1"
-  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.55.1.tgz#e74c6fe5a6bf985b817d2de3eb88d56afc494a1b"
-  integrity sha512-jz4x+TJNFHwHtwuV9vA9rMujcZRb0CEilTEwG2rRSpe/A7Jdkuj8xPKttCgOh+v/lkHy7HsZ64oj+q3xoAFl9A==
+monaco-editor@^0.56.0:
+  version "0.56.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.56.0.tgz#e85ac00b7ab7092ca1d077894504919af5073cf0"
+  integrity sha512-sXboRm3BeBeLm938eaiyLMe0OxzfXIlZvbv4ir/jVgQy1zDhWjgmny0WoN45fuDKhCCQsYMbBJrv/A6jd8aCUg==
   dependencies:
-    dompurify "3.2.7"
+    dompurify "3.4.8"
     marked "14.0.0"
 
 monaco-languageserver-types@^0.4.0:

@@ -935,6 +935,16 @@ export var ServerSortBy;
     ServerSortBy["Version"] = "Version";
     /** Sort by state. */
     ServerSortBy["State"] = "State";
+    /** Sort by current cpu usage percentage. */
+    ServerSortBy["Cpu"] = "Cpu";
+    /** Sort by current memory usage percentage. */
+    ServerSortBy["Memory"] = "Memory";
+    /** Sort by current disk usage percentage. */
+    ServerSortBy["Disk"] = "Disk";
+    /** Sort by current 1m load average. */
+    ServerSortBy["LoadAverage"] = "LoadAverage";
+    /** Sort by current network usage (ingress + egress). */
+    ServerSortBy["Network"] = "Network";
 })(ServerSortBy || (ServerSortBy = {}));
 export var StackSortBy;
 (function (StackSortBy) {

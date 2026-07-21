@@ -2475,15 +2475,17 @@ export interface ServerActionState {
     /** Server currently pruning system */
     pruning_system: boolean;
     /** Server currently starting containers. */
-    starting_containers: boolean;
+    starting_containers: number;
     /** Server currently restarting containers. */
-    restarting_containers: boolean;
+    restarting_containers: number;
     /** Server currently pausing containers. */
-    pausing_containers: boolean;
+    pausing_containers: number;
     /** Server currently unpausing containers. */
-    unpausing_containers: boolean;
+    unpausing_containers: number;
     /** Server currently stopping containers. */
-    stopping_containers: boolean;
+    stopping_containers: number;
+    /** Server currently destroying containers. */
+    destroying_containers: number;
 }
 export type GetServerActionStateResponse = ServerActionState;
 /** Server configuration. */
@@ -5364,6 +5366,47 @@ export interface __Serror {
     trace: string[];
 }
 export type _Serror = __Serror;
+/** Realtime minimal system stats data (zero allocation) */
+export interface MinimalSystemStats {
+    /** Cpu usage percentage */
+    cpu_perc: number;
+    /** Load average (1m, 5m, 15m) */
+    load_average: SystemLoadAverage;
+    /**
+     * This is really the 'Free' memory, not the 'Available' memory.
+     * It may be different than mem_total_gb - mem_used_gb.
+     */
+    mem_free_gb: number;
+    /**
+     * Used memory in GB. 'Total' - 'Available' (not free) memory,
+     * with the (reclaimable) ZFS ARC cache subtracted out.
+     */
+    mem_used_gb: number;
+    /** Total memory in GB */
+    mem_total_gb: number;
+    /** Reclaimable page cache + buffers in GB. */
+    mem_buff_cache_gb: number;
+    /** ZFS ARC cache in GB. 0 when ZFS is not present. */
+    mem_zfs_arc_gb: number;
+    /** Total swap in GB. */
+    swap_total_gb: number;
+    /** Used swap in GB. */
+    swap_used_gb: number;
+    /** Total size of all disks combined in GB */
+    disk_total_gb: number;
+    /** Used portion of all disks combined in GB */
+    disk_used_gb: number;
+    /** Network ingress usage in MB */
+    network_ingress_bytes: number;
+    /** Network egress usage in MB */
+    network_egress_bytes: number;
+    /** The rate the system stats are being polled from the system */
+    polling_rate: Timelength;
+    /** Unix timestamp in milliseconds when stats were last polled */
+    refresh_ts: I64;
+    /** Unix timestamp in milliseconds when disk list was last refreshed */
+    refresh_list_ts: I64;
+}
 export interface ServerListItemInfo {
     /** The server's state. */
     state: ServerState;
@@ -5372,6 +5415,8 @@ export interface ServerListItemInfo {
      * the server, message will be given here.
      */
     err?: _Serror;
+    /** System stats, if available */
+    stats?: MinimalSystemStats;
     /** Region of the server. */
     region: string;
     /** Address of the server, or null if empty. */
@@ -9359,7 +9404,17 @@ export declare enum ServerSortBy {
     /** Sort by periphery version. */
     Version = "Version",
     /** Sort by state. */
-    State = "State"
+    State = "State",
+    /** Sort by current cpu usage percentage. */
+    Cpu = "Cpu",
+    /** Sort by current memory usage percentage. */
+    Memory = "Memory",
+    /** Sort by current disk usage percentage. */
+    Disk = "Disk",
+    /** Sort by current 1m load average. */
+    LoadAverage = "LoadAverage",
+    /** Sort by current network usage (ingress + egress). */
+    Network = "Network"
 }
 /** List servers matching optional query. Response: [ListServersResponse]. */
 export interface ListServers {

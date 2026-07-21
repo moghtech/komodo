@@ -144,8 +144,6 @@ export default function ResourceTable({
     return <ResourceNotFound type={type} />;
   }
 
-  console.log(newProps)
-
   return (
     <Stack {...stackProps}>
       <Group justify="space-between" w="100%">
