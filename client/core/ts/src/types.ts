@@ -227,7 +227,9 @@ export type AlerterEndpoint =
 	/** Send alert to Ntfy */
 	| { type: "Ntfy", params: NtfyAlerterEndpoint }
 	/** Send alert to Pushover */
-	| { type: "Pushover", params: PushoverAlerterEndpoint };
+	| { type: "Pushover", params: PushoverAlerterEndpoint }
+	/** Send alert to Pinglet */
+	| { type: "Pinglet", params: PingletAlerterEndpoint };
 
 /** Used to reference a specific resource across all resource types */
 export type ResourceTarget = 
@@ -9302,6 +9304,21 @@ export interface PushRecentlyViewed {
 export interface PushoverAlerterEndpoint {
 	/** The pushover URL including application and user tokens in parameters. */
 	url: string;
+}
+
+/** Configuration for a Pinglet alerter. */
+export interface PingletAlerterEndpoint {
+	/**
+	 * The Pinglet topic publish URL,
+	 * ie `https://app.pinglet.co.uk/<namespace>/<topic>`
+	 */
+	url: string;
+	/**
+	 * The Pinglet API key, sent as a Bearer token.
+	 * Supports variable / secret interpolation,
+	 * eg `[[PINGLET_API_KEY]]`.
+	 */
+	token?: string;
 }
 
 /** Trigger a refresh of the cached latest hash and message. */

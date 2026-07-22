@@ -8,6 +8,7 @@ const ENDPOINT_TYPES: Types.AlerterEndpoint["type"][] = [
   "Slack",
   "Ntfy",
   "Pushover",
+  "Pinglet",
 ] as const;
 
 export default function AlerterConfigEndpoint({
@@ -65,6 +66,21 @@ export default function AlerterConfigEndpoint({
           email
         />
       )}
+      {endpoint.type === "Pinglet" && (
+        <ConfigInput
+          label="Token"
+          description="The Pinglet API key, sent as a Bearer token. Supports interpolation of Komodo Variables / Secrets, eg [[PINGLET_API_KEY]]."
+          placeholder="[[PINGLET_API_KEY]]"
+          value={endpoint.params.token}
+          onValueChange={(token) =>
+            set({
+              ...endpoint,
+              params: { ...endpoint.params, token },
+            })
+          }
+          disabled={disabled}
+        />
+      )}
     </>
   );
 }
@@ -80,5 +96,7 @@ function defaultUrl(type: Types.AlerterEndpoint["type"]) {
           ? "https://ntfy.sh/komodo"
           : type === "Pushover"
             ? "https://api.pushover.net/1/messages.json?token=XXXXXXXXXXXXX&user=XXXXXXXXXXXXX"
-            : "";
+            : type === "Pinglet"
+              ? "https://app.pinglet.co.uk/namespace/komodo"
+              : "";
 }
