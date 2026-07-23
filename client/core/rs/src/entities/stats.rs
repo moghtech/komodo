@@ -18,10 +18,16 @@ pub struct SystemInformation {
   pub kernel: Option<String>,
   /// Physical core count
   pub core_count: Option<u32>,
+  /// Logical core count.
+  pub logical_core_count: Option<u32>,
   /// System hostname based off DNS
   pub host_name: Option<String>,
   /// The CPU's brand
+  #[serde(default)]
   pub cpu_brand: String,
+  /// CPU architecture (eg. x86_64, aarch64, arm64)
+  #[serde(default)]
+  pub cpu_arch: String,
 }
 
 /// System stats stored on the database.

@@ -15,11 +15,12 @@ export function ServerLoadAverage({
   if (!stats?.load_average) return null;
   const { one = 0, five = 0, fifteen = 0 } = stats.load_average || {};
   const isServerAvailable = useIsServerAvailable(id);
-  const cores = useRead(
+  const sysInfo = useRead(
     "GetSystemInformation",
     { server: id },
     { enabled: isServerAvailable },
-  ).data?.core_count;
+  ).data;
+  const cores = sysInfo?.logical_core_count || sysInfo?.core_count;
 
   const pct = (load: number) =>
     cores && cores > 0 ? Math.min((load / cores) * 100, 100) : undefined;
@@ -37,13 +38,13 @@ export function ServerLoadAverage({
     <InfoCard title="Load Average" w={{ base: "100%", lg: 300 }}>
       {/* CURRENT LOAD */}
       <Stack gap="0.4rem">
-        <Group justify="space-between" align="end">
+        <Group justify="space-between" align="end" gap="xs">
           <Text c={textColor(one)} fz="h2" fw="bold">
             {one.toFixed(2)}
           </Text>
           <Text c="dimmed">
             {cores && cores > 0
-              ? `${(pct(one) ?? 0).toFixed(0)}% of ${cores} cores`
+              ? `${(pct(one) ?? 0).toFixed(0)}% of ${cores} Cores`
               : "N/A"}
           </Text>
         </Group>

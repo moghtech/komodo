@@ -2992,10 +2992,17 @@ export interface SystemInformation {
     kernel?: string;
     /** Physical core count */
     core_count?: number;
+    /**
+     * Logical core count. If available,
+     * used to interpret system load accurately.
+     */
+    logical_core_count?: number;
     /** System hostname based off DNS */
     host_name?: string;
     /** The CPU's brand */
-    cpu_brand: string;
+    cpu_brand?: string;
+    /** CPU architecture (eg. x86_64, aarch64, arm64) */
+    cpu_arch?: string;
 }
 export type GetSystemInformationResponse = SystemInformation;
 export interface SystemLoadAverage {
@@ -5417,6 +5424,10 @@ export interface ServerListItemInfo {
     err?: _Serror;
     /** System stats, if available */
     stats?: MinimalSystemStats;
+    /** The server's number of physical cores. */
+    core_count?: number;
+    /** The server's number of logical cores. */
+    logical_core_count?: number;
     /** Region of the server. */
     region: string;
     /** Address of the server, or null if empty. */

@@ -205,11 +205,13 @@ fn get_system_information(
     kernel: System::kernel_version(),
     host_name: System::host_name(),
     core_count: System::physical_core_count().map(|c| c as u32),
+    logical_core_count: Some(sys.cpus().len() as u32),
     cpu_brand: sys
       .cpus()
       .iter()
       .next()
       .map(|cpu| cpu.brand().to_string())
       .unwrap_or_default(),
+    cpu_arch: System::cpu_arch(),
   }
 }

@@ -198,6 +198,8 @@ function LoadAvgCell({ server }: { server: Types.ServerListItem }) {
   const one = stats?.load_average?.one;
   const five = stats?.load_average?.five;
   const fifteen = stats?.load_average?.fifteen;
+  const logicalCores = server.info.logical_core_count;
+  const physicalCores = server.info.core_count;
   return (
     <Group gap="xs" wrap="nowrap">
       <Group gap="0.2rem" wrap="nowrap">
@@ -224,6 +226,11 @@ function LoadAvgCell({ server }: { server: Types.ServerListItem }) {
           {fifteen !== undefined ? fifteen.toFixed(2) : "N/A"}
         </Text>
       </Group>
+      {logicalCores && (
+        <Text c="dimmed" size="sm">
+          {logicalCores} / {physicalCores} Core{logicalCores === 1 ? "" : "s"}
+        </Text>
+      )}
     </Group>
   );
 }
