@@ -66,7 +66,6 @@ export default function DeploymentImageConfig({
             buildId={image.params.build_id}
             selected={image.params.version}
             onSelect={(version) => {
-              console.log(version);
               setUpdate({
                 image: {
                   ...image,
