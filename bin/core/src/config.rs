@@ -433,6 +433,12 @@ pub fn core_config() -> &'static CoreConfig {
       ssl_cert_file: env
         .komodo_ssl_cert_file
         .unwrap_or(config.ssl_cert_file),
+      reporting_enabled: env
+        .komodo_reporting_enabled
+        .unwrap_or(config.reporting_enabled),
+      reporting_private_key: env
+        .komodo_reporting_private_key
+        .unwrap_or(config.reporting_private_key),
       ui_path: env.komodo_ui_path.unwrap_or(config.ui_path),
       ui_index_force_no_cache: env
         .komodo_ui_index_force_no_cache

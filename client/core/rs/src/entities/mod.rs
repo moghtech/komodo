@@ -35,6 +35,8 @@ pub mod build;
 pub mod builder;
 /// [core config][config::core] and [periphery config][config::periphery]
 pub mod config;
+/// Subtypes of [CoreReport][core_report::CoreReport]
+pub mod core_report;
 /// Subtypes of [Deployment][deployment::Deployment].
 pub mod deployment;
 /// Networks, Images, Containers.

@@ -296,6 +296,11 @@ pub struct Env {
   /// Override `ssl_cert_file`
   pub komodo_ssl_cert_file: Option<String>,
 
+  /// Override `reporting_enabled`
+  pub komodo_reporting_enabled: Option<bool>,
+  /// Override `reporting_private_key`
+  pub komodo_reporting_private_key: Option<String>,
+
   /// Override `ui_path`
   pub komodo_ui_path: Option<String>,
   /// Override `ui_index_force_no_cache`
@@ -771,6 +776,28 @@ pub struct CoreConfig {
   #[serde(default = "default_ssl_cert_file")]
   pub ssl_cert_file: String,
 
+  // =============
+  // = Reporting =
+  // =============
+  /// If passed, enables semi-anonymous reporting to https://mogh.tech/komodo/report.
+  /// Reports are only identified by the specific
+  /// private key ([CoreConfig::reporting_private_key]) used
+  /// to sign the report.
+  #[serde(default)]
+  pub reporting_enabled: bool,
+
+  /// Private key to sign the core reports.
+  ///
+  /// Supports openssl generated pem file, `openssl genpkey -algorithm X25519 -out private.key`.
+  /// To load from file, use `private_key = "file:/path/to/private.key"`.
+  ///
+  /// If a file is specified and does not exist, will try to generate one at the path
+  /// and use it going forward.
+  ///
+  /// Default: file:/config/keys/core-reporting.key
+  #[serde(default = "default_reporting_private_key")]
+  pub reporting_private_key: String,
+
   // =========
   // = Other =
   // =========
@@ -819,6 +846,10 @@ fn default_core_bind_ip() -> String {
 
 fn default_private_key() -> String {
   String::from("file:/config/keys/core.key")
+}
+
+fn default_reporting_private_key() -> String {
+  String::from("file:/config/keys/core-reporting.key")
 }
 
 fn default_default_pagination_limit() -> u64 {
@@ -970,6 +1001,8 @@ impl Default for CoreConfig {
       ssl_enabled: Default::default(),
       ssl_key_file: default_ssl_key_file(),
       ssl_cert_file: default_ssl_cert_file(),
+      reporting_enabled: Default::default(),
+      reporting_private_key: default_reporting_private_key(),
       ui_path: default_ui_path(),
       ui_index_force_no_cache: Default::default(),
       sync_directory: default_sync_directory(),
@@ -1106,10 +1139,18 @@ impl CoreConfig {
           provider
         })
         .collect(),
-
       ssl_enabled: config.ssl_enabled,
       ssl_key_file: config.ssl_key_file,
       ssl_cert_file: config.ssl_cert_file,
+      reporting_enabled: config.reporting_enabled,
+      reporting_private_key: if self
+        .reporting_private_key
+        .starts_with("file:")
+      {
+        self.reporting_private_key.clone()
+      } else {
+        empty_or_redacted(&self.reporting_private_key)
+      },
       ui_path: config.ui_path,
       ui_index_force_no_cache: config.ui_index_force_no_cache,
       repo_directory: config.repo_directory,
