@@ -15,6 +15,7 @@ use komodo_client::entities::{
 };
 use mogh_resolver::Resolve;
 use periphery_client::api::container::*;
+use shell_escape::unix::escape;
 
 use crate::{
   docker::{stats::get_container_stats, stop_container_command},
@@ -94,6 +95,7 @@ impl Resolve<crate::api::Args> for GetContainerLogSearch {
     } else {
       Default::default()
     };
+    let name = escape(name.into());
     let command = format!(
       "docker logs {name} --tail 5000{timestamps} 2>&1 | {grep}"
     );
@@ -321,6 +323,7 @@ impl Resolve<crate::api::Args> for RemoveContainer {
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
     let RemoveContainer { name, signal, time } = self;
+    let name = escape(name.into());
     let stop_command = stop_container_command(&name, signal, time);
     let command =
       format!("{stop_command} && docker container rm {name}");

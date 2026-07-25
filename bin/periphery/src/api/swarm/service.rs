@@ -23,6 +23,7 @@ use periphery_client::api::swarm::{
   InspectSwarmService, RemoveSwarmServices, RollbackSwarmService,
   UpdateSwarmService,
 };
+use shell_escape::unix::escape;
 use tracing::Instrument;
 
 use crate::{
@@ -132,6 +133,7 @@ impl Resolve<crate::api::Args> for GetSwarmServiceLogSearch {
       Default::default()
     };
     let grep = format_log_grep(&terms, combinator, invert);
+    let service = escape(service.into());
     let command = format!(
       "docker service logs --tail 5000{timestamps}{no_task_ids}{no_resolve}{details} {service} 2>&1 | {grep}",
     );

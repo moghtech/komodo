@@ -18,6 +18,7 @@ use komodo_client::entities::{
   update::Log,
 };
 use periphery_client::api::swarm::CreateSwarmSecret;
+use shell_escape::unix::escape;
 
 use super::DockerClient;
 
@@ -119,36 +120,32 @@ pub async fn create_swarm_secret(
     template_driver,
   }: &CreateSwarmSecret,
 ) -> anyhow::Result<Log> {
-  let mut command = String::from("docker secret create");
+  let mut flags = String::new();
 
   if let Some(driver) = driver {
-    write!(&mut command, " --driver {driver}")?;
+    write!(&mut flags, " --driver {}", escape(driver.into()))?;
   }
 
   for label in labels {
-    write!(&mut command, " --label {label}")?;
+    write!(&mut flags, " --label {}", escape(label.into()))?;
   }
 
   if let Some(driver) = template_driver {
-    write!(&mut command, " --template-driver {driver}")?;
+    write!(
+      &mut flags,
+      " --template-driver {}",
+      escape(driver.into())
+    )?;
   }
 
-  let mut sanitized_command = command.clone();
-
-  write!(
-    &mut command,
-    r#" {name} - <<'EOF'
-{}
-EOF"#,
-    data.trim()
-  )?;
-
-  write!(
-    &mut sanitized_command,
-    r#" {name} - <<'EOF'
-<secret-data>
-EOF"#
-  )?;
+  let name = escape(name.into());
+  let command = format!(
+    "printf '%s\\n' {} | docker secret create{flags} {name} -",
+    escape(data.trim().into())
+  );
+  let sanitized_command = format!(
+    "printf '%s\\n' <secret-data> | docker secret create{flags} {name} -"
+  );
 
   let mut log = run_komodo_shell_command(
     "Create Secret",

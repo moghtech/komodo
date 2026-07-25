@@ -1,4 +1,7 @@
-use std::{borrow::Cow, fmt::Write, path::PathBuf, time::Duration};
+use std::{
+  borrow::Cow, fmt::Write, path::PathBuf, sync::LazyLock,
+  time::Duration,
+};
 
 use anyhow::{Context, anyhow};
 use command::{
@@ -86,8 +89,13 @@ impl Resolve<crate::api::Args> for GetComposeLogSearch {
       Default::default()
     };
     let command = format!(
-      "{docker_compose} -p {project} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
-      services.join(" ")
+      "{docker_compose} -p {} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
+      escape(project.into()),
+      services
+        .iter()
+        .map(|service| escape(service.into()))
+        .collect::<Vec<_>>()
+        .join(" ")
     );
     Ok(
       run_komodo_shell_command(
@@ -887,16 +895,21 @@ impl Resolve<crate::api::Args> for ComposeRun {
 
     let project_name = stack.project_name(true);
 
+    // Comes straight off the request and interpolated into a
+    // command string which is handed to `bash -c`, so must be escaped.
+    let service = escape(Cow::Borrowed(&service));
+
     // Parse wrapper configuration
     let compose_cmd_wrapper =
       parse_multiline_command(&stack.config.compose_cmd_wrapper);
     // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
-    let default_include = vec![String::from("up")];
+    static DEFAULT_INCLUDE: LazyLock<Vec<String>> =
+      LazyLock::new(|| vec![String::from("up")]);
     let wrapper_include =
       if stack.config.compose_cmd_wrapper_include.is_empty()
         && !compose_cmd_wrapper.is_empty()
       {
-        &default_include
+        &DEFAULT_INCLUDE
       } else {
         &stack.config.compose_cmd_wrapper_include
       };
@@ -949,17 +962,25 @@ impl Resolve<crate::api::Args> for ComposeRun {
       run_flags.push_str(" --service-ports");
     }
     if let Some(dir) = workdir.as_ref() {
-      run_flags.push_str(&format!(" --workdir {dir}"));
+      run_flags
+        .push_str(&format!(" --workdir {}", escape(dir.into())));
     }
     if let Some(user) = user.as_ref() {
-      run_flags.push_str(&format!(" --user {user}"));
+      run_flags.push_str(&format!(" --user {}", escape(user.into())));
     }
     if let Some(entrypoint) = entrypoint.as_ref() {
-      run_flags.push_str(&format!(" --entrypoint {entrypoint}"));
+      run_flags.push_str(&format!(
+        " --entrypoint {}",
+        escape(entrypoint.into())
+      ));
     }
     if let Some(env) = env {
       for (k, v) in env {
-        run_flags.push_str(&format!(" -e {}={} ", k, v));
+        // Escaped as a single KEY=VALUE token, which is what compose expects.
+        run_flags.push_str(&format!(
+          " -e {}",
+          escape(format!("{k}={v}").into())
+        ));
       }
     }
 
@@ -969,7 +990,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
       .map(|argv| {
         let joined = argv
           .iter()
-          .map(|s| escape(Cow::Borrowed(s)).into_owned())
+          .map(|s| escape(s.into()).into_owned())
           .collect::<Vec<_>>()
           .join(" ");
         format!(" {joined}")

@@ -16,6 +16,7 @@ use komodo_client::entities::{
   random_string,
 };
 use periphery_client::api::swarm::CreateSwarmConfig;
+use shell_escape::unix::escape;
 
 use super::*;
 
@@ -116,23 +117,25 @@ pub async fn create_swarm_config(
     template_driver,
   }: &CreateSwarmConfig,
 ) -> anyhow::Result<Log> {
-  let mut command = String::from("docker config create");
+  let mut flags = String::new();
 
   for label in labels {
-    write!(&mut command, " --label {label}")?;
+    write!(&mut flags, " --label {}", escape(label.into()))?;
   }
 
   if let Some(driver) = template_driver {
-    write!(&mut command, " --template-driver {driver}")?;
+    write!(
+      &mut flags,
+      " --template-driver {}",
+      escape(driver.into())
+    )?;
   }
 
-  write!(
-    &mut command,
-    r#" {name} - <<'EOF'
-{}
-EOF"#,
-    data.trim()
-  )?;
+  let command = format!(
+    "printf '%s\\n' {} | docker config create{flags} {} -",
+    escape(data.trim().into()),
+    escape(name.into())
+  );
 
   let log = run_komodo_shell_command(
     "Create Config",

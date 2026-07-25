@@ -8,6 +8,7 @@ use komodo_client::entities::{
   docker::{task::*, *},
   update::Log,
 };
+use shell_escape::unix::escape;
 
 pub mod compose;
 pub mod config;
@@ -53,9 +54,15 @@ pub async fn docker_login(
     None => crate::helpers::registry_token(domain, account)?,
   };
 
-  let log = run_shell_command(&format!(
-    "echo {registry_token} | docker login {domain} --username '{account}' --password-stdin",
-  ), CommandOptions::default())
+  let log = run_shell_command(
+    &format!(
+      "echo {} | docker login {} --username {} --password-stdin",
+      escape(registry_token.into()),
+      escape(domain.into()),
+      escape(account.into()),
+    ),
+    CommandOptions::default(),
+  )
   .await;
 
   if log.success() {

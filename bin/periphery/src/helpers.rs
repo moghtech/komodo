@@ -19,6 +19,7 @@ use komodo_client::{
   parsers::QUOTE_PATTERN,
 };
 use periphery_client::api::git::PeripheryRepoExecutionResponse;
+use shell_escape::unix::escape;
 
 use crate::config::periphery_config;
 
@@ -121,12 +122,15 @@ pub fn format_log_grep(
   let maybe_invert = if invert { " -v" } else { Default::default() };
   match combinator {
     SearchCombinator::Or => {
-      format!("grep{maybe_invert} -E '{}'", terms.join("|"))
+      format!(
+        "grep{maybe_invert} -E {}",
+        escape(terms.join("|").into())
+      )
     }
     SearchCombinator::And => {
       format!(
-        "grep{maybe_invert} -P '^(?=.*{})'",
-        terms.join(")(?=.*")
+        "grep{maybe_invert} -P {}",
+        escape(format!("^(?=.*{})", terms.join(")(?=.*")).into())
       )
     }
   }
