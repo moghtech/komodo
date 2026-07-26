@@ -92,6 +92,8 @@ impl Resolve<crate::api::Args> for RemoveSwarmStacks {
     if !self.detach {
       command += " --detach=false"
     }
+    // `--` so a stack beginning with `-` is not parsed as a flag.
+    command += " --";
     for stack in self.stacks {
       command += " ";
       command += &stack;
@@ -304,7 +306,8 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       command += " --with-registry-auth";
     }
     push_extra_args(&mut command, &stack.config.extra_args)?;
-    write!(&mut command, " {project_name}")?;
+    // `--` so a name beginning with `-` is not parsed as a flag.
+    write!(&mut command, " -- {project_name}")?;
 
     // Apply compose cmd wrapper if configured
     let (command, _) = match maybe_wrap_command(

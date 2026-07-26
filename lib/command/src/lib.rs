@@ -120,7 +120,8 @@ pub fn output_into_log(
 
 /// Commands are run directly, and cannot include '&&'.
 ///
-/// See [CommandOptions] for the available `timeout` / `cancel` controls.
+/// See [CommandOptions] for the available `timeout` / `cancel` / `stdin`
+/// controls.
 pub async fn run_standard_command(
   command: &str,
   options: CommandOptions<'_>,
@@ -137,12 +138,7 @@ pub async fn run_standard_command(
 
   let mut cmd = Command::new(&lexed[0]);
 
-  cmd
-    .args(&lexed[1..])
-    .kill_on_drop(true)
-    .stdin(Stdio::null())
-    .stdout(Stdio::piped())
-    .stderr(Stdio::piped());
+  cmd.args(&lexed[1..]).kill_on_drop(true);
 
   run_command(cmd, options).await
 }
@@ -167,17 +163,15 @@ fn shell() -> &'static str {
 
 /// Commands are wrapped in 'sh -c', and can include '&&'.
 ///
-/// See [CommandOptions] for the available `timeout` / `cancel` controls.
+/// See [CommandOptions] for the available `timeout` / `cancel` / `stdin`
+/// controls.
 pub async fn run_shell_command(
   command: &str,
   options: CommandOptions<'_>,
 ) -> CommandOutput {
   let mut cmd = Command::new(shell());
 
-  cmd
-    .args(["-c", command])
-    .kill_on_drop(true)
-    .stdin(Stdio::null());
+  cmd.args(["-c", command]).kill_on_drop(true);
 
   run_command(cmd, options).await
 }
@@ -201,6 +195,7 @@ async fn run_command(
     path,
     timeout,
     cancel,
+    stdin,
   } = options;
 
   // Attach the path to cmd as current dir
@@ -213,26 +208,55 @@ async fn run_command(
     }
   }
 
-  // Fast path: nothing to wait on besides the command itself.
-  if timeout.is_none() && cancel.is_none() {
+  // Anything to write needs a pipe, otherwise the command gets no input.
+  cmd.stdin(if stdin.is_some() {
+    Stdio::piped()
+  } else {
+    Stdio::null()
+  });
+
+  // Fast path: nothing to write, and nothing to wait
+  // on besides the command itself.
+  if timeout.is_none() && cancel.is_none() && stdin.is_none() {
     return CommandOutput::from(cmd.output().await);
   }
 
-  // Place the child in a new process group so the whole group can be
-  // signalled together. `output()` configures stdout/stderr automatically,
-  // but since we spawn manually we set them here too.
-  cmd
-    .process_group(0)
-    .stdout(Stdio::piped())
-    .stderr(Stdio::piped());
+  // `output()` configures stdout/stderr automatically, but since
+  // we spawn manually we set them here too.
+  cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
 
-  let child = match cmd.spawn() {
+  // Place the child in a new process group so the whole group can be
+  // signalled together. Only needed when there is something to signal on.
+  if timeout.is_some() || cancel.is_some() {
+    cmd.process_group(0);
+  }
+
+  let mut child = match cmd.spawn() {
     Ok(child) => child,
     Err(e) => return CommandOutput::from_err(e),
   };
 
+  // Written from a task, so that a payload larger than the pipe buffer
+  // cannot deadlock against a child which is filling up its stdout.
+  if let Some(stdin) = stdin
+    && let Some(mut pipe) = child.stdin.take()
+  {
+    let stdin = stdin.to_string();
+    tokio::spawn(async move {
+      use tokio::io::AsyncWriteExt;
+      let _ = pipe.write_all(stdin.as_bytes()).await;
+      // Dropping the pipe closes the child's stdin, so it stops reading.
+      let _ = pipe.shutdown().await;
+    });
+  }
+
   // Because of `process_group(0)`, the child's pid equals its pgid.
   let pid = child.id();
+
+  // Nothing to signal on, so just wait for it to finish.
+  if timeout.is_none() && cancel.is_none() {
+    return CommandOutput::from(child.wait_with_output().await);
+  }
 
   // Resolve to `()` only when the relevant control fires; otherwise stay
   // pending forever so it never wins the `select!`.
@@ -323,6 +347,84 @@ mod tests {
     assert!(
       pids.is_empty(),
       "backgrounded grandchild survived timeout: pids={pids:?}"
+    );
+  }
+
+  /// Neither runner configures stdout/stderr itself — the fast path relies
+  /// on `output()` doing it, and the spawn path on [run_command]. Both must
+  /// still capture, rather than leaking output to the parent.
+  #[tokio::test]
+  async fn output_is_captured_on_both_spawn_paths() {
+    // Fast path: no stdin, timeout or cancel, so `cmd.output()`.
+    let fast =
+      run_standard_command("echo out", CommandOptions::default())
+        .await;
+    assert!(fast.success(), "{fast:?}");
+    assert_eq!(fast.stdout.trim(), "out");
+
+    // Spawn path, reached here by setting a timeout.
+    let spawned = run_shell_command(
+      "echo out; echo err >&2",
+      CommandOptions::default().timeout(Duration::from_secs(10)),
+    )
+    .await;
+    assert!(spawned.success(), "{spawned:?}");
+    assert_eq!(spawned.stdout.trim(), "out");
+    assert_eq!(spawned.stderr.trim(), "err");
+  }
+
+  /// Data set as [CommandOptions::stdin] must reach the child on its
+  /// standard input.
+  #[tokio::test]
+  async fn stdin_is_delivered_to_child() {
+    let payload = "some-secret-token\nwith two lines";
+    let out = run_standard_command(
+      "cat",
+      CommandOptions::default().stdin(payload),
+    )
+    .await;
+
+    assert!(out.success(), "cat failed: {out:?}");
+    assert_eq!(out.stdout, payload);
+  }
+
+  /// The whole point of [CommandOptions::stdin]: a secret passed this way
+  /// must not be visible in the process arguments, where any user on the
+  /// host could read it with `ps`. The shell equivalent, which interpolates
+  /// the secret into the command, is checked alongside it to confirm the
+  /// test would actually catch a regression.
+  #[tokio::test]
+  async fn stdin_secret_is_not_in_process_args() {
+    let secret = "komodo-stdin-secret-marker";
+
+    let visible_in_ps = |marker: &'static str| async move {
+      // Give the child a moment to actually be running.
+      tokio::time::sleep(Duration::from_millis(300)).await;
+      let out = std::process::Command::new("pgrep")
+        .args(["-f", marker])
+        .output()
+        .expect("pgrep should run");
+      !String::from_utf8_lossy(&out.stdout).trim().is_empty()
+    };
+
+    let (_, via_stdin) = tokio::join!(
+      run_standard_command(
+        "sleep 1",
+        CommandOptions::default().stdin(secret)
+      ),
+      visible_in_ps(secret)
+    );
+    assert!(!via_stdin, "secret passed via stdin showed up in ps");
+
+    // Control: interpolating it into the command does expose it.
+    let interpolated = format!("echo {secret} | sleep 1");
+    let (_, via_command) = tokio::join!(
+      run_shell_command(&interpolated, CommandOptions::default()),
+      visible_in_ps(secret)
+    );
+    assert!(
+      via_command,
+      "control failed: interpolated secret should be visible in ps"
     );
   }
 

@@ -54,7 +54,7 @@ impl Resolve<crate::api::Args> for GetComposeLog {
       Default::default()
     };
     let command = format!(
-      "{docker_compose} -p {project} logs --tail {tail}{timestamps} {}",
+      "{docker_compose} -p {project} logs --tail {tail}{timestamps} -- {}",
       services.join(" ")
     );
     Ok(
@@ -89,7 +89,7 @@ impl Resolve<crate::api::Args> for GetComposeLogSearch {
       Default::default()
     };
     let command = format!(
-      "{docker_compose} -p {} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
+      "{docker_compose} -p {} logs --tail 5000{timestamps} -- {} 2>&1 | {grep}",
       escape(project.into()),
       services
         .iter()
@@ -353,7 +353,8 @@ impl Resolve<crate::api::Args> for ComposePull {
     let service_args = if services.is_empty() {
       String::new()
     } else {
-      format!(" {}", services.join(" "))
+      // `--` so a service beginning with `-` is not parsed as a flag.
+      format!(" -- {}", services.join(" "))
     };
 
     let file_args = stack.compose_file_paths().join(" -f ");
@@ -525,7 +526,8 @@ impl Resolve<crate::api::Args> for ComposeUp {
     let service_args = if services.is_empty() {
       String::new()
     } else {
-      format!(" {}", services.join(" "))
+      // `--` so a service beginning with `-` is not parsed as a flag.
+      format!(" -- {}", services.join(" "))
     };
 
     let file_args = stack.compose_file_paths().join(" -f ");
@@ -916,7 +918,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
 
     if pull.unwrap_or_default() {
       let pull_command = format!(
-        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull {service}",
+        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull -- {service}",
       );
       let (pull_command, wrapped) = match maybe_wrap_command(
         pull_command,
@@ -998,7 +1000,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
       .unwrap_or_default();
 
     let run_command = format!(
-      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} run{run_flags} {service}{command_args}",
+      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} run{run_flags} -- {service}{command_args}",
     );
     let (run_command, _) = match maybe_wrap_command(
       run_command,
@@ -1092,7 +1094,8 @@ async fn compose_down(
   let service_args = if services.is_empty() {
     String::new()
   } else {
-    format!(" {}", services.join(" "))
+    // `--` so a service beginning with `-` is not parsed as a flag.
+    format!(" -- {}", services.join(" "))
   };
   let log = run_komodo_standard_command(
     "Compose Down",

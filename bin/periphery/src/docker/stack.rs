@@ -132,7 +132,7 @@ pub async fn list_swarm_stack_service_ids(
 ) -> anyhow::Result<Vec<String>> {
   let res = run_komodo_standard_command(
     "List Swarm Stack Services",
-    format!("docker stack services --format json {stack}"),
+    format!("docker stack services --format json -- {stack}"),
     CommandOptions::default().timeout(Duration::from_secs(3)),
   )
   .await;
@@ -162,7 +162,7 @@ pub async fn list_swarm_stack_tasks(
 ) -> anyhow::Result<Vec<SwarmStackTaskListItem>> {
   let res = run_komodo_standard_command(
     "List Swarm Stack Tasks",
-    format!("docker stack ps --format json --no-trunc {stack}"),
+    format!("docker stack ps --format json --no-trunc -- {stack}"),
     CommandOptions::default().timeout(Duration::from_secs(3)),
   )
   .await;

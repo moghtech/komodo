@@ -62,8 +62,9 @@ impl Resolve<crate::api::Args> for GetContainerLog {
     } else {
       Default::default()
     };
+    // `--` so a name beginning with `-` is not parsed as a flag.
     let command =
-      format!("docker logs {name} --tail {tail}{timestamps}");
+      format!("docker logs --tail {tail}{timestamps} -- {name}");
     Ok(
       run_komodo_standard_command(
         "Get container log",
@@ -172,7 +173,7 @@ impl Resolve<crate::api::Args> for StartContainer {
     Ok(
       run_komodo_standard_command(
         "Docker Start",
-        format!("docker start {}", self.name),
+        format!("docker start -- {}", self.name),
         CommandOptions::default(),
       )
       .await,
@@ -199,7 +200,7 @@ impl Resolve<crate::api::Args> for RestartContainer {
     Ok(
       run_komodo_standard_command(
         "Docker Restart",
-        format!("docker restart {}", self.name),
+        format!("docker restart -- {}", self.name),
         CommandOptions::default(),
       )
       .await,
@@ -226,7 +227,7 @@ impl Resolve<crate::api::Args> for PauseContainer {
     Ok(
       run_komodo_standard_command(
         "Docker Pause",
-        format!("docker pause {}", self.name),
+        format!("docker pause -- {}", self.name),
         CommandOptions::default(),
       )
       .await,
@@ -251,7 +252,7 @@ impl Resolve<crate::api::Args> for UnpauseContainer {
     Ok(
       run_komodo_standard_command(
         "Docker Unpause",
-        format!("docker unpause {}", self.name),
+        format!("docker unpause -- {}", self.name),
         CommandOptions::default(),
       )
       .await,
@@ -326,7 +327,7 @@ impl Resolve<crate::api::Args> for RemoveContainer {
     let name = escape(name.into());
     let stop_command = stop_container_command(&name, signal, time);
     let command =
-      format!("{stop_command} && docker container rm {name}");
+      format!("{stop_command} && docker container rm -- {name}");
     let log = run_komodo_shell_command(
       "Docker Stop and Remove",
       command,
@@ -336,7 +337,7 @@ impl Resolve<crate::api::Args> for RemoveContainer {
     if log.stderr.contains("unknown flag: --signal") {
       let stop_command = stop_container_command(&name, None, time);
       let command =
-        format!("{stop_command} && docker container rm {name}");
+        format!("{stop_command} && docker container rm -- {name}");
       let mut log = run_komodo_shell_command(
         "Docker Stop and Remove",
         command,
@@ -379,7 +380,7 @@ impl Resolve<crate::api::Args> for RenameContainer {
       curr_name,
       new_name,
     } = self;
-    let command = format!("docker rename {curr_name} {new_name}");
+    let command = format!("docker rename -- {curr_name} {new_name}");
     Ok(
       run_komodo_standard_command(
         "Docker Rename",
@@ -449,7 +450,7 @@ impl Resolve<crate::api::Args> for StartAllContainers {
         {
           return None;
         }
-        let command = format!("docker start {name}");
+        let command = format!("docker start -- {name}");
         Some(async move {
           run_komodo_standard_command(
             &command.clone(),
@@ -495,7 +496,7 @@ impl Resolve<crate::api::Args> for RestartAllContainers {
         {
           return None;
         }
-        let command = format!("docker restart {name}");
+        let command = format!("docker restart -- {name}");
         Some(async move {
           run_komodo_standard_command(
             &command.clone(),
@@ -541,7 +542,7 @@ impl Resolve<crate::api::Args> for PauseAllContainers {
         {
           return None;
         }
-        let command = format!("docker pause {name}");
+        let command = format!("docker pause -- {name}");
         Some(async move {
           run_komodo_standard_command(
             &command.clone(),
@@ -587,7 +588,7 @@ impl Resolve<crate::api::Args> for UnpauseAllContainers {
         {
           return None;
         }
-        let command = format!("docker unpause {name}");
+        let command = format!("docker unpause -- {name}");
         Some(async move {
           run_komodo_standard_command(
             &command.clone(),

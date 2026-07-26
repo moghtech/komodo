@@ -70,7 +70,9 @@ pub async fn inspect_swarm_config(
 ) -> anyhow::Result<SwarmConfigDetails> {
   let res = run_komodo_standard_command(
     "Inspect Swarm Config",
-    format!(r#"docker config inspect "{config}""#),
+    // `--` so a name beginning with `-` is not parsed as a flag.
+    // The quotes alone give no protection, as they are stripped when lexed.
+    format!(r#"docker config inspect -- "{config}""#),
     CommandOptions::default().timeout(Duration::from_secs(3)),
   )
   .await;
@@ -151,6 +153,8 @@ pub async fn remove_swarm_configs(
   configs: impl Iterator<Item = &str>,
 ) -> Log {
   let mut command = String::from("docker config rm");
+  // `--` so a name beginning with `-` is not parsed as a flag.
+  command += " --";
   for config in configs {
     command += " ";
     command += config;
@@ -331,7 +335,8 @@ async fn switch_service_config(
     write!(&mut command, ",mode={mode}")?;
   }
 
-  write!(&mut command, " {service}")?;
+  // `--` so a name beginning with `-` is not parsed as a flag.
+  write!(&mut command, " -- {service}")?;
 
   let log = run_komodo_standard_command(
     "Switch Service Config",

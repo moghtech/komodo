@@ -84,7 +84,7 @@ impl Resolve<crate::api::Args> for GetSwarmServiceLog {
       Default::default()
     };
     let command = format!(
-      "docker service logs --tail {tail}{timestamps}{no_task_ids}{no_resolve}{details} {service}",
+      "docker service logs --tail {tail}{timestamps}{no_task_ids}{no_resolve}{details} -- {service}",
     );
     Ok(
       run_komodo_standard_command(
@@ -163,6 +163,8 @@ impl Resolve<crate::api::Args> for RemoveSwarmServices {
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
     let mut command = String::from("docker service rm");
+    // `--` so a service beginning with `-` is not parsed as a flag.
+    command += " --";
     for service in self.services {
       command += " ";
       command += &service;
@@ -195,7 +197,7 @@ impl Resolve<crate::api::Args> for RollbackSwarmService {
     Ok(
       run_komodo_standard_command(
         "Rollback Swarm Service",
-        format!("docker service rollback {}", self.service),
+        format!("docker service rollback -- {}", self.service),
         CommandOptions::default(),
       )
       .await,
@@ -432,7 +434,8 @@ impl Resolve<crate::api::Args> for UpdateSwarmService {
 
     push_extra_args(&mut command, &extra_args)?;
 
-    write!(&mut command, " {service}")?;
+    // `--` so a name beginning with `-` is not parsed as a flag.
+    write!(&mut command, " -- {service}")?;
 
     let span = info_span!("ExecuteDockerServiceCreate");
     let log = run_komodo_standard_command(

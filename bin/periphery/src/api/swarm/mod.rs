@@ -112,7 +112,8 @@ impl Resolve<crate::api::Args> for UpdateSwarmNode {
       }
     }
 
-    command += " ";
+    // `--` so a node beginning with `-` is not parsed as a flag.
+    command += " -- ";
     command += &self.node;
 
     Ok(
@@ -145,6 +146,8 @@ impl Resolve<crate::api::Args> for RemoveSwarmNodes {
     if self.force {
       command += " --force"
     }
+    // `--` so a node beginning with `-` is not parsed as a flag.
+    command += " --";
     for node in self.nodes {
       command += " ";
       command += &node;

@@ -163,6 +163,8 @@ pub async fn remove_swarm_secrets(
   secrets: impl Iterator<Item = &str>,
 ) -> Log {
   let mut command = String::from("docker secret rm");
+  // `--` so a name beginning with `-` is not parsed as a flag.
+  command += " --";
   for secret in secrets {
     command += " ";
     command += secret;
@@ -346,7 +348,8 @@ async fn switch_service_secret(
     write!(&mut command, ",mode={mode}")?;
   }
 
-  write!(&mut command, " {service}")?;
+  // `--` so a name beginning with `-` is not parsed as a flag.
+  write!(&mut command, " -- {service}")?;
 
   let log = run_komodo_standard_command(
     "Switch Service Secret",
