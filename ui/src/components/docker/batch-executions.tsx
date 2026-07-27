@@ -106,6 +106,23 @@ function DockerBatchExecutionsDropdownMenu({
     base: "target",
     xs: 250,
   });
+
+  if (executions.length === 0) {
+    return (
+      <Button
+        variant="filled"
+        color="red"
+        rightSection={<ICONS.Delete size="1rem" />}
+        justify="space-between"
+        w={{ base: "100%", xs: 190 }}
+        onClick={() => onSelect(DELETE_EXECUTIONS[type])}
+        disabled={disabled}
+      >
+        {fmtUpperCamelcase(DELETE_EXECUTIONS[type].replaceAll(type, ""))}
+      </Button>
+    );
+  }
+
   return (
     <Menu position="bottom-start" offset={16} disabled={disabled} width={width}>
       <Menu.Target>
