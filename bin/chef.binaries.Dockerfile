@@ -3,7 +3,7 @@
 
 ## Uses chef for dependency caching to help speed up back-to-back builds.
 
-FROM lukemathwalker/cargo-chef:latest-rust-1.96.1-bookworm AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.97.1-bookworm AS chef
 WORKDIR /builder
 
 # Plan just the RECIPE to see if things have changed
