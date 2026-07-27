@@ -110,6 +110,7 @@ function TableSection({
     <Section
       key={type}
       icon={<Icon size="1.3rem" />}
+      gap="0.2rem"
       titleNode={
         <Text
           fz="h2"
@@ -120,16 +121,16 @@ function TableSection({
           {type + "s"}
         </Text>
       }
-      actions={
-        <Group gap="xs">
-          {show && (
-            <ListPagination
-              page={page}
-              setPage={setPage}
-              count={resources.length}
-            />
-          )}
+      titleRight={
+        <Group>
           <ShowHideButton show={show} setShow={setShow} />
+          <RC.New />
+          <RC.BatchExecutions />
+          <ListPagination
+            page={page}
+            setPage={setPage}
+            count={resources.length}
+          />
         </Group>
       }
     >
