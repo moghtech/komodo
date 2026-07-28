@@ -40,7 +40,7 @@ impl Resolve<ReadArgs> for ListAlerts {
       FindOptions::builder()
         .sort(doc! { "ts": -1 })
         .limit(NUM_ALERTS_PER_PAGE as i64)
-        .skip(self.page * NUM_ALERTS_PER_PAGE)
+        .skip(self.page.saturating_mul(NUM_ALERTS_PER_PAGE))
         .build(),
     )
     .await

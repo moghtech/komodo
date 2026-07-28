@@ -1,6 +1,6 @@
 import Tags from "@/components/tags";
 import { tagColor } from "@/lib/color";
-import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
+import { useInvalidate, useListItem, useRead, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { filterBySplit } from "mogh_ui";
 import {
@@ -28,7 +28,7 @@ export const ResourceTags = ({
 }) => {
   const inv = useInvalidate();
   const { type, id } = target;
-  const resource = useRead(`List${type}s`, {}).data?.find((d) => d.id === id);
+  const resource = useListItem(type, id);
   const { mutate } = useWrite("UpdateResourceMeta", {
     onSuccess: () => {
       inv([`List${type}s`]);

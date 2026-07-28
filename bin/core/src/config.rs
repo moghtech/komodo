@@ -348,6 +348,9 @@ pub fn core_config() -> &'static CoreConfig {
       transparent_mode: env
         .komodo_transparent_mode
         .unwrap_or(config.transparent_mode),
+      default_pagination_limit: env
+        .komodo_default_pagination_limit
+        .unwrap_or(config.default_pagination_limit),
       ui_write_disabled: env
         .komodo_ui_write_disabled
         .unwrap_or(config.ui_write_disabled),
@@ -430,6 +433,12 @@ pub fn core_config() -> &'static CoreConfig {
       ssl_cert_file: env
         .komodo_ssl_cert_file
         .unwrap_or(config.ssl_cert_file),
+      reporting_enabled: env
+        .komodo_reporting_enabled
+        .unwrap_or(config.reporting_enabled),
+      reporting_private_key: env
+        .komodo_reporting_private_key
+        .unwrap_or(config.reporting_private_key),
       ui_path: env.komodo_ui_path.unwrap_or(config.ui_path),
       ui_index_force_no_cache: env
         .komodo_ui_index_force_no_cache
@@ -447,7 +456,7 @@ pub fn core_config() -> &'static CoreConfig {
       // These can't be overridden on env
       secrets: config.secrets,
       git_providers: config.git_providers,
-      docker_registries: config.docker_registries,
+      image_registries: config.image_registries,
     }
   })
 }

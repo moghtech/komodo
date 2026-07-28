@@ -1,4 +1,4 @@
-import { useRead, useSelectedResources } from "@/lib/hooks";
+import { useRead, useResourceSelectionState } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Types } from "komodo_client";
@@ -7,16 +7,22 @@ import { ServerComponents } from "..";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 
+const SORT_KEYS = ["Name", "Region", "Version", "State"];
+
 export default function StandardServerTable({
   resources,
+  onServerSort,
   ...boxProps
 }: {
   resources: Types.ServerListItem[];
+  /** When provided, sorting is handled server side,
+   * and sort updates are passed to this callback. */
+  onServerSort?: (sort: { sort_by?: string; sort_desc?: boolean }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Server");
-  const deployments = useRead("ListDeployments", {}).data;
-  const stacks = useRead("ListStacks", {}).data;
-  const repos = useRead("ListRepos", {}).data;
+  const selectionState = useResourceSelectionState("Server");
+  const deployments = useRead("ListDeployments", { limit: 0 }).data;
+  const stacks = useRead("ListStacks", { limit: 0 }).data;
+  const repos = useRead("ListRepos", { limit: 0 }).data;
   const resourcesCount = useCallback(
     (id: string) => {
       return (
@@ -31,15 +37,24 @@ export default function StandardServerTable({
   return (
     <DataTable
       {...boxProps}
+      manualSorting={!!onServerSort}
+      onSortingStateChange={
+        onServerSort &&
+        ((sorting) => {
+          const sort = sorting.find((s) => SORT_KEYS.includes(s.id));
+          onServerSort(sort ? { sort_by: sort.id, sort_desc: sort.desc } : {});
+        })
+      }
       tableKey="standard-server-table"
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: selectionState,
       }}
       columns={[
         {
           size: 250,
+          id: "Name",
           accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
@@ -51,6 +66,9 @@ export default function StandardServerTable({
         {
           size: 100,
           accessorKey: "id",
+          // The resource count is computed on the client,
+          // it cannot be sorted server side.
+          enableSorting: !onServerSort,
           sortingFn: (a, b) => {
             const sa = resourcesCount(a.original.id);
             const sb = resourcesCount(b.original.id);
@@ -72,6 +90,7 @@ export default function StandardServerTable({
         },
         {
           size: 200,
+          id: "Region",
           accessorKey: "info.region",
           header: ({ column }) => (
             <SortableHeader column={column} title="Region" />
@@ -79,6 +98,7 @@ export default function StandardServerTable({
         },
         {
           size: 150,
+          id: "Version",
           accessorKey: "info.version",
           header: ({ column }) => (
             <SortableHeader column={column} title="Version" />
@@ -87,6 +107,7 @@ export default function StandardServerTable({
         },
         {
           size: 150,
+          id: "State",
           accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />

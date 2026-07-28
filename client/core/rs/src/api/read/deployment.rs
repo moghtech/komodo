@@ -6,7 +6,7 @@ use crate::entities::{
   I64, SearchCombinator, U64,
   deployment::{
     Deployment, DeploymentActionState, DeploymentListItem,
-    DeploymentQuery, DeploymentState,
+    DeploymentQuery, DeploymentSortBy, DeploymentState,
   },
   docker::{
     container::{Container, ContainerListItem, ContainerStats},
@@ -73,6 +73,31 @@ pub struct ListDeployments {
   /// optional structured query to filter deployments.
   #[serde(default)]
   pub query: DeploymentQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: DeploymentSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]
@@ -104,6 +129,21 @@ pub struct ListFullDeployments {
   /// optional structured query to filter deployments.
   #[serde(default)]
   pub query: DeploymentQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
 }
 
 #[typeshare]

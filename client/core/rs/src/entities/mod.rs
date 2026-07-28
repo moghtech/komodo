@@ -35,6 +35,8 @@ pub mod build;
 pub mod builder;
 /// [core config][config::core] and [periphery config][config::periphery]
 pub mod config;
+/// Subtypes of [CoreReport][core_report::CoreReport]
+pub mod core_report;
 /// Subtypes of [Deployment][deployment::Deployment].
 pub mod deployment;
 /// Networks, Images, Containers.
@@ -156,13 +158,34 @@ pub fn to_path_compatible_name(name: &str) -> String {
   name.trim().replace([' ', '\n'], "_").to_string()
 }
 
-/// Enforce common container naming rules.
-/// [a-zA-Z0-9_.-]
+/// Enforce docker container / service naming rules:
+/// [a-zA-Z0-9][a-zA-Z0-9_.-]*
+/// Any other characters are replaced with '_',
+/// and leading non-alphanumeric characters are stripped.
+/// This also guards against shell injection through the name,
+/// as it is passed to shell commands like 'docker stop {name}'.
 pub fn to_container_compatible_name(name: &str) -> String {
-  name.trim().replace([' ', ',', '\n', '&'], "_").to_string()
+  name
+    .trim()
+    .chars()
+    .map(|c| {
+      if c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-') {
+        c
+      } else {
+        '_'
+      }
+    })
+    .collect::<String>()
+    .trim_start_matches(|c: char| !c.is_ascii_alphanumeric())
+    .to_string()
 }
 
-/// Enforce common docker naming rules, such as only lowercase, and no '.'.
+/// Enforce common docker naming rules, such as only lowercase, and no '.':
+/// [a-z0-9][a-z0-9_-]*
+/// Any other characters are replaced with '_',
+/// and leading non-alphanumeric characters are stripped.
+/// This also guards against shell injection through the name,
+/// as it is passed to shell commands like 'docker compose -p {name}'.
 /// These apply to:
 ///   - Stacks (docker project name)
 ///   - Builds (docker image name)
@@ -170,9 +193,21 @@ pub fn to_container_compatible_name(name: &str) -> String {
 ///   - Volumes
 pub fn to_docker_compatible_name(name: &str) -> String {
   name
-    .to_lowercase()
-    .replace([' ', '.', ',', '\n', '&'], "_")
     .trim()
+    .to_lowercase()
+    .chars()
+    .map(|c| {
+      if c.is_ascii_lowercase()
+        || c.is_ascii_digit()
+        || matches!(c, '_' | '-')
+      {
+        c
+      } else {
+        '_'
+      }
+    })
+    .collect::<String>()
+    .trim_start_matches(|c: char| !c.is_ascii_alphanumeric())
     .to_string()
 }
 
@@ -1281,6 +1316,7 @@ pub enum Operation {
   RenameProcedure,
   DeleteProcedure,
   RunProcedure,
+  CancelProcedure,
 
   // Action
   CreateAction,
@@ -1288,6 +1324,7 @@ pub enum Operation {
   RenameAction,
   DeleteAction,
   RunAction,
+  CancelAction,
 
   // Sync
   CreateResourceSync,

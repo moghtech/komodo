@@ -117,9 +117,25 @@ async fn forward_ws_channel(
   };
 
   let periphery_to_core = async {
+    let mut keep_alive =
+      tokio::time::interval(super::WS_KEEP_ALIVE_INTERVAL);
     loop {
       // Already adheres to cancellation token
-      match periphery_receiver.recv().await {
+      let recv = tokio::select! {
+        // Websocket keep-alive ping
+        _ = keep_alive.tick() => {
+          if client_send
+            .send(ws::Message::Ping(Bytes::new()))
+            .await
+            .is_err()
+          {
+            break;
+          }
+          continue;
+        }
+        recv = periphery_receiver.recv() => recv,
+      };
+      match recv {
         Ok(Ok(bytes)) => {
           if let Err(e) =
             client_send.send(ws::Message::Binary(bytes.into())).await

@@ -136,9 +136,9 @@ use crate::api::write;
     write::create_git_provider_account,
     write::update_git_provider_account,
     write::delete_git_provider_account,
-    write::create_docker_registry_account,
-    write::update_docker_registry_account,
-    write::delete_docker_registry_account,
+    write::create_image_registry_account,
+    write::update_image_registry_account,
+    write::delete_image_registry_account,
   ),
 )]
 pub struct KomodoWriteApi;

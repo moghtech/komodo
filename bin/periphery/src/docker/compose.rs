@@ -1,6 +1,8 @@
+use std::time::Duration;
+
 use anyhow::{Context, anyhow};
-use command::run_komodo_standard_command;
-use komodo_client::entities::stack::ComposeProject;
+use command::{CommandOptions, run_komodo_standard_command};
+use komodo_client::entities::stack::*;
 use serde::{Deserialize, Serialize};
 
 use crate::config::periphery_config;
@@ -18,8 +20,8 @@ pub async fn list_compose_projects()
   let docker_compose = docker_compose();
   let res = run_komodo_standard_command(
     "List Projects",
-    None,
     format!("{docker_compose} ls --all --format json"),
+    CommandOptions::default().timeout(Duration::from_secs(1)),
   )
   .await;
 
@@ -66,4 +68,53 @@ pub struct DockerComposeLsItem {
   /// Comma seperated list of paths
   #[serde(default, alias = "ConfigFiles")]
   pub config_files: String,
+}
+
+pub fn parse_compose_services(
+  raw_config: &str,
+  project_name: &str,
+  services: &mut Vec<StackServiceNames>,
+) -> anyhow::Result<()> {
+  let compose = serde_yaml_ng::from_str::<ComposeFile>(raw_config)
+    .context("Failed to parse compose contents")?;
+
+  for (
+    service_name,
+    ComposeService {
+      container_name,
+      deploy,
+      image,
+    },
+  ) in compose.services
+  {
+    let image = image.unwrap_or_default();
+    match deploy {
+      Some(ComposeServiceDeploy {
+        replicas: Some(replicas),
+      }) if replicas > 1 => {
+        for i in 1..1 + replicas {
+          services.push(StackServiceNames {
+            container_name: format!(
+              "{project_name}-{service_name}-{i}"
+            ),
+            service_name: format!("{service_name}-{i}"),
+            image: image.clone(),
+            image_digest: None,
+          });
+        }
+      }
+      _ => {
+        services.push(StackServiceNames {
+          container_name: container_name.unwrap_or_else(|| {
+            format!("{project_name}-{service_name}")
+          }),
+          service_name,
+          image,
+          image_digest: None,
+        });
+      }
+    }
+  }
+
+  Ok(())
 }

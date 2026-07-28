@@ -37,6 +37,7 @@ impl DockerClient {
         let stats = stats.get(&name).cloned();
         anyhow::Ok(ContainerListItem {
           server_id: None,
+          server_name: None,
           name,
           stats,
           id: container.id,

@@ -13,6 +13,7 @@ use komodo_client::{
   entities::{
     Operation,
     permission::PermissionLevel,
+    resource::ResourceQuery,
     update::{Log, Update},
     user::User,
   },
@@ -29,7 +30,10 @@ use uuid::Uuid;
 
 use crate::{
   auth::KomodoAuthImpl,
-  helpers::update::{init_execution_update, update_update},
+  helpers::{
+    query::get_all_tags,
+    update::{init_execution_update, update_update},
+  },
   resource::{KomodoResource, list_full_for_user_using_pattern},
   state::db_client,
 };
@@ -111,10 +115,12 @@ pub enum ExecuteRequest {
   // ==== PROCEDURE ====
   RunProcedure(RunProcedure),
   BatchRunProcedure(BatchRunProcedure),
+  CancelProcedure(CancelProcedure),
 
   // ==== ACTION ====
   RunAction(RunAction),
   BatchRunAction(BatchRunAction),
+  CancelAction(CancelAction),
 
   // ==== SYNC ====
   RunSync(RunSync),
@@ -356,14 +362,26 @@ trait BatchExecute {
 #[instrument("BatchExecute", skip(user))]
 async fn batch_execute<E: BatchExecute>(
   pattern: &str,
+  tags: Vec<String>,
   user: &User,
 ) -> anyhow::Result<BatchExecutionResponse> {
+  let all_tags = if tags.is_empty() {
+    vec![]
+  } else {
+    get_all_tags(None).await?
+  };
+
   let resources = list_full_for_user_using_pattern::<E::Resource>(
     pattern,
-    Default::default(),
+    ResourceQuery {
+      tags,
+      ..Default::default()
+    },
+    None,
+    None,
     user,
     PermissionLevel::Execute.into(),
-    &[],
+    &all_tags,
   )
   .await?;
 

@@ -72,8 +72,8 @@ impl utoipa::PartialSchema for PartialGitProviderAccount {
 #[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialGitProviderAccount {}
 
-#[typeshare(serialized_as = "Partial<DockerRegistryAccount>")]
-pub type _PartialDockerRegistryAccount = PartialDockerRegistryAccount;
+#[typeshare(serialized_as = "Partial<ImageRegistryAccount>")]
+pub type _PartialImageRegistryAccount = PartialImageRegistryAccount;
 
 /// Configuration to access private image repositories on various registries.
 #[typeshare]
@@ -87,10 +87,10 @@ pub type _PartialDockerRegistryAccount = PartialDockerRegistryAccount;
   derive(mongo_indexed::derive::MongoIndexed)
 )]
 #[cfg_attr(feature = "mongo", unique_doc_index({ "domain": 1, "username": 1 }))]
-pub struct DockerRegistryAccount {
+pub struct ImageRegistryAccount {
   /// The Mongo ID of the docker registry account.
   /// This field is de/serialized from/to JSON as
-  /// `{ "_id": { "$oid": "..." }, ...(rest of DockerRegistryAccount) }`
+  /// `{ "_id": { "$oid": "..." }, ...(rest of ImageRegistryAccount) }`
   #[serde(
     default,
     rename = "_id",
@@ -122,7 +122,7 @@ fn default_registry_domain() -> String {
 }
 
 #[cfg(feature = "utoipa")]
-impl utoipa::PartialSchema for PartialDockerRegistryAccount {
+impl utoipa::PartialSchema for PartialImageRegistryAccount {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
     utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
@@ -130,4 +130,4 @@ impl utoipa::PartialSchema for PartialDockerRegistryAccount {
 }
 
 #[cfg(feature = "utoipa")]
-impl utoipa::ToSchema for PartialDockerRegistryAccount {}
+impl utoipa::ToSchema for PartialImageRegistryAccount {}

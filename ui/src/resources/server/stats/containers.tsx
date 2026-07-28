@@ -19,7 +19,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
   });
   const isServerAvailable = useIsServerAvailable(id);
   const containers = useRead(
-    "ListDockerContainers",
+    "ListContainers",
     {
       server: id,
     },
@@ -84,7 +84,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
                 <SortableHeader column={column} title="Memory" />
               ),
               cell: ({ row }) => (
-                <Group gap="xs">
+                <Group wrap="nowrap" gap="xs">
                   <Text>{row.original.stats?.mem_perc}</Text>
                   <Text c="muted" size="sm">
                     ({row.original.stats?.mem_usage})

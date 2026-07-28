@@ -1,5 +1,5 @@
 import { resourceSyncStateIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
 import { fmtDate, StatusBadge } from "mogh_ui";
@@ -13,13 +13,15 @@ import { Box, Group } from "@mantine/core";
 import HashCompare from "@/components/hash-compare";
 import ResourceSyncTabs from "./tabs";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useResourceSync(id: string | undefined, useName?: boolean) {
-  return useRead("ListResourceSyncs", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+export function useResourceSync(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("ResourceSync", id, useName, refetchInterval);
 }
 
 export function useFullResourceSync(id: string) {
@@ -30,9 +32,11 @@ export function useFullResourceSync(id: string) {
 export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncConfig,
   Types.ResourceSyncInfo,
-  Types.ResourceSyncListItemInfo
+  Types.ResourceSyncListItemInfo,
+  Types.ResourceSyncQuerySpecifics
 > = {
-  useList: () => useRead("ListResourceSyncs", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListResourceSyncs", { query, limit, page }).data,
   useListItem: useResourceSync,
   useFull: useFullResourceSync,
 
@@ -71,7 +75,13 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   Description: () => <>Declare resources in TOML files.</>,
 
-  New: () => <NewResource type="ResourceSync" readableType="Sync" />,
+  New: ({ repoId }) => (
+    <NewResource
+      type="ResourceSync"
+      readableType="Sync"
+      config={() => ({ linked_repo: repoId })}
+    />
+  ),
 
   BatchExecutions: () => (
     <BatchExecutions
@@ -86,9 +96,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   Table: ResourceSyncTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListResourceSyncs", {}).data?.find(
-      (r) => r.id === id,
-    )?.info.state;
+    const state = useResourceSync(id)?.info.state;
     const color = noColor
       ? undefined
       : state && hexColorByIntention(resourceSyncStateIntention(state));

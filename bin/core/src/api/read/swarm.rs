@@ -3,7 +3,9 @@ use komodo_client::{
   api::read::*,
   entities::{
     permission::PermissionLevel,
-    swarm::{Swarm, SwarmActionState, SwarmListItem, SwarmState},
+    swarm::{
+      Swarm, SwarmActionState, SwarmListItem, SwarmSortBy, SwarmState,
+    },
   },
 };
 use mogh_resolver::Resolve;
@@ -15,7 +17,7 @@ use crate::{
   state::{action_states, server_status_cache, swarm_status_cache},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetSwarm {
   async fn resolve(
@@ -43,12 +45,32 @@ impl Resolve<ReadArgs> for ListSwarms {
     } else {
       get_all_tags(None).await?
     };
+    let limit = list_limit(self.limit);
+    let sort_by: resource::ListItemSort<SwarmListItem> =
+      match self.sort_by {
+        SwarmSortBy::Name => resource::ListItemSort::Name,
+        SwarmSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+      };
     Ok(
-      resource::list_for_user::<Swarm>(
+      resource::list_items_for_user::<Swarm>(
         self.query,
+        resource::ListItemsQueryOptions {
+          limit,
+          page: self.page,
+          sort_desc: self.sort_desc,
+          sort_by,
+        },
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |_| true,
       )
       .await?,
     )
@@ -65,9 +87,12 @@ impl Resolve<ReadArgs> for ListFullSwarms {
     } else {
       get_all_tags(None).await?
     };
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user::<Swarm>(
         self.query,
+        limit as i64,
+        self.page.saturating_mul(limit),
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -105,6 +130,8 @@ impl Resolve<ReadArgs> for GetSwarmsSummary {
   ) -> mogh_error::Result<GetSwarmsSummaryResponse> {
     let swarms = resource::list_full_for_user::<Swarm>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],

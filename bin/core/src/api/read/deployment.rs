@@ -6,8 +6,8 @@ use komodo_client::{
   entities::{
     SwarmOrServer,
     deployment::{
-      Deployment, DeploymentActionState, DeploymentConfig,
-      DeploymentListItem, DeploymentState,
+      Deployment, DeploymentActionState, DeploymentListItem,
+      DeploymentSortBy, DeploymentState,
     },
     docker::{
       container::{Container, ContainerStats},
@@ -25,7 +25,9 @@ use reqwest::StatusCode;
 
 use crate::{
   helpers::{
-    periphery_client, query::get_all_tags, swarm::swarm_request,
+    periphery_client,
+    query::{get_all_tags, get_deployment_state},
+    swarm::swarm_request,
   },
   permission::get_check_permissions,
   resource::{self, setup_deployment_execution},
@@ -34,7 +36,7 @@ use crate::{
   },
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetDeployment {
   async fn resolve(
@@ -63,21 +65,66 @@ impl Resolve<ReadArgs> for ListDeployments {
       get_all_tags(None).await?
     };
     let only_update_available = self.query.specific.update_available;
-    let deployments = resource::list_for_user::<Deployment>(
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
+    let sort_by: resource::ListItemSort<DeploymentListItem> =
+      match self.sort_by {
+        DeploymentSortBy::Name => resource::ListItemSort::Name,
+        DeploymentSortBy::Image => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .image
+              .cmp(&b.info.image)
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+        DeploymentSortBy::Host => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            let host_a = if a.info.swarm_id.is_empty() {
+              &a.info.server_name
+            } else {
+              &a.info.swarm_name
+            };
+            let host_b = if b.info.swarm_id.is_empty() {
+              &b.info.server_name
+            } else {
+              &b.info.swarm_name
+            };
+            host_a.cmp(host_b).then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+        DeploymentSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| {
+                // Use ! with update available to order 'true' first
+                (!a.info.update_available)
+                  .cmp(&!b.info.update_available)
+              })
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+      };
+    let deployments = resource::list_items_for_user::<Deployment>(
       self.query,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
       user,
       PermissionLevel::Read.into(),
       &all_tags,
+      |deployment| {
+        (!only_update_available || deployment.info.update_available)
+          && (states.is_empty()
+            || states.contains(&deployment.info.state))
+      },
     )
     .await?;
-    let deployments = if only_update_available {
-      deployments
-        .into_iter()
-        .filter(|deployment| deployment.info.update_available)
-        .collect()
-    } else {
-      deployments
-    };
     Ok(deployments)
   }
 }
@@ -92,12 +139,32 @@ impl Resolve<ReadArgs> for ListFullDeployments {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
     Ok(
-      resource::list_full_for_user::<Deployment>(
+      resource::list_full_for_user_filtered::<Deployment, _>(
         self.query,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |deployment| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states.contains(
+                &get_deployment_state(&deployment.id)
+                  .await
+                  .unwrap_or_default(),
+              )
+            {
+              Some(deployment)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )
@@ -154,7 +221,7 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
       SwarmOrServer::Swarm(swarm) => swarm_request(
         &swarm.config.server_ids,
         periphery_client::api::swarm::GetSwarmServiceLog {
-          service: deployment.name,
+          service: deployment.deployed_name().to_string(),
           tail,
           timestamps,
           no_task_ids: false,
@@ -167,7 +234,7 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
       SwarmOrServer::Server(server) => periphery_client(&server)
         .await?
         .request(api::container::GetContainerLog {
-          name: deployment.name,
+          name: deployment.deployed_name().to_string(),
           tail: cmp::min(tail, MAX_LOG_LENGTH),
           timestamps,
         })
@@ -206,7 +273,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       SwarmOrServer::Swarm(swarm) => swarm_request(
         &swarm.config.server_ids,
         periphery_client::api::swarm::GetSwarmServiceLogSearch {
-          service: deployment.name,
+          service: deployment.deployed_name().to_string(),
           terms,
           combinator,
           invert,
@@ -221,7 +288,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       SwarmOrServer::Server(server) => periphery_client(&server)
         .await?
         .request(api::container::GetContainerLogSearch {
-          name: deployment.name,
+          name: deployment.deployed_name().to_string(),
           terms,
           combinator,
           invert,
@@ -274,7 +341,7 @@ impl Resolve<ReadArgs> for InspectDeploymentContainer {
     periphery_client(&server)
       .await?
       .request(InspectContainer {
-        name: deployment.name,
+        name: deployment.deployed_name().to_string(),
       })
       .await
       .context("Failed to inspect container on server")
@@ -307,7 +374,7 @@ impl Resolve<ReadArgs> for InspectDeploymentSwarmService {
     swarm_request(
       &swarm.config.server_ids,
       periphery_client::api::swarm::InspectSwarmService {
-        service: deployment.name,
+        service: deployment.deployed_name().to_string(),
       },
     )
     .await
@@ -321,25 +388,24 @@ impl Resolve<ReadArgs> for GetDeploymentStats {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> mogh_error::Result<ContainerStats> {
-    let Deployment {
-      name,
-      config: DeploymentConfig { server_id, .. },
-      ..
-    } = get_check_permissions::<Deployment>(
+    let deployment = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
       PermissionLevel::Read.into(),
     )
     .await?;
-    if server_id.is_empty() {
+    if deployment.config.server_id.is_empty() {
       return Err(
-        anyhow!("deployment has no server attached").into(),
+        anyhow!("Deployment has no Server attached").into(),
       );
     }
-    let server = resource::get::<Server>(&server_id).await?;
+    let server =
+      resource::get::<Server>(&deployment.config.server_id).await?;
     let res = periphery_client(&server)
       .await?
-      .request(api::container::GetContainerStats { name })
+      .request(api::container::GetContainerStats {
+        name: deployment.deployed_name().to_string(),
+      })
       .await
       .context("failed to get stats from periphery")?;
     Ok(res)
@@ -374,6 +440,8 @@ impl Resolve<ReadArgs> for GetDeploymentsSummary {
   ) -> mogh_error::Result<GetDeploymentsSummaryResponse> {
     let deployments = resource::list_full_for_user::<Deployment>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],
@@ -422,6 +490,8 @@ impl Resolve<ReadArgs> for ListCommonDeploymentExtraArgs {
     };
     let deployments = resource::list_full_for_user::<Deployment>(
       self.query,
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &all_tags,

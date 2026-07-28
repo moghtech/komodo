@@ -91,20 +91,20 @@ Komodo supports pushing and pulling images from any Docker-compatible registry, 
 ```toml
 # in core.config.toml or periphery.config.toml
 
-[[docker_registry]]
+[[image_registry]]
 domain = "docker.io"
 accounts = [
   { username = "my-user", token = "dckr_pat_xxxxxxxxxxxx" },
 ]
 organizations = ["MyOrg"]
 
-[[docker_registry]]
+[[image_registry]]
 domain = "ghcr.io"
 accounts = [
   { username = "my-user", token = "ghp_xxxxxxxxxxxx" },
 ]
 
-[[docker_registry]]
+[[image_registry]]
 domain = "registry.example.com" # self-hosted registry
 accounts = [
   { username = "my-user", token = "access_token" },
