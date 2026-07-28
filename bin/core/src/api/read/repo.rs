@@ -3,7 +3,9 @@ use komodo_client::{
   api::read::*,
   entities::{
     permission::PermissionLevel,
-    repo::{Repo, RepoActionState, RepoListItem, RepoState},
+    repo::{
+      Repo, RepoActionState, RepoListItem, RepoSortBy, RepoState,
+    },
   },
 };
 use mogh_resolver::Resolve;
@@ -15,7 +17,7 @@ use crate::{
   state::{action_states, repo_state_cache},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetRepo {
   async fn resolve(
@@ -43,15 +45,41 @@ impl Resolve<ReadArgs> for ListRepos {
     } else {
       get_all_tags(None).await?
     };
-    Ok(
-      resource::list_for_user::<Repo>(
-        self.query,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-      )
-      .await?,
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
+    let sort_by: resource::ListItemSort<RepoListItem> =
+      match self.sort_by {
+        RepoSortBy::Name => resource::ListItemSort::Name,
+        RepoSortBy::Repo => {
+          resource::ListItemSort::DbField("config.repo")
+        }
+        RepoSortBy::Branch => {
+          resource::ListItemSort::DbField("config.branch")
+        }
+        RepoSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+      };
+    let repos = resource::list_items_for_user::<Repo>(
+      self.query,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
+      |repo| states.is_empty() || states.contains(&repo.info.state),
     )
+    .await?;
+    Ok(repos)
   }
 }
 
@@ -65,12 +93,29 @@ impl Resolve<ReadArgs> for ListFullRepos {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
     Ok(
-      resource::list_full_for_user::<Repo>(
+      resource::list_full_for_user_filtered::<Repo, _>(
         self.query,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |repo| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states
+                .contains(&resource::get_repo_state(&repo.id).await)
+            {
+              Some(repo)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )
@@ -105,6 +150,8 @@ impl Resolve<ReadArgs> for GetReposSummary {
   ) -> mogh_error::Result<GetReposSummaryResponse> {
     let repos = resource::list_full_for_user::<Repo>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],

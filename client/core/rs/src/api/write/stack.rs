@@ -198,6 +198,109 @@ pub struct WriteStackFileContents {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
+  path = "/CreateStackEditBranch",
+  description = "Create a git edit branch for the stack and switch to it.",
+  request_body(content = CreateStackEditBranch),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn create_stack_edit_branch() {}
+
+/// Enter Edit Branch mode for a Git Repo stack:
+/// create a new branch on the remote pointing at the current
+/// tip of the configured branch, and switch the stack to it.
+/// Subsequent file saves commit to the edit branch,
+/// keeping the base branch history clean until
+/// [MergeStackEditBranch]. Response: [Update].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(Update)]
+#[error(mogh_error::Error)]
+pub struct CreateStackEditBranch {
+  /// The name or id of the target Stack.
+  #[serde(alias = "id", alias = "name")]
+  pub stack: String,
+  /// Optionally override the edit branch name.
+  /// Default: `komodo/edit/{stack_name}`.
+  #[serde(default)]
+  pub branch: Option<String>,
+}
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/MergeStackEditBranch",
+  description = "Squash merge the stack edit branch back into the base branch.",
+  request_body(content = MergeStackEditBranch),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn merge_stack_edit_branch() {}
+
+/// Exit Edit Branch mode by squash merging the edit branch
+/// back into the base branch as a single commit,
+/// switching the stack back to the base branch,
+/// and deleting the edit branch on the remote.
+/// On merge conflict, the stack stays in Edit Branch mode.
+/// Response: [Update].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(Update)]
+#[error(mogh_error::Error)]
+pub struct MergeStackEditBranch {
+  /// The name or id of the target Stack.
+  #[serde(alias = "id", alias = "name")]
+  pub stack: String,
+  /// Optional custom message for the squash commit,
+  /// used as `[Komodo] {username}: {message}`.
+  /// Default: `Merge Stack Edits: update {changed files}`.
+  #[serde(default)]
+  pub message: Option<String>,
+}
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DiscardStackEditBranch",
+  description = "Discard the stack edit branch and switch back to the base branch.",
+  request_body(content = DiscardStackEditBranch),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn discard_stack_edit_branch() {}
+
+/// Exit Edit Branch mode by switching the stack back
+/// to the base branch and deleting the edit branch
+/// on the remote. All commits on the edit branch are discarded.
+/// Response: [Update].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(Update)]
+#[error(mogh_error::Error)]
+pub struct DiscardStackEditBranch {
+  /// The name or id of the target Stack.
+  #[serde(alias = "id", alias = "name")]
+  pub stack: String,
+}
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
   path = "/RefreshStackCache",
   description = "Trigger a refresh of the cached compose file contents.",
   request_body(content = RefreshStackCache),
@@ -310,6 +413,10 @@ pub struct BatchCheckStackForUpdate {
   /// extra-stack-1, extra-stack-2
   /// ```
   pub pattern: String,
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
   /// Normally resources with 'auto_update' will be
   /// redeployed immediately if updates are found.
   /// With this enabled, convert this into an UpdateAvailable alert.

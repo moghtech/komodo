@@ -8,11 +8,20 @@ import {
 import {
   UseMutationOptions,
   UseQueryOptions,
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { RowSelectionState } from "@tanstack/react-table";
 import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { atomWithHash } from "jotai-location";
@@ -21,8 +30,13 @@ import { UsableResource, RESOURCE_TARGETS } from "@/resources";
 import {
   hasMinimumPermissions,
   resourceTargetFromTerminalTarget,
+  setSelectedStateHandler,
+  termMatchesTypeKeyword,
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
+import { useDebounce } from "mogh_ui";
+import { useLocalStorage } from "@mantine/hooks";
+import { DockerResourceType } from "@/components/docker";
 
 export function komodo_client() {
   return KomodoClient(KOMODO_BASE_URL, {
@@ -180,12 +194,29 @@ export function atomWithStorage<T>(key: string, init: T) {
   );
 }
 
-export function useResourceName(type: UsableResource) {
-  const resources = useRead(`List${type}s`, {}).data;
-  return useCallback(
-    (id: string) => resources?.find((resource) => resource.id === id)?.name,
-    [resources],
-  );
+export function useDebouncedTermSearch(props?: {
+  debounce?: number;
+  onUpdate?: () => void;
+  localStorageKey?: string;
+}) {
+  const { debounce = 200, onUpdate, localStorageKey } = props ?? {};
+  const [search, setSearch] = localStorageKey
+    ? useLocalStorage({ key: localStorageKey, defaultValue: "" })
+    : useState("");
+  const debouncedSearch = useDebounce(search, debounce);
+  const terms = useMemo(() => {
+    onUpdate?.();
+    return debouncedSearch
+      .toLowerCase()
+      .split(" ")
+      .map((term) => term.trim())
+      .filter((term) => term);
+  }, [debouncedSearch]);
+  return {
+    search,
+    setSearch,
+    terms,
+  };
 }
 
 export function useResourceParamType() {
@@ -195,23 +226,257 @@ export function useResourceParamType() {
   return (type[0].toUpperCase() + type.slice(1, -1)) as UsableResource;
 }
 
+// ============== BATCHED LIST ITEM LOOKUP ==============
+
+/**
+ * All list item lookups mounting within the window (eg. the rows of a
+ * rendering table) are combined into a single `List<Type>s` request.
+ */
+const LIST_ITEM_BATCH_MS = 10;
+
+/** Matches the server side ObjectId parse used to split `query.names` into ids / names. */
+const OBJECT_ID_REGEX = /^[0-9a-f]{24}$/i;
+
+type ListItemBatch = {
+  names: Set<string>;
+  promise: Promise<Map<string, Types.ResourceListItem<unknown>>>;
+};
+
+const listItemBatches = new Map<string, ListItemBatch>();
+
+function batchedListItemFetch(
+  type: UsableResource,
+  name: string,
+): Promise<Types.ResourceListItem<unknown>[]> {
+  // The server ANDs the id filter / name filter it extracts from
+  // `query.names`, so id lookups must be batched separately from
+  // name lookups to avoid empty intersections.
+  const bucket = `${type}:${OBJECT_ID_REGEX.test(name) ? "id" : "name"}`;
+  let batch = listItemBatches.get(bucket);
+  if (!batch) {
+    const names = new Set<string>();
+    const promise = new Promise<Types.ResourceListItem<unknown>[]>(
+      (resolve, reject) => {
+        setTimeout(() => {
+          listItemBatches.delete(bucket);
+          komodo_client()
+            .read(`List${type}s`, {
+              query: { names: [...names] },
+              // limit: 0 so large batches aren't truncated to the default page size
+              limit: 0,
+            })
+            .then(resolve, reject);
+        }, LIST_ITEM_BATCH_MS);
+      },
+    ).then((resources) => {
+      const map = new Map<string, Types.ResourceListItem<unknown>>();
+      for (const resource of resources) {
+        map.set(resource.id, resource);
+        map.set(resource.name, resource);
+      }
+      return map;
+    });
+    batch = { names, promise };
+    listItemBatches.set(bucket, batch);
+  }
+  batch.names.add(name);
+  return batch.promise.then((map) => {
+    const resource = map.get(name);
+    return resource ? [resource] : [];
+  });
+}
+
+/**
+ * The underlying query for [useListItem]. The query key mirrors the
+ * plain `useRead("List<Type>s", { query: { names: [id] } })` call, so cache
+ * entries are shared and `useInvalidate(["List<Type>s"])` style prefix
+ * invalidations reach these too.
+ *
+ * Polls by default so state colors etc. stay current for passive
+ * state changes (which don't come in over the update websocket).
+ * The refetches re-batch, so this costs one small request
+ * per resource type per interval. Pass `false` to disable.
+ */
+export function useListItemQuery(
+  type: UsableResource,
+  id: string | undefined,
+  refetchInterval: number | false = 15_000,
+) {
+  const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
+  return useQuery({
+    queryKey: [`List${type}s`, { query: { names: id ? [id] : [] } }],
+    queryFn: () => batchedListItemFetch(type, id!),
+    enabled: hasJwt && !!id,
+    refetchInterval,
+  });
+}
+
+/**
+ * Look up a single resource list item by id (or name, with `useName`).
+ * Concurrent lookups are transparently batched into a single
+ * `List<Type>s` call per resource type, instead of a request per id.
+ */
+export function useListItem<T extends UsableResource>(
+  type: T,
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+): ReadResponses[`List${T}s`][number] | undefined {
+  const { data } = useListItemQuery(type, id, refetchInterval);
+  return (data as Types.ResourceListItem<unknown>[] | undefined)?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  ) as ReadResponses[`List${T}s`][number] | undefined;
+}
+
 export type ResourceMap = {
   [Resource in UsableResource]: Types.ResourceListItem<unknown>[] | undefined;
 };
 
-export function useAllResources(refetchInterval?: number): ResourceMap {
+export function useAllResources(
+  terms?: string[],
+  limit?: number,
+  refetchInterval?: number,
+  enabled?: boolean,
+): ResourceMap {
   return {
-    Swarm: useRead("ListSwarms", {}, { refetchInterval }).data,
-    Server: useRead("ListServers", {}, { refetchInterval }).data,
-    Stack: useRead("ListStacks", {}, { refetchInterval }).data,
-    Deployment: useRead("ListDeployments", {}, { refetchInterval }).data,
-    Build: useRead("ListBuilds", {}, { refetchInterval }).data,
-    Repo: useRead("ListRepos", {}, { refetchInterval }).data,
-    Procedure: useRead("ListProcedures", {}, { refetchInterval }).data,
-    Action: useRead("ListActions", {}, { refetchInterval }).data,
-    Builder: useRead("ListBuilders", {}, { refetchInterval }).data,
-    Alerter: useRead("ListAlerters", {}, { refetchInterval }).data,
-    ResourceSync: useRead("ListResourceSyncs", {}, { refetchInterval }).data,
+    Swarm: useRead(
+      "ListSwarms",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("swarms", term),
+          ),
+        },
+        limit,
+      },
+      {
+        refetchInterval,
+        enabled,
+        // Keep the previous results visible while fetching after a search
+        // change to prevent resource flashing.
+        placeholderData: keepPreviousData,
+      },
+    ).data,
+    Server: useRead(
+      "ListServers",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("servers", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    Stack: useRead(
+      "ListStacks",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("stacks", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    Deployment: useRead(
+      "ListDeployments",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("deployments", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    Build: useRead(
+      "ListBuilds",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("builds", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    Repo: useRead(
+      "ListRepos",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("repos", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    Procedure: useRead(
+      "ListProcedures",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("procedures", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    Action: useRead(
+      "ListActions",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("actions", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    Builder: useRead(
+      "ListBuilders",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("builders", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    Alerter: useRead(
+      "ListAlerters",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("alerters", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
+    ResourceSync: useRead(
+      "ListResourceSyncs",
+      {
+        query: {
+          terms: terms?.filter(
+            (term) => !termMatchesTypeKeyword("syncs", term),
+          ),
+        },
+        limit,
+      },
+      { refetchInterval, enabled, placeholderData: keepPreviousData },
+    ).data,
   };
 }
 
@@ -226,37 +491,6 @@ export function useNoResources() {
   return true;
 }
 
-/** returns function that takes a resource target and checks if it exists */
-export function useCheckResourceExists() {
-  const resources = useAllResources();
-  return (target: Types.ResourceTarget) => {
-    return (
-      resources[target.type as UsableResource]?.some(
-        (resource) => resource.id === target.id,
-      ) || false
-    );
-  };
-}
-
-export function useFilterResources<Info>(
-  resources?: Types.ResourceListItem<Info>[],
-  search?: string,
-) {
-  const tags = useTagsFilter();
-  const searchSplit = search?.toLowerCase()?.split(" ") || [];
-  return (
-    resources?.filter(
-      (resource) =>
-        tags.every((tag: string) => resource.tags.includes(tag)) &&
-        (searchSplit.length > 0
-          ? searchSplit.every((search) =>
-              resource.name.toLowerCase().includes(search),
-            )
-          : true),
-    ) ?? []
-  );
-}
-
 export function usePushRecentlyViewed({ type, id }: Types.ResourceTarget) {
   const userInvalidate = useUserInvalidate();
 
@@ -264,11 +498,7 @@ export function usePushRecentlyViewed({ type, id }: Types.ResourceTarget) {
     onSuccess: userInvalidate,
   }).mutate;
 
-  const exists = useRead(`List${type as UsableResource}s`, {}).data?.find(
-    (r) => r.id === id,
-  )
-    ? true
-    : false;
+  const exists = useListItem(type as UsableResource, id) ? true : false;
 
   useEffect(() => {
     exists && push({ resource: { type, id } });
@@ -363,6 +593,60 @@ export function useWebhookIdOrName() {
 const selectedResources = atomFamily((_: UsableResource) => atom<string[]>([]));
 export function useSelectedResources(type: UsableResource) {
   return useAtom(selectedResources(type));
+}
+
+/** Controlled DataTable `selectOptions.state` backed by
+ * the selected resources atom, so batch executions
+ * (eg. Delete) can clear the table selection state. */
+export function useResourceSelectionState(
+  type: UsableResource,
+): [RowSelectionState, Dispatch<SetStateAction<RowSelectionState>>] {
+  const [selected, setSelected] = useSelectedResources(type);
+  return useSelectionState(selected, setSelected);
+}
+
+const selectedDockerResources = atomFamily((_: DockerResourceType) =>
+  atom<string[]>([]),
+);
+/** Holds list of `${server_id} ${resource_name}`
+ * (concatenated with a space)
+ */
+export function useSelectedDockerResources(type: DockerResourceType) {
+  return useAtom(selectedDockerResources(type));
+}
+
+/** Controlled DataTable `selectOptions.state` backed by
+ * the selected docker resources atom, so batch executions
+ * (eg. Delete) can clear the table selection state. */
+export function useDockerSelectionState(
+  type: DockerResourceType,
+): [RowSelectionState, Dispatch<SetStateAction<RowSelectionState>>] {
+  const [selected, setSelected] = useSelectedDockerResources(type);
+  return useSelectionState(selected, setSelected);
+}
+
+function useSelectionState(
+  selected: string[],
+  setSelected: (list: string[]) => void,
+): [RowSelectionState, Dispatch<SetStateAction<RowSelectionState>>] {
+  const selectionState = useMemo(
+    () =>
+      selected.reduce((state, item) => {
+        state[item] = true;
+        return state;
+      }, {} as RowSelectionState),
+    [selected],
+  );
+  const setSelectionState = useCallback(
+    (state: SetStateAction<RowSelectionState>) =>
+      setSelectedStateHandler(state, selectionState, setSelected),
+    [selectionState, setSelected],
+  );
+  // Stable tuple so it can be used in memo dependencies (eg. Containers page).
+  return useMemo(
+    () => [selectionState, setSelectionState],
+    [selectionState, setSelectionState],
+  );
 }
 
 const filterByUpdateAvailable = atomWithHash<boolean>(
@@ -535,7 +819,7 @@ export function useUserTargetPermissions(user_target: Types.UserTarget) {
   const permissions = useRead("ListUserTargetPermissions", {
     user_target,
   }).data;
-  const allResources = useAllResources();
+  const allResources = useAllResources(undefined, 0);
   const perms: (Types.Permission & { name: string })[] = [];
   for (const [resource_type, resources] of Object.entries(allResources)) {
     addUserTargetPermissions(
@@ -573,4 +857,39 @@ function addUserTargetPermissions<I>(
       });
     }
   });
+}
+
+/**
+ * Checks if target operation is cancelling
+ * by querying relevant Updates on the target.
+ * If a 'Cancel' operation is more recent than
+ * an InProgress 'Run' operation, the target
+ * is cancelling.
+ */
+export function useIsCancelling(
+  target: Types.ResourceTarget,
+  runOp: Types.Operation,
+  cancelOp: Types.Operation,
+) {
+  const updates = useRead("ListUpdates", {
+    query: {
+      "target.type": target.type,
+      "target.id": target.id,
+    },
+  }).data?.updates;
+  if (!updates) {
+    return true;
+  }
+  let hasCancel = false;
+  for (const update of updates) {
+    if (update.operation === cancelOp) {
+      hasCancel = true;
+    } else if (
+      update.operation === runOp &&
+      update.status === Types.UpdateStatus.InProgress
+    ) {
+      return hasCancel;
+    }
+  }
+  return false;
 }

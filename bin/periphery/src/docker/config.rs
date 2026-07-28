@@ -1,8 +1,9 @@
-use std::fmt::Write;
+use std::{fmt::Write, time::Duration};
 
 use anyhow::{Context, anyhow};
 use command::{
-  run_komodo_shell_command, run_komodo_standard_command,
+  CommandOptions, run_komodo_shell_command,
+  run_komodo_standard_command,
 };
 use data_encoding::BASE64URL;
 use futures_util::{TryStreamExt as _, stream::FuturesUnordered};
@@ -23,8 +24,8 @@ pub async fn list_swarm_configs(
 ) -> anyhow::Result<Vec<SwarmConfigListItem>> {
   let res = run_komodo_standard_command(
     "List Swarm Configs",
-    None,
     "docker config ls --format json",
+    CommandOptions::default().timeout(Duration::from_secs(1)),
   )
   .await;
 
@@ -68,8 +69,8 @@ pub async fn inspect_swarm_config(
 ) -> anyhow::Result<SwarmConfigDetails> {
   let res = run_komodo_standard_command(
     "Inspect Swarm Config",
-    None,
     format!(r#"docker config inspect "{config}""#),
+    CommandOptions::default().timeout(Duration::from_secs(3)),
   )
   .await;
 
@@ -133,8 +134,12 @@ EOF"#,
     data.trim()
   )?;
 
-  let log =
-    run_komodo_shell_command("Create Config", None, command).await;
+  let log = run_komodo_shell_command(
+    "Create Config",
+    command,
+    CommandOptions::default(),
+  )
+  .await;
 
   Ok(log)
 }
@@ -147,8 +152,12 @@ pub async fn remove_swarm_configs(
     command += " ";
     command += config;
   }
-  run_komodo_standard_command("Remove Swarm Configs", None, command)
-    .await
+  run_komodo_standard_command(
+    "Remove Swarm Configs",
+    command,
+    CommandOptions::default(),
+  )
+  .await
 }
 
 pub async fn recreate_swarm_config(
@@ -323,8 +332,8 @@ async fn switch_service_config(
 
   let log = run_komodo_standard_command(
     "Switch Service Config",
-    None,
     command,
+    CommandOptions::default(),
   )
   .await;
 

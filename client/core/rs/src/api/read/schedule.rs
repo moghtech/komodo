@@ -4,7 +4,11 @@ use typeshare::typeshare;
 
 use crate::{
   deserializers::string_list_deserializer,
-  entities::{resource::TagQueryBehavior, schedule::Schedule},
+  entities::{
+    U64,
+    resource::TagQueryBehavior,
+    schedule::{Schedule, ScheduleSortBy},
+  },
 };
 
 use super::KomodoReadRequest;
@@ -26,7 +30,7 @@ pub fn list_schedules() {}
 /// List configured schedules.
 /// Response: [ListSchedulesResponse].
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSchedulesResponse)]
@@ -38,6 +42,35 @@ pub struct ListSchedules {
   /// 'All' or 'Any'
   #[serde(default)]
   pub tag_behavior: TagQueryBehavior,
+
+  /// Filter by target name.
+  /// Returned schedules have names which contain all terms.
+  #[serde(default)]
+  pub terms: Vec<String>,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of schedules per-page.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name.
+  #[serde(default)]
+  pub sort_by: ScheduleSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]

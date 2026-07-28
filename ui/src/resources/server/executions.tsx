@@ -16,7 +16,7 @@ export const Prune = ({
   const action_state = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
   const { canExecute } = usePermissions({ type: "Server", id: serverId });
 

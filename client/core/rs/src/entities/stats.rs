@@ -50,6 +50,22 @@ pub struct SystemStatsRecord {
   pub mem_used_gb: f64,
   /// Total memory in GB
   pub mem_total_gb: f64,
+  /// [2.3.0+]
+  /// Reclaimable page cache + buffers in GB.
+  #[serde(default)]
+  pub mem_buff_cache_gb: f64,
+  /// [2.3.0+]
+  /// ZFS ARC cache in GB. 0 when ZFS is not present.
+  #[serde(default)]
+  pub mem_zfs_arc_gb: f64,
+  /// [2.3.0+]
+  /// Total swap in GB.
+  #[serde(default)]
+  pub swap_total_gb: f64,
+  /// [2.3.0+]
+  /// Used swap in GB.
+  #[serde(default)]
+  pub swap_used_gb: f64,
   /// Disk used in GB
   pub disk_used_gb: f64,
   /// Total disk size in GB
@@ -83,10 +99,27 @@ pub struct SystemStats {
   /// It may be different than mem_total_gb - mem_used_gb.
   #[serde(default)]
   pub mem_free_gb: f64,
-  /// Used memory in GB. 'Total' - 'Available' (not free) memory.
+  /// Used memory in GB. 'Total' - 'Available' (not free) memory,
+  /// with the (reclaimable) ZFS ARC cache subtracted out.
   pub mem_used_gb: f64,
   /// Total memory in GB
   pub mem_total_gb: f64,
+  /// [2.3.0+]
+  /// Reclaimable page cache + buffers in GB.
+  #[serde(default)]
+  pub mem_buff_cache_gb: f64,
+  /// [2.3.0+]
+  /// ZFS ARC cache in GB. 0 when ZFS is not present.
+  #[serde(default)]
+  pub mem_zfs_arc_gb: f64,
+  /// [2.3.0+]
+  /// Total swap in GB.
+  #[serde(default)]
+  pub swap_total_gb: f64,
+  /// [2.3.0+]
+  /// Used swap in GB.
+  #[serde(default)]
+  pub swap_used_gb: f64,
   /// Breakdown of individual disks, ie their usages, sizes, and mount points
   pub disks: Vec<SingleDiskUsage>,
   /// Network ingress usage in MB

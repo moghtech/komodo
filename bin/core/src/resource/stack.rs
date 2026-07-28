@@ -31,7 +31,9 @@ use crate::{
   config::core_config,
   helpers::{
     periphery_client,
-    query::{get_stack_state, get_swarm_or_server},
+    query::{
+      get_cached_stack_state, get_stack_state, get_swarm_or_server,
+    },
     repo_link,
     swarm::swarm_request,
   },
@@ -95,20 +97,7 @@ impl super::KomodoResource for Stack {
     stack: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = stack_status_cache().get(&stack.id).await;
-    let state = if action_states()
-      .stack
-      .get(&stack.id)
-      .await
-      .map(|s| s.get().map(|s| s.deploying))
-      .transpose()
-      .ok()
-      .flatten()
-      .unwrap_or_default()
-    {
-      StackState::Deploying
-    } else {
-      status.as_ref().map(|s| s.curr.state).unwrap_or_default()
-    };
+    let state = get_cached_stack_state(&stack.id).await;
     let project_name = stack.project_name(false);
     let services = status
       .as_ref()
@@ -156,8 +145,9 @@ impl super::KomodoResource for Stack {
       stack.config.repo,
       stack.config.branch,
       stack.config.git_https,
+      String::new(),
     );
-    let (git_provider, repo, branch, git_https) =
+    let (git_provider, repo, branch, git_https, linked_repo_name) =
       if stack.config.linked_repo.is_empty() {
         default_git
       } else {
@@ -171,6 +161,7 @@ impl super::KomodoResource for Stack {
               r.config.repo.clone(),
               r.config.branch.clone(),
               r.config.git_https,
+              r.name.clone(),
             )
           })
           .unwrap_or(default_git)
@@ -205,6 +196,18 @@ impl super::KomodoResource for Stack {
         (false, None)
       };
 
+    let all = all_resources_cache().load();
+    let server_name = all
+      .servers
+      .get(&stack.config.server_id)
+      .map(|server| server.name.clone())
+      .unwrap_or_default();
+    let swarm_name = all
+      .swarms
+      .get(&stack.config.swarm_id)
+      .map(|swarm| swarm.name.clone())
+      .unwrap_or_default();
+
     StackListItem {
       name: stack.name,
       id: stack.id,
@@ -218,8 +221,11 @@ impl super::KomodoResource for Stack {
         project_missing,
         file_contents: !stack.config.file_contents.is_empty(),
         swarm_id: stack.config.swarm_id,
+        swarm_name,
         server_id: stack.config.server_id,
+        server_name,
         linked_repo: stack.config.linked_repo,
+        linked_repo_name,
         missing_files: stack.info.missing_files,
         files_on_host: stack.config.files_on_host,
         repo_link: repo_link(
@@ -453,6 +459,12 @@ impl super::KomodoResource for Stack {
     _update: &mut Update,
   ) -> anyhow::Result<()> {
     stack_status_cache().remove(&resource.id).await;
+    // Best effort cleanup of a leftover remote edit branch.
+    if !resource.config.edit_base_branch.is_empty() {
+      tokio::spawn(crate::api::write::cleanup_stack_edit_branch(
+        resource.clone(),
+      ));
+    }
     Ok(())
   }
 }

@@ -1,9 +1,10 @@
-use std::{borrow::Cow, fmt::Write, path::PathBuf};
+use std::{borrow::Cow, fmt::Write, path::PathBuf, time::Duration};
 
 use anyhow::{Context, anyhow};
 use command::{
-  KomodoCommandMode, run_komodo_command_with_sanitization,
-  run_komodo_shell_command, run_komodo_standard_command,
+  CommandOptions, KomodoCommandMode,
+  run_komodo_command_with_sanitization, run_komodo_shell_command,
+  run_komodo_standard_command,
 };
 use formatting::format_serror;
 use git::write_commit_file;
@@ -11,11 +12,7 @@ use interpolate::Interpolator;
 use komodo_client::{
   entities::{
     FileContents, RepoExecutionResponse, all_logs_success,
-    stack::{
-      AdditionalEnvFile, ComposeFile, ComposeService,
-      ComposeServiceDeploy, StackRemoteFileContents,
-      StackServiceNames,
-    },
+    stack::{AdditionalEnvFile, StackRemoteFileContents},
     to_path_compatible_name,
     update::Log,
   },
@@ -28,7 +25,7 @@ use tracing::Instrument;
 
 use crate::{
   config::periphery_config,
-  docker::compose::docker_compose,
+  docker::compose::{docker_compose, parse_compose_services},
   helpers::{format_extra_args, format_log_grep},
   stack::{
     maybe_login_registry, pull_or_clone_stack, validate_files,
@@ -58,8 +55,12 @@ impl Resolve<crate::api::Args> for GetComposeLog {
       services.join(" ")
     );
     Ok(
-      run_komodo_standard_command("Get Stack Log", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Get Stack Log",
+        command,
+        CommandOptions::default().timeout(Duration::from_secs(3)),
+      )
+      .await,
     )
   }
 }
@@ -89,8 +90,12 @@ impl Resolve<crate::api::Args> for GetComposeLogSearch {
       services.join(" ")
     );
     Ok(
-      run_komodo_shell_command("Search Stack Log", None, command)
-        .await,
+      run_komodo_shell_command(
+        "Search Stack Log",
+        command,
+        CommandOptions::default().timeout(Duration::from_secs(3)),
+      )
+      .await,
     )
   }
 }
@@ -390,8 +395,8 @@ impl Resolve<crate::api::Args> for ComposePull {
     };
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Pull",
-      run_directory.as_path(),
       pull_command,
+      CommandOptions::default().path(run_directory.as_path()),
       mode,
       &replacers,
     )
@@ -488,8 +493,8 @@ impl Resolve<crate::api::Args> for ComposeUp {
       let span = info_span!("ExecutePreDeploy");
       if let Some(log) = run_komodo_command_with_sanitization(
         "Pre Deploy",
-        pre_deploy_path.as_path(),
         &stack.config.pre_deploy.command,
+        CommandOptions::default().path(pre_deploy_path.as_path()),
         if stack.config.pre_deploy.shell_mode {
           KomodoCommandMode::Shell
         } else {
@@ -559,70 +564,55 @@ impl Resolve<crate::api::Args> for ComposeUp {
           return Ok(res);
         }
       };
-      let mode = if wrapped {
-        KomodoCommandMode::Shell
-      } else {
-        KomodoCommandMode::Standard
-      };
       let span = info_span!("GetComposeConfig", command);
-      let Some(config_log) = run_komodo_command_with_sanitization(
-        "Compose Config",
-        run_directory.as_path(),
-        command,
-        mode,
-        &replacers,
-      )
-      .instrument(span)
-      .await
-      else {
-        unreachable!()
+      let mut config_log = if wrapped {
+        run_komodo_shell_command(
+          "Compose Config",
+          command,
+          CommandOptions::default().path(run_directory.as_path()),
+        )
+        .instrument(span)
+        .await
+      } else {
+        run_komodo_standard_command(
+          "Compose Config",
+          command,
+          CommandOptions::default().path(run_directory.as_path()),
+        )
+        .instrument(span)
+        .await
       };
+
       if !config_log.success {
+        config_log.sanitize(&replacers);
         res.logs.push(config_log);
         return Ok(res);
       }
-      let compose =
-        serde_yaml_ng::from_str::<ComposeFile>(&config_log.stdout)
-          .context("Failed to parse compose contents")?;
-      // Store sanitized compose config output
-      res.merged_config = Some(config_log.stdout);
-      for (
-        service_name,
-        ComposeService {
-          container_name,
-          deploy,
-          image,
-        },
-      ) in compose.services
-      {
-        let image = image.unwrap_or_default();
-        match deploy {
-          Some(ComposeServiceDeploy {
-            replicas: Some(replicas),
-          }) if replicas > 1 => {
-            for i in 1..1 + replicas {
-              res.services.push(StackServiceNames {
-                container_name: format!(
-                  "{project_name}-{service_name}-{i}"
-                ),
-                service_name: format!("{service_name}-{i}"),
-                image: image.clone(),
-                image_digest: None,
-              });
-            }
-          }
-          _ => {
-            res.services.push(StackServiceNames {
-              container_name: container_name.unwrap_or_else(|| {
-                format!("{project_name}-{service_name}")
-              }),
-              service_name,
-              image,
-              image_digest: None,
-            });
-          }
-        }
+
+      // attach sanitized merged config in any case.
+      res.merged_config =
+        svi::replace_in_string(&config_log.stdout, &replacers).into();
+
+      if let Err(e) = parse_compose_services(
+        &config_log.stdout,
+        &project_name,
+        &mut res.services,
+      ) {
+        config_log.sanitize(&replacers);
+        res.logs.push(config_log);
+        res.logs.push(Log::error(
+          "Parse Compose Services",
+          format_serror(&e.into()),
+        ));
+        // early return with error log
+        // including sanitized config log
+        // and parse error for clear view
+        // of what the issue might be.
+        return Ok(res);
       }
+
+      config_log.sanitize(&replacers);
+      res.logs.push(config_log);
     }
 
     if stack.config.run_build {
@@ -651,8 +641,8 @@ impl Resolve<crate::api::Args> for ComposeUp {
       let span = info_span!("ExecuteComposeBuild");
       let Some(log) = run_komodo_command_with_sanitization(
         "Compose Build",
-        run_directory.as_path(),
         command,
+        CommandOptions::default().path(run_directory.as_path()),
         mode,
         &replacers,
       )
@@ -694,8 +684,8 @@ impl Resolve<crate::api::Args> for ComposeUp {
       let span = info_span!("RunComposePull");
       let Some(log) = run_komodo_command_with_sanitization(
         "Compose Pull",
-        run_directory.as_path(),
         command,
+        CommandOptions::default().path(run_directory.as_path()),
         mode,
         &replacers,
       )
@@ -742,8 +732,8 @@ impl Resolve<crate::api::Args> for ComposeUp {
     let span = info_span!("ExecuteComposeUp");
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Up",
-      run_directory.as_path(),
       command,
+      CommandOptions::default().path(run_directory.as_path()),
       KomodoCommandMode::Shell,
       &replacers,
     )
@@ -762,8 +752,8 @@ impl Resolve<crate::api::Args> for ComposeUp {
       let span = info_span!("ExecutePostDeploy");
       if let Some(log) = run_komodo_command_with_sanitization(
         "Post Deploy",
-        post_deploy_path.as_path(),
         &stack.config.post_deploy.command,
+        CommandOptions::default().path(post_deploy_path.as_path()),
         if stack.config.post_deploy.shell_mode {
           KomodoCommandMode::Shell
         } else {
@@ -803,8 +793,8 @@ impl Resolve<crate::api::Args> for ComposeExecution {
     let docker_compose = docker_compose();
     let log = run_komodo_standard_command(
       "Compose Command",
-      None,
       format!("{docker_compose} -p {project} {command}"),
+      CommandOptions::default(),
     )
     .await;
     Ok(log)
@@ -931,8 +921,8 @@ impl Resolve<crate::api::Args> for ComposeRun {
       };
       let Some(pull_log) = run_komodo_command_with_sanitization(
         "Compose Pull",
-        run_directory.as_path(),
         pull_command,
+        CommandOptions::default().path(run_directory.as_path()),
         mode,
         &replacers,
       )
@@ -1002,8 +992,8 @@ impl Resolve<crate::api::Args> for ComposeRun {
     let span = info_span!("RunComposeRun", run_command);
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Run",
-      run_directory.as_path(),
       run_command,
+      CommandOptions::default().path(run_directory.as_path()),
       KomodoCommandMode::Shell,
       &replacers,
     )
@@ -1085,8 +1075,8 @@ async fn compose_down(
   };
   let log = run_komodo_standard_command(
     "Compose Down",
-    None,
     format!("{docker_compose} -p {project} down{service_args}"),
+    CommandOptions::default(),
   )
   .await;
   let success = log.success;

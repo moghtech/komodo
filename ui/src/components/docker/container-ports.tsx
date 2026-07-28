@@ -31,18 +31,10 @@ export default function ContainerPorts({
 }: ContainerPortsProps) {
   const portsMap = useContainerPortsMap(ports);
 
-  if (Object.keys(portsMap).length > 0) {
-    console.log("mapped", portsMap);
-  }
-
   const sortedNumericPorts = Object.keys(portsMap)
     .map(Number)
     .filter((port) => !Number.isNaN(port))
     .sort((a, b) => a - b);
-
-  if (Object.keys(portsMap).length > 0) {
-    console.log("sorted", sortedNumericPorts);
-  }
 
   type Group = { start: number; end: number; ports: Types.Port[] };
 
@@ -61,8 +53,6 @@ export default function ContainerPorts({
   if (!groupedPorts.length) {
     return null;
   }
-
-  console.log("grouped", groupedPorts);
 
   return (
     <DividedChildren gap={gap} wrap="nowrap" {...groupProps}>

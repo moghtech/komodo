@@ -503,7 +503,7 @@ async fn create_server_maybe_builder(
       name: server_query,
       config: PartialBuilderConfig::Server(
         PartialServerBuilderConfig {
-          server_id: Some(server.id.clone()),
+          server_ids: Some(vec![server.id.clone()]),
         },
       ),
     })

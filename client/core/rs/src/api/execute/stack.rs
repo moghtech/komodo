@@ -81,6 +81,11 @@ pub struct BatchDeployStack {
   /// extra-stack-1, extra-stack-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }
 
 //
@@ -153,6 +158,11 @@ pub struct BatchDeployStackIfChanged {
   /// extra-stack-1, extra-stack-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }
 
 //
@@ -224,6 +234,11 @@ pub struct BatchPullStack {
   /// extra-stack-1, extra-stack-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }
 
 //
@@ -534,4 +549,9 @@ pub struct BatchDestroyStack {
   /// extra-stack-1, extra-stack-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }

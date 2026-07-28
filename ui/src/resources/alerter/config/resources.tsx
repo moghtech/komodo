@@ -22,7 +22,7 @@ export default function AlerterConfigResources({
   disabled: boolean;
   blacklist: boolean;
 }) {
-  const resourcesMap = useAllResources();
+  const resourcesMap = useAllResources(undefined, 0);
   const allResources = [
     ...(resourcesMap.Server?.map((server) => {
       return {

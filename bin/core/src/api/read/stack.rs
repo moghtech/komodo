@@ -9,7 +9,10 @@ use komodo_client::{
       container::Container, service::SwarmService, stack::SwarmStack,
     },
     permission::PermissionLevel,
-    stack::{Stack, StackActionState, StackListItem, StackState},
+    stack::{
+      Stack, StackActionState, StackListItem, StackQuery,
+      StackService, StackSortBy, StackState,
+    },
   },
 };
 use mogh_error::AddStatusCodeError as _;
@@ -22,7 +25,9 @@ use reqwest::StatusCode;
 
 use crate::{
   helpers::{
-    periphery_client, query::get_all_tags, swarm::swarm_request,
+    periphery_client,
+    query::{get_all_tags, get_cached_stack_state},
+    swarm::swarm_request,
   },
   permission::get_check_permissions,
   resource,
@@ -30,7 +35,7 @@ use crate::{
   state::{action_states, stack_status_cache},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetStack {
   async fn resolve(
@@ -42,6 +47,128 @@ impl Resolve<ReadArgs> for GetStack {
         &self.stack,
         user,
         PermissionLevel::Read.into(),
+      )
+      .await?,
+    )
+  }
+}
+
+impl Resolve<ReadArgs> for ListStacks {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<Vec<StackListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+    let only_update_available = self.query.specific.update_available;
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
+    let sort_by: resource::ListItemSort<StackListItem> =
+      match self.sort_by {
+        StackSortBy::Name => resource::ListItemSort::Name,
+        StackSortBy::Source => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .files_on_host
+              .cmp(&b.info.files_on_host)
+              .then_with(|| {
+                a.info.linked_repo_name.cmp(&b.info.linked_repo_name)
+              })
+              .then_with(|| a.info.repo.cmp(&b.info.repo))
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+        StackSortBy::Host => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            let host_a = if a.info.swarm_id.is_empty() {
+              &a.info.server_name
+            } else {
+              &a.info.swarm_name
+            };
+            let host_b = if b.info.swarm_id.is_empty() {
+              &b.info.server_name
+            } else {
+              &b.info.swarm_name
+            };
+            host_a.cmp(host_b).then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+        StackSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| {
+                // Use ! with update available to order 'true' first
+                (!a.info.update_available())
+                  .cmp(&!b.info.update_available())
+              })
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+      };
+    let stacks = resource::list_items_for_user::<Stack>(
+      self.query,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
+      |stack| {
+        (!only_update_available
+          || stack
+            .info
+            .services
+            .iter()
+            .any(|service| service.update_available))
+          && (states.is_empty() || states.contains(&stack.info.state))
+      },
+    )
+    .await?;
+    Ok(stacks)
+  }
+}
+
+impl Resolve<ReadArgs> for ListFullStacks {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListFullStacksResponse> {
+    let all_tags = if self.query.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
+    Ok(
+      resource::list_full_for_user_filtered::<Stack, _>(
+        self.query,
+        limit,
+        self.page,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
+        |stack| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states
+                .contains(&get_cached_stack_state(&stack.id).await)
+            {
+              Some(stack)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )
@@ -67,6 +194,75 @@ impl Resolve<ReadArgs> for ListStackServices {
       .curr
       .services
       .clone();
+
+    Ok(services)
+  }
+}
+
+impl Resolve<ReadArgs> for ListAllStackServices {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<ListStackServicesResponse> {
+    let all_tags = if self.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+    let stacks = resource::list_for_user::<Stack>(
+      StackQuery::builder()
+        .names(self.stacks.clone())
+        .tags(self.tags)
+        .build(),
+      None,
+      None,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
+    )
+    .await?;
+
+    let mut services = Vec::<StackService>::new();
+    let mut skipped = 0;
+    let limit = list_limit(self.limit);
+    let limit_usize = limit as usize;
+    // Eg. page 1 skips until after 100 services, page 2 after 200.
+    let skip = limit.saturating_mul(self.page);
+    // Match terms case insensitively.
+    let terms = self
+      .terms
+      .iter()
+      .map(|term| term.to_lowercase())
+      .collect::<Vec<_>>();
+
+    for stack in stacks {
+      let cache =
+        stack_status_cache().get_or_insert_default(&stack.id).await;
+      let more = cache.curr.services
+        .iter()
+        .filter(|service| {
+          // Apply state filter if defined.
+          (self.state.is_empty() || self.state.contains(&service.state)) &&
+          // Apply terms filter if defined
+          (terms.is_empty()
+            // Match when all terms contained within a name.
+            || {
+              let name = service.service.to_lowercase();
+              terms.iter().all(|term| name.contains(term))
+            })
+        });
+      for service in more {
+        if skipped < skip {
+          skipped += 1;
+        } else {
+          // push and maybe early return
+          services.push(service.clone());
+          if limit > 0 && services.len() >= limit_usize {
+            return Ok(services);
+          }
+        }
+      }
+    }
 
     Ok(services)
   }
@@ -339,6 +535,8 @@ impl Resolve<ReadArgs> for ListCommonStackExtraArgs {
     };
     let stacks = resource::list_full_for_user::<Stack>(
       self.query,
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
@@ -373,6 +571,8 @@ impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
     };
     let stacks = resource::list_full_for_user::<Stack>(
       self.query,
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &all_tags,
@@ -392,64 +592,6 @@ impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
     let mut res = res.into_iter().collect::<Vec<_>>();
     res.sort();
     Ok(res)
-  }
-}
-
-impl Resolve<ReadArgs> for ListStacks {
-  async fn resolve(
-    self,
-    ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<Vec<StackListItem>> {
-    let all_tags = if self.query.tags.is_empty() {
-      vec![]
-    } else {
-      get_all_tags(None).await?
-    };
-    let only_update_available = self.query.specific.update_available;
-    let stacks = resource::list_for_user::<Stack>(
-      self.query,
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?;
-    let stacks = if only_update_available {
-      stacks
-        .into_iter()
-        .filter(|stack| {
-          stack
-            .info
-            .services
-            .iter()
-            .any(|service| service.update_available)
-        })
-        .collect()
-    } else {
-      stacks
-    };
-    Ok(stacks)
-  }
-}
-
-impl Resolve<ReadArgs> for ListFullStacks {
-  async fn resolve(
-    self,
-    ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<ListFullStacksResponse> {
-    let all_tags = if self.query.tags.is_empty() {
-      vec![]
-    } else {
-      get_all_tags(None).await?
-    };
-    Ok(
-      resource::list_full_for_user::<Stack>(
-        self.query,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-      )
-      .await?,
-    )
   }
 }
 
@@ -481,6 +623,8 @@ impl Resolve<ReadArgs> for GetStacksSummary {
   ) -> mogh_error::Result<GetStacksSummaryResponse> {
     let stacks = resource::list_full_for_user::<Stack>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],

@@ -22,7 +22,12 @@ use crate::{
   },
   entities::{
     EnvironmentVar, ImageDigest,
-    docker::service::SwarmServiceListItem, environment_vars_from_str,
+    docker::{
+      container::ContainerStateStatusEnum,
+      service::SwarmServiceListItem,
+    },
+    environment_vars_from_str,
+    swarm::SwarmState,
   },
 };
 
@@ -146,14 +151,23 @@ pub type StackListItem = ResourceListItem<StackListItemInfo>;
 pub struct StackListItemInfo {
   /// The swarm that stack is deployed on, when in Swarm mode.
   pub swarm_id: String,
+  /// The name of the swarm that stack is deployed on, when in Swarm mode.
+  #[serde(default)]
+  pub swarm_name: String,
   /// The server that stack is deployed on, when in Server mode.
   pub server_id: String,
+  /// The name of the server that stack is deployed on, when in Server mode.
+  #[serde(default)]
+  pub server_name: String,
   /// Whether stack is using files on host mode
   pub files_on_host: bool,
   /// Whether stack has file contents defined.
   pub file_contents: bool,
   /// Linked repo, if one is attached.
   pub linked_repo: String,
+  /// The name of the linked repo, if one is attached.
+  #[serde(default)]
+  pub linked_repo_name: String,
   /// The git provider domain
   pub git_provider: String,
   /// The configured repo
@@ -181,6 +195,12 @@ pub struct StackListItemInfo {
   pub deployed_hash: Option<String>,
   /// Latest short commit hash, or null. Only for repo based stacks
   pub latest_hash: Option<String>,
+}
+
+impl StackListItemInfo {
+  pub fn update_available(&self) -> bool {
+    self.services.iter().any(|s| s.update_available)
+  }
 }
 
 #[typeshare]
@@ -443,6 +463,25 @@ pub struct StackConfig {
   #[builder(default = "default_branch()")]
   #[partial_default(default_branch())]
   pub branch: String,
+
+  /// When set, the Stack is in Edit Branch mode:
+  /// `branch` currently points to a Komodo managed edit branch,
+  /// and this field holds the base branch to squash merge back into.
+  /// Managed by [CreateStackEditBranch][crate::api::write::CreateStackEditBranch] /
+  /// [MergeStackEditBranch][crate::api::write::MergeStackEditBranch] /
+  /// [DiscardStackEditBranch][crate::api::write::DiscardStackEditBranch].
+  #[serde(default)]
+  #[builder(default)]
+  pub edit_base_branch: String,
+
+  /// When set (together with `edit_base_branch`), the Stack was in
+  /// Linked Repo mode before entering Edit Branch mode.
+  /// The linked Repo's git config was copied onto the inline
+  /// git fields for the session, and this holds the Repo id
+  /// to restore on exit.
+  #[serde(default)]
+  #[builder(default)]
+  pub edit_linked_repo: String,
 
   /// Optionally set a specific commit hash.
   #[serde(default)]
@@ -731,6 +770,8 @@ impl Default for StackConfig {
       git_https: default_git_https(),
       repo: Default::default(),
       branch: default_branch(),
+      edit_base_branch: Default::default(),
+      edit_linked_repo: Default::default(),
       commit: Default::default(),
       clone_path: Default::default(),
       reclone: Default::default(),
@@ -803,10 +844,16 @@ pub struct StackServiceNames {
   pub image_digest: Option<ImageDigest>,
 }
 
+/// A stack service, whether server or swarm based.
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackService {
+  /// The stack which the service is a part of.
+  pub stack_id: String,
+  /// The name of the stack which the service is a part of.
+  #[serde(default)]
+  pub stack_name: String,
   /// The service name
   pub service: String,
   /// The service image
@@ -815,8 +862,88 @@ pub struct StackService {
   pub container: Option<ContainerListItem>,
   /// The service (Swarm mode)
   pub swarm_service: Option<SwarmServiceListItem>,
+  /// The service state
+  pub state: StackServiceState,
   /// The service image digests
   pub image_digests: Option<Vec<ImageDigest>>,
+}
+
+/// Combined state options for
+/// both Server and Swarm based Stacks.
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Default,
+  Serialize,
+  Deserialize,
+  Display,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum StackServiceState {
+  /// (Swarm) All tasks OK
+  Healthy,
+  /// (Swarm) Some tasks don't match desired state
+  Unhealthy,
+  /// (Swarm) All tasks down.
+  Down,
+  /// (Container) Container is running
+  Running,
+  /// (Container) Container is created
+  Created,
+  /// (Container) Container is paused
+  Paused,
+  /// (Container) Container is restarting
+  Restarting,
+  /// (Container) Container is exited
+  Exited,
+  /// (Container) Container is stopping
+  Stopping,
+  /// (Container) Container is removing
+  Removing,
+  /// (Container) Container is dead
+  Dead,
+  /// Unknown case
+  #[default]
+  Unknown,
+}
+
+impl From<SwarmState> for StackServiceState {
+  fn from(value: SwarmState) -> Self {
+    match value {
+      SwarmState::Healthy => StackServiceState::Healthy,
+      SwarmState::Unhealthy => StackServiceState::Unhealthy,
+      SwarmState::Down => StackServiceState::Down,
+      SwarmState::Unknown => StackServiceState::Unknown,
+    }
+  }
+}
+
+impl From<ContainerStateStatusEnum> for StackServiceState {
+  fn from(value: ContainerStateStatusEnum) -> Self {
+    match value {
+      ContainerStateStatusEnum::Running => StackServiceState::Running,
+      ContainerStateStatusEnum::Created => StackServiceState::Created,
+      ContainerStateStatusEnum::Paused => StackServiceState::Paused,
+      ContainerStateStatusEnum::Restarting => {
+        StackServiceState::Restarting
+      }
+      ContainerStateStatusEnum::Exited => StackServiceState::Exited,
+      ContainerStateStatusEnum::Stopping => {
+        StackServiceState::Stopping
+      }
+      ContainerStateStatusEnum::Removing => {
+        StackServiceState::Removing
+      }
+      ContainerStateStatusEnum::Dead => StackServiceState::Dead,
+      ContainerStateStatusEnum::Empty => StackServiceState::Unknown,
+    }
+  }
 }
 
 #[typeshare]
@@ -831,10 +958,31 @@ pub struct StackActionState {
   pub unpausing: bool,
   pub stopping: bool,
   pub destroying: bool,
+  /// An Edit Branch operation (create / merge / discard)
+  /// is running git commands for this Stack.
+  #[serde(default)]
+  pub editing_branch: bool,
 }
 
 #[typeshare]
 pub type StackQuery = ResourceQuery<StackQuerySpecifics>;
+
+#[typeshare]
+#[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum StackSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by source repo.
+  Source,
+  /// Sort by host Server / Swarm name.
+  Host,
+  /// Sort by state.
+  State,
+}
 
 #[typeshare]
 #[derive(
@@ -847,6 +995,11 @@ pub struct StackQuerySpecifics {
   /// Only accepts Server id (not name).
   #[serde(default)]
   pub server_ids: Vec<String>,
+  /// Query only for Stacks on these Swarms.
+  /// If empty, does not filter by Swarm.
+  /// Only accepts Swarm id (not name).
+  #[serde(default)]
+  pub swarm_ids: Vec<String>,
   /// Query only for Stacks with these linked repos.
   /// Only accepts Repo id (not name).
   #[serde(default)]
@@ -857,6 +1010,10 @@ pub struct StackQuerySpecifics {
   /// Query only for Stack with available image updates.
   #[serde(default)]
   pub update_available: bool,
+  /// Query only for Stacks matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<StackState>,
 }
 
 impl super::resource::AddFilters for StackQuerySpecifics {
@@ -864,6 +1021,10 @@ impl super::resource::AddFilters for StackQuerySpecifics {
     if !self.server_ids.is_empty() {
       filters
         .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
+    if !self.swarm_ids.is_empty() {
+      filters
+        .insert("config.swarm_id", doc! { "$in": &self.swarm_ids });
     }
     if !self.linked_repos.is_empty() {
       filters.insert(

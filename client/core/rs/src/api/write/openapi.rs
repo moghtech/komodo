@@ -33,6 +33,9 @@ use crate::api::write;
     write::update_stack,
     write::rename_stack,
     write::write_stack_file_contents,
+    write::create_stack_edit_branch,
+    write::merge_stack_edit_branch,
+    write::discard_stack_edit_branch,
     write::refresh_stack_cache,
     write::check_stack_for_update,
     // deployment
@@ -136,9 +139,9 @@ use crate::api::write;
     write::create_git_provider_account,
     write::update_git_provider_account,
     write::delete_git_provider_account,
-    write::create_docker_registry_account,
-    write::update_docker_registry_account,
-    write::delete_docker_registry_account,
+    write::create_image_registry_account,
+    write::update_image_registry_account,
+    write::delete_image_registry_account,
   ),
 )]
 pub struct KomodoWriteApi;

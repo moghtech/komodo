@@ -27,6 +27,8 @@ options:
                         https://raw.githubusercontent.com/moghtech/komodo/refs/heads/main/config/periphery.config.toml)
   --binary-url BINARY_URL
                         Use alternate binary source (default: https://github.com/moghtech/komodo/releases/download)
+  --core-public-keys CORE_PUBLIC_KEYS
+                        Comma separate list of accepted public keys to allow Core(s) to connect. May include "file:/..."
 ```
 
 These scripts will set up Komodo Periphery on your hosts, managed by systemd.

@@ -22,11 +22,12 @@ impl Busy for ServerActionState {
       || self.pruning_images
       || self.pruning_networks
       || self.pruning_volumes
-      || self.starting_containers
-      || self.restarting_containers
-      || self.pausing_containers
-      || self.unpausing_containers
-      || self.stopping_containers
+      || self.starting_containers > 0
+      || self.restarting_containers > 0
+      || self.pausing_containers > 0
+      || self.unpausing_containers > 0
+      || self.stopping_containers > 0
+      || self.destroying_containers > 0
   }
 }
 
@@ -52,6 +53,7 @@ impl Busy for StackActionState {
       || self.unpausing
       || self.stopping
       || self.destroying
+      || self.editing_branch
   }
 }
 

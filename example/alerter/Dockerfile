@@ -1,4 +1,4 @@
-FROM rust:1.95.0-trixie as builder
+FROM rust:1.96.1-trixie as builder
 WORKDIR /builder
 
 COPY . .

@@ -11,7 +11,9 @@ use komodo_client::{
   api::read::*,
   entities::{
     Operation,
-    build::{Build, BuildActionState, BuildListItem, BuildState},
+    build::{
+      Build, BuildActionState, BuildListItem, BuildSortBy, BuildState,
+    },
     permission::PermissionLevel,
     update::UpdateStatus,
   },
@@ -25,7 +27,7 @@ use crate::{
   state::{action_states, build_state_cache, db_client},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetBuild {
   async fn resolve(
@@ -53,15 +55,47 @@ impl Resolve<ReadArgs> for ListBuilds {
     } else {
       get_all_tags(None).await?
     };
-    Ok(
-      resource::list_for_user::<Build>(
-        self.query,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-      )
-      .await?,
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
+    let sort_by: resource::ListItemSort<BuildListItem> =
+      match self.sort_by {
+        BuildSortBy::Name => resource::ListItemSort::Name,
+        BuildSortBy::Source => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .files_on_host
+              .cmp(&b.info.files_on_host)
+              .then_with(|| {
+                a.info.linked_repo_name.cmp(&b.info.linked_repo_name)
+              })
+              .then_with(|| a.info.repo.cmp(&b.info.repo))
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+        BuildSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+      };
+    let builds = resource::list_items_for_user::<Build>(
+      self.query,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
+      |build| states.is_empty() || states.contains(&build.info.state),
     )
+    .await?;
+    Ok(builds)
   }
 }
 
@@ -75,12 +109,29 @@ impl Resolve<ReadArgs> for ListFullBuilds {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
     Ok(
-      resource::list_full_for_user::<Build>(
+      resource::list_full_for_user_filtered::<Build, _>(
         self.query,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |build| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states
+                .contains(&resource::get_build_state(&build.id).await)
+            {
+              Some(build)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )
@@ -115,6 +166,8 @@ impl Resolve<ReadArgs> for GetBuildsSummary {
   ) -> mogh_error::Result<GetBuildsSummaryResponse> {
     let builds = resource::list_full_for_user::<Build>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],
@@ -164,7 +217,8 @@ impl Resolve<ReadArgs> for GetBuildMonthlyStats {
     let curr_ts = unix_timestamp_ms() as i64;
     let next_day = curr_ts - curr_ts % ONE_DAY_MS + ONE_DAY_MS;
 
-    let close_ts = next_day - self.page as i64 * 30 * ONE_DAY_MS;
+    let close_ts =
+      next_day - (self.page as i64).saturating_mul(30 * ONE_DAY_MS);
     let open_ts = close_ts - 30 * ONE_DAY_MS;
 
     let mut build_updates = db_client()
@@ -281,6 +335,8 @@ impl Resolve<ReadArgs> for ListCommonBuildExtraArgs {
     };
     let builds = resource::list_full_for_user::<Build>(
       self.query,
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &all_tags,

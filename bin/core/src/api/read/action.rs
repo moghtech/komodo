@@ -3,7 +3,8 @@ use komodo_client::{
   api::read::*,
   entities::{
     action::{
-      Action, ActionActionState, ActionListItem, ActionState,
+      Action, ActionActionState, ActionListItem, ActionSortBy,
+      ActionState,
     },
     permission::PermissionLevel,
   },
@@ -11,13 +12,13 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags,
+  helpers::query::{get_action_state, get_all_tags},
   permission::get_check_permissions,
   resource,
   state::{action_state_cache, action_states},
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetAction {
   async fn resolve(
@@ -45,15 +46,45 @@ impl Resolve<ReadArgs> for ListActions {
     } else {
       get_all_tags(None).await?
     };
-    Ok(
-      resource::list_for_user::<Action>(
-        self.query,
-        user,
-        PermissionLevel::Read.into(),
-        &all_tags,
-      )
-      .await?,
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
+    let sort_by: resource::ListItemSort<ActionListItem> =
+      match self.sort_by {
+        ActionSortBy::Name => resource::ListItemSort::Name,
+        ActionSortBy::State => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .state
+              .cmp(&b.info.state)
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+        ActionSortBy::NextRun => {
+          resource::ListItemSort::InMemory(Box::new(|a, b| {
+            a.info
+              .next_scheduled_run
+              .cmp(&b.info.next_scheduled_run)
+              .then_with(|| a.name.cmp(&b.name))
+          }))
+        }
+      };
+    let actions = resource::list_items_for_user::<Action>(
+      self.query,
+      resource::ListItemsQueryOptions {
+        limit,
+        page: self.page,
+        sort_desc: self.sort_desc,
+        sort_by,
+      },
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
+      |action| {
+        states.is_empty() || states.contains(&action.info.state)
+      },
     )
+    .await?;
+    Ok(actions)
   }
 }
 
@@ -67,12 +98,28 @@ impl Resolve<ReadArgs> for ListFullActions {
     } else {
       get_all_tags(None).await?
     };
+    let states = self.query.specific.states.clone();
+    let limit = list_limit(self.limit);
     Ok(
-      resource::list_full_for_user::<Action>(
+      resource::list_full_for_user_filtered::<Action, _>(
         self.query,
+        limit,
+        self.page,
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |action| {
+          let states = states.clone();
+          async move {
+            if states.is_empty()
+              || states.contains(&get_action_state(&action.id).await)
+            {
+              Some(action)
+            } else {
+              None
+            }
+          }
+        },
       )
       .await?,
     )
@@ -107,6 +154,8 @@ impl Resolve<ReadArgs> for GetActionsSummary {
   ) -> mogh_error::Result<GetActionsSummaryResponse> {
     let actions = resource::list_full_for_user::<Action>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],

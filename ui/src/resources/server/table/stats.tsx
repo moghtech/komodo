@@ -1,4 +1,4 @@
-import { useSelectedResources } from "@/lib/hooks";
+import { useResourceSelectionState } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { DataTable, fmtRateBytes, SortableHeader } from "mogh_ui";
 import { BoxProps, Group, Text } from "@mantine/core";
@@ -14,7 +14,7 @@ export default function StatsServerTable({
 }: {
   resources: Types.ServerListItem[];
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Server");
+  const selectionState = useResourceSelectionState("Server");
   return (
     <DataTable
       {...boxProps}
@@ -22,7 +22,7 @@ export default function StatsServerTable({
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: selectionState,
       }}
       columns={[
         {
@@ -154,5 +154,7 @@ function NetCell({ id }: { id: string }) {
   if (!stats) {
     return <Text c="dimmed">N/A</Text>;
   }
-  return <Text>{fmtRateBytes(ingress + egress)}</Text>;
+  return (
+    <Text style={{ textWrap: "nowrap" }}>{fmtRateBytes(ingress + egress)}</Text>
+  );
 }

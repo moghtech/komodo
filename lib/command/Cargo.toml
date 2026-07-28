@@ -2,7 +2,6 @@
 name = "command"
 version.workspace = true
 edition.workspace = true
-authors.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
@@ -13,4 +12,6 @@ komodo_client.workspace = true
 svi.workspace = true
 #
 tokio.workspace = true
+tokio-util.workspace = true
 shlex.workspace = true
+libc.workspace = true

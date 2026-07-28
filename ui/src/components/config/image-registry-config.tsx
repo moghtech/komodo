@@ -25,7 +25,7 @@ export default function ImageRegistryConfig({
   imageName,
 }: ImageRegistryConfig) {
   // This is the only way to get organizations for now
-  const config_provider = useRead("ListDockerRegistriesFromConfig", {
+  const config_provider = useRead("ListImageRegistriesFromConfig", {
     target: builderId ? { type: "Builder", id: builderId } : undefined,
   }).data?.find((provider) => {
     return provider.domain === registry?.domain;
