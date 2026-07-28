@@ -15,6 +15,7 @@ use komodo_client::{
     docker::container::RestartPolicyNameEnum,
     komodo_timestamp, optional_string,
     permission::PermissionLevel,
+    resource::ResourceQuery,
     server::{Server, ServerState},
     to_container_compatible_name,
     update::Update,
@@ -30,7 +31,9 @@ use crate::{
   api::execute::{self, ExecuteRequest, ExecutionResult},
   helpers::{
     periphery_client,
-    query::{get_deployment_state, get_swarm_or_server},
+    query::{
+      get_all_tags, get_deployment_state, get_swarm_or_server,
+    },
     registry_token,
     update::{add_update, make_update, poll_update_until_complete},
   },
@@ -300,10 +303,24 @@ impl Resolve<WriteArgs> for RenameDeployment {
 
     let name = to_container_compatible_name(&self.name);
 
-    let container_state =
-      get_deployment_state(&deployment.id).await?;
+    let state = get_deployment_state(&deployment.id).await?;
 
-    if container_state == DeploymentState::Unknown {
+    // When no custom name is configured, the container / service
+    // follows the Deployment name, and must be kept matched:
+    //   - Server mode: rename the container to the new name.
+    //   - Swarm mode: services cannot be renamed, so the current
+    //     service name is pinned in info.deployed_name, and stays
+    //     in use until the next deploy recreates the service.
+    // A configured custom name is unaffected by Deployment rename.
+    let follows_name =
+      deployment.config.custom_name.trim().is_empty();
+    let deployed = state != DeploymentState::NotDeployed;
+
+    let rename_container = follows_name
+      && deployed
+      && !deployment.config.server_id.is_empty();
+
+    if rename_container && state == DeploymentState::Unknown {
       return Err(
         anyhow!(
           "Cannot rename Deployment when container status is unknown"
@@ -312,27 +329,51 @@ impl Resolve<WriteArgs> for RenameDeployment {
       );
     }
 
+    // Includes the Unknown state, in case a service
+    // is still running under the current name.
+    let pin_deployed_name = follows_name
+      && deployed
+      && !deployment.config.swarm_id.is_empty()
+      && deployment.info.deployed_name.is_empty();
+
     let mut update =
       make_update(&deployment, Operation::RenameDeployment, user);
+
+    let mut set =
+      doc! { "name": &name, "updated_at": komodo_timestamp() };
+    if rename_container {
+      // Container is renamed to the new name below.
+      set.insert("info.deployed_name", name.as_str());
+    } else if pin_deployed_name {
+      set.insert("info.deployed_name", deployment.deployed_name());
+    }
 
     update_one_by_id(
       &db_client().deployments,
       &deployment.id,
-      database::mungos::update::Update::Set(
-        doc! { "name": &name, "updated_at": komodo_timestamp() },
-      ),
+      database::mungos::update::Update::Set(set),
       None,
     )
     .await
     .context("Failed to update Deployment name on db")?;
 
-    if container_state != DeploymentState::NotDeployed {
+    if pin_deployed_name {
+      update.push_simple_log(
+        "Pin Service Name",
+        format!(
+          "Swarm services cannot be renamed, so the current service name '{}' stays in use until the next deploy recreates the service under the new name.",
+          deployment.deployed_name()
+        ),
+      );
+    }
+
+    if rename_container {
       let server =
         resource::get::<Server>(&deployment.config.server_id).await?;
       let log = periphery_client(&server)
         .await?
         .request(api::container::RenameContainer {
-          curr_name: deployment.name.clone(),
+          curr_name: deployment.deployed_name().to_string(),
           new_name: name.clone(),
         })
         .await
@@ -465,6 +506,7 @@ pub async fn check_deployment_for_update_inner(
     &deployment.id,
     &DeploymentInfo {
       latest_image_digest: latest_digest.clone(),
+      deployed_name: deployment.info.deployed_name.clone(),
     },
   )
   .await?;
@@ -621,6 +663,7 @@ impl Resolve<WriteArgs> for BatchCheckDeploymentForUpdate {
     fields(
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
       skip_auto_update = self.skip_auto_update,
       wait_for_auto_update = self.wait_for_auto_update,
     )
@@ -629,12 +672,23 @@ impl Resolve<WriteArgs> for BatchCheckDeploymentForUpdate {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> Result<Self::Response, Self::Error> {
+    let all_tags = if self.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+
     let deployments = list_full_for_user_using_pattern::<Deployment>(
       &self.pattern,
-      Default::default(),
+      ResourceQuery {
+        tags: self.tags,
+        ..Default::default()
+      },
+      None,
+      None,
       user,
       PermissionLevel::Execute.into(),
-      &[],
+      &all_tags,
     )
     .await?;
 

@@ -120,7 +120,7 @@ export default function Terminal({
 
     const callbacks: TerminalCallbacks = {
       on_login: () => {
-        // console.log("logged in terminal");
+        // console.log("Logged into terminal");
       },
       on_open: resize,
       on_message: (e: MessageEvent<any>) => {

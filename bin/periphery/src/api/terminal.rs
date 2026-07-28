@@ -74,6 +74,7 @@ impl Resolve<crate::api::Args> for CreateServerTerminal {
     .map(|terminal| Terminal {
       name: terminal.name.clone(),
       target: TerminalTarget::Server { server: None },
+      target_name: None,
       command: terminal.command.clone(),
       stored_size_kb: terminal.history.size_kb(),
       created_at: terminal.created_at,
@@ -131,6 +132,7 @@ impl Resolve<crate::api::Args> for CreateContainerExecTerminal {
     .map(|terminal| Terminal {
       name: terminal.name.clone(),
       target: terminal.target.clone(),
+      target_name: None,
       command: terminal.command.clone(),
       stored_size_kb: terminal.history.size_kb(),
       created_at: terminal.created_at,
@@ -185,6 +187,7 @@ impl Resolve<crate::api::Args> for CreateContainerAttachTerminal {
     .map(|terminal| Terminal {
       name: terminal.name.clone(),
       target: terminal.target.clone(),
+      target_name: None,
       command: terminal.command.clone(),
       stored_size_kb: terminal.history.size_kb(),
       created_at: terminal.created_at,
@@ -463,8 +466,15 @@ async fn setup_execute_command_on_terminal(
     tokio_util::codec::LinesCodec::new(),
   );
 
+  // Build the command as a single physical line: use `\n` escapes that `printf`
+  // expands, rather than real newline bytes. A multi-line command is echoed back
+  // by the PTY (local echo is on for interactive use) with the sentinels on their
+  // own lines, and the reader below matches those *echoed* lines instead of the
+  // real command output (issue #1289). A single-line command cannot produce a bare
+  // sentinel line in its echo, while `printf` still emits the sentinels on their
+  // own lines in the actual output.
   let full_command = format!(
-    "printf '\n{START_OF_OUTPUT}\n\n'; {command}; rc=$?; printf '\n{KOMODO_EXIT_CODE}%d\n{END_OF_OUTPUT}\n' \"$rc\"\n"
+    "printf '\\n{START_OF_OUTPUT}\\n\\n'; {command}; rc=$?; printf '\\n{KOMODO_EXIT_CODE}%d\\n{END_OF_OUTPUT}\\n' \"$rc\"\n"
   );
 
   terminal

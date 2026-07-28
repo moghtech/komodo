@@ -1,14 +1,14 @@
 use std::{io::ErrorKind, path::Path};
 
 use anyhow::Context;
-use command::run_komodo_standard_command;
+use command::{CommandOptions, run_komodo_standard_command};
 use formatting::format_serror;
 use komodo_client::entities::{
   RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
   update::Log,
 };
 
-use crate::get_commit_hash_log;
+use crate::{check_installed, get_commit_hash_log};
 
 /// Will delete the existing repo folder,
 /// clone the repo, get the latest hash / message,
@@ -24,6 +24,8 @@ pub async fn clone<T>(
 where
   T: Into<RepoExecutionArgs> + std::fmt::Debug,
 {
+  check_installed().await?;
+
   let args: RepoExecutionArgs = clone_args.into();
   let repo_url = args.remote_url(access_token.as_deref())?;
 
@@ -70,8 +72,12 @@ where
     args.branch
   );
 
-  let mut log =
-    run_komodo_standard_command("Clone Repo", None, command).await;
+  let mut log = run_komodo_standard_command(
+    "Clone Repo",
+    command,
+    CommandOptions::default(),
+  )
+  .await;
 
   if let Some(token) = access_token {
     log.command = log.command.replace(&token, "<TOKEN>");
@@ -88,8 +94,8 @@ where
   if let Some(commit) = args.commit {
     let reset_log = run_komodo_standard_command(
       "set commit",
-      res.path.as_path(),
       format!("git reset --hard {commit}",),
+      CommandOptions::default().path(res.path.as_path()),
     )
     .await;
     res.logs.push(reset_log);

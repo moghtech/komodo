@@ -5,11 +5,19 @@ import { useMemo } from "react";
 import UpdatesSection from "./section";
 
 export default function ResourceUpdates({ type, id }: Types.ResourceTarget) {
-  const deployments = useRead("ListDeployments", {}).data;
+  const deployment = useRead(
+    "GetDeployment",
+    { deployment: id },
+    { enabled: type === "Deployment" },
+  ).data;
+  const buildId =
+    deployment?.config?.image?.type === "Build"
+      ? deployment.config.image.params.build_id
+      : undefined;
 
   const query = useMemo(
-    () => getUpdateQuery({ type, id }, deployments),
-    [type, id, deployments],
+    () => getUpdateQuery({ type, id }, buildId),
+    [type, id],
   );
 
   // const alerts = useRead("ListAlerts", {

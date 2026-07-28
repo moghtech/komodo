@@ -29,7 +29,15 @@ impl CommandOutput {
     Self {
       status: ExitStatus::from_raw(1),
       stdout: "".to_string(),
-      stderr: format!("{e:#?}"),
+      stderr: format!("{e:?}"),
+    }
+  }
+
+  pub fn from_err_message(e: String) -> Self {
+    Self {
+      status: ExitStatus::from_raw(1),
+      stdout: "".to_string(),
+      stderr: e,
     }
   }
 

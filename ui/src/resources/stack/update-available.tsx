@@ -9,13 +9,15 @@ import { notifications } from "@mantine/notifications";
 import { useFullStack, useStack } from ".";
 import { Types } from "komodo_client";
 import {
-  ActionIcon,
+  Badge,
   Box,
   Button,
   Group,
   HoverCard,
   Stack,
   Text,
+  ThemeIcon,
+  VisuallyHidden,
 } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
@@ -40,11 +42,14 @@ export default function StackUpdateAvailable({
       },
     },
   );
+
   const deploying = useRead(
     "GetStackActionState",
     { stack: id },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000, enabled: !small && canExecute },
   ).data?.deploying;
+  const pending = isPending || deploying;
+
   const stack = useStack(id);
   const fullStack = useFullStack(id);
   const info = stack?.info;
@@ -62,10 +67,7 @@ export default function StackUpdateAvailable({
 
   const updateAvailable = servicesWithUpdate.length > 0;
 
-  const pending = isPending || deploying;
-
-  // No quick deploy action / check for update button
-  if (small || !canExecute) {
+  if (!canExecute) {
     if (!updateAvailable) {
       return null;
     }
@@ -74,18 +76,21 @@ export default function StackUpdateAvailable({
         <HoverCard>
           <HoverCard.Target>
             {small ? (
-              <ActionIcon
+              <ThemeIcon
+                aria-label="Update available"
                 variant="outline"
                 bd={"1px solid " + hexColorByIntention("Neutral")}
                 size="md"
               >
                 <ICONS.UpdateAvailable size="1rem" />
-              </ActionIcon>
+              </ThemeIcon>
             ) : (
-              <Button
+              <Badge
                 variant="outline"
                 bd={"1px solid " + hexColorByIntention("Neutral")}
                 leftSection={<ICONS.UpdateAvailable size="1rem" />}
+                size="lg"
+                tt="none"
               >
                 Update
                 {(info?.services.filter((s) => s.update_available).length ??
@@ -93,7 +98,7 @@ export default function StackUpdateAvailable({
                   ? "s"
                   : ""}{" "}
                 Available
-              </Button>
+              </Badge>
             )}
           </HoverCard.Target>
           <HoverCard.Dropdown>
@@ -107,8 +112,73 @@ export default function StackUpdateAvailable({
     );
   }
 
+  const updateAction = (
+    <ConfirmModalWithDisable
+      title={
+        <>
+          Confirm <b>Redeploy</b>
+        </>
+      }
+      confirmText={stack.name}
+      confirmButtonContent={small ? "Update Available" : undefined}
+      icon={small ? undefined : <ICONS.UpdateAvailable size="1rem" />}
+      targetNoIcon={small}
+      targetProps={
+        small
+          ? {
+              variant: "outline",
+              bd: "1px solid var(--mantine-color-blue-7)",
+              w: "auto",
+              miw: "auto",
+              px: "xs",
+            }
+          : {
+              variant: "outline",
+              bd: "1px solid var(--mantine-color-blue-7)",
+            }
+      }
+      onConfirm={() =>
+        deploy({
+          stack: id,
+          services: fullStack?.config?.auto_update_all_services
+            ? []
+            : servicesWithUpdate.map((s) => s.service),
+        })
+      }
+      loading={pending}
+      topAdditonal={
+        !fullStack?.config?.auto_update_all_services && (
+          <Stack className="bordered-light" p="md" bdrs="md" gap="sm">
+            <Text size="lg">
+              Service
+              {servicesWithUpdate.length === 1 ? "" : "s"} with update:
+            </Text>
+            <Services
+              services={info?.services}
+              latestServices={fullStack?.info?.latest_services}
+            />
+          </Stack>
+        )
+      }
+    >
+      {small ? (
+        <>
+          <VisuallyHidden>Redeploy stack update</VisuallyHidden>
+          <ICONS.UpdateAvailable size="1rem" />
+        </>
+      ) : (
+        "Update Available"
+      )}
+    </ConfirmModalWithDisable>
+  );
+
+  if (small) {
+    return updateAvailable ? <Box>{updateAction}</Box> : null;
+  }
+
   return (
     <>
+      {updateAvailable && <Box>{updateAction}</Box>}
       <Box>
         <Button
           title="Check for updates"
@@ -121,48 +191,6 @@ export default function StackUpdateAvailable({
           Check
         </Button>
       </Box>
-      {updateAvailable && (
-        <Box>
-          <ConfirmModalWithDisable
-            title={
-              <>
-                Confirm <b>Redeploy</b>
-              </>
-            }
-            confirmText={stack.name}
-            icon={<ICONS.UpdateAvailable size="1rem" />}
-            targetProps={{
-              variant: "outline",
-              bd: "1px solid var(--mantine-color-blue-7)",
-            }}
-            onConfirm={() =>
-              deploy({
-                stack: id,
-                services: fullStack?.config?.auto_update_all_services
-                  ? []
-                  : servicesWithUpdate.map((s) => s.service),
-              })
-            }
-            loading={pending}
-            topAdditonal={
-              !fullStack?.config?.auto_update_all_services && (
-                <Stack className="bordered-light" p="md" bdrs="md" gap="sm">
-                  <Text size="lg">
-                    Service
-                    {servicesWithUpdate.length === 1 ? "" : "s"} with update:
-                  </Text>
-                  <Services
-                    services={info?.services}
-                    latestServices={fullStack?.info?.latest_services}
-                  />
-                </Stack>
-              )
-            }
-          >
-            Update Available
-          </ConfirmModalWithDisable>
-        </Box>
-      )}
     </>
   );
 }

@@ -80,7 +80,7 @@ pub async fn execute_compose_with_stack_and_server<
 
   // Will check to ensure stack not already busy before updating, and return Err if so.
   // The returned guard will set the action state back to default when dropped.
-  let _action_guard = action_state.update(set_in_progress)?;
+  let action_guard = action_state.update(set_in_progress)?;
 
   // Send update here for UI to recheck action state
   update_update(update.clone()).await?;
@@ -105,6 +105,10 @@ pub async fn execute_compose_with_stack_and_server<
   refresh_server_cache(&server, true).await;
 
   update.finalize();
+
+  // Drop action guard before updating
+  // clients to requery action state
+  drop(action_guard);
   update_update(update.clone()).await?;
 
   Ok(update)

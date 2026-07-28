@@ -1,7 +1,7 @@
 use std::sync::OnceLock;
 
 use anyhow::Context;
-use command::run_komodo_standard_command;
+use command::{CommandOptions, run_komodo_standard_command};
 use komodo_client::entities::{
   deployment::extract_registry_domain,
   docker::{
@@ -132,8 +132,8 @@ impl Resolve<crate::api::Args> for PullImage {
       anyhow::Ok(
         run_komodo_standard_command(
           "Docker Pull",
-          None,
-          format!("docker pull {name}"),
+          format!("docker pull -- {name}"),
+          CommandOptions::default(),
         )
         .await,
       )
@@ -164,10 +164,14 @@ impl Resolve<crate::api::Args> for DeleteImage {
     self,
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
-    let command = format!("docker image rm {}", self.name);
+    let command = format!("docker image rm -- {}", self.name);
     Ok(
-      run_komodo_standard_command("Delete Image", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Delete Image",
+        command,
+        CommandOptions::default(),
+      )
+      .await,
     )
   }
 }
@@ -189,8 +193,12 @@ impl Resolve<crate::api::Args> for PruneImages {
   ) -> anyhow::Result<Log> {
     let command = String::from("docker image prune -a -f");
     Ok(
-      run_komodo_standard_command("Prune Images", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Prune Images",
+        command,
+        CommandOptions::default(),
+      )
+      .await,
     )
   }
 }
@@ -235,10 +243,14 @@ impl Resolve<crate::api::Args> for CreateNetwork {
       Some(driver) => format!(" -d {driver}"),
       None => String::new(),
     };
-    let command = format!("docker network create{driver} {name}");
+    let command = format!("docker network create{driver} -- {name}");
     Ok(
-      run_komodo_standard_command("Create Network", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Create Network",
+        command,
+        CommandOptions::default(),
+      )
+      .await,
     )
   }
 }
@@ -259,10 +271,14 @@ impl Resolve<crate::api::Args> for DeleteNetwork {
     self,
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
-    let command = format!("docker network rm {}", self.name);
+    let command = format!("docker network rm -- {}", self.name);
     Ok(
-      run_komodo_standard_command("Delete Network", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Delete Network",
+        command,
+        CommandOptions::default(),
+      )
+      .await,
     )
   }
 }
@@ -284,8 +300,12 @@ impl Resolve<crate::api::Args> for PruneNetworks {
   ) -> anyhow::Result<Log> {
     let command = String::from("docker network prune -f");
     Ok(
-      run_komodo_standard_command("Prune Networks", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Prune Networks",
+        command,
+        CommandOptions::default(),
+      )
+      .await,
     )
   }
 }
@@ -324,10 +344,14 @@ impl Resolve<crate::api::Args> for DeleteVolume {
     self,
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
-    let command = format!("docker volume rm {}", self.name);
+    let command = format!("docker volume rm -- {}", self.name);
     Ok(
-      run_komodo_standard_command("Delete Volume", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Delete Volume",
+        command,
+        CommandOptions::default(),
+      )
+      .await,
     )
   }
 }
@@ -349,8 +373,12 @@ impl Resolve<crate::api::Args> for PruneVolumes {
   ) -> anyhow::Result<Log> {
     let command = String::from("docker volume prune -a -f");
     Ok(
-      run_komodo_standard_command("Prune Volumes", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Prune Volumes",
+        command,
+        CommandOptions::default(),
+      )
+      .await,
     )
   }
 }

@@ -2,8 +2,6 @@ import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { MonacoEditor } from "mogh_ui";
-import Tags from "@/components/tags";
-import TagSelector from "@/components/tags/selector";
 import WebhookBuilder from "@/components/webhook/builder";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
 import {
@@ -22,12 +20,12 @@ import {
   ConfigSwitch,
 } from "mogh_ui";
 import { ShowHideButton } from "mogh_ui";
-import { Group, Select, Text } from "@mantine/core";
+import { Select, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { CircleMinus } from "lucide-react";
 import { ReactNode } from "react";
 import { useFullResourceSync } from ".";
+import TagMultiSelector from "@/components/tags/multi-selector";
 
 type SyncMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const SYNC_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -189,36 +187,14 @@ export default function ResourceSyncConfig({
     description: "Only sync resources matching all of these tags.",
     fields: {
       match_tags: (values, set) => {
-        const tags = useRead("ListTags", {}).data;
-        const otherTags = tags?.filter((tag) => !values?.includes(tag.name));
         return (
-          <Group>
-            <TagSelector
-              title="Select Tags"
-              tags={otherTags}
-              onSelect={(tag) => set({ match_tags: [...(values ?? []), tag] })}
-              disabled={disabled || !includeResources}
-              position="bottom-start"
-              useName
-              canCreate
-            />
-
-            <Tags
-              tagIds={
-                tags
-                  ?.filter((tag) => values?.includes(tag.name))
-                  .map((tag) => tag.name) ?? []
-              }
-              onBadgeClick={(toRemove) =>
-                set({
-                  match_tags: values?.filter((tagName) => tagName !== toRemove),
-                })
-              }
-              icon={<CircleMinus size="1rem" />}
-              fz="1rem"
-              useName
-            />
-          </Group>
+          <TagMultiSelector
+            value={values ?? []}
+            onChange={(match_tags) => set({ match_tags })}
+            disabled={disabled || !includeResources}
+            useName
+            canCreate
+          />
         );
       },
     },

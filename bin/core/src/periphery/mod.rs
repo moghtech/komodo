@@ -89,20 +89,6 @@ impl PeripheryClient {
     T: std::fmt::Debug + Serialize + HasResponse,
     T::Response: DeserializeOwned,
   {
-    self
-      .request_custom_timeout(request, Duration::from_secs(10))
-      .await
-  }
-
-  pub async fn request_custom_timeout<T>(
-    &self,
-    request: T,
-    timeout: Duration,
-  ) -> anyhow::Result<T::Response>
-  where
-    T: std::fmt::Debug + Serialize + HasResponse,
-    T::Response: DeserializeOwned,
-  {
     let connection =
       periphery_connections().get(&self.id).await.with_context(
         || format!("No connection found for server {}", self.id),
@@ -134,11 +120,17 @@ impl PeripheryClient {
     let res = async {
       // Poll for the associated response
       loop {
-        let message =
-          response_receiever.recv().with_timeout(timeout).await?;
+        let message = response_receiever
+          .recv()
+          // Periphery request handler sends pings every 4s
+          // *on this channel specifically* so Core knows
+          // request is being processed. Hardcoded 11s
+          // allows for missed 5s ping due to network reconnect.
+          .with_timeout(Duration::from_secs(10))
+          .await?;
 
-        // Still in progress, sent to avoid timeout.
         let Some(message) = message.decode()? else {
+          // Just a ping from periphery request handler
           continue;
         };
 

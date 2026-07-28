@@ -29,7 +29,7 @@ use crate::{
 };
 
 use super::{
-  DockerRegistry, GitProvider, ProviderAccount, empty_or_redacted,
+  GitProvider, ImageRegistry, ProviderAccount, empty_or_redacted,
 };
 
 /// # Periphery Command Line Arguments.
@@ -424,10 +424,16 @@ pub struct PeripheryConfig {
   #[serde(default, alias = "git_provider")]
   pub git_providers: ForgivingVec<GitProvider>,
 
-  /// Configure docker credentials used to push / pull images.
-  /// Supports any docker image repository.
-  #[serde(default, alias = "docker_registry")]
-  pub docker_registries: ForgivingVec<DockerRegistry>,
+  /// Configure image registry credentials used to push / pull images.
+  ///
+  /// Pre v2.3.0, called `docker_registries`
+  #[serde(
+    default,
+    alias = "image_registry",
+    alias = "docker_registry",
+    alias = "docker_registries"
+  )]
+  pub image_registries: ForgivingVec<ImageRegistry>,
 }
 
 fn default_periphery_port() -> u16 {
@@ -489,7 +495,7 @@ impl Default for PeripheryConfig {
       exclude_disk_mounts: Default::default(),
       secrets: Default::default(),
       git_providers: Default::default(),
-      docker_registries: Default::default(),
+      image_registries: Default::default(),
       ssl_enabled: default_ssl_enabled(),
       ssl_key_file: None,
       ssl_cert_file: None,
@@ -560,10 +566,10 @@ impl PeripheryConfig {
             .collect(),
         })
         .collect(),
-      docker_registries: self
-        .docker_registries
+      image_registries: self
+        .image_registries
         .iter()
-        .map(|provider| DockerRegistry {
+        .map(|provider| ImageRegistry {
           domain: provider.domain.clone(),
           organizations: provider.organizations.clone(),
           accounts: provider

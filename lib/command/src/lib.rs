@@ -1,40 +1,38 @@
-use std::{
-  path::{Path, PathBuf},
-  process::Stdio,
-  sync::OnceLock,
-};
+use std::{path::PathBuf, process::Stdio, sync::OnceLock};
 
 use komodo_client::{
   entities::{komodo_timestamp, update::Log},
   parsers::parse_multiline_command,
 };
+use tokio::process::Command;
 
+mod options;
 mod output;
 
+pub use options::*;
 pub use output::*;
-use tokio::process::Command;
 
 /// Commands are run directly, and cannot include '&&'
 pub async fn run_komodo_standard_command(
   stage: &str,
-  path: impl Into<Option<&Path>>,
   command: impl Into<String>,
+  options: CommandOptions<'_>,
 ) -> Log {
   let command = command.into();
   let start_ts = komodo_timestamp();
-  let output = run_standard_command(&command, path).await;
+  let output = run_standard_command(&command, options).await;
   output_into_log(stage, command, start_ts, output)
 }
 
 /// Commands are wrapped in 'sh -c', and can include '&&'
 pub async fn run_komodo_shell_command(
   stage: &str,
-  path: impl Into<Option<&Path>>,
   command: impl Into<String>,
+  options: CommandOptions<'_>,
 ) -> Log {
   let command = command.into();
   let start_ts = komodo_timestamp();
-  let output = run_shell_command(&command, path).await;
+  let output = run_shell_command(&command, options).await;
   output_into_log(stage, command, start_ts, output)
 }
 
@@ -47,14 +45,14 @@ pub async fn run_komodo_shell_command(
 /// ie if all the lines are commented out.
 pub async fn run_komodo_multiline_command(
   stage: &str,
-  path: impl Into<Option<&Path>>,
   command: impl AsRef<str>,
+  options: CommandOptions<'_>,
 ) -> Option<Log> {
   let command = parse_multiline_command(command);
   if command.is_empty() {
     return None;
   }
-  Some(run_komodo_shell_command(stage, path, command).await)
+  Some(run_komodo_shell_command(stage, command, options).await)
 }
 
 pub enum KomodoCommandMode {
@@ -73,28 +71,24 @@ pub enum KomodoCommandMode {
 /// See [parse_multiline_command].
 pub async fn run_komodo_command_with_sanitization(
   stage: &str,
-  path: impl Into<Option<&Path>>,
   command: impl AsRef<str>,
+  options: CommandOptions<'_>,
   mode: KomodoCommandMode,
   replacers: &[(String, String)],
 ) -> Option<Log> {
   let mut log = match mode {
-    KomodoCommandMode::Standard => run_komodo_standard_command(
-      stage,
-      path,
-      command.as_ref().to_string(),
-    )
-    .await
-    .into(),
-    KomodoCommandMode::Shell => run_komodo_shell_command(
-      stage,
-      path,
-      command.as_ref().to_string(),
-    )
-    .await
-    .into(),
+    KomodoCommandMode::Standard => {
+      run_komodo_standard_command(stage, command.as_ref(), options)
+        .await
+        .into()
+    }
+    KomodoCommandMode::Shell => {
+      run_komodo_shell_command(stage, command.as_ref(), options)
+        .await
+        .into()
+    }
     KomodoCommandMode::Multiline => {
-      run_komodo_multiline_command(stage, path, command).await
+      run_komodo_multiline_command(stage, command, options).await
     }
   }?;
 
@@ -124,10 +118,13 @@ pub fn output_into_log(
   }
 }
 
-/// Commands are run directly, and cannot include '&&'
+/// Commands are run directly, and cannot include '&&'.
+///
+/// See [CommandOptions] for the available `timeout` / `cancel` / `stdin`
+/// controls.
 pub async fn run_standard_command(
   command: &str,
-  path: impl Into<Option<&Path>>,
+  options: CommandOptions<'_>,
 ) -> CommandOutput {
   let lexed = if let Some(lexed) = shlex::split(command)
     && !lexed.is_empty()
@@ -141,23 +138,9 @@ pub async fn run_standard_command(
 
   let mut cmd = Command::new(&lexed[0]);
 
-  cmd
-    .args(&lexed[1..])
-    .kill_on_drop(true)
-    .stdin(Stdio::null())
-    .stdout(Stdio::piped())
-    .stderr(Stdio::piped());
+  cmd.args(&lexed[1..]).kill_on_drop(true);
 
-  if let Some(path) = path.into() {
-    match path.canonicalize() {
-      Ok(path) => {
-        cmd.current_dir(path);
-      }
-      Err(e) => return CommandOutput::from_err(e),
-    }
-  }
-
-  CommandOutput::from(cmd.output().await)
+  run_command(cmd, options).await
 }
 
 fn shell() -> &'static str {
@@ -178,19 +161,45 @@ fn shell() -> &'static str {
   })
 }
 
-/// Commands are wrapped in 'sh -c', and can include '&&'
+/// Commands are wrapped in 'sh -c', and can include '&&'.
+///
+/// See [CommandOptions] for the available `timeout` / `cancel` / `stdin`
+/// controls.
 pub async fn run_shell_command(
   command: &str,
-  path: impl Into<Option<&Path>>,
+  options: CommandOptions<'_>,
 ) -> CommandOutput {
   let mut cmd = Command::new(shell());
 
-  cmd
-    .args(["-c", command])
-    .kill_on_drop(true)
-    .stdin(Stdio::null());
+  cmd.args(["-c", command]).kill_on_drop(true);
 
-  if let Some(path) = path.into() {
+  run_command(cmd, options).await
+}
+
+/// Runs the command to completion, returning its output.
+///
+/// With an empty `options`, this is just `cmd.output()`.
+///
+/// With a `timeout` and/or `cancel` token, the child is spawned in its own
+/// process group (via `process_group(0)`, so the child's pid is also its
+/// process group id). If the timeout elapses or the token is cancelled
+/// before the command finishes, the entire process group is killed with
+/// `SIGKILL` — not just the direct child — so any descendants the command
+/// spawned (e.g. processes started by a `sh -c` wrapper) are torn down too.
+/// `kill_on_drop(true)` remains set as a backstop to reap the direct child.
+async fn run_command(
+  mut cmd: Command,
+  options: CommandOptions<'_>,
+) -> CommandOutput {
+  let CommandOptions {
+    path,
+    timeout,
+    cancel,
+    stdin,
+  } = options;
+
+  // Attach the path to cmd as current dir
+  if let Some(path) = path {
     match path.canonicalize() {
       Ok(path) => {
         cmd.current_dir(path);
@@ -199,5 +208,263 @@ pub async fn run_shell_command(
     }
   }
 
-  CommandOutput::from(cmd.output().await)
+  // Anything to write needs a pipe, otherwise the command gets no input.
+  cmd.stdin(if stdin.is_some() {
+    Stdio::piped()
+  } else {
+    Stdio::null()
+  });
+
+  // Fast path: nothing to write, and nothing to wait
+  // on besides the command itself.
+  if timeout.is_none() && cancel.is_none() && stdin.is_none() {
+    return CommandOutput::from(cmd.output().await);
+  }
+
+  // `output()` configures stdout/stderr automatically, but since
+  // we spawn manually we set them here too.
+  cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
+
+  // Place the child in a new process group so the whole group can be
+  // signalled together. Only needed when there is something to signal on.
+  if timeout.is_some() || cancel.is_some() {
+    cmd.process_group(0);
+  }
+
+  let mut child = match cmd.spawn() {
+    Ok(child) => child,
+    Err(e) => return CommandOutput::from_err(e),
+  };
+
+  // Written from a task, so that a payload larger than the pipe buffer
+  // cannot deadlock against a child which is filling up its stdout.
+  if let Some(stdin) = stdin
+    && let Some(mut pipe) = child.stdin.take()
+  {
+    let stdin = stdin.to_string();
+    tokio::spawn(async move {
+      use tokio::io::AsyncWriteExt;
+      let _ = pipe.write_all(stdin.as_bytes()).await;
+      // Dropping the pipe closes the child's stdin, so it stops reading.
+      let _ = pipe.shutdown().await;
+    });
+  }
+
+  // Because of `process_group(0)`, the child's pid equals its pgid.
+  let pid = child.id();
+
+  // Nothing to signal on, so just wait for it to finish.
+  if timeout.is_none() && cancel.is_none() {
+    return CommandOutput::from(child.wait_with_output().await);
+  }
+
+  // Resolve to `()` only when the relevant control fires; otherwise stay
+  // pending forever so it never wins the `select!`.
+  let on_timeout = async {
+    match timeout {
+      Some(timeout) => tokio::time::sleep(timeout).await,
+      None => std::future::pending().await,
+    }
+  };
+  let on_cancel = async {
+    match &cancel {
+      Some(cancel) => cancel.cancelled().await,
+      None => std::future::pending().await,
+    }
+  };
+
+  let killed_reason = tokio::select! {
+    output = child.wait_with_output() => {
+      return CommandOutput::from(output);
+    }
+    _ = on_timeout => format!(
+      "Command timed out after {:.1}s (process group killed)",
+      // `timeout` is `Some` here, since `on_timeout` only fires when set.
+      timeout.map(|t| t.as_secs_f64()).unwrap_or_default(),
+    ),
+    _ = on_cancel => {
+      "Command cancelled (process group killed)".to_string()
+    }
+  };
+
+  kill_process_group(pid);
+  CommandOutput::from_err_message(killed_reason)
+}
+
+/// Sends `SIGKILL` to the entire process group led by `pid`.
+///
+/// A negative pid targets the whole group, so a child spawned with
+/// `process_group(0)` (group leader) is killed along with all of its
+/// descendants.
+fn kill_process_group(pid: Option<u32>) {
+  let Some(pid) = pid else {
+    return;
+  };
+  // SAFETY: `kill` is a simple syscall with no memory safety concerns;
+  // we only signal our own child's process group.
+  unsafe {
+    libc::kill(-(pid as libc::pid_t), libc::SIGKILL);
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use std::time::Duration;
+
+  use tokio_util::sync::CancellationToken;
+
+  use super::*;
+
+  /// On timeout, a backgrounded grandchild (here `sleep 31337`, started
+  /// with `&` so it is not the direct child of our spawned shell) must be
+  /// killed along with the rest of the process group.
+  #[tokio::test]
+  async fn timeout_kills_process_group() {
+    // Unique sleep duration so we can pgrep for exactly this process.
+    let marker = "sleep 31337";
+    let out = run_shell_command(
+      &format!("{marker} & sleep 31336"),
+      CommandOptions::default().timeout(Duration::from_millis(300)),
+    )
+    .await;
+
+    // The command should have reported a timeout failure.
+    assert!(!out.success(), "expected timeout failure, got: {out:?}");
+    assert!(
+      out.stderr.contains("timed out"),
+      "expected timeout error, got: {out:?}"
+    );
+
+    // Give the kernel a moment to reap the killed group.
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    let still_running = std::process::Command::new("pgrep")
+      .args(["-f", marker])
+      .output()
+      .expect("pgrep should run");
+    let pids = String::from_utf8_lossy(&still_running.stdout);
+    let pids = pids.trim();
+    assert!(
+      pids.is_empty(),
+      "backgrounded grandchild survived timeout: pids={pids:?}"
+    );
+  }
+
+  /// Neither runner configures stdout/stderr itself — the fast path relies
+  /// on `output()` doing it, and the spawn path on [run_command]. Both must
+  /// still capture, rather than leaking output to the parent.
+  #[tokio::test]
+  async fn output_is_captured_on_both_spawn_paths() {
+    // Fast path: no stdin, timeout or cancel, so `cmd.output()`.
+    let fast =
+      run_standard_command("echo out", CommandOptions::default())
+        .await;
+    assert!(fast.success(), "{fast:?}");
+    assert_eq!(fast.stdout.trim(), "out");
+
+    // Spawn path, reached here by setting a timeout.
+    let spawned = run_shell_command(
+      "echo out; echo err >&2",
+      CommandOptions::default().timeout(Duration::from_secs(10)),
+    )
+    .await;
+    assert!(spawned.success(), "{spawned:?}");
+    assert_eq!(spawned.stdout.trim(), "out");
+    assert_eq!(spawned.stderr.trim(), "err");
+  }
+
+  /// Data set as [CommandOptions::stdin] must reach the child on its
+  /// standard input.
+  #[tokio::test]
+  async fn stdin_is_delivered_to_child() {
+    let payload = "some-secret-token\nwith two lines";
+    let out = run_standard_command(
+      "cat",
+      CommandOptions::default().stdin(payload),
+    )
+    .await;
+
+    assert!(out.success(), "cat failed: {out:?}");
+    assert_eq!(out.stdout, payload);
+  }
+
+  /// The whole point of [CommandOptions::stdin]: a secret passed this way
+  /// must not be visible in the process arguments, where any user on the
+  /// host could read it with `ps`. The shell equivalent, which interpolates
+  /// the secret into the command, is checked alongside it to confirm the
+  /// test would actually catch a regression.
+  #[tokio::test]
+  async fn stdin_secret_is_not_in_process_args() {
+    let secret = "komodo-stdin-secret-marker";
+
+    let visible_in_ps = |marker: &'static str| async move {
+      // Give the child a moment to actually be running.
+      tokio::time::sleep(Duration::from_millis(300)).await;
+      let out = std::process::Command::new("pgrep")
+        .args(["-f", marker])
+        .output()
+        .expect("pgrep should run");
+      !String::from_utf8_lossy(&out.stdout).trim().is_empty()
+    };
+
+    let (_, via_stdin) = tokio::join!(
+      run_standard_command(
+        "sleep 1",
+        CommandOptions::default().stdin(secret)
+      ),
+      visible_in_ps(secret)
+    );
+    assert!(!via_stdin, "secret passed via stdin showed up in ps");
+
+    // Control: interpolating it into the command does expose it.
+    let interpolated = format!("echo {secret} | sleep 1");
+    let (_, via_command) = tokio::join!(
+      run_shell_command(&interpolated, CommandOptions::default()),
+      visible_in_ps(secret)
+    );
+    assert!(
+      via_command,
+      "control failed: interpolated secret should be visible in ps"
+    );
+  }
+
+  /// Cancelling the token mid-run must kill the whole process group, just
+  /// like a timeout does, and return promptly with a cancellation error.
+  #[tokio::test]
+  async fn cancel_kills_process_group() {
+    let marker = "sleep 41337";
+    let cancel = CancellationToken::new();
+
+    // Cancel shortly after the command starts.
+    let cancel_clone = cancel.clone();
+    tokio::spawn(async move {
+      tokio::time::sleep(Duration::from_millis(300)).await;
+      cancel_clone.cancel();
+    });
+
+    let out = run_shell_command(
+      &format!("{marker} & sleep 41336"),
+      CommandOptions::default().cancel(cancel),
+    )
+    .await;
+
+    assert!(!out.success(), "expected cancel failure, got: {out:?}");
+    assert!(
+      out.stderr.contains("cancelled"),
+      "expected cancellation error, got: {out:?}"
+    );
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    let still_running = std::process::Command::new("pgrep")
+      .args(["-f", marker])
+      .output()
+      .expect("pgrep should run");
+    let pids = String::from_utf8_lossy(&still_running.stdout);
+    let pids = pids.trim();
+    assert!(
+      pids.is_empty(),
+      "backgrounded grandchild survived cancellation: pids={pids:?}"
+    );
+  }
 }

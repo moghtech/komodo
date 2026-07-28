@@ -4,7 +4,7 @@ use database::mungos::mongodb::bson::doc;
 use komodo_client::{
   api::read::*,
   entities::{
-    alerter::{Alerter, AlerterListItem},
+    alerter::{Alerter, AlerterListItem, AlerterSortBy},
     permission::PermissionLevel,
   },
 };
@@ -17,7 +17,7 @@ use crate::{
   state::db_client,
 };
 
-use super::ReadArgs;
+use super::{ReadArgs, list_limit};
 
 impl Resolve<ReadArgs> for GetAlerter {
   async fn resolve(
@@ -45,12 +45,30 @@ impl Resolve<ReadArgs> for ListAlerters {
     } else {
       get_all_tags(None).await?
     };
+    let limit = list_limit(self.limit);
+    let sort_by: resource::ListItemSort<AlerterListItem> =
+      match self.sort_by {
+        AlerterSortBy::Name => resource::ListItemSort::Name,
+        AlerterSortBy::Type => {
+          resource::ListItemSort::DbField("config.endpoint.type")
+        }
+        AlerterSortBy::Enabled => {
+          resource::ListItemSort::DbField("config.enabled")
+        }
+      };
     Ok(
-      resource::list_for_user::<Alerter>(
+      resource::list_items_for_user::<Alerter>(
         self.query,
+        resource::ListItemsQueryOptions {
+          limit,
+          page: self.page,
+          sort_desc: self.sort_desc,
+          sort_by,
+        },
         user,
         PermissionLevel::Read.into(),
         &all_tags,
+        |_| true,
       )
       .await?,
     )
@@ -67,9 +85,12 @@ impl Resolve<ReadArgs> for ListFullAlerters {
     } else {
       get_all_tags(None).await?
     };
+    let limit = list_limit(self.limit);
     Ok(
       resource::list_full_for_user::<Alerter>(
         self.query,
+        limit as i64,
+        self.page.saturating_mul(limit),
         user,
         PermissionLevel::Read.into(),
         &all_tags,
@@ -85,6 +106,8 @@ impl Resolve<ReadArgs> for GetAlertersSummary {
     ReadArgs { user }: &ReadArgs,
   ) -> mogh_error::Result<GetAlertersSummaryResponse> {
     let query = match list_resource_ids_for_user::<Alerter>(
+      Default::default(),
+      None,
       None,
       user,
       PermissionLevel::Read.into(),

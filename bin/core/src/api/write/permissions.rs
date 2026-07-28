@@ -347,9 +347,9 @@ async fn extract_resource_target_with_validation(
         .find_one(filter)
         .await
         .context("Failed to query db for swarms")?
-        .context("No matching server found")?
+        .context("No matching swarm found")?
         .id;
-      Ok((ResourceTargetVariant::Server, id))
+      Ok((ResourceTargetVariant::Swarm, id))
     }
     ResourceTarget::Server(ident) => {
       let filter = match ObjectId::from_str(ident) {

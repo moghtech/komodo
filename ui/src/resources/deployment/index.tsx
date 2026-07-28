@@ -1,5 +1,5 @@
 import { deploymentStateIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -24,14 +24,16 @@ import SwarmResourceLink from "@/components/swarm/link";
 import ContainerPorts from "@/components/docker/container-ports";
 import DeploymentUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useDeployment(id: string | undefined, useName?: boolean) {
-  return useRead("ListDeployments", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+export function useDeployment(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Deployment", id, useName, refetchInterval);
 }
 
 export function useFullDeployment(id: string) {
@@ -42,12 +44,23 @@ export function useFullDeployment(id: string) {
   ).data;
 }
 
+/** The container / service name for the deployment,
+ * ie the configured custom name if set, otherwise the deployment name. */
+export function deploymentContainerName(
+  deployment: Types.DeploymentListItem | undefined,
+) {
+  if (!deployment) return undefined;
+  return deployment.info.custom_name || deployment.name;
+}
+
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
   Types.DeploymentInfo,
-  Types.DeploymentListItemInfo
+  Types.DeploymentListItemInfo,
+  Types.DeploymentQuerySpecifics
 > = {
-  useList: () => useRead("ListDeployments", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListDeployments", { query, limit, page }).data,
   useListItem: useDeployment,
   useFull: useFullDeployment,
 
@@ -112,9 +125,7 @@ export const DeploymentComponents: RequiredResourceComponents<
   Table: DeploymentTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const info = useRead("ListDeployments", {}).data?.find(
-      (r) => r.id === id,
-    )?.info;
+    const info = useDeployment(id)?.info;
     const color = noColor
       ? undefined
       : info &&
@@ -191,11 +202,12 @@ export const DeploymentComponents: RequiredResourceComponents<
     },
     DockerResource: ({ id }) => {
       const deployment = useDeployment(id);
+      const containerName = deploymentContainerName(deployment);
       const service = useRead(
         "ListSwarmServices",
         { swarm: deployment?.info.swarm_id! },
         { enabled: !!deployment?.info.swarm_id },
-      ).data?.find((service) => service.Name === deployment?.name);
+      ).data?.find((service) => service.Name === containerName);
       if (
         !deployment ||
         [
@@ -211,8 +223,8 @@ export const DeploymentComponents: RequiredResourceComponents<
             <SwarmResourceLink
               type="Service"
               swarmId={deployment.info.swarm_id}
-              resourceId={deployment.name}
-              name={deployment.name}
+              resourceId={containerName!}
+              name={containerName!}
             />
             {service?.Configs.map((config) => (
               <SwarmResourceLink
@@ -238,7 +250,7 @@ export const DeploymentComponents: RequiredResourceComponents<
         return (
           <DockerResourceLink
             type="Container"
-            name={deployment.name}
+            name={containerName!}
             serverId={deployment.info.server_id}
           />
         );
@@ -246,13 +258,14 @@ export const DeploymentComponents: RequiredResourceComponents<
     },
     Ports: ({ id }) => {
       const deployment = useDeployment(id);
+      const containerName = deploymentContainerName(deployment);
       const container = useRead(
-        "ListDockerContainers",
+        "ListContainers",
         {
           server: deployment?.info.server_id!,
         },
         { refetchInterval: 10_000, enabled: !!deployment?.info.server_id },
-      ).data?.find((container) => container.name === deployment?.name);
+      ).data?.find((container) => container.name === containerName);
       if (!container) return null;
       return (
         <ContainerPorts

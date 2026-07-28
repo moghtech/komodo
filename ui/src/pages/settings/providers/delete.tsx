@@ -7,7 +7,7 @@ export default function DeleteProviderAccount({
   type,
   id,
 }: {
-  type: "GitProvider" | "DockerRegistry";
+  type: "GitProvider" | "ImageRegistry";
   id: string;
 }) {
   const invalidate = useInvalidate();

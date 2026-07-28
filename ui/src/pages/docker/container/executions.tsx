@@ -6,7 +6,7 @@ import { Pause, Play, RefreshCcw, Square, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const useContainer = (serverId: string, containerName: string) => {
-  return useRead("ListDockerContainers", { server: serverId }).data?.find(
+  return useRead("ListContainers", { server: serverId }).data?.find(
     (container) => container.name === containerName,
   );
 };
@@ -26,7 +26,7 @@ const DestroyContainer = ({
   const destroying = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.pruning_containers;
 
   if (!container) {
@@ -61,7 +61,7 @@ const RestartContainer = ({
   const action_state = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!container || state !== Types.ContainerStateStatusEnum.Running) {
@@ -74,7 +74,7 @@ const RestartContainer = ({
       icon={<RefreshCcw size="1rem" />}
       onConfirm={() => restart({ server: serverId, container: containerName })}
       disabled={restartPending}
-      loading={restartPending || action_state?.restarting_containers}
+      loading={restartPending || !!action_state?.restarting_containers}
     >
       Restart
     </ConfirmModalWithDisable>
@@ -96,7 +96,7 @@ const StartStopContainer = ({
   const action_state = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!container) {
@@ -109,7 +109,7 @@ const StartStopContainer = ({
         icon={<Play size="1rem" />}
         onClick={() => start({ server: serverId, container: containerName })}
         disabled={startPending}
-        loading={startPending || action_state?.starting_containers}
+        loading={startPending || !!action_state?.starting_containers}
       >
         Start
       </ConfirmButton>
@@ -122,7 +122,7 @@ const StartStopContainer = ({
         icon={<Square size="1rem" />}
         onConfirm={() => stop({ server: serverId, container: containerName })}
         disabled={stopPending}
-        loading={stopPending || action_state?.stopping_containers}
+        loading={stopPending || !!action_state?.stopping_containers}
       >
         Stop
       </ConfirmModalWithDisable>
@@ -146,7 +146,7 @@ const PauseUnpauseContainer = ({
   const action_state = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!container) {
@@ -159,7 +159,7 @@ const PauseUnpauseContainer = ({
         icon={<Play size="1rem" />}
         onClick={() => unpause({ server: serverId, container: containerName })}
         disabled={unpausePending}
-        loading={unpausePending || action_state?.unpausing_containers}
+        loading={unpausePending || !!action_state?.unpausing_containers}
       >
         Unpause
       </ConfirmButton>
@@ -172,7 +172,7 @@ const PauseUnpauseContainer = ({
         icon={<Pause size="1rem" />}
         onConfirm={() => pause({ server: serverId, container: containerName })}
         disabled={pausePending}
-        loading={pausePending || action_state?.pausing_containers}
+        loading={pausePending || !!action_state?.pausing_containers}
       >
         Pause
       </ConfirmModalWithDisable>

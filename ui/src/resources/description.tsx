@@ -59,9 +59,9 @@ export default function ResourceDescription({
         >
           <Text
             className="text-ellipsis"
-            maw={{ xl: 600, xl2: 750, xl3: 900, xl4: 1050 }}
+            maw={{ base: 350, md: 600, xl2: 750, xl3: 900, xl4: 1050 }}
           >
-            {resource?.description || "Set Description"}
+            {resource?.description?.split("\n")[0] || "Set Description"}
           </Text>
         </Button>
       )}

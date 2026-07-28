@@ -58,6 +58,7 @@ impl Resolve<ExecuteArgs> for BatchDeploy {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -65,8 +66,12 @@ impl Resolve<ExecuteArgs> for BatchDeploy {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchDeploy>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchDeploy>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }
@@ -110,7 +115,7 @@ impl Resolve<ExecuteArgs> for Deploy {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.deploying = true)?;
 
     let mut update = update.clone();
@@ -122,26 +127,16 @@ impl Resolve<ExecuteArgs> for Deploy {
     let (version, registry_token) = match &deployment.config.image {
       DeploymentImage::Build { build_id, version } => {
         let build = resource::get::<Build>(build_id).await?;
-        let image_names = build.get_image_names();
-        let image_name = image_names
-          .first()
-          .context("No image name could be created")
-          .context("Failed to create image name")?;
         let version = if version.is_none() {
           build.config.version
         } else {
           *version
         };
-        let version_str = version.to_string();
-        // Potentially add the build image_tag postfix
-        let version_str = if build.config.image_tag.is_empty() {
-          version_str
-        } else {
-          format!("{version_str}-{}", build.config.image_tag)
-        };
+        let image_name = build.get_deployment_image_name();
+        let image_tag = build.get_deployment_image_tag(version);
         // replace image with corresponding build image.
         deployment.config.image = DeploymentImage::Image {
-          image: format!("{image_name}:{version_str}"),
+          image: format!("{image_name}:{image_tag}"),
         };
         let first_registry = build
           .config
@@ -211,6 +206,12 @@ impl Resolve<ExecuteArgs> for Deploy {
     update_update(update.clone()).await?;
 
     let deployment_id = deployment.id.clone();
+    // Track the name the container / service is deployed under,
+    // so the Deployment stays matched to it even if the
+    // name configuration changes before the next deploy.
+    let fresh_name = deployment.custom_name().to_string();
+    let prev_deployed_name = deployment.info.deployed_name.clone();
+    let mut deployed = false;
 
     match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -227,6 +228,7 @@ impl Resolve<ExecuteArgs> for Deploy {
         {
           Ok(logs) => {
             refresh_swarm_cache(&swarm, true).await;
+            deployed = logs.iter().all(|log| log.success);
             update.logs.extend(logs)
           }
           Err(e) => {
@@ -251,6 +253,7 @@ impl Resolve<ExecuteArgs> for Deploy {
         {
           Ok(log) => {
             refresh_server_cache(&server, true).await;
+            deployed = log.success;
             update.logs.push(log)
           }
           Err(e) => {
@@ -267,6 +270,11 @@ impl Resolve<ExecuteArgs> for Deploy {
       &deployment_id,
       &DeploymentInfo {
         latest_image_digest: Default::default(),
+        deployed_name: if deployed {
+          fresh_name
+        } else {
+          prev_deployed_name
+        },
       },
     )
     .await
@@ -278,6 +286,11 @@ impl Resolve<ExecuteArgs> for Deploy {
     }
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
+
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -458,7 +471,7 @@ impl Resolve<ExecuteArgs> for PullDeployment {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pulling = true)?;
 
     let mut update = update.clone();
@@ -469,6 +482,10 @@ impl Resolve<ExecuteArgs> for PullDeployment {
 
     update.logs.push(log);
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -516,7 +533,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.starting = true)?;
 
     let mut update = update.clone();
@@ -527,7 +544,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::StartContainer {
-        name: deployment.name,
+        name: deployment.deployed_name().to_string(),
       })
       .await
     {
@@ -541,6 +558,10 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     update.logs.push(log);
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -588,7 +609,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.restarting = true)?;
 
     let mut update = update.clone();
@@ -599,7 +620,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::RestartContainer {
-        name: deployment.name,
+        name: deployment.deployed_name().to_string(),
       })
       .await
     {
@@ -615,6 +636,10 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     update.logs.push(log);
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -662,7 +687,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pausing = true)?;
 
     let mut update = update.clone();
@@ -673,7 +698,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::PauseContainer {
-        name: deployment.name,
+        name: deployment.deployed_name().to_string(),
       })
       .await
     {
@@ -687,6 +712,10 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     update.logs.push(log);
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -734,7 +763,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.unpausing = true)?;
 
     let mut update = update.clone();
@@ -745,7 +774,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::UnpauseContainer {
-        name: deployment.name,
+        name: deployment.deployed_name().to_string(),
       })
       .await
     {
@@ -761,6 +790,10 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     update.logs.push(log);
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -810,7 +843,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.stopping = true)?;
 
     let mut update = update.clone();
@@ -821,7 +854,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     let log = match periphery_client(&server)
       .await?
       .request(api::container::StopContainer {
-        name: deployment.name,
+        name: deployment.deployed_name().to_string(),
         signal: self
           .signal
           .unwrap_or(deployment.config.termination_signal)
@@ -843,6 +876,10 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     update.logs.push(log);
     refresh_server_cache(&server, true).await;
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -868,6 +905,7 @@ impl Resolve<ExecuteArgs> for BatchDestroyDeployment {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -877,6 +915,7 @@ impl Resolve<ExecuteArgs> for BatchDestroyDeployment {
     Ok(
       super::batch_execute::<BatchDestroyDeployment>(
         &self.pattern,
+        self.tags,
         user,
       )
       .await?,
@@ -922,7 +961,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
 
     // Will check to ensure deployment not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.destroying = true)?;
 
     let mut update = update.clone();
@@ -936,7 +975,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         match swarm_request(
           &swarm.config.server_ids,
           api::swarm::RemoveSwarmServices {
-            services: vec![deployment.name],
+            services: vec![deployment.deployed_name().to_string()],
           },
         )
         .await
@@ -957,7 +996,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         match periphery_client(&server)
           .await?
           .request(api::container::RemoveContainer {
-            name: deployment.name,
+            name: deployment.deployed_name().to_string(),
             signal: self
               .signal
               .unwrap_or(deployment.config.termination_signal)
@@ -983,9 +1022,33 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
       }
     };
 
+    // Clear the tracked deployed name once the container / service
+    // is confirmed removed, so the next deploy uses the fresh name.
+    if log.success
+      && let Err(e) = resource::update_info::<Deployment>(
+        &deployment.id,
+        &DeploymentInfo {
+          latest_image_digest: deployment
+            .info
+            .latest_image_digest
+            .clone(),
+          deployed_name: Default::default(),
+        },
+      )
+      .await
+    {
+      warn!(
+        "Failed to clear deployment {} ({}) deployed name after destroy | {e:#}",
+        deployment.name, deployment.id,
+      );
+    }
+
     update.logs.push(log);
     update.finalize();
 
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)

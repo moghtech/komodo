@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Group, Select, Stack, Text } from "@mantine/core";
-import { useExecute, useRead } from "@/lib/hooks";
+import { useExecute, useListItem, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { parseKeyValue } from "@/lib/utils";
 import { useDeployment } from ".";
@@ -23,8 +23,7 @@ export function DeployDeployment({ id }: DeploymentId) {
 
   const { mutateAsync: deploy, isPending } = useExecute("Deploy");
 
-  const deployments = useRead("ListDeployments", {}).data;
-  const deployment_item = deployments?.find((d) => d.id === id);
+  const deployment_item = useListItem("Deployment", id);
 
   const deploying = useRead(
     "GetDeploymentActionState",
@@ -93,15 +92,14 @@ export function DestroyDeployment({ id }: DeploymentId) {
 
   const { mutateAsync: destroy, isPending } = useExecute("DestroyDeployment");
 
-  const deployments = useRead("ListDeployments", {}).data;
-  const state = deployments?.find((d) => d.id === id)?.info.state;
+  const state = useListItem("Deployment", id)?.info.state;
 
   const destroying = useRead(
     "GetDeploymentActionState",
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.destroying;
 
   const pending = isPending || destroying;
@@ -145,7 +143,7 @@ export function PullDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!deployment || deployment.info.swarm_id) return null;
@@ -172,7 +170,7 @@ export function RestartDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!deployment || deployment.info.swarm_id) return null;
@@ -204,7 +202,7 @@ export function StartStopDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!deployment || deployment.info.swarm_id) return null;
@@ -241,7 +239,7 @@ function StopDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.stopping;
 
   const pending = isPending || stopping;
@@ -317,7 +315,7 @@ export function PauseUnpauseDeployment({ id }: DeploymentId) {
     {
       deployment: id,
     },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
 
   if (!deployment || deployment.info.swarm_id) return null;

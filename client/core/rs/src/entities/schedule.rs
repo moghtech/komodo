@@ -30,3 +30,20 @@ pub struct Schedule {
   /// Resource tags.
   pub tags: Vec<String>,
 }
+
+#[typeshare]
+#[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ScheduleSortBy {
+  /// Sort by target name. Default.
+  #[default]
+  Name,
+  /// Sort by the schedule expression.
+  Schedule,
+  /// Sort by next scheduled run.
+  NextRun,
+  /// Sort by enabled.
+  Enabled,
+}
