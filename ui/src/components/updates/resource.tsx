@@ -17,16 +17,8 @@ export default function ResourceUpdates({ type, id }: Types.ResourceTarget) {
 
   const query = useMemo(
     () => getUpdateQuery({ type, id }, buildId),
-    [type, id],
+    [type, id, buildId],
   );
-
-  // const alerts = useRead("ListAlerts", {
-  //   query: getUpdateQuery({ type, id }, deployments),
-  // }).data;
-
-  // const openAlerts = alerts?.alerts.filter((alert) => !alert.resolved);
-
-  // const showAlerts = type === "Server";
 
   return (
     <UpdatesSection query={query} link={`/updates?type=${type}&id=${id}`} />
