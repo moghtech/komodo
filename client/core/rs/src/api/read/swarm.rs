@@ -14,7 +14,9 @@ use crate::entities::{
     swarm::SwarmInspectInfo,
     task::{SwarmTask, SwarmTaskListItem},
   },
-  swarm::{Swarm, SwarmActionState, SwarmListItem, SwarmQuery},
+  swarm::{
+    Swarm, SwarmActionState, SwarmListItem, SwarmQuery, SwarmSortBy,
+  },
   update::Log,
 };
 
@@ -75,6 +77,31 @@ pub struct ListSwarms {
   /// Optional structured query to filter Swarms.
   #[serde(default)]
   pub query: SwarmQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: SwarmSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]
@@ -105,6 +132,21 @@ pub struct ListFullSwarms {
   /// optional structured query to filter swarms.
   #[serde(default)]
   pub query: SwarmQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
 }
 
 #[typeshare]

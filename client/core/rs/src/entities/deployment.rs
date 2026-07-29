@@ -8,13 +8,7 @@ use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::{
-  deserializers::{
-    conversions_deserializer, env_vars_deserializer,
-    labels_deserializer, option_conversions_deserializer,
-    option_env_vars_deserializer, option_labels_deserializer,
-    option_string_list_deserializer, option_term_labels_deserializer,
-    string_list_deserializer, term_labels_deserializer,
-  },
+  deserializers::*,
   entities::{
     EnvironmentVar, ImageDigest, environment_vars_from_str,
     optional_str,
@@ -39,9 +33,42 @@ pub struct DeploymentSchema(
 #[typeshare]
 pub type Deployment = Resource<DeploymentConfig, DeploymentInfo>;
 
+impl Deployment {
+  /// Configured custom container / service name,
+  /// falling back to deployment name.
+  /// This is the name the next deploy will use.
+  pub fn custom_name(&self) -> &str {
+    optional_str(self.config.custom_name.trim())
+      .unwrap_or(self.name.trim())
+  }
+
+  /// The name of the currently deployed container / service,
+  /// falling back to [Deployment::custom_name].
+  /// May be different than custom_name if the name configuration
+  /// changed since the last deploy. Use this to match the Deployment
+  /// against the existing container / service.
+  pub fn deployed_name(&self) -> &str {
+    let trimmed = self.info.deployed_name.trim();
+    if !trimmed.is_empty() {
+      trimmed
+    } else {
+      self.custom_name()
+    }
+  }
+}
+
 #[typeshare]
 pub type DeploymentListItem =
   ResourceListItem<DeploymentListItemInfo>;
+
+impl DeploymentListItem {
+  /// Configured custom container / service name,
+  /// falling back to deployment name.
+  pub fn custom_name(&self) -> &str {
+    optional_str(self.info.custom_name.trim())
+      .unwrap_or(self.name.trim())
+  }
+}
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -51,14 +78,24 @@ pub struct DeploymentListItemInfo {
   pub state: DeploymentState,
   /// The status of the docker container (eg. up 12 hours, exited 5 minutes ago.)
   pub status: Option<String>,
+  /// The container / service name, if different than
+  /// the deployment name. Uses the currently deployed name
+  /// if deployed, else the configured custom name.
+  pub custom_name: String,
   /// The image attached to the deployment.
   pub image: String,
   /// Whether there is a newer image available at the same tag.
   pub update_available: bool,
   /// The swarm that deployment is deployed on, when in Swarm mode.
   pub swarm_id: String,
+  /// The name of the swarm that deployment is deployed on, when in Swarm mode.
+  #[serde(default)]
+  pub swarm_name: String,
   /// The server that deployment is deployed on, when in Server mode.
   pub server_id: String,
+  /// The name of the server that deployment is deployed on, when in Server mode.
+  #[serde(default)]
+  pub server_name: String,
   /// An attached Komodo Build, if it exists.
   pub build_id: Option<String>,
 }
@@ -71,6 +108,11 @@ pub struct DeploymentInfo {
   /// This includes both the image name / tag, and the specific digest hash.
   #[serde(default)]
   pub latest_image_digest: ImageDigest,
+  /// The container / service name used at the time of the last deploy.
+  /// Kept to match the Deployment to its container / service
+  /// even if the name configuration changes before the next deploy.
+  #[serde(default)]
+  pub deployed_name: String,
 }
 
 #[typeshare(serialized_as = "Partial<DeploymentConfig>")]
@@ -112,6 +154,12 @@ pub struct DeploymentConfig {
   )]
   #[builder(default)]
   pub server_id: String,
+
+  /// Specify a custom container / service name,
+  /// if different from Deployment name.
+  #[serde(default)]
+  #[builder(default)]
+  pub custom_name: String,
 
   /// The image which the deployment deploys.
   /// Can either be a user inputted image, or a Komodo Build.
@@ -299,6 +347,7 @@ impl Default for DeploymentConfig {
     Self {
       swarm_id: Default::default(),
       server_id: Default::default(),
+      custom_name: Default::default(),
       image: Default::default(),
       image_registry_account: Default::default(),
       skip_secret_interp: Default::default(),
@@ -590,6 +639,23 @@ pub type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum DeploymentSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by image.
+  Image,
+  /// Sort by host Server / Swarm name.
+  Host,
+  /// Sort by state.
+  State,
+}
+
+#[typeshare]
+#[derive(
   Debug, Clone, Default, Serialize, Deserialize, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -600,6 +666,12 @@ pub struct DeploymentQuerySpecifics {
   #[serde(default)]
   pub server_ids: Vec<String>,
 
+  /// Query only for Deployments on these Swarms.
+  /// If empty, does not filter by Swarm.
+  /// Only accepts Swarm id (not name).
+  #[serde(default)]
+  pub swarm_ids: Vec<String>,
+
   /// Query only for Deployments with these Builds attached.
   /// If empty, does not filter by Build.
   /// Only accepts Build id (not name).
@@ -609,6 +681,11 @@ pub struct DeploymentQuerySpecifics {
   /// Query only for Deployments with available image updates.
   #[serde(default)]
   pub update_available: bool,
+
+  /// Query only for Deployments matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<DeploymentState>,
 }
 
 impl super::resource::AddFilters for DeploymentQuerySpecifics {
@@ -616,6 +693,10 @@ impl super::resource::AddFilters for DeploymentQuerySpecifics {
     if !self.server_ids.is_empty() {
       filters
         .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
+    if !self.swarm_ids.is_empty() {
+      filters
+        .insert("config.swarm_id", doc! { "$in": &self.swarm_ids });
     }
     if !self.build_ids.is_empty() {
       filters.insert("config.image.type", "Build");

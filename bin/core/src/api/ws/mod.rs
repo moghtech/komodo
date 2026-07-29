@@ -24,6 +24,9 @@ use crate::{
 mod terminal;
 mod update;
 
+pub(super) const WS_KEEP_ALIVE_INTERVAL: std::time::Duration =
+  std::time::Duration::from_secs(30);
+
 pub fn router() -> Router {
   Router::new()
     // Periphery facing

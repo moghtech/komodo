@@ -62,8 +62,13 @@ export interface RequiredResourceComponents<
   Config = any,
   Info = any,
   ListItemInfo = any,
+  ResourceQuerySpecifics = any,
 > {
-  useList: () => Types.ResourceListItem<ListItemInfo>[] | undefined;
+  useList: (
+    query?: Types.ResourceQuery<ResourceQuerySpecifics>,
+    limit?: number,
+    page?: number,
+  ) => Types.ResourceListItem<ListItemInfo>[] | undefined;
   useListItem: (
     id: string | undefined,
     useName?: boolean,
@@ -88,12 +93,16 @@ export interface RequiredResourceComponents<
     serverId?: string;
     builderId?: string;
     buildId?: string;
+    repoId?: string;
   }>;
 
   /** A table component to view resource list */
   Table: React.FC<
     {
       resources: Types.ResourceListItem<ListItemInfo>[];
+      /** When provided, sorting is handled server side,
+       * and sort updates are passed to this callback. */
+      onServerSort?: (sort: { sort_by?: string; sort_desc?: boolean }) => void;
       tableProps?: TableProps;
     } & BoxProps
   >;

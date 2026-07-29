@@ -338,9 +338,7 @@ fn build_cache_for_deployment<'a>(
         // Makes sure things that aren't defined in toml (come through as None) actually get removed.
         let config: DeploymentConfig =
           deployment.config.clone().into();
-        let mut config: PartialDeploymentConfig = config.into();
-
-        Deployment::validate_partial_config(&mut config);
+        let config: PartialDeploymentConfig = config.into();
 
         let mut diff =
           Deployment::get_diff(original.config.clone(), config)?;
@@ -572,9 +570,7 @@ fn build_cache_for_stack<'a>(
         // Merge toml resource config (partial) onto default resource config.
         // Makes sure things that aren't defined in toml (come through as None) actually get removed.
         let config: StackConfig = stack.config.clone().into();
-        let mut config: PartialStackConfig = config.into();
-
-        Stack::validate_partial_config(&mut config);
+        let config: PartialStackConfig = config.into();
 
         let mut diff =
           Stack::get_diff(original.config.clone(), config)?;

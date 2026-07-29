@@ -79,6 +79,11 @@ private_key = "file:/config/keys/core.key"
 ## Optional, no default.
 # first_server_address = ""
 
+## Set the default pagination limit for the API and UI to use.
+## Env: KOMODO_DEFAULT_PAGINATION_LIMIT
+## Default: 50
+default_pagination_limit = 50
+
 ## Disables write support on resources in the UI.
 ## This protects users that that would normally have write priviledges during their UI usage,
 ## when they intend to fully rely on ResourceSyncs to manage config.
@@ -623,15 +628,15 @@ aws.secret_access_key = ""
 ## They allow these Resources to pull private images.
 ## They cannot be configured on the environment.
 
-## configure docker registries
-# [[docker_registry]]
+## configure image registries
+# [[image_registry]]
 # domain = "docker.io"
 # accounts = [
 # 	{ username = "mbecker2020", token = "access_token_for_account" }
 # ]
 # organizations = ["DockerhubOrganization"]
 
-# [[docker_registry]]
+# [[image_registry]]
 # domain = "git.mogh.tech" # use a custom provider, like self-hosted gitea
 # accounts = [
 # 	{ username = "mbecker20", token = "access_token_for_account" },

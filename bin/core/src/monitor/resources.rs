@@ -6,7 +6,10 @@ use komodo_client::entities::{
     container::ContainerListItem, image::ImageListItem,
     service::SwarmServiceListItem, stack::SwarmStackListItem,
   },
-  stack::{Stack, StackService, StackServiceNames, StackState},
+  stack::{
+    Stack, StackService, StackServiceNames, StackServiceState,
+    StackState,
+  },
   swarm::SwarmState,
 };
 
@@ -95,10 +98,18 @@ pub async fn update_swarm_stack_cache(
               None,
             ));
 
+          let state = swarm_service
+            .as_ref()
+            .map(|c| c.state.into())
+            .unwrap_or(StackServiceState::Unknown);
+
           StackService {
+            stack_id: stack.id.clone(),
+            stack_name: stack.name.clone(),
             service: service_name.clone(),
             container: None,
             swarm_service,
+            state,
             image,
             image_digests,
           }
@@ -176,11 +187,19 @@ pub async fn update_server_stack_cache(
           None
         ));
 
+      let state = container
+        .as_ref()
+        .map(|c| c.state.into())
+        .unwrap_or(StackServiceState::Unknown);
+
       StackService {
+        stack_id: stack.id.clone(),
+        stack_name: stack.name.clone(),
         service: service_name.clone(),
         image: image.clone(),
         container,
         swarm_service: None,
+        state,
         image_digests,
       }
     }).collect::<Vec<_>>();
@@ -228,7 +247,7 @@ pub async fn update_swarm_deployment_cache(
         service
           .name
           .as_ref()
-          .map(|name| name == &deployment.name)
+          .map(|name| name == deployment.deployed_name())
           .unwrap_or_default()
       })
       .cloned();
@@ -282,7 +301,7 @@ pub async fn update_server_deployment_cache(
   for deployment in deployments {
     let container = containers
       .iter()
-      .find(|container| container.name == deployment.name)
+      .find(|container| container.name == deployment.deployed_name())
       .cloned();
 
     let image_digests = container

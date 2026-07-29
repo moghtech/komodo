@@ -17,7 +17,7 @@ import { ChangeEvent, useState } from "react";
 export default function NewProviderAccount({
   type,
 }: {
-  type: "GitProvider" | "DockerRegistry";
+  type: "GitProvider" | "ImageRegistry";
 }) {
   const [opened, { open, close }] = useDisclosure();
   const [domain, setDomain] = useState("");
@@ -62,7 +62,7 @@ export default function NewProviderAccount({
     ],
   ];
   const accountType =
-    type === "DockerRegistry" ? "Registry Account" : "Git Account";
+    type === "ImageRegistry" ? "Registry Account" : "Git Account";
 
   return (
     <>

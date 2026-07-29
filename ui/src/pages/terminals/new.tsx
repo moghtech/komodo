@@ -236,7 +236,11 @@ function CreateServerTerminal({
   close: () => void;
 }) {
   const nav = useNavigate();
-  const firstServer = (useRead("ListServers", {}).data ?? [])[0]?.id ?? "";
+  const firstServer =
+    (useRead("ListServers", {
+      query: { specific: { states: [Types.ServerState.Ok] } },
+      limit: 1,
+    }).data ?? [])[0]?.id ?? "";
   const [server, _setServer] = useState(firstServer);
   const [changed, setChanged] = useState(false);
   const setServer = (server: string) => {
@@ -292,7 +296,11 @@ function CreateContainerTerminal({
   close: () => void;
 }) {
   const nav = useNavigate();
-  const firstServer = (useRead("ListServers", {}).data ?? [])[0]?.id ?? "";
+  const firstServer =
+    (useRead("ListServers", {
+      query: { specific: { states: [Types.ServerState.Ok] } },
+      limit: 1,
+    }).data ?? [])[0]?.id ?? "";
   const [params, _setParams] = useState({ server: firstServer, container: "" });
   const [changed, setChanged] = useState(false);
   const setParams = (params: { server: string; container: string }) => {
@@ -368,7 +376,15 @@ function CreateStackServiceTerminal({
   close: () => void;
 }) {
   const nav = useNavigate();
-  const firstStack = (useRead("ListStacks", {}).data ?? [])[0]?.id ?? "";
+  const firstStack =
+    (useRead("ListStacks", {
+      query: {
+        specific: {
+          states: [Types.StackState.Running, Types.StackState.Unhealthy],
+        },
+      },
+      limit: 1,
+    }).data ?? [])[0]?.id ?? "";
   const [params, _setParams] = useState({ stack: firstStack, service: "" });
   const [changed, setChanged] = useState(false);
   const setParams = (params: { stack: string; service: string }) => {
@@ -445,7 +461,10 @@ function CreateDeploymentTerminal({
 }) {
   const nav = useNavigate();
   const firstDeployment =
-    (useRead("ListDeployments", {}).data ?? [])[0]?.id ?? "";
+    (useRead("ListDeployments", {
+      query: { specific: { states: [Types.DeploymentState.Running] } },
+      limit: 1,
+    }).data ?? [])[0]?.id ?? "";
   const [deployment, _setDeployment] = useState(firstDeployment);
   const [changed, setChanged] = useState(false);
   const setDeployment = (deployment: string) => {

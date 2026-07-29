@@ -5,8 +5,10 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
-  I64, Version,
-  build::{Build, BuildActionState, BuildListItem, BuildQuery},
+  I64, U64, Version,
+  build::{
+    Build, BuildActionState, BuildListItem, BuildQuery, BuildSortBy,
+  },
 };
 
 use super::KomodoReadRequest;
@@ -66,6 +68,31 @@ pub struct ListBuilds {
   /// optional structured query to filter builds.
   #[serde(default)]
   pub query: BuildQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name. Non-Name sorts are applied in memory
+  /// after querying all matching resources.
+  #[serde(default)]
+  pub sort_by: BuildSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]
@@ -96,6 +123,21 @@ pub struct ListFullBuilds {
   /// optional structured query to filter builds.
   #[serde(default)]
   pub query: BuildQuery,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of resources per-page.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
 }
 
 #[typeshare]

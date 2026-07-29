@@ -30,19 +30,22 @@ export default function ServerTabs({ id }: { id: string }) {
     !specificTerminal || (serverInfo?.terminals_disabled ?? true);
 
   const stacks =
-    useRead("ListStacks", {}).data?.filter(
-      (stack) => stack.info.server_id === id,
-    ) ?? [];
+    useRead("ListStacks", {
+      query: { specific: { server_ids: [id] } },
+      limit: 1,
+    }).data ?? [];
   const noStacks = stacks.length === 0;
   const deployments =
-    useRead("ListDeployments", {}).data?.filter(
-      (deployment) => deployment.info.server_id === id,
-    ) ?? [];
+    useRead("ListDeployments", {
+      query: { specific: { server_ids: [id] } },
+      limit: 1,
+    }).data ?? [];
   const noDeployments = deployments.length === 0;
   const repos =
-    useRead("ListRepos", {}).data?.filter(
-      (repo) => repo.info.server_id === id,
-    ) ?? [];
+    useRead("ListRepos", {
+      query: { specific: { server_ids: [id] } },
+      limit: 1,
+    }).data ?? [];
   const noRepos = repos.length === 0;
 
   const noResources = noDeployments && noRepos && noStacks;
@@ -107,13 +110,7 @@ export default function ServerTabs({ id }: { id: string }) {
       break;
     case "Resources":
       View = (
-        <ServerHostedResourcesSection
-          serverId={id}
-          stacks={stacks}
-          deployments={deployments}
-          repos={repos}
-          titleOther={Selector}
-        />
+        <ServerHostedResourcesSection serverId={id} titleOther={Selector} />
       );
       break;
     case "Terminals":

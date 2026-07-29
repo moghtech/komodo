@@ -40,7 +40,7 @@ export default function ContainerSelector({
   clearable,
   ...comboboxProps
 }: ContainerSelectorProps) {
-  const containers = useRead("ListDockerContainers", {
+  const containers = useRead("ListContainers", {
     server: serverId,
   }).data?.filter((container) => !state || container.state === state);
 

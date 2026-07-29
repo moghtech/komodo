@@ -4,12 +4,12 @@ import { Badge, Center, Group, Loader, Stack, Text } from "@mantine/core";
 export default function ProvidersFromConfig({
   type,
 }: {
-  type: "GitProvider" | "DockerRegistry";
+  type: "GitProvider" | "ImageRegistry";
 }) {
   const accounts = useRead(
     type === "GitProvider"
       ? "ListGitProvidersFromConfig"
-      : "ListDockerRegistriesFromConfig",
+      : "ListImageRegistriesFromConfig",
     {},
   )
     .data?.map((provider) =>

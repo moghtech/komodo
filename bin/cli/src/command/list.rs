@@ -7,7 +7,8 @@ use komodo_client::{
   api::read::{
     ListActions, ListAlerters, ListBuilders, ListBuilds,
     ListDeployments, ListProcedures, ListRepos, ListResourceSyncs,
-    ListSchedules, ListServers, ListStacks, ListTags, ListTerminals,
+    ListSchedules, ListServers, ListStacks, ListSwarms, ListTags,
+    ListTerminals,
   },
   entities::{
     ResourceTargetVariant,
@@ -31,6 +32,7 @@ use komodo_client::{
     schedule::Schedule,
     server::{ServerListItem, ServerListItemInfo, ServerState},
     stack::{StackListItem, StackListItemInfo, StackState},
+    swarm::{SwarmListItem, SwarmListItemInfo, SwarmState},
     sync::{
       ResourceSyncListItem, ResourceSyncListItemInfo,
       ResourceSyncState,
@@ -52,40 +54,52 @@ pub async fn handle(list: &args::list::List) -> anyhow::Result<()> {
   match &list.command {
     None => list_all(list).await,
     Some(ListCommand::Servers(filters)) => {
-      list_resources::<ServerListItem>(filters, false).await
+      list_resources::<ServerListItem>(filters, list.page, false)
+        .await
+    }
+    Some(ListCommand::Swarms(filters)) => {
+      list_resources::<SwarmListItem>(filters, list.page, false).await
     }
     Some(ListCommand::Stacks(filters)) => {
-      list_resources::<StackListItem>(filters, false).await
+      list_resources::<StackListItem>(filters, list.page, false).await
     }
     Some(ListCommand::Deployments(filters)) => {
-      list_resources::<DeploymentListItem>(filters, false).await
+      list_resources::<DeploymentListItem>(filters, list.page, false)
+        .await
     }
     Some(ListCommand::Builds(filters)) => {
-      list_resources::<BuildListItem>(filters, false).await
+      list_resources::<BuildListItem>(filters, list.page, false).await
     }
     Some(ListCommand::Repos(filters)) => {
-      list_resources::<RepoListItem>(filters, false).await
+      list_resources::<RepoListItem>(filters, list.page, false).await
     }
     Some(ListCommand::Procedures(filters)) => {
-      list_resources::<ProcedureListItem>(filters, false).await
+      list_resources::<ProcedureListItem>(filters, list.page, false)
+        .await
     }
     Some(ListCommand::Actions(filters)) => {
-      list_resources::<ActionListItem>(filters, false).await
+      list_resources::<ActionListItem>(filters, list.page, false)
+        .await
     }
     Some(ListCommand::Syncs(filters)) => {
-      list_resources::<ResourceSyncListItem>(filters, false).await
+      list_resources::<ResourceSyncListItem>(
+        filters, list.page, false,
+      )
+      .await
+    }
+    Some(ListCommand::Builders(filters)) => {
+      list_resources::<BuilderListItem>(filters, list.page, false)
+        .await
+    }
+    Some(ListCommand::Alerters(filters)) => {
+      list_resources::<AlerterListItem>(filters, list.page, false)
+        .await
     }
     Some(ListCommand::Terminals(filters)) => {
       list_terminals(filters).await
     }
     Some(ListCommand::Schedules(filters)) => {
       list_schedules(filters).await
-    }
-    Some(ListCommand::Builders(filters)) => {
-      list_resources::<BuilderListItem>(filters, false).await
-    }
-    Some(ListCommand::Alerters(filters)) => {
-      list_resources::<AlerterListItem>(filters, false).await
     }
   }
 }
@@ -97,6 +111,7 @@ async fn list_all(list: &args::list::List) -> anyhow::Result<()> {
   let (
     tags,
     mut servers,
+    mut swarms,
     mut stacks,
     mut deployments,
     mut builds,
@@ -109,19 +124,26 @@ async fn list_all(list: &args::list::List) -> anyhow::Result<()> {
       .into_iter()
       .map(|t| (t.id, t.name))
       .collect::<HashMap<_, _>>())),
-    ServerListItem::list(client, &filters, true),
-    StackListItem::list(client, &filters, true),
-    DeploymentListItem::list(client, &filters, true),
-    BuildListItem::list(client, &filters, true),
-    RepoListItem::list(client, &filters, true),
-    ProcedureListItem::list(client, &filters, true),
-    ActionListItem::list(client, &filters, true),
-    ResourceSyncListItem::list(client, &filters, true),
+    ServerListItem::list(client, &filters, list.page, true),
+    SwarmListItem::list(client, &filters, list.page, true),
+    StackListItem::list(client, &filters, list.page, true),
+    DeploymentListItem::list(client, &filters, list.page, true),
+    BuildListItem::list(client, &filters, list.page, true),
+    RepoListItem::list(client, &filters, list.page, true),
+    ProcedureListItem::list(client, &filters, list.page, true),
+    ActionListItem::list(client, &filters, list.page, true),
+    ResourceSyncListItem::list(client, &filters, list.page, true),
   )?;
 
   if !servers.is_empty() {
     fix_tags(&mut servers, &tags);
     print_items(servers, filters.format, list.links)?;
+    println!();
+  }
+
+  if !swarms.is_empty() {
+    fix_tags(&mut swarms, &tags);
+    print_items(swarms, filters.format, list.links)?;
     println!();
   }
 
@@ -172,6 +194,7 @@ async fn list_all(list: &args::list::List) -> anyhow::Result<()> {
 
 async fn list_resources<T>(
   filters: &ResourceFilters,
+  page: u64,
   minimal: bool,
 ) -> anyhow::Result<()>
 where
@@ -180,7 +203,7 @@ where
 {
   let client = crate::command::komodo_client().await?;
   let (mut resources, tags) = tokio::try_join!(
-    T::list(client, filters, minimal),
+    T::list(client, filters, page, minimal),
     client.read(ListTags::default()).map(|res| res.map(|res| res
       .into_iter()
       .map(|t| (t.id, t.name))
@@ -205,6 +228,8 @@ async fn list_terminals(
     .read(ListTerminals {
       target: None,
       use_names: true,
+      limit: Some(0),
+      ..Default::default()
     })
     .await?;
   if !terminals.is_empty() {
@@ -222,6 +247,8 @@ async fn list_schedules(
       .read(ListSchedules {
         tags: filters.tags.clone(),
         tag_behavior: Default::default(),
+        limit: Some(0),
+        ..Default::default()
       })
       .map(|res| res.map(|res| res
         .into_iter()
@@ -279,6 +306,7 @@ where
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     // For use with root `km ls`
     minimal: bool,
   ) -> anyhow::Result<Vec<ResourceListItem<Self::Info>>>;
@@ -291,6 +319,7 @@ impl ListResources for ServerListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     _minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let servers = client
@@ -300,6 +329,10 @@ impl ListResources for ServerListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?;
     let names = parse_wildcards(&filters.names);
@@ -329,17 +362,68 @@ impl ListResources for ServerListItem {
   }
 }
 
+impl ListResources for SwarmListItem {
+  type Info = SwarmListItemInfo;
+  async fn list(
+    client: &KomodoClient,
+    filters: &ResourceFilters,
+    page: u64,
+    _minimal: bool,
+  ) -> anyhow::Result<Vec<Self>> {
+    let servers = client
+      .read(ListSwarms {
+        query: ResourceQuery::builder()
+          .tags(filters.tags.clone())
+          // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
+          .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
+      })
+      .await?;
+    let names = parse_wildcards(&filters.names);
+    let server_wildcards = parse_wildcards(&filters.servers);
+    let mut servers = servers
+      .into_iter()
+      .filter(|server| {
+        let state_check = if filters.all {
+          true
+        } else if filters.down {
+          !matches!(server.info.state, SwarmState::Healthy)
+        } else if filters.in_progress {
+          false
+        } else {
+          matches!(server.info.state, SwarmState::Healthy)
+        };
+        let name_items = &[server.name.as_str()];
+        state_check
+          && matches_wildcards(&names, name_items)
+          && matches_wildcards(&server_wildcards, name_items)
+      })
+      .collect::<Vec<_>>();
+    servers.sort_by(|a, b| {
+      a.info.state.cmp(&b.info.state).then(a.name.cmp(&b.name))
+    });
+    Ok(servers)
+  }
+}
+
 impl ListResources for StackListItem {
   type Info = StackListItemInfo;
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     _minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let (servers, mut stacks) = tokio::try_join!(
       client
         .read(ListServers {
           query: ResourceQuery::builder().build(),
+          limit: Some(0),
+          ..Default::default()
         })
         .map(|res| res.map(|res| res
           .into_iter()
@@ -351,6 +435,10 @@ impl ListResources for StackListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false
       })
     )?;
     stacks.iter_mut().for_each(|stack| {
@@ -406,12 +494,15 @@ impl ListResources for DeploymentListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     _minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let (servers, mut deployments) = tokio::try_join!(
       client
         .read(ListServers {
           query: ResourceQuery::builder().build(),
+          limit: Some(0),
+          ..Default::default()
         })
         .map(|res| res.map(|res| res
           .into_iter()
@@ -423,6 +514,10 @@ impl ListResources for DeploymentListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false
       })
     )?;
     deployments.iter_mut().for_each(|deployment| {
@@ -479,12 +574,15 @@ impl ListResources for BuildListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let (builders, mut builds) = tokio::try_join!(
       client
         .read(ListBuilders {
           query: ResourceQuery::builder().build(),
+          limit: Some(0),
+          ..Default::default()
         })
         .map(|res| res.map(|res| res
           .into_iter()
@@ -496,6 +594,10 @@ impl ListResources for BuildListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false
       })
     )?;
     builds.iter_mut().for_each(|build| {
@@ -533,10 +635,7 @@ impl ListResources for BuildListItem {
       })
       .collect::<Vec<_>>();
     builds.sort_by(|a, b| {
-      a.name
-        .cmp(&b.name)
-        .then(a.info.builder_id.cmp(&b.info.builder_id))
-        .then(a.info.state.cmp(&b.info.state))
+      a.info.state.cmp(&b.info.state).then(a.name.cmp(&b.name))
     });
     Ok(builds)
   }
@@ -547,6 +646,7 @@ impl ListResources for RepoListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let names = parse_wildcards(&filters.names);
@@ -557,6 +657,10 @@ impl ListResources for RepoListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -595,6 +699,7 @@ impl ListResources for ProcedureListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let names = parse_wildcards(&filters.names);
@@ -605,6 +710,10 @@ impl ListResources for ProcedureListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -632,7 +741,7 @@ impl ListResources for ProcedureListItem {
         (Some(a), Some(b)) => return a.cmp(&b),
         (None, None) => {}
       }
-      a.name.cmp(&b.name).then(a.info.state.cmp(&b.info.state))
+      a.info.state.cmp(&b.info.state).then(a.name.cmp(&b.name))
     });
     Ok(procedures)
   }
@@ -643,6 +752,7 @@ impl ListResources for ActionListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let names = parse_wildcards(&filters.names);
@@ -653,6 +763,10 @@ impl ListResources for ActionListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -680,7 +794,7 @@ impl ListResources for ActionListItem {
         (Some(a), Some(b)) => return a.cmp(&b),
         (None, None) => {}
       }
-      a.name.cmp(&b.name).then(a.info.state.cmp(&b.info.state))
+      a.info.state.cmp(&b.info.state).then(a.name.cmp(&b.name))
     });
     Ok(actions)
   }
@@ -691,6 +805,7 @@ impl ListResources for ResourceSyncListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let names = parse_wildcards(&filters.names);
@@ -701,6 +816,10 @@ impl ListResources for ResourceSyncListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -725,7 +844,7 @@ impl ListResources for ResourceSyncListItem {
       })
       .collect::<Vec<_>>();
     syncs.sort_by(|a, b| {
-      a.name.cmp(&b.name).then(a.info.state.cmp(&b.info.state))
+      a.info.state.cmp(&b.info.state).then(a.name.cmp(&b.name))
     });
     Ok(syncs)
   }
@@ -736,6 +855,7 @@ impl ListResources for BuilderListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let names = parse_wildcards(&filters.names);
@@ -746,6 +866,10 @@ impl ListResources for BuilderListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -768,6 +892,7 @@ impl ListResources for AlerterListItem {
   async fn list(
     client: &KomodoClient,
     filters: &ResourceFilters,
+    page: u64,
     minimal: bool,
   ) -> anyhow::Result<Vec<Self>> {
     let names = parse_wildcards(&filters.names);
@@ -778,6 +903,10 @@ impl ListResources for AlerterListItem {
           // .tag_behavior(TagQueryBehavior::Any)
           .templates(filters.templates)
           .build(),
+        limit: None,
+        page: page.saturating_sub(1),
+        sort_by: Default::default(),
+        sort_desc: false,
       })
       .await?
       .into_iter()
@@ -819,6 +948,39 @@ impl PrintTable for ResourceListItem<ServerListItemInfo> {
         .fg(color)
         .add_attribute(Attribute::Bold),
       Cell::new(self.info.address.as_deref().unwrap_or("inbound")),
+      Cell::new(self.tags.join(", ")),
+    ];
+    if links {
+      res.push(Cell::new(resource_link(
+        &cli_config().host,
+        ResourceTargetVariant::Server,
+        &self.id,
+      )))
+    }
+    res
+  }
+}
+
+impl PrintTable for ResourceListItem<SwarmListItemInfo> {
+  fn header(links: bool) -> &'static [&'static str] {
+    if links {
+      &["Swarm", "State", "Tags", "Link"]
+    } else {
+      &["Swarm", "State", "Tags"]
+    }
+  }
+  fn row(self, links: bool) -> Vec<Cell> {
+    let color = match self.info.state {
+      SwarmState::Healthy => Color::Green,
+      SwarmState::Unhealthy => Color::Red,
+      SwarmState::Down => Color::Blue,
+      SwarmState::Unknown => Color::Magenta,
+    };
+    let mut res = vec![
+      Cell::new(self.name).add_attribute(Attribute::Bold),
+      Cell::new(self.info.state.to_string())
+        .fg(color)
+        .add_attribute(Attribute::Bold),
       Cell::new(self.tags.join(", ")),
     ];
     if links {

@@ -80,6 +80,11 @@ pub struct BatchCloneRepo {
   /// extra-repo-1, extra-repo-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }
 
 //
@@ -152,6 +157,11 @@ pub struct BatchPullRepo {
   /// extra-repo-1, extra-repo-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }
 
 //
@@ -228,6 +238,11 @@ pub struct BatchBuildRepo {
   /// extra-repo-1, extra-repo-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }
 
 //

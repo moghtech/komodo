@@ -57,8 +57,9 @@ impl super::KomodoResource for ResourceSync {
       resource_sync.config.repo,
       resource_sync.config.branch,
       resource_sync.config.git_https,
+      String::new(),
     );
-    let (git_provider, repo, branch, git_https) =
+    let (git_provider, repo, branch, git_https, linked_repo_name) =
       if resource_sync.config.linked_repo.is_empty() {
         default_git
       } else {
@@ -72,6 +73,7 @@ impl super::KomodoResource for ResourceSync {
               r.config.repo.clone(),
               r.config.branch.clone(),
               r.config.git_https,
+              r.name.clone(),
             )
           })
           .unwrap_or(default_git)
@@ -88,6 +90,7 @@ impl super::KomodoResource for ResourceSync {
         files_on_host: resource_sync.config.files_on_host,
         managed: resource_sync.config.managed,
         linked_repo: resource_sync.config.linked_repo,
+        linked_repo_name,
         repo_link: repo_link(
           &git_provider,
           &repo,

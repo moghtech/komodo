@@ -85,6 +85,11 @@ pub struct BatchDeploy {
   /// extra-deployment-1, extra-deployment-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }
 
 //
@@ -352,4 +357,9 @@ pub struct BatchDestroyDeployment {
   /// extra-deployment-1, extra-deployment-2
   /// ```
   pub pattern: String,
+
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
 }

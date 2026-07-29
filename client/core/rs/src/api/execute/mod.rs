@@ -139,12 +139,14 @@ pub enum Execution {
   #[clap(alias = "procedure", alias = "pr")]
   RunProcedure(RunProcedure),
   BatchRunProcedure(BatchRunProcedure),
+  CancelProcedure(CancelProcedure),
 
   // ACTION
   /// Run the target action. (alias: `action`, `ac`)
   #[clap(alias = "action", alias = "ac")]
   RunAction(RunAction),
   BatchRunAction(BatchRunAction),
+  CancelAction(CancelAction),
 
   // SYNC
   /// Execute a Resource Sync. (alias: `sync`)

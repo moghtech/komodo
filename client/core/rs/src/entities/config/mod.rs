@@ -154,9 +154,9 @@ fn default_git_https() -> bool {
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct DockerRegistry {
-  /// The docker provider domain. Default: `docker.io`.
-  #[serde(default = "default_docker_provider")]
+pub struct ImageRegistry {
+  /// The image provider domain. Default: `docker.io`.
+  #[serde(default = "default_image_provider")]
   pub domain: String,
   /// The accounts on the registry. Required.
   #[serde(alias = "account")]
@@ -167,7 +167,7 @@ pub struct DockerRegistry {
   pub organizations: Vec<String>,
 }
 
-fn default_docker_provider() -> String {
+fn default_image_provider() -> String {
   String::from("docker.io")
 }
 

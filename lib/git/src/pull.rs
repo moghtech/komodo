@@ -3,7 +3,7 @@ use std::{
   sync::OnceLock,
 };
 
-use command::run_komodo_standard_command;
+use command::{CommandOptions, run_komodo_standard_command};
 use formatting::format_serror;
 use komodo_client::entities::{
   RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
@@ -11,7 +11,7 @@ use komodo_client::entities::{
 };
 use mogh_cache::TimeoutCache;
 
-use crate::get_commit_hash_log;
+use crate::{check_installed, get_commit_hash_log};
 
 /// Wait this long after a pull to allow another pull through
 const PULL_TIMEOUT: i64 = 5_000;
@@ -27,7 +27,6 @@ fn pull_cache()
 /// This will pull in a way that handles edge cases
 /// from possible state of the repo. For example, the user
 /// can change branch after clone, or even the remote.
-#[allow(clippy::too_many_arguments)]
 pub async fn pull<T>(
   clone_args: T,
   root_repo_dir: &Path,
@@ -36,6 +35,8 @@ pub async fn pull<T>(
 where
   T: Into<RepoExecutionArgs> + std::fmt::Debug,
 {
+  check_installed().await?;
+
   let args: RepoExecutionArgs = clone_args.into();
   let repo_url = args.remote_url(access_token.as_deref())?;
 
@@ -78,8 +79,8 @@ where
     // Set remote url
     let mut set_remote = run_komodo_standard_command(
       "Set Git Remote",
-      res.path.as_ref(),
       format!("git remote set-url origin {repo_url}"),
+      CommandOptions::default().path(res.path.as_ref()),
     )
     .await;
     // Sanitize the output
@@ -99,8 +100,8 @@ where
     // First fetch remote branches before checkout
     let fetch = run_komodo_standard_command(
       "Git Fetch",
-      res.path.as_ref(),
       "git fetch --all --prune",
+      CommandOptions::default().path(res.path.as_ref()),
     )
     .await;
     if !fetch.success {
@@ -110,8 +111,8 @@ where
 
     let checkout = run_komodo_standard_command(
       "Checkout branch",
-      res.path.as_ref(),
       format!("git checkout -f {}", args.branch),
+      CommandOptions::default().path(res.path.as_ref()),
     )
     .await;
     res.logs.push(checkout);
@@ -121,8 +122,8 @@ where
 
     let pull_log = run_komodo_standard_command(
       "Git pull",
-      res.path.as_ref(),
       format!("git pull --rebase --force origin {}", args.branch),
+      CommandOptions::default().path(res.path.as_ref()),
     )
     .await;
     res.logs.push(pull_log);
@@ -133,8 +134,8 @@ where
     if let Some(commit) = args.commit {
       let reset_log = run_komodo_standard_command(
         "Set commit",
-        res.path.as_ref(),
         format!("git reset --hard {commit}"),
+        CommandOptions::default().path(res.path.as_ref()),
       )
       .await;
       res.logs.push(reset_log);

@@ -258,11 +258,49 @@ pub type ProcedureQuery = ResourceQuery<ProcedureQuerySpecifics>;
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ProcedureSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by state.
+  State,
+  /// Sort by next scheduled run.
+  NextRun,
+}
+
+#[typeshare]
+#[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct ProcedureQuerySpecifics {}
+pub struct ProcedureQuerySpecifics {
+  /// Query only for Procedures matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<ProcedureState>,
+  /// Query only for Procedures with (or without)
+  /// a schedule configured.
+  #[serde(default)]
+  pub scheduled: Option<bool>,
+}
 
 impl super::resource::AddFilters for ProcedureQuerySpecifics {
-  fn add_filters(&self, _: &mut Document) {}
+  fn add_filters(&self, filters: &mut Document) {
+    if let Some(scheduled) = self.scheduled {
+      if scheduled {
+        filters.insert(
+          "config.schedule",
+          bson::doc! { "$nin": ["", null] },
+        );
+      } else {
+        filters.insert(
+          "config.schedule",
+          bson::doc! { "$in": ["", null] },
+        );
+      }
+    }
+  }
 }

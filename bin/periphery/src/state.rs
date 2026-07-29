@@ -341,3 +341,11 @@ pub async fn host_public_ip() -> Option<&'static String> {
     .await
     .as_ref()
 }
+
+type CancelCache = CloneCache<String, CancellationToken>;
+
+/// Maps build id => CancellationToken
+pub fn build_cancel_cache() -> &'static CancelCache {
+  static BUILD_CANCEL_CACHE: OnceLock<CancelCache> = OnceLock::new();
+  BUILD_CANCEL_CACHE.get_or_init(Default::default)
+}
