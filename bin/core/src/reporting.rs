@@ -6,7 +6,8 @@ use komodo_client::entities::{
   ResourceTargetVariant, core_report::CoreReport,
 };
 use mogh_pki::{
-  PkiKind, RotatableKeyPair, one_way::OneWayNoiseHandshake,
+  PkiKind, RotatableKeyPair, SpkiPublicKey,
+  one_way::OneWayNoiseHandshake,
 };
 
 use crate::{config::core_config, state::db_client};
@@ -49,6 +50,12 @@ async fn report(
 ) -> anyhow::Result<()> {
   let db = db_client();
 
+  let keys = keys.load();
+  let private_key_bytes = keys
+    .private
+    .as_raw_bytes()
+    .context("Invalid reporting private key.")?;
+
   let endpoint_public_key = client
     .get("https://mogh.tech/report/public_key")
     .send()
@@ -59,6 +66,10 @@ async fn report(
     .text()
     .await
     .context("Failed to get reporting endpoint public key for signature.")?;
+
+  let endpoint_public_key =
+    SpkiPublicKey::maybe_pem_to_raw_bytes(&endpoint_public_key)
+      .context("Invalid reporting endpoint public key.")?;
 
   let users = db
     .users
@@ -101,8 +112,6 @@ async fn report(
   .into_iter()
   .collect();
 
-  let keys = keys.load();
-
   let report = CoreReport {
     report_public_key: keys.public().to_string(),
     users,
@@ -116,11 +125,11 @@ async fn report(
     SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis() as i64;
 
   let prologue =
-    format!("post|/report/komodo|{serialized}|{}", timestamp);
+    format!("POST|/report/komodo|{serialized}|{timestamp}");
 
   let mut handshake = OneWayNoiseHandshake::new_initiator(
-    keys.private().as_bytes(),
-    endpoint_public_key.as_bytes(),
+    &private_key_bytes,
+    &endpoint_public_key,
     prologue.as_bytes(),
   )?;
 
