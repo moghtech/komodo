@@ -624,7 +624,13 @@ async fn handle_post_build_redeploy(build_id: &str) {
         let state = get_deployment_state(&deployment.id)
           .await
           .unwrap_or_default();
-        if state == DeploymentState::Running {
+        if ![
+          DeploymentState::NotDeployed,
+          DeploymentState::Exited,
+          DeploymentState::Unknown,
+        ]
+        .contains(&state)
+        {
           let req = super::ExecuteRequest::Deploy(Deploy {
             deployment: deployment.id.clone(),
             stop_signal: None,
