@@ -794,7 +794,7 @@ pub struct CoreConfig {
   /// If a file is specified and does not exist, will try to generate one at the path
   /// and use it going forward.
   ///
-  /// Default: file:/config/keys/core-reporting.key
+  /// Default: file:/config/keys/reporting.key
   #[serde(default = "default_reporting_private_key")]
   pub reporting_private_key: String,
 
