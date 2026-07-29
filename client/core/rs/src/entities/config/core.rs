@@ -849,7 +849,7 @@ fn default_private_key() -> String {
 }
 
 fn default_reporting_private_key() -> String {
-  String::from("file:/config/keys/core-reporting.key")
+  String::from("file:/config/keys/reporting.key")
 }
 
 fn default_default_pagination_limit() -> u64 {
