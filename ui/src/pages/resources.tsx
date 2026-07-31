@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useResourceParamType, useSetTitle } from "@/lib/hooks";
+import { useResourceParamType, useSetTitle, useTagsFilter } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import { Page } from "mogh_ui";
@@ -18,6 +18,8 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
 
   const [query, setQuery] = useState<Types.ResourceQuery<any>>({});
 
+  const tags = useTagsFilter();
+
   const RC = ResourceComponents[type];
 
   if (!RC) {
@@ -32,7 +34,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
       oppositeTitle={
         <Group w={{ base: "100%", xs: "fit-content" }}>
           {type === "Server" && <ServerShowStats />}
-          <ExportToml listQuery={{ type, query }} />
+          <ExportToml listQuery={{ type, query }} tags={tags} />
         </Group>
       }
     >
