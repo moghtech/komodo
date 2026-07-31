@@ -1,9 +1,21 @@
-import { useExecute, useRead } from "@/lib/hooks";
+import { useExecute, useInvalidate, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { useStack } from ".";
 import { ConfirmButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
+import { EXECUTION_ACTION_STATE_REQUERY_MS } from "@/lib/utils";
+
+const useInvalidateActionState = () => {
+  const invalidate = useInvalidate();
+  return {
+    onSuccess: () =>
+      setTimeout(
+        () => invalidate(["GetStackActionState"]),
+        EXECUTION_ACTION_STATE_REQUERY_MS,
+      ),
+  };
+};
 
 export const DeployStack = ({
   id,
@@ -14,7 +26,10 @@ export const DeployStack = ({
 }) => {
   const stack = useStack(id);
   const state = stack?.info.state;
-  const { mutateAsync: deploy, isPending } = useExecute("DeployStack");
+  const { mutateAsync: deploy, isPending } = useExecute(
+    "DeployStack",
+    useInvalidateActionState(),
+  );
   const deploying = useRead(
     "GetStackActionState",
     { stack: id },
@@ -78,7 +93,10 @@ export const DestroyStack = ({
 }) => {
   const stack = useStack(id);
   const state = stack?.info.state;
-  const { mutateAsync: destroy, isPending } = useExecute("DestroyStack");
+  const { mutateAsync: destroy, isPending } = useExecute(
+    "DestroyStack",
+    useInvalidateActionState(),
+  );
   const destroying = useRead(
     "GetStackActionState",
     { stack: id },
@@ -122,7 +140,10 @@ export const PullStack = ({
   service?: string;
 }) => {
   const stack = useStack(id);
-  const { mutate: pull, isPending: pullPending } = useExecute("PullStack");
+  const { mutate: pull, isPending: pullPending } = useExecute(
+    "PullStack",
+    useInvalidateActionState(),
+  );
   const actionState = useRead(
     "GetStackActionState",
     { stack: id },
@@ -158,8 +179,10 @@ export const RestartStack = ({
 }) => {
   const stack = useStack(id);
   const state = stack?.info.state;
-  const { mutateAsync: restart, isPending: restartPending } =
-    useExecute("RestartStack");
+  const { mutateAsync: restart, isPending: restartPending } = useExecute(
+    "RestartStack",
+    useInvalidateActionState(),
+  );
   const actionState = useRead(
     "GetStackActionState",
     { stack: id },
@@ -206,8 +229,14 @@ export const StartStopStack = ({
 }) => {
   const stack = useStack(id);
   const state = stack?.info.state ?? Types.StackState.Unknown;
-  const { mutate: start, isPending: startPending } = useExecute("StartStack");
-  const { mutateAsync: stop, isPending: stopPending } = useExecute("StopStack");
+  const { mutate: start, isPending: startPending } = useExecute(
+    "StartStack",
+    useInvalidateActionState(),
+  );
+  const { mutateAsync: stop, isPending: stopPending } = useExecute(
+    "StopStack",
+    useInvalidateActionState(),
+  );
   const actionState = useRead(
     "GetStackActionState",
     { stack: id },
@@ -278,10 +307,14 @@ export const PauseUnpauseStack = ({
 }) => {
   const stack = useStack(id);
   const state = stack?.info.state;
-  const { mutate: unpause, isPending: unpausePending } =
-    useExecute("UnpauseStack");
-  const { mutateAsync: pause, isPending: pausePending } =
-    useExecute("PauseStack");
+  const { mutate: unpause, isPending: unpausePending } = useExecute(
+    "UnpauseStack",
+    useInvalidateActionState(),
+  );
+  const { mutateAsync: pause, isPending: pausePending } = useExecute(
+    "PauseStack",
+    useInvalidateActionState(),
+  );
   const actionState = useRead(
     "GetStackActionState",
     { stack: id },

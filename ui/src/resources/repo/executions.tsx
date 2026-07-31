@@ -1,12 +1,32 @@
-import { useExecute, usePermissions, useRead } from "@/lib/hooks";
+import {
+  useExecute,
+  useInvalidate,
+  usePermissions,
+  useRead,
+} from "@/lib/hooks";
 import { useRepo } from ".";
 import { useBuilder } from "../builder";
 import { Types } from "komodo_client";
 import { ConfirmButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
+import { EXECUTION_ACTION_STATE_REQUERY_MS } from "@/lib/utils";
+
+const useInvalidateActionState = () => {
+  const invalidate = useInvalidate();
+  return {
+    onSuccess: () =>
+      setTimeout(
+        () => invalidate(["GetRepoActionState"]),
+        EXECUTION_ACTION_STATE_REQUERY_MS,
+      ),
+  };
+};
 
 export function CloneRepo({ id }: { id: string }) {
-  const { mutate, isPending } = useExecute("CloneRepo");
+  const { mutate, isPending } = useExecute(
+    "CloneRepo",
+    useInvalidateActionState(),
+  );
   const cloning = useRead(
     "GetRepoActionState",
     { repo: id },
@@ -30,7 +50,10 @@ export function CloneRepo({ id }: { id: string }) {
 }
 
 export function PullRepo({ id }: { id: string }) {
-  const { mutate, isPending } = useExecute("PullRepo");
+  const { mutate, isPending } = useExecute(
+    "PullRepo",
+    useInvalidateActionState(),
+  );
   const pulling = useRead(
     "GetRepoActionState",
     { repo: id },
@@ -67,9 +90,14 @@ export function BuildRepo({ id }: { id: string }) {
       "target.id": id,
     },
   }).data;
-  const { mutate: run_mutate, isPending: runPending } = useExecute("BuildRepo");
-  const { mutate: cancel_mutate, isPending: cancelPending } =
-    useExecute("CancelRepoBuild");
+  const { mutate: run_mutate, isPending: runPending } = useExecute(
+    "BuildRepo",
+    useInvalidateActionState(),
+  );
+  const { mutate: cancel_mutate, isPending: cancelPending } = useExecute(
+    "CancelRepoBuild",
+    useInvalidateActionState(),
+  );
 
   const repo = useRepo(id);
   const builder = useBuilder(repo?.info.builder_id);
