@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::Context;
 use async_timing_util::{Timelength, wait_until_timelength};
 use komodo_client::entities::{
-  ResourceTargetVariant, core_report::CoreReport,
+  ResourceTargetVariant, report::KomodoReport,
 };
 use mogh_pki::{
   PkiKind, RotatableKeyPair, SpkiPublicKey,
@@ -112,8 +112,9 @@ async fn report(
   .into_iter()
   .collect();
 
-  let report = CoreReport {
-    report_public_key: keys.public().to_string(),
+  let report = KomodoReport {
+    public_key: keys.public().to_string(),
+    version: String::from(env!("CARGO_PKG_VERSION")),
     users,
     count,
   };
