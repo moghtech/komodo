@@ -1,23 +1,40 @@
 import { Types } from "komodo_client";
 import {
   useExecute,
+  useInvalidate,
   useIsCancelling,
   usePermissions,
   useRead,
 } from "@/lib/hooks";
 import { ConfirmButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
+import { EXECUTION_ACTION_STATE_REQUERY_MS } from "@/lib/utils";
 
 export function RunBuild({ id }: { id: string }) {
+  const invalidate = useInvalidate();
   const { canExecute } = usePermissions({ type: "Build", id });
   const building = useRead(
     "GetBuildActionState",
     { build: id },
     { refetchInterval: 5_000 },
   ).data?.building;
-  const { mutate: run, isPending: runPending } = useExecute("RunBuild");
-  const { mutate: cancel, isPending: cancelPending } =
-    useExecute("CancelBuild");
+  const { mutate: run, isPending: runPending } = useExecute("RunBuild", {
+    onSuccess: () =>
+      setTimeout(
+        () => invalidate(["GetBuildActionState"]),
+        EXECUTION_ACTION_STATE_REQUERY_MS,
+      ),
+  });
+  const { mutate: cancel, isPending: cancelPending } = useExecute(
+    "CancelBuild",
+    {
+      onSuccess: () =>
+        setTimeout(
+          () => invalidate(["GetBuildActionState"]),
+          EXECUTION_ACTION_STATE_REQUERY_MS,
+        ),
+    },
+  );
   const cancelling = useIsCancelling(
     { type: "Build", id },
     Types.Operation.RunBuild,

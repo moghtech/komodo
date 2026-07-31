@@ -85,7 +85,7 @@ impl StatsClient {
     let mut network_ingress_bytes: u64 = 0;
     let mut network_egress_bytes: u64 = 0;
 
-    for (_, network) in self.networks.iter() {
+    for network in self.networks.values() {
       network_ingress_bytes += network.received();
       network_egress_bytes += network.transmitted();
     }

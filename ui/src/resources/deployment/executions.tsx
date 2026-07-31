@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Group, Select, Stack, Text } from "@mantine/core";
-import { useExecute, useListItem, useRead } from "@/lib/hooks";
+import { useExecute, useInvalidate, useListItem, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
-import { parseKeyValue } from "@/lib/utils";
+import { EXECUTION_ACTION_STATE_REQUERY_MS, parseKeyValue } from "@/lib/utils";
 import { useDeployment } from ".";
 import { ICONS } from "@/lib/icons";
 import { ConfirmButton } from "mogh_ui";
@@ -11,6 +11,17 @@ import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 interface DeploymentId {
   id: string;
 }
+
+const useInvalidateActionState = () => {
+  const invalidate = useInvalidate();
+  return {
+    onSuccess: () =>
+      setTimeout(
+        () => invalidate(["GetDeploymentActionState"]),
+        EXECUTION_ACTION_STATE_REQUERY_MS,
+      ),
+  };
+};
 
 export function DeployDeployment({ id }: DeploymentId) {
   const deployment = useRead("GetDeployment", { deployment: id }).data;
@@ -21,7 +32,10 @@ export function DeployDeployment({ id }: DeploymentId) {
     [deployment?.config?.termination_signal],
   );
 
-  const { mutateAsync: deploy, isPending } = useExecute("Deploy");
+  const { mutateAsync: deploy, isPending } = useExecute(
+    "Deploy",
+    useInvalidateActionState(),
+  );
 
   const deployment_item = useListItem("Deployment", id);
 
@@ -90,7 +104,10 @@ export function DestroyDeployment({ id }: DeploymentId) {
     [deployment?.config?.termination_signal],
   );
 
-  const { mutateAsync: destroy, isPending } = useExecute("DestroyDeployment");
+  const { mutateAsync: destroy, isPending } = useExecute(
+    "DestroyDeployment",
+    useInvalidateActionState(),
+  );
 
   const state = useListItem("Deployment", id)?.info.state;
 
@@ -137,7 +154,10 @@ export function DestroyDeployment({ id }: DeploymentId) {
 
 export function PullDeployment({ id }: DeploymentId) {
   const deployment = useDeployment(id);
-  const { mutate: pull, isPending: pullPending } = useExecute("PullDeployment");
+  const { mutate: pull, isPending: pullPending } = useExecute(
+    "PullDeployment",
+    useInvalidateActionState(),
+  );
   const action_state = useRead(
     "GetDeploymentActionState",
     {
@@ -163,8 +183,10 @@ export function PullDeployment({ id }: DeploymentId) {
 export function RestartDeployment({ id }: DeploymentId) {
   const deployment = useDeployment(id);
   const state = deployment?.info.state;
-  const { mutateAsync: restart, isPending: restartPending } =
-    useExecute("RestartDeployment");
+  const { mutateAsync: restart, isPending: restartPending } = useExecute(
+    "RestartDeployment",
+    useInvalidateActionState(),
+  );
   const action_state = useRead(
     "GetDeploymentActionState",
     {
@@ -195,8 +217,10 @@ export function RestartDeployment({ id }: DeploymentId) {
 export function StartStopDeployment({ id }: DeploymentId) {
   const deployment = useDeployment(id);
   const state = deployment?.info.state;
-  const { mutate: start, isPending: startPending } =
-    useExecute("StartDeployment");
+  const { mutate: start, isPending: startPending } = useExecute(
+    "StartDeployment",
+    useInvalidateActionState(),
+  );
   const action_state = useRead(
     "GetDeploymentActionState",
     {
@@ -233,7 +257,10 @@ function StopDeployment({ id }: DeploymentId) {
     [deployment?.config?.termination_signal],
   );
 
-  const { mutateAsync: stop, isPending } = useExecute("StopDeployment");
+  const { mutateAsync: stop, isPending } = useExecute(
+    "StopDeployment",
+    useInvalidateActionState(),
+  );
   const stopping = useRead(
     "GetDeploymentActionState",
     {
@@ -306,10 +333,14 @@ function TermSignalSelector({
 export function PauseUnpauseDeployment({ id }: DeploymentId) {
   const deployment = useDeployment(id);
   const state = deployment?.info.state;
-  const { mutate: unpause, isPending: unpausePending } =
-    useExecute("UnpauseDeployment");
-  const { mutateAsync: pause, isPending: pausePending } =
-    useExecute("PauseDeployment");
+  const { mutate: unpause, isPending: unpausePending } = useExecute(
+    "UnpauseDeployment",
+    useInvalidateActionState(),
+  );
+  const { mutateAsync: pause, isPending: pausePending } = useExecute(
+    "PauseDeployment",
+    useInvalidateActionState(),
+  );
   const action_state = useRead(
     "GetDeploymentActionState",
     {

@@ -184,6 +184,8 @@ pub struct StackListItemInfo {
   /// If deployed, will be `deployed_services`.
   /// Otherwise, its `latest_services`
   pub services: Vec<StackServiceWithUpdate>,
+  /// Whether stack has auto_update_all_services enabled.
+  pub auto_update_all_services: bool,
   /// Whether the compose project is missing on the host.
   /// Ie, it does not show up in `docker compose ls`.
   /// If true, and the stack is not Down, this is an unhealthy state.
@@ -208,8 +210,10 @@ impl StackListItemInfo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackServiceWithUpdate {
   pub service: String,
-  /// The service's image
+  /// The service's (current) image
   pub image: String,
+  /// The latest image (if different than current)
+  pub latest_image: Option<String>,
   /// Whether there is a newer image available for this service
   pub update_available: bool,
 }

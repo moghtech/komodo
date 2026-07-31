@@ -4,6 +4,8 @@ import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
 import { RowSelectionState } from "@tanstack/react-table";
 
+export const EXECUTION_ACTION_STATE_REQUERY_MS = 500;
+
 export function objectKeys<T extends object>(o: T): (keyof T)[] {
   return Object.keys(o) as (keyof T)[];
 }

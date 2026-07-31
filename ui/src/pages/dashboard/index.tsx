@@ -1,5 +1,9 @@
 import { Page } from "mogh_ui";
-import { useDashboardPreferences, useSetTitle } from "@/lib/hooks";
+import {
+  useDashboardPreferences,
+  useSetTitle,
+  useTagsFilter,
+} from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { Group } from "@mantine/core";
 import DashboardRecents from "./recents";
@@ -11,6 +15,7 @@ import DashboardActiveResources from "./active";
 
 export default function Dashboard() {
   const { preferences } = useDashboardPreferences();
+  const tags = useTagsFilter();
   useSetTitle(undefined);
   return (
     <Page
@@ -21,7 +26,7 @@ export default function Dashboard() {
         <Group w={{ base: "100%", xs: "fit-content" }}>
           <ShowTables />
           <ServerShowStats />
-          <ExportToml />
+          <ExportToml tags={preferences.showTables ? tags : undefined} />
         </Group>
       }
     >

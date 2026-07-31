@@ -26,7 +26,7 @@ use komodo_client::entities::{
   user_group::UserGroup,
   variable::Variable,
 };
-use mongo_indexed::{create_index, create_unique_index};
+use mongo_indexed::{Document, create_index, create_unique_index};
 use mungos::{
   by_id::update_one_by_id,
   init::MongoBuilder,
@@ -90,7 +90,7 @@ impl Client {
       tags: mongo_indexed::collection(&db, true).await?,
       variables: mongo_indexed::collection(&db, true).await?,
       git_accounts: mongo_indexed::collection(&db, true).await?,
-      registry_accounts: mongo_indexed::collection(&db, true).await?,
+      registry_accounts: registry_accounts_collection(&db).await?,
       updates: mongo_indexed::collection(&db, true).await?,
       alerts: mongo_indexed::collection(&db, true).await?,
       stats: mongo_indexed::collection(&db, true).await?,
@@ -262,4 +262,40 @@ where
 {
   bcrypt::hash(password, BCRYPT_COST)
     .context("failed to hash password")
+}
+
+/// Prior to v2.3.0, the image registry accounts were stored in
+/// DockerRegistryAccount collection instead of default ImageRegistryAccount.
+/// This method selects the correct name to use for any Komodo database,
+/// including legacy installations, where the old name continues
+/// to be used.
+async fn registry_accounts_collection(
+  db: &Database,
+) -> anyhow::Result<Collection<ImageRegistryAccount>> {
+  let name = if db
+    .collection::<Document>("ImageRegistryAccount")
+    .count_documents(Document::new())
+    .await
+    .unwrap_or_default()
+    > 0
+  {
+    // If ImageRegistryAccount collection is non-empty in any case, prefer it.
+    "ImageRegistryAccount"
+  } else if db
+    .collection::<Document>("DockerRegistryAccount")
+    .count_documents(Document::new())
+    .await
+    .unwrap_or_default()
+    > 0
+  {
+    // If already using DockerRegistryAccount collection, prefer it instead.
+    "DockerRegistryAccount"
+  } else {
+    // If using neither, prefer the new convention
+    "ImageRegistryAccount"
+  };
+
+  mongo_indexed::collection_with_name(db, name, true)
+    .await
+    .map_err(Into::into)
 }

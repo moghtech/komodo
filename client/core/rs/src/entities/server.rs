@@ -44,6 +44,8 @@ pub struct ServerListItemInfo {
   pub err: Option<_Serror>,
   /// System stats, if available
   pub stats: Option<MinimalSystemStats>,
+  /// The server alerting thresholds
+  pub alerting_thresholds: ServerAlertingThresholds,
   /// The server's number of physical cores.
   pub core_count: Option<u32>,
   /// The server's number of logical cores.
@@ -362,6 +364,49 @@ impl utoipa::PartialSchema for PartialServerConfig {
 
 #[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialServerConfig {}
+
+/// Just the server alerting thresholds
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct ServerAlertingThresholds {
+  /// The percentage threshhold which triggers WARNING state for CPU.
+  #[serde(default = "default_cpu_warning")]
+  pub cpu_warning: f32,
+
+  /// The percentage threshhold which triggers CRITICAL state for CPU.
+  #[serde(default = "default_cpu_critical")]
+  pub cpu_critical: f32,
+
+  /// The percentage threshhold which triggers WARNING state for MEM.
+  #[serde(default = "default_mem_warning")]
+  pub mem_warning: f64,
+
+  /// The percentage threshhold which triggers CRITICAL state for MEM.
+  #[serde(default = "default_mem_critical")]
+  pub mem_critical: f64,
+
+  /// The percentage threshhold which triggers WARNING state for DISK.
+  #[serde(default = "default_disk_warning")]
+  pub disk_warning: f64,
+
+  /// The percentage threshhold which triggers CRITICAL state for DISK.
+  #[serde(default = "default_disk_critical")]
+  pub disk_critical: f64,
+}
+
+impl From<&ServerConfig> for ServerAlertingThresholds {
+  fn from(config: &ServerConfig) -> Self {
+    ServerAlertingThresholds {
+      cpu_warning: config.cpu_warning,
+      cpu_critical: config.cpu_critical,
+      mem_warning: config.mem_warning,
+      mem_critical: config.mem_critical,
+      disk_warning: config.disk_warning,
+      disk_critical: config.disk_critical,
+    }
+  }
+}
 
 /// The health of a part of the server.
 #[typeshare]

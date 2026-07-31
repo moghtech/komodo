@@ -106,33 +106,38 @@ impl super::KomodoResource for Stack {
           .services
           .iter()
           .map(|current_service| {
+            let latest_service = stack
+              .info
+              .latest_services
+              .iter()
+              .find(|latest_service| {
+                current_service.service == latest_service.service_name
+              });
+            let latest_image = if let Some(latest_image) =
+              latest_service.as_ref().map(|s| &s.image)
+              && latest_image != &current_service.image
+            {
+              Some(latest_image.to_string())
+            } else {
+              None
+            };
             let update_available = current_service
               .image_digests
               .as_ref()
-              .map(|current_digests| {
-                stack
-                  .info
-                  .latest_services
-                  .iter()
-                  .find_map(|latest_service| {
-                    if current_service.service
-                      == latest_service.service_name
-                    {
-                      latest_service
-                        .image_digest
-                        .as_ref()?
-                        .update_available(current_digests)
-                        .into()
-                    } else {
-                      None
-                    }
-                  })
-                  .unwrap_or_default()
+              .and_then(|current_digests| {
+                latest_service.as_ref().and_then(|latest_service| {
+                  latest_service
+                    .image_digest
+                    .as_ref()?
+                    .update_available(current_digests)
+                    .into()
+                })
               })
               .unwrap_or_default();
             StackServiceWithUpdate {
               service: current_service.service.clone(),
               image: current_service.image.clone(),
+              latest_image,
               update_available,
             }
           })
@@ -239,6 +244,9 @@ impl super::KomodoResource for Stack {
         branch,
         latest_hash: stack.info.latest_hash,
         deployed_hash: stack.info.deployed_hash,
+        auto_update_all_services: stack
+          .config
+          .auto_update_all_services,
       },
     }
   }

@@ -16,7 +16,7 @@ import { fmtResourceType } from "@/lib/formatting";
 import { ICONS } from "@/lib/icons";
 import { useDebounce, useSearchCombobox } from "mogh_ui";
 import { keepPreviousData } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRead } from "@/lib/hooks";
 
 export interface ResourceSelectorProps extends ComboboxProps {
@@ -83,6 +83,14 @@ export default function ResourceSelector({
       ) ?? []) as Array<Types.ResourceListItem<any>>,
     [__resources],
   );
+
+  useEffect(() => {
+    // useSearchCombobox only selects the first option when the search
+    // input changes, but the options settle later (debounce + fetch),
+    // which can leave nothing selected. Select the first option
+    // whenever newly settled options render.
+    combobox.selectFirstOption();
+  }, [resources]);
 
   const name = selectedResource?.name;
 
