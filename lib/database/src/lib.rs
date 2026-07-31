@@ -295,7 +295,7 @@ async fn registry_accounts_collection(
     "ImageRegistryAccount"
   };
 
-  mongo_indexed::collection_with_name(&db, name, true)
+  mongo_indexed::collection_with_name(db, name, true)
     .await
     .map_err(Into::into)
 }
