@@ -21,7 +21,7 @@ use periphery_client::api;
 use crate::{
   config::core_config,
   helpers::{
-    git_token, periphery_client,
+    git_credential, periphery_client,
     update::{add_update, make_update},
   },
   permission::get_check_permissions,
@@ -222,7 +222,7 @@ impl Resolve<WriteArgs> for RefreshRepoCache {
     clone_args.destination = Some(repo_path.display().to_string());
 
     let access_token = if let Some(username) = &clone_args.account {
-      git_token(&clone_args.provider, username, |https| {
+      git_credential(&clone_args.provider, username, |https| {
           clone_args.https = https
         })
         .await

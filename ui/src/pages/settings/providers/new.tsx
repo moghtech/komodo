@@ -24,6 +24,7 @@ export default function NewProviderAccount({
   const [https, setHttps] = useState(true);
   const [username, setUsername] = useState("");
   const [token, setToken] = useState("");
+  const [sshKey, setSshKey] = useState("");
   const invalidate = useInvalidate();
   const { mutate: create, isPending } = useWrite(`Create${type}Account`, {
     onSuccess: () => {
@@ -32,7 +33,16 @@ export default function NewProviderAccount({
       close();
     },
   });
-  const submit = () => create({ account: { domain, https, username, token } });
+  const submit = () =>
+    create({
+      account: {
+        domain,
+        https,
+        username,
+        token,
+        ...(type === "GitProvider" ? { ssh_key: sshKey } : {}),
+      },
+    });
 
   const form: Array<
     | undefined
@@ -60,6 +70,14 @@ export default function NewProviderAccount({
       (e: ChangeEvent<HTMLInputElement>) => setToken(e.target.value),
       false,
     ],
+    type === "GitProvider"
+      ? [
+          "SSH Key",
+          sshKey,
+          (e: ChangeEvent<HTMLInputElement>) => setSshKey(e.target.value),
+          false,
+        ]
+      : undefined,
   ];
   const accountType =
     type === "ImageRegistry" ? "Registry Account" : "Git Account";

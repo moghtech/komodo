@@ -41,12 +41,65 @@ This includes GitHub, GitLab,
 [Bitbucket](https://github.com/moghtech/komodo/issues/387#issuecomment-3240726344),
 Forgejo, Gitea, and many other git providers.
 
+### Cloning over SSH
+
+Builds, Repos, Stacks, and Resource Syncs can instead clone over SSH by enabling
+**`git_ssh`** on the resource (in the UI, click the `https://` button next to the
+git provider until it reads `git@`). The remote becomes:
+
+```shell
+git clone git@<domain>:<Owner>/<Repo>
+```
+
+This is useful where a personal access token is undesirable - GitHub deploy keys, for
+example, are scoped to a single repository and are not tied to a user account.
+
+There are two ways to supply the key.
+
+#### 1. The host's ssh config
+
+Leave the account's `ssh_key` empty (or attach no account at all) and git uses the ssh
+config of whichever host performs the clone - Core for Resource Syncs, the target
+server's Periphery otherwise. Place the key at `~/.ssh/id_ed25519` for the user
+Periphery runs as, or add a `Host` entry to that user's `~/.ssh/config`, and make sure
+the provider's host key is in `known_hosts`.
+
+Best when you already manage host keys with configuration management.
+
+#### 2. Komodo-managed key
+
+Set `ssh_key` on the git provider account, either in **Settings > Providers** or in a
+config file. Komodo then distributes the key to whichever server runs the clone, the
+same way it distributes tokens today, so a new server needs no ssh setup of its own:
+
+```toml
+# in core.config.toml or periphery.config.toml
+
+[[git_provider]]
+domain = "github.com"
+accounts = [
+  { username = "my-user", ssh_key = """
+-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----
+""" },
+]
+```
+
+The key is written to a temporary file with mode `0600` for the duration of each git
+command and removed immediately afterwards. It is passed to git via `core.sshCommand`
+with `IdentitiesOnly=yes` and `StrictHostKeyChecking=accept-new`, so the provider's
+host key is trusted on first use rather than needing to be seeded.
+
+An `ssh_key` stored on an account is held in plain text, exactly like `token` - the
+same caveats about database and host access apply. Prefer a read-only key.
+
 ### Fields
 
 | Field | Default | Description |
 |-------|---------|-------------|
 | `domain` | `github.com` | The hostname of the git provider. Do not include the protocol (`http://` or `https://`). |
-| `https` | `true` | Whether to clone over HTTPS. Set to `false` for HTTP (e.g. local development). |
+| `https` | `true` | Whether to clone over HTTPS. Set to `false` for HTTP (e.g. local development). Ignored when the resource has `git_ssh` enabled. |
 | `accounts` | `[]` | A list of `{ username, token }` pairs. Each account provides access to repos visible to that user. |
 
 ### Configuration

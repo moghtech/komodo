@@ -562,6 +562,7 @@ impl PeripheryConfig {
             .map(|account| ProviderAccount {
               username: account.username.clone(),
               token: empty_or_redacted(&account.token),
+              ssh_key: empty_or_redacted(&account.ssh_key),
             })
             .collect(),
         })
@@ -578,6 +579,7 @@ impl PeripheryConfig {
             .map(|account| ProviderAccount {
               username: account.username.clone(),
               token: empty_or_redacted(&account.token),
+              ssh_key: empty_or_redacted(&account.ssh_key),
             })
             .collect(),
         })

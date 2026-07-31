@@ -32,7 +32,7 @@ use crate::{
   helpers::{
     builder::{cleanup_builder_instance, connect_builder_periphery},
     channel::repo_cancel_channel,
-    git_token, periphery_client,
+    git_credential, periphery_client,
     query::{VariablesAndSecrets, get_variables_and_secrets},
     update::update_update,
   },
@@ -118,7 +118,7 @@ impl Resolve<ExecuteArgs> for CloneRepo {
       return Err(anyhow!("repo has no server attached").into());
     }
 
-    let git_token = git_token(
+    let git_credential = git_credential(
       &repo.config.git_provider,
       &repo.config.git_account,
       |https| repo.config.git_https = https,
@@ -141,7 +141,7 @@ impl Resolve<ExecuteArgs> for CloneRepo {
     let logs = match periphery
       .request(api::git::CloneRepo {
         args: (&repo).into(),
-        git_token,
+        git_credential,
         environment: repo.config.env_vars()?,
         env_file_path: repo.config.env_file_path,
         on_clone: repo.config.on_clone.into(),
@@ -263,7 +263,7 @@ impl Resolve<ExecuteArgs> for PullRepo {
       return Err(anyhow!("repo has no server attached").into());
     }
 
-    let git_token = git_token(
+    let git_credential = git_credential(
       &repo.config.git_provider,
       &repo.config.git_account,
       |https| repo.config.git_https = https,
@@ -286,7 +286,7 @@ impl Resolve<ExecuteArgs> for PullRepo {
     let logs = match periphery
       .request(api::git::PullRepo {
         args: (&repo).into(),
-        git_token,
+        git_credential,
         environment: repo.config.env_vars()?,
         env_file_path: repo.config.env_file_path,
         on_pull: repo.config.on_pull.into(),
@@ -452,7 +452,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
     let mut update = update.clone();
     update_update(update.clone()).await?;
 
-    let git_token = git_token(
+    let git_credential = git_credential(
       &repo.config.git_provider,
       &repo.config.git_account,
       |https| repo.config.git_https = https,
@@ -545,7 +545,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
       res = periphery
         .request(api::git::CloneRepo {
           args: (&repo).into(),
-          git_token,
+          git_credential,
           environment: repo.config.env_vars()?,
           env_file_path: repo.config.env_file_path,
           on_clone: repo.config.on_clone.into(),

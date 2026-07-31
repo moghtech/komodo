@@ -4,11 +4,14 @@ use anyhow::Context;
 use command::{CommandOptions, run_komodo_standard_command};
 use formatting::format_serror;
 use komodo_client::entities::{
-  RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
-  update::Log,
+  GitCredential, RepoExecutionArgs, RepoExecutionResponse,
+  all_logs_success, update::Log,
 };
 
-use crate::{check_installed, get_commit_hash_log};
+use crate::{
+  check_installed, get_commit_hash_log,
+  ssh::{self, SshKeyFile},
+};
 
 /// Will delete the existing repo folder,
 /// clone the repo, get the latest hash / message,
@@ -19,7 +22,7 @@ use crate::{check_installed, get_commit_hash_log};
 pub async fn clone<T>(
   clone_args: T,
   root_repo_dir: &Path,
-  access_token: Option<String>,
+  credential: Option<GitCredential>,
 ) -> anyhow::Result<RepoExecutionResponse>
 where
   T: Into<RepoExecutionArgs> + std::fmt::Debug,
@@ -27,7 +30,15 @@ where
   check_installed().await?;
 
   let args: RepoExecutionArgs = clone_args.into();
-  let repo_url = args.remote_url(access_token.as_deref())?;
+  let repo_url = args.remote_url(credential.as_ref())?;
+  let ssh_key = SshKeyFile::maybe_write(
+    args
+      .ssh
+      .then(|| credential.as_ref()?.ssh_key.as_deref())
+      .flatten(),
+  )
+  .await?;
+  let git = ssh::git(ssh_key.as_ref());
 
   let mut res = RepoExecutionResponse {
     path: args.path(root_repo_dir),
@@ -67,7 +78,7 @@ where
   }
 
   let command = format!(
-    "git clone {repo_url} {} -b {}",
+    "{git} clone {repo_url} {} -b {}",
     res.path.display(),
     args.branch
   );
@@ -79,10 +90,12 @@ where
   )
   .await;
 
-  if let Some(token) = access_token {
-    log.command = log.command.replace(&token, "<TOKEN>");
-    log.stdout = log.stdout.replace(&token, "<TOKEN>");
-    log.stderr = log.stderr.replace(&token, "<TOKEN>");
+  if let Some(token) =
+    credential.as_ref().and_then(|c| c.token.as_deref())
+  {
+    log.command = log.command.replace(token, "<TOKEN>");
+    log.stdout = log.stdout.replace(token, "<TOKEN>");
+    log.stderr = log.stderr.replace(token, "<TOKEN>");
   }
 
   res.logs.push(log);

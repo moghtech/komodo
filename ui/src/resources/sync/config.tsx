@@ -265,6 +265,7 @@ export default function ResourceSyncConfig({
           ? {
               git_provider: (provider: string | undefined, set) => {
                 const https = update.git_https ?? config.git_https;
+                const ssh = update.git_ssh ?? config.git_ssh;
                 return (
                   <ProviderSelectorConfig
                     accountType="git"
@@ -272,7 +273,16 @@ export default function ResourceSyncConfig({
                     disabled={disabled}
                     onSelect={(git_provider) => set({ git_provider })}
                     https={https}
-                    onHttpsSwitch={() => set({ git_https: !https })}
+                    ssh={ssh}
+                    onHttpsSwitch={() =>
+                      set(
+                        ssh
+                          ? { git_ssh: false, git_https: true }
+                          : https
+                            ? { git_https: false }
+                            : { git_ssh: true }
+                      )
+                    }
                   />
                 );
               },

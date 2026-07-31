@@ -8,7 +8,7 @@ use komodo_client::entities::{
   update::Log,
 };
 
-use crate::{config::core_config, helpers::git_token};
+use crate::{config::core_config, helpers::git_credential};
 
 use super::file::extend_resources;
 
@@ -68,7 +68,7 @@ async fn get_repo(
   mut clone_args: RepoExecutionArgs,
 ) -> anyhow::Result<RemoteResources> {
   let access_token = if let Some(account) = &clone_args.account {
-    git_token(&clone_args.provider, account, |https| clone_args.https = https)
+    git_credential(&clone_args.provider, account, |https| clone_args.https = https)
       .await
       .with_context(
         || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),

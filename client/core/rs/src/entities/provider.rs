@@ -51,6 +51,12 @@ pub struct GitProviderAccount {
   /// If the database / host can be accessed this is insecure.
   #[serde(default)]
   pub token: String,
+  /// An ssh private key, in plain text on the db, used for repos
+  /// cloned over ssh. Same security caveat as `token`.
+  ///
+  /// Leave empty to use the ssh config of the host running the clone.
+  #[serde(default)]
+  pub ssh_key: String,
 }
 
 fn default_git_domain() -> String {

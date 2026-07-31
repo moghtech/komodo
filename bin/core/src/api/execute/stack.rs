@@ -33,7 +33,7 @@ use crate::{
   helpers::{
     periphery_client,
     query::{VariablesAndSecrets, get_variables_and_secrets},
-    stack_git_token,
+    stack_git_credential,
     swarm::swarm_request,
     update::{
       add_update_without_send, init_execution_update, update_update,
@@ -153,8 +153,8 @@ impl Resolve<ExecuteArgs> for DeployStack {
       ))
     }
 
-    let git_token =
-      stack_git_token(&mut stack, repo.as_mut()).await?;
+    let git_credential =
+      stack_git_credential(&mut stack, repo.as_mut()).await?;
 
     let registry_token = crate::helpers::registry_token(
       &stack.config.registry_provider,
@@ -203,7 +203,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
           DeploySwarmStack {
             stack: stack.clone(),
             repo,
-            git_token,
+            git_credential,
             registry_token,
             replacers: secret_replacers.into_iter().collect(),
           },
@@ -217,7 +217,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
             stack: stack.clone(),
             services: self.services,
             repo,
-            git_token,
+            git_credential,
             registry_token,
             replacers: secret_replacers.into_iter().collect(),
           })
@@ -858,7 +858,8 @@ pub async fn pull_stack_inner(
     ))
   }
 
-  let git_token = stack_git_token(&mut stack, repo.as_mut()).await?;
+  let git_credential =
+    stack_git_credential(&mut stack, repo.as_mut()).await?;
 
   let registry_token = crate::helpers::registry_token(
       &stack.config.registry_provider,
@@ -895,7 +896,7 @@ pub async fn pull_stack_inner(
       stack,
       services,
       repo,
-      git_token,
+      git_credential,
       registry_token,
       replacers: secret_replacers.into_iter().collect(),
     })
@@ -1349,8 +1350,8 @@ impl Resolve<ExecuteArgs> for RunStackService {
     let mut update = update.clone();
     update_update(update.clone()).await?;
 
-    let git_token =
-      stack_git_token(&mut stack, repo.as_mut()).await?;
+    let git_credential =
+      stack_git_credential(&mut stack, repo.as_mut()).await?;
 
     let registry_token = crate::helpers::registry_token(
       &stack.config.registry_provider,
@@ -1384,7 +1385,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
       .request(ComposeRun {
         stack,
         repo,
-        git_token,
+        git_credential,
         registry_token,
         replacers: secret_replacers.into_iter().collect(),
         service: self.service,

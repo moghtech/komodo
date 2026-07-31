@@ -38,7 +38,7 @@ use crate::{
   config::core_config,
   helpers::{
     query::{get_all_tags, get_swarm_or_server},
-    stack_git_token, swarm_or_server_request,
+    stack_git_credential, swarm_or_server_request,
     update::{add_update, make_update, poll_update_until_complete},
   },
   permission::get_check_permissions,
@@ -331,7 +331,8 @@ async fn write_stack_file_contents_git(
   } else {
     None
   };
-  let git_token = stack_git_token(&mut stack, repo.as_mut()).await?;
+  let git_credential =
+    stack_git_credential(&mut stack, repo.as_mut()).await?;
 
   let mut repo_args: RepoExecutionArgs = if let Some(repo) = &repo {
     repo.into()
@@ -364,7 +365,7 @@ async fn write_stack_file_contents_git(
     git::init_folder_as_repo(
       &root,
       &repo_args,
-      git_token.as_deref(),
+      git_credential.as_ref(),
       &mut update.logs,
     )
     .await;
@@ -382,7 +383,7 @@ async fn write_stack_file_contents_git(
   match git::pull_or_clone(
     repo_args,
     &core_config().repo_directory,
-    git_token,
+    git_credential,
   )
   .await
   .context("Failed to pull latest changes before commit")

@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::entities::{
-  FileContents, RepoExecutionArgs, all_logs_success, repo::Repo,
-  stack::Stack, to_path_compatible_name, update::Log,
+  FileContents, GitCredential, RepoExecutionArgs, all_logs_success,
+  repo::Repo, stack::Stack, to_path_compatible_name, update::Log,
 };
 use mogh_resolver::Resolve;
 use periphery_client::api::{
@@ -64,7 +64,7 @@ impl WriteStackRes for &mut ComposeRunResponse {
 pub async fn write_stack<'a>(
   stack: &'a Stack,
   repo: Option<&Repo>,
-  git_token: Option<String>,
+  git_credential: Option<GitCredential>,
   replacers: Vec<(String, String)>,
   res: impl WriteStackRes,
   req_args: &Args,
@@ -78,11 +78,17 @@ pub async fn write_stack<'a>(
     write_stack_files_on_host(stack, res).await
   } else if let Some(repo) = repo {
     write_stack_linked_repo(
-      stack, repo, git_token, replacers, res, req_args,
+      stack,
+      repo,
+      git_credential,
+      replacers,
+      res,
+      req_args,
     )
     .await
   } else if !stack.config.repo.is_empty() {
-    write_stack_inline_repo(stack, git_token, res, req_args).await
+    write_stack_inline_repo(stack, git_credential, res, req_args)
+      .await
   } else {
     write_stack_ui_defined(stack, res).await
   }
@@ -129,7 +135,7 @@ async fn write_stack_files_on_host(
 async fn write_stack_linked_repo<'a>(
   stack: &'a Stack,
   repo: &Repo,
-  git_token: Option<String>,
+  git_credential: Option<GitCredential>,
   replacers: Vec<(String, String)>,
   mut res: impl WriteStackRes,
   req_args: &Args,
@@ -150,7 +156,8 @@ async fn write_stack_linked_repo<'a>(
   // Set the clone destination to the one created for this run
   args.destination = Some(root.display().to_string());
 
-  let git_token = stack_git_token(git_token, &args, &mut res)?;
+  let git_credential =
+    stack_git_credential(git_credential, &args, &mut res)?;
 
   let env_file_path = root
     .join(&repo.config.env_file_path)
@@ -167,7 +174,7 @@ async fn write_stack_linked_repo<'a>(
   let clone_res = if stack.config.reclone {
     CloneRepo {
       args,
-      git_token,
+      git_credential,
       environment: repo.config.env_vars()?,
       env_file_path,
       on_clone,
@@ -180,7 +187,7 @@ async fn write_stack_linked_repo<'a>(
   } else {
     PullOrCloneRepo {
       args,
-      git_token,
+      git_credential,
       environment: repo.config.env_vars()?,
       env_file_path,
       on_clone,
@@ -227,7 +234,7 @@ async fn write_stack_linked_repo<'a>(
 #[instrument("WriteStackInlineRepo", skip_all)]
 async fn write_stack_inline_repo<'a>(
   stack: &'a Stack,
-  git_token: Option<String>,
+  git_credential: Option<GitCredential>,
   mut res: impl WriteStackRes,
   req_args: &Args,
 ) -> anyhow::Result<(
@@ -247,12 +254,13 @@ async fn write_stack_inline_repo<'a>(
   // Set the clone destination to the one created for this run
   args.destination = Some(root.display().to_string());
 
-  let git_token = stack_git_token(git_token, &args, &mut res)?;
+  let git_credential =
+    stack_git_credential(git_credential, &args, &mut res)?;
 
   let clone_res = if stack.config.reclone {
     CloneRepo {
       args,
-      git_token,
+      git_credential,
       environment: Default::default(),
       env_file_path: Default::default(),
       on_clone: Default::default(),
@@ -265,7 +273,7 @@ async fn write_stack_inline_repo<'a>(
   } else {
     PullOrCloneRepo {
       args,
-      git_token,
+      git_credential,
       environment: Default::default(),
       env_file_path: Default::default(),
       on_clone: Default::default(),
@@ -378,20 +386,20 @@ async fn write_stack_ui_defined(
   ))
 }
 
-fn stack_git_token<R: WriteStackRes>(
-  core_token: Option<String>,
+fn stack_git_credential<R: WriteStackRes>(
+  core_credential: Option<GitCredential>,
   args: &RepoExecutionArgs,
   res: &mut R,
-) -> anyhow::Result<Option<String>> {
-  helpers::git_token(core_token, args).map_err(|e| {
+) -> anyhow::Result<Option<GitCredential>> {
+  helpers::git_credential(core_credential, args).map_err(|e| {
     let error = format_serror(&e.into());
     res
       .logs()
-      .push(Log::error("Missing git token", error.clone()));
+      .push(Log::error("Missing git credential", error.clone()));
     res.add_remote_error(FileContents {
       path: Default::default(),
       contents: error,
     });
-    anyhow!("failed to find required git token, stopping run")
+    anyhow!("failed to find required git credential, stopping run")
   })
 }
