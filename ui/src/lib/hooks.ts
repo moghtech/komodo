@@ -660,13 +660,32 @@ export function useFilterByUpdateAvailable(): [boolean, () => void] {
 
 export function usePermissions({ type, id }: Types.ResourceTarget) {
   const user = useUser().data;
-  const perms = useRead("GetPermission", { target: { type, id } }).data as
+  const perms = useRead(
+    "GetPermission",
+    { target: { type, id } },
+    // skip call for admins
+    { enabled: user ? !user?.admin : false },
+  ).data as
     | Types.PermissionLevelAndSpecifics
     | Types.PermissionLevel
     | undefined;
   const info = useRead("GetCoreInfo", {}).data;
   const ui_write_disabled = info?.ui_write_disabled ?? false;
   const disable_non_admin_create = info?.disable_non_admin_create ?? false;
+
+  if (user?.admin) {
+    return {
+      canWrite: true,
+      canExecute: true,
+      canCreate: true,
+      specific: Object.values(Types.SpecificPermission),
+      specificLogs: true,
+      specificInspect: true,
+      specificTerminal: true,
+      specificAttach: true,
+      specificProcesses: true,
+    };
+  }
 
   const level =
     (perms && typeof perms === "string"
