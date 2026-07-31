@@ -2858,10 +2858,7 @@ export interface SystemInformation {
 	kernel?: string;
 	/** Physical core count */
 	core_count?: number;
-	/**
-	 * Logical core count. If available,
-	 * used to interpret system load accurately.
-	 */
+	/** Logical core count. */
 	logical_core_count?: number;
 	/** System hostname based off DNS */
 	host_name?: string;
@@ -5531,6 +5528,22 @@ export interface MinimalSystemStats {
 	refresh_list_ts: I64;
 }
 
+/** Just the server alerting thresholds */
+export interface ServerAlertingThresholds {
+	/** The percentage threshhold which triggers WARNING state for CPU. */
+	cpu_warning: number;
+	/** The percentage threshhold which triggers CRITICAL state for CPU. */
+	cpu_critical: number;
+	/** The percentage threshhold which triggers WARNING state for MEM. */
+	mem_warning: number;
+	/** The percentage threshhold which triggers CRITICAL state for MEM. */
+	mem_critical: number;
+	/** The percentage threshhold which triggers WARNING state for DISK. */
+	disk_warning: number;
+	/** The percentage threshhold which triggers CRITICAL state for DISK. */
+	disk_critical: number;
+}
+
 export interface ServerListItemInfo {
 	/** The server's state. */
 	state: ServerState;
@@ -5541,6 +5554,8 @@ export interface ServerListItemInfo {
 	err?: _Serror;
 	/** System stats, if available */
 	stats?: MinimalSystemStats;
+	/** The server alerting thresholds */
+	alerting_thresholds: ServerAlertingThresholds;
 	/** The server's number of physical cores. */
 	core_count?: number;
 	/** The server's number of logical cores. */

@@ -58,21 +58,19 @@ export function useServerStats(id: string) {
   ).data;
 }
 
-export function useServerThresholds(id: string) {
-  const isServerAvailable = useIsServerAvailable(id);
-  const config = useRead(
-    "GetServer",
-    { server: id },
-    {
-      enabled: isServerAvailable,
-    },
-  ).data?.config as any;
+export function serverThresholds(server: Types.ServerListItem | undefined) {
+  const thresholds = server?.info.alerting_thresholds;
   return {
-    cpuWarning: config?.cpu_warning ?? 75,
-    cpuCritical: config?.cpu_critical ?? 90,
-    memWarning: config?.mem_warning ?? 75,
-    memCritical: config?.mem_critical ?? 90,
-    diskWarning: config?.disk_warning ?? 75,
-    diskCritical: config?.disk_critical ?? 90,
+    cpuWarning: thresholds?.cpu_warning ?? 75,
+    cpuCritical: thresholds?.cpu_critical ?? 90,
+    memWarning: thresholds?.mem_warning ?? 75,
+    memCritical: thresholds?.mem_critical ?? 90,
+    diskWarning: thresholds?.disk_warning ?? 75,
+    diskCritical: thresholds?.disk_critical ?? 90,
   };
+}
+
+export function useServerThresholds(id: string) {
+  const server = useServer(id);
+  return serverThresholds(server);
 }
