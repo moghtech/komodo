@@ -20,7 +20,10 @@ use komodo_client::{
     permission::PermissionLevel,
     repo::Repo,
     resource::ResourceQuery,
-    stack::{Stack, StackInfo, StackServiceWithUpdate, StackState},
+    stack::{
+      Stack, StackInfo, StackServiceNames, StackServiceWithUpdate,
+      StackState,
+    },
     update::Update,
     user::{auto_redeploy_user, stack_user, system_user},
   },
@@ -822,6 +825,11 @@ pub async fn check_stack_for_update_inner(
       services: extract_services_from_stack(&stack)
         .into_iter()
         .map(|service| StackServiceWithUpdate {
+          latest_image: find_latest_image(
+            &service.service_name,
+            &service.image,
+            &stack.info.latest_services,
+          ),
           service: service.service_name,
           image: service.image,
           update_available: false,
@@ -842,6 +850,11 @@ pub async fn check_stack_for_update_inner(
         .services
         .iter()
         .map(|service| StackServiceWithUpdate {
+          latest_image: find_latest_image(
+            &service.service,
+            &service.image,
+            &stack.info.latest_services,
+          ),
           service: service.service.clone(),
           image: service.image.clone(),
           update_available: false,
@@ -857,6 +870,11 @@ pub async fn check_stack_for_update_inner(
       service: service.service.clone(),
       image: service.image.clone(),
       update_available: false,
+      latest_image: find_latest_image(
+        &service.service,
+        &service.image,
+        &stack.info.latest_services,
+      ),
     };
 
     let Some(current_digests) = &service.image_digests else {
@@ -1029,6 +1047,22 @@ pub async fn check_stack_for_update_inner(
   Ok(CheckStackForUpdateResponse {
     stack: stack_id,
     services,
+  })
+}
+
+fn find_latest_image(
+  service_name: &str,
+  current_image: &str,
+  latest_services: &[StackServiceNames],
+) -> Option<String> {
+  latest_services.iter().find_map(|latest| {
+    if latest.service_name == service_name
+      && latest.image != current_image
+    {
+      Some(latest.image.clone())
+    } else {
+      None
+    }
   })
 }
 
