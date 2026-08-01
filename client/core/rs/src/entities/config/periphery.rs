@@ -181,6 +181,8 @@ pub struct Env {
   /// Override `disable_container_terminals`
   #[serde(alias = "periphery_disable_container_exec")]
   pub periphery_disable_container_terminals: Option<bool>,
+  /// Override `public_ip`
+  pub periphery_public_ip: Option<String>,
   /// Override `stats_polling_rate`
   pub periphery_stats_polling_rate: Option<Timelength>,
   /// Override `container_stats_polling_rate`
@@ -378,6 +380,13 @@ pub struct PeripheryConfig {
   /// Default: false
   #[serde(default, alias = "disable_container_exec")]
   pub disable_container_terminals: bool,
+  
+  /// The public IP reported for the host.
+  /// If empty, Periphery resolves the IP by querying the OpenDNS resolvers.
+  /// When set, the lookup is skipped entirely.
+  /// Default: empty
+  #[serde(default)]
+  pub public_ip: String,
 
   /// The rate at which the system stats will be polled to update the cache.
   /// Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
@@ -484,6 +493,7 @@ impl Default for PeripheryConfig {
       default_terminal_command: default_default_terminal_command(),
       disable_terminals: Default::default(),
       disable_container_terminals: Default::default(),
+      public_ip: Default::default(),
       stats_polling_rate: default_stats_polling_rate(),
       container_stats_polling_rate:
         default_container_stats_polling_rate(),
@@ -535,6 +545,7 @@ impl PeripheryConfig {
       default_terminal_command: self.default_terminal_command.clone(),
       disable_terminals: self.disable_terminals,
       disable_container_terminals: self.disable_container_terminals,
+      public_ip: self.public_ip.clone(),
       stats_polling_rate: self.stats_polling_rate,
       container_stats_polling_rate: self.container_stats_polling_rate,
       legacy_compose_cli: self.legacy_compose_cli,

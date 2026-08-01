@@ -331,6 +331,11 @@ pub async fn host_public_ip() -> Option<&'static String> {
   static PUBLIC_IPS: OnceCell<Option<String>> = OnceCell::const_new();
   PUBLIC_IPS
     .get_or_init(|| async {
+      let public_ip = periphery_config().public_ip.trim();
+      if !public_ip.is_empty() {
+        return Some(public_ip.to_string());
+      }
+
       resolve_host_public_ip()
         .await
         .inspect_err(|e| {
