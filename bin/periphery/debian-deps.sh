@@ -3,7 +3,7 @@
 ## Periphery deps installer
 
 apt-get update
-apt-get install -y git curl wget ca-certificates
+apt-get install -y git curl wget ca-certificates smartmontools util-linux
 
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc

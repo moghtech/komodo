@@ -2891,6 +2891,8 @@ export interface SingleDiskUsage {
 	used_gb: number;
 	/** Total size of the disk in GB */
 	total_gb: number;
+	/** SMART health status */
+	healthy?: boolean;
 }
 
 /** Realtime system stats data. */

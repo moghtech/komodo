@@ -2,7 +2,7 @@ import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Section } from "mogh_ui";
 import { ShowHideButton } from "mogh_ui";
-import { Group, Text } from "@mantine/core";
+import { Badge, Group, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 
@@ -87,6 +87,19 @@ export default function ServerDisks({
                 <>{row.original.percentage.toFixed(2)}% Full</>
               ),
             },
+            {
+               header: "Health",
+               cell: ({ row }) => {
+                 const healthy = row.original.healthy;
+                 if (healthy === true) {
+                   return <Badge color="green">Passed</Badge>;
+                 }
+                 if (healthy === false) {
+                   return <Badge color="red">Failed</Badge>;
+                 }
+                 return <Text c="dimmed" size="sm">N/A</Text>;
+               },
+             }
           ]}
         />
       )}

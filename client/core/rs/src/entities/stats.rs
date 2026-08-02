@@ -230,6 +230,8 @@ pub struct SingleDiskUsage {
   pub used_gb: f64,
   /// Total size of the disk in GB
   pub total_gb: f64,
+  /// SMART health status
+  pub healthy: Option<bool>,
 }
 
 /// Info for network interface usage.
