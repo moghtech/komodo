@@ -11,11 +11,13 @@ import {
   InputWrapperProps,
   Text,
 } from "@mantine/core";
-import { filterBySplit } from "mogh_ui";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtResourceType } from "@/lib/formatting";
 import { ICONS } from "@/lib/icons";
-import { useSearchCombobox } from "mogh_ui";
+import { useDebounce, useSearchCombobox } from "mogh_ui";
+import { keepPreviousData } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import { useRead } from "@/lib/hooks";
 
 export interface ResourceSelectorProps extends ComboboxProps {
   type: UsableResource;
@@ -47,34 +49,58 @@ export default function ResourceSelector({
   clearable = true,
   ...comboboxProps
 }: ResourceSelectorProps) {
-  const templateFilterFn =
-    templates === Types.TemplatesQueryBehavior.Exclude
-      ? (r: Types.ResourceListItem<unknown>) => !r.template
-      : templates === Types.TemplatesQueryBehavior.Only
-        ? (r: Types.ResourceListItem<unknown>) => r.template
-        : () => true;
-  const Components = ResourceComponents[type];
-  const resources = Components.useList()?.filter(
-    (r) =>
-      templateFilterFn(r) &&
-      (!state || (r.info as any).state === state) &&
-      (!excludeIds || r.id === selected || !excludeIds?.includes(r.id)),
-  );
-  const name = resources?.find((r) => r.id === selected)?.name;
-
   const { search, setSearch, combobox } = useSearchCombobox();
-
-  const filtered = filterBySplit(resources, search, (item) => item.name).sort(
-    (a, b) => {
-      if (a.name > b.name) {
-        return 1;
-      } else if (a.name < b.name) {
-        return -1;
-      } else {
-        return 0;
-      }
-    },
+  const debouncedSearch = useDebounce(search, 200);
+  const terms = useMemo(
+    () =>
+      debouncedSearch
+        .split(" ")
+        .map((item) => item.trim())
+        .filter((item) => !!item),
+    [debouncedSearch],
   );
+
+  const Components = ResourceComponents[type];
+  const selectedResource = Components.useListItem(selected);
+
+  const { data: __resources } = useRead(
+    `List${type}s`,
+    {
+      query: { templates, terms },
+      limit: 10,
+    },
+    // Keep the previous options visible while the
+    // next search fetches, to prevent flashing.
+    { placeholderData: keepPreviousData },
+  );
+
+  const resources = useMemo(
+    () =>
+      (__resources?.filter(
+        (r) =>
+          (!state || (r.info as any).state === state) &&
+          (!excludeIds || r.id === selected || !excludeIds?.includes(r.id)),
+      ) ?? []) as Array<Types.ResourceListItem<any>>,
+    [__resources],
+  );
+
+  useEffect(() => {
+    // useSearchCombobox only selects the first option when the search
+    // input changes, but the options settle later (debounce + fetch),
+    // which can leave nothing selected. Select the first option
+    // whenever newly settled options render.
+    combobox.selectFirstOption();
+  }, [resources]);
+
+  const name = selectedResource?.name;
+
+  if (
+    terms.length === 0 &&
+    selectedResource &&
+    resources.every((resource) => resource.id !== selectedResource.id)
+  ) {
+    resources.push(selectedResource);
+  }
 
   const Selector = (
     <Combobox
@@ -134,7 +160,12 @@ export default function ResourceSelector({
           placeholder="search..."
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
-          {filtered.map((resource) => (
+          {/* {isFetching && (
+            <Center pt="xs">
+              <Loader size="sm" />
+            </Center>
+          )} */}
+          {resources.map((resource) => (
             <Combobox.Option key={resource.id} value={resource.id}>
               <Group gap="xs">
                 <Components.Icon id={resource.id} />
@@ -142,7 +173,7 @@ export default function ResourceSelector({
               </Group>
             </Combobox.Option>
           ))}
-          {filtered.length === 0 && (
+          {resources.length === 0 && (
             <Combobox.Empty>No results.</Combobox.Empty>
           )}
         </Combobox.Options>

@@ -347,6 +347,21 @@ pub type AlerterQuery = ResourceQuery<AlerterQuerySpecifics>;
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum AlerterSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by endpoint type.
+  Type,
+  /// Sort by enabled.
+  Enabled,
+}
+
+#[typeshare]
+#[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]

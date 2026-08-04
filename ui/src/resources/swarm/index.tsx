@@ -3,7 +3,7 @@ import {
   swarmNodeStateIntention,
   swarmTaskStateIntention,
 } from "@/lib/color";
-import { usePermissions, useRead } from "@/lib/hooks";
+import { useListItem, usePermissions, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -15,15 +15,17 @@ import { useDisclosure } from "@mantine/hooks";
 import { Box, Button, Modal, Text } from "@mantine/core";
 import JoinSwarmCommands from "./join-commands";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import SwarmHeaderInfo from "./header-info";
 import { HoverError } from "mogh_ui";
 import { hexColorByIntention } from "mogh_ui";
 
-export function useSwarm(id: string | undefined, useName?: boolean) {
-  return useRead("ListSwarms", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+export function useSwarm(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Swarm", id, useName, refetchInterval);
 }
 
 export function useFullSwarm(id: string) {
@@ -33,9 +35,11 @@ export function useFullSwarm(id: string) {
 export const SwarmComponents: RequiredResourceComponents<
   Types.SwarmConfig,
   Types.SwarmInfo,
-  Types.SwarmListItemInfo
+  Types.SwarmListItemInfo,
+  Types.SwarmQuerySpecifics
 > = {
-  useList: () => useRead("ListSwarms", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListSwarms", { query, limit, page }).data,
   useListItem: useSwarm,
   useFull: useFullSwarm,
 
@@ -71,8 +75,7 @@ export const SwarmComponents: RequiredResourceComponents<
   Table: SwarmTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListSwarms", {}).data?.find((r) => r.id === id)?.info
-      .state;
+    const state = useSwarm(id)?.info.state;
     const color = noColor
       ? undefined
       : state && hexColorByIntention(swarmStateIntention(state));

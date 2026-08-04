@@ -3,10 +3,7 @@ import { useStack } from ".";
 import { usePermissions, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
-import {
-  MobileFriendlyTabsSelector,
-  TabNoContent,
-} from "mogh_ui";
+import { MobileFriendlyTabsSelector, TabNoContent } from "mogh_ui";
 import { Tabs } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import { stackStateIntention } from "@/lib/color";
@@ -37,14 +34,16 @@ export default function StackTabs({ id }: { id: string }) {
 
   const state = info?.state;
   const hideInfo = !info?.files_on_host && !info?.repo && !info?.linked_repo;
-  const hideServices =
+  const hideLogs =
     state === undefined ||
     state === Types.StackState.Unknown ||
-    state === Types.StackState.Down;
-  const hideLogs = hideServices || !specificLogs;
+    state === Types.StackState.Down ||
+    !specificLogs;
   const terminalDisabled =
     !specificTerminal ||
     containerTerminalsDisabled ||
+    // Not attached to swarm
+    !!info?.swarm_id ||
     // All services are not running
     services?.every(
       (service) =>
@@ -54,7 +53,6 @@ export default function StackTabs({ id }: { id: string }) {
 
   const view =
     (_view === "Info" && hideInfo) ||
-    (_view === "Services" && hideServices) ||
     (_view === "Terminals" && terminalDisabled) ||
     (_view === "Log" && hideLogs)
       ? "Config"
@@ -73,7 +71,6 @@ export default function StackTabs({ id }: { id: string }) {
       },
       {
         value: "Services",
-        disabled: hideServices,
         icon: ICONS.Service,
       },
       {
@@ -90,7 +87,6 @@ export default function StackTabs({ id }: { id: string }) {
     ],
     [
       hideInfo,
-      hideServices,
       specificLogs,
       hideLogs,
       specificTerminal,

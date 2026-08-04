@@ -1,22 +1,23 @@
-import { useRead } from "@/lib/hooks";
+import { useListItem, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import NewResource from "@/resources/new";
 import BuilderTable from "./table";
-import { useServer } from "../server";
 import { serverStateIntention } from "@/lib/color";
 import ResourceHeader from "../header";
 import BuilderConfig from "./config";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { useState } from "react";
-import { Select } from "@mantine/core";
+import { Group, Select } from "@mantine/core";
 
-export function useBuilder(id: string | undefined, useName?: boolean) {
-  return useRead("ListBuilders", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+export function useBuilder(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Builder", id, useName, refetchInterval);
 }
 
 export function useFullBuilder(id: string) {
@@ -27,9 +28,11 @@ export function useFullBuilder(id: string) {
 export const BuilderComponents: RequiredResourceComponents<
   Types.BuilderConfig,
   undefined,
-  Types.BuilderListItemInfo
+  Types.BuilderListItemInfo,
+  Types.BuilderQuerySpecifics
 > = {
-  useList: () => useRead("ListBuilders", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListBuilders", { query, limit, page }).data,
   useListItem: useBuilder,
   useFull: useFullBuilder,
 
@@ -77,20 +80,35 @@ export const BuilderComponents: RequiredResourceComponents<
 
   ResourcePageHeader: ({ id }) => {
     const builder = useBuilder(id);
-    const server = useServer(
-      builder?.info.builder_type === "Server"
-        ? builder.info.instance_type
-        : undefined,
-    );
+    const configured =
+      (builder?.info.builder_type === "Server" &&
+        builder.info.instance_type?.split(",").map((id) => id.trim())) ||
+      [];
+    const servers = useRead(
+      "ListServers",
+      {
+        query: { names: configured },
+      },
+      { refetchInterval: 15_000 },
+    ).data?.filter((s) => configured.includes(s.id));
     const coreVersion = useRead("GetVersion", {}).data?.version;
-    const intent = server?.info.state
-      ? serverStateIntention(
-          server.info.state,
-          !!coreVersion &&
-            !!server.info.version &&
-            coreVersion !== server.info.version,
-        )
-      : "Neutral";
+    const intent = !servers?.length
+      ? "Neutral"
+      : servers.length === 1
+        ? serverStateIntention(
+            servers[0].info.state,
+            !!coreVersion &&
+              !!servers[0].info.version &&
+              coreVersion !== servers[0].info.version,
+          )
+        : // All servers connected
+          servers.every((s) => s.info.state === Types.ServerState.Ok)
+          ? "Good"
+          : // No servers connected
+            servers.every((s) => s.info.state !== Types.ServerState.Ok)
+            ? "Critical"
+            : // Some servers connected
+              "Warning";
     return (
       <ResourceHeader
         type="Builder"
@@ -103,9 +121,15 @@ export const BuilderComponents: RequiredResourceComponents<
         status={
           builder?.info.builder_type === "Aws" ? (
             builder?.info.instance_type
-          ) : builder?.info.builder_type === "Server" &&
-            builder.info.instance_type ? (
-            <ResourceLink type="Server" id={builder.info.instance_type} />
+          ) : builder?.info.builder_type === "Server" ? (
+            <Group gap="xs">
+              {builder?.info.instance_type
+                ?.split(",")
+                .slice(0, 3)
+                .map((id) => (
+                  <ResourceLink type="Server" id={id.trim()} />
+                ))}
+            </Group>
           ) : undefined
         }
       />

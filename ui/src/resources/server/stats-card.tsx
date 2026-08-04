@@ -14,6 +14,7 @@ import {
 } from "@mantine/core";
 import { ColorIntention, hexColorByIntention } from "mogh_ui";
 import { LucideIcon } from "lucide-react";
+import { serverThresholds } from "./hooks";
 
 export interface ServerStatsCardProps {
   id: string;
@@ -25,20 +26,14 @@ export default function ServerStatsCard({ id }: ServerStatsCardProps) {
   const isServerAvailable = server?.info.state === Types.ServerState.Ok;
   const enabled = preferences.showServerStats && isServerAvailable;
 
-  const serverDetails = useRead(
-    "GetServer",
-    { server: id },
-    {
-      enabled,
-    },
-  ).data;
-
-  const cpuWarning = serverDetails?.config?.cpu_warning ?? 75;
-  const cpuCritical = serverDetails?.config?.cpu_critical ?? 90;
-  const memWarning = serverDetails?.config?.mem_warning ?? 75;
-  const memCritical = serverDetails?.config?.mem_critical ?? 90;
-  const diskWarning = serverDetails?.config?.disk_warning ?? 75;
-  const diskCritical = serverDetails?.config?.disk_critical ?? 90;
+  const {
+    cpuWarning,
+    cpuCritical,
+    memWarning,
+    memCritical,
+    diskWarning,
+    diskCritical,
+  } = serverThresholds(server);
 
   const intention = (percentage: number, type: "cpu" | "memory" | "disk") => {
     const warning =

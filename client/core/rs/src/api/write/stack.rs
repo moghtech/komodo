@@ -310,6 +310,10 @@ pub struct BatchCheckStackForUpdate {
   /// extra-stack-1, extra-stack-2
   /// ```
   pub pattern: String,
+  /// Filter matches by tag.
+  /// If empty, skips tag filtering.
+  #[serde(default)]
+  pub tags: Vec<String>,
   /// Normally resources with 'auto_update' will be
   /// redeployed immediately if updates are found.
   /// With this enabled, convert this into an UpdateAvailable alert.

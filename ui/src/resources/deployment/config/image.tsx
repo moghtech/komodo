@@ -14,6 +14,7 @@ import {
 import { Types } from "komodo_client";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtDate, useSearchCombobox } from "mogh_ui";
+import { parseVersion } from "@/lib/utils";
 
 export interface DeploymentImageConfigProps {
   image: Types.DeploymentImage | undefined;
@@ -64,7 +65,7 @@ export default function DeploymentImageConfig({
           <BuildVersionSelector
             buildId={image.params.build_id}
             selected={image.params.version}
-            onSelect={(version) =>
+            onSelect={(version) => {
               setUpdate({
                 image: {
                   ...image,
@@ -73,8 +74,8 @@ export default function DeploymentImageConfig({
                     version,
                   },
                 },
-              })
-            }
+              });
+            }}
             disabled={disabled}
           />
         </>
@@ -134,7 +135,7 @@ function BuildVersionSelector({
 }) {
   const versions = useRead(
     "ListBuildVersions",
-    { build: buildId! },
+    { build: buildId!, limit: 50 },
     { enabled: !!buildId },
   ).data;
 
@@ -148,7 +149,12 @@ function BuildVersionSelector({
     <Combobox
       store={combobox}
       disabled={disabled}
-      onOptionSubmit={() => {
+      onOptionSubmit={(value) => {
+        if (value === "Latest") {
+          onSelect({ major: 0, minor: 0, patch: 0 });
+        } else {
+          onSelect(parseVersion(value));
+        }
         combobox.closeDropdown();
       }}
       width={250}
@@ -177,16 +183,11 @@ function BuildVersionSelector({
           }}
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
-          <Combobox.Option
-            value="Latest"
-            onSelect={() => onSelect({ major: 0, minor: 0, patch: 0 })}
-          >
-            Latest
-          </Combobox.Option>
+          <Combobox.Option value="Latest">Latest</Combobox.Option>
           {filtered.map((v) => {
             const version = fmtVersion(v.version);
             return (
-              <Combobox.Option key={version} value={version}>
+              <Combobox.Option key={`${version}-${v.ts}`} value={version}>
                 <Group justify="space-between" wrap="nowrap">
                   <Text>{version}</Text>
                   <Text c="dimmed">{fmtDate(new Date(v.ts))}</Text>

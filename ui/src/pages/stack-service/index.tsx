@@ -60,7 +60,11 @@ function StackServiceInner({
 }) {
   const stack = useStack(stackId);
   useSetTitle(`${stack?.name} | ${serviceName}`);
-  const services = useRead("ListStackServices", { stack: stackId }).data;
+  const services = useRead(
+    "ListStackServices",
+    { stack: stackId },
+    { refetchInterval: 10_000 },
+  ).data;
   const service = services?.find((s) => s.service === serviceName);
 
   const container = service?.container;

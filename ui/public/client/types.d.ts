@@ -140,14 +140,14 @@ export interface ResourceListItem<Info> {
     info: Info;
 }
 export declare enum ActionState {
-    /** Unknown case */
-    Unknown = "Unknown",
+    /** Currently running */
+    Running = "Running",
     /** Last clone / pull successful (or never cloned) */
     Ok = "Ok",
     /** Last clone / pull failed */
     Failed = "Failed",
-    /** Currently running */
-    Running = "Running"
+    /** Unknown case */
+    Unknown = "Unknown"
 }
 export interface ActionListItemInfo {
     /** Whether last action run successful */
@@ -166,6 +166,12 @@ export interface ActionListItemInfo {
     schedule_error?: string;
 }
 export type ActionListItem = ResourceListItem<ActionListItemInfo>;
+export declare enum TagQueryBehavior {
+    /** Returns resources which have strictly all the tags */
+    All = "All",
+    /** Returns resources which have one or more of the tags */
+    Any = "Any"
+}
 export declare enum TemplatesQueryBehavior {
     /** Include templates in results. Default. */
     Include = "Include",
@@ -174,23 +180,33 @@ export declare enum TemplatesQueryBehavior {
     /** Results *only* includes templates. */
     Only = "Only"
 }
-export declare enum TagQueryBehavior {
-    /** Returns resources which have strictly all the tags */
-    All = "All",
-    /** Returns resources which have one or more of the tags */
-    Any = "Any"
-}
 /** Passing empty Vec is the same as not filtering by that field */
 export interface ResourceQuery<T> {
+    /**
+     * List of search terms. Names must contain
+     * all terms to match.
+     */
+    terms?: string[];
+    /** List of exact names to return */
     names?: string[];
-    templates?: TemplatesQueryBehavior;
     /** Pass Vec of tag ids or tag names */
     tags?: string[];
     /** 'All' or 'Any' */
     tag_behavior?: TagQueryBehavior;
+    templates?: TemplatesQueryBehavior;
     specific?: T;
 }
 export interface ActionQuerySpecifics {
+    /**
+     * Query only for Actions matching these states.
+     * If empty, does not filter by state.
+     */
+    states?: ActionState[];
+    /**
+     * Query only for Actions with (or without)
+     * a schedule configured.
+     */
+    scheduled?: boolean;
 }
 export type ActionQuery = ResourceQuery<ActionQuerySpecifics>;
 export type AlerterEndpoint = 
@@ -353,8 +369,10 @@ export interface CheckDeploymentForUpdateResponse {
 export type BatchCheckDeploymentForUpdateResponse = CheckDeploymentForUpdateResponse[];
 export interface StackServiceWithUpdate {
     service: string;
-    /** The service's image */
+    /** The service's (current) image */
     image: string;
+    /** The latest image (if different than current) */
+    latest_image?: string;
     /** Whether there is a newer image available for this service */
     update_available: boolean;
 }
@@ -473,11 +491,13 @@ export declare enum Operation {
     RenameProcedure = "RenameProcedure",
     DeleteProcedure = "DeleteProcedure",
     RunProcedure = "RunProcedure",
+    CancelProcedure = "CancelProcedure",
     CreateAction = "CreateAction",
     UpdateAction = "UpdateAction",
     RenameAction = "RenameAction",
     DeleteAction = "DeleteAction",
     RunAction = "RunAction",
+    CancelAction = "CancelAction",
     CreateResourceSync = "CreateResourceSync",
     UpdateResourceSync = "UpdateResourceSync",
     RenameResourceSync = "RenameResourceSync",
@@ -785,6 +805,8 @@ export interface BuildListItemInfo {
     dockerfile_contents: boolean;
     /** Linked repo, if one is attached. */
     linked_repo: string;
+    /** The name of the linked repo, if one is attached. */
+    linked_repo_name?: string;
     /** The git provider domain */
     git_provider: string;
     /** The repo used as the source of the build */
@@ -805,10 +827,20 @@ export interface BuildQuerySpecifics {
     builder_ids?: string[];
     repos?: string[];
     /**
+     * Query only for Builds with these linked repos.
+     * Only accepts Repo id (not name).
+     */
+    linked_repos?: string[];
+    /**
      * query for builds last built more recently than this timestamp
      * defaults to 0 which is a no op
      */
     built_since?: I64;
+    /**
+     * Query only for Builds matching these states.
+     * If empty, does not filter by state.
+     */
+    states?: BuildState[];
 }
 export type BuildQuery = ResourceQuery<BuildQuerySpecifics>;
 export type BuilderConfig = 
@@ -966,6 +998,9 @@ export type Execution =
 } | {
     type: "BatchRunProcedure";
     params: BatchRunProcedure;
+} | {
+    type: "CancelProcedure";
+    params: CancelProcedure;
 }
 /** Run the target action. (alias: `action`, `ac`) */
  | {
@@ -974,6 +1009,9 @@ export type Execution =
 } | {
     type: "BatchRunAction";
     params: BatchRunAction;
+} | {
+    type: "CancelAction";
+    params: CancelAction;
 }
 /** Execute a Resource Sync. (alias: `sync`) */
  | {
@@ -1181,31 +1219,6 @@ export interface CreateApiKeyResponse {
     secret: string;
 }
 export type CreateApiKeyForServiceUserResponse = CreateApiKeyResponse;
-/** Configuration to access private image repositories on various registries. */
-export interface DockerRegistryAccount {
-    /**
-     * The Mongo ID of the docker registry account.
-     * This field is de/serialized from/to JSON as
-     * `{ "_id": { "$oid": "..." }, ...(rest of DockerRegistryAccount) }`
-     */
-    _id?: MongoId;
-    /**
-     * The domain of the provider.
-     *
-     * For docker registry, this can include 'http://...',
-     * however this is not recommended and won't work unless "insecure registries" are enabled
-     * on your hosts. See <https://docs.docker.com/reference/cli/dockerd/#insecure-registries>.
-     */
-    domain: string;
-    /** The account username */
-    username?: string;
-    /**
-     * The token in plain text on the db.
-     * If the database / host can be accessed this is insecure.
-     */
-    token?: string;
-}
-export type CreateDockerRegistryAccountResponse = DockerRegistryAccount;
 /**
  * Configuration to access private git repos from various git providers.
  * Note. Cannot create two accounts with the same domain and username.
@@ -1235,6 +1248,31 @@ export interface GitProviderAccount {
     token?: string;
 }
 export type CreateGitProviderAccountResponse = GitProviderAccount;
+/** Configuration to access private image repositories on various registries. */
+export interface ImageRegistryAccount {
+    /**
+     * The Mongo ID of the docker registry account.
+     * This field is de/serialized from/to JSON as
+     * `{ "_id": { "$oid": "..." }, ...(rest of ImageRegistryAccount) }`
+     */
+    _id?: MongoId;
+    /**
+     * The domain of the provider.
+     *
+     * For docker registry, this can include 'http://...',
+     * however this is not recommended and won't work unless "insecure registries" are enabled
+     * on your hosts. See <https://docs.docker.com/reference/cli/dockerd/#insecure-registries>.
+     */
+    domain: string;
+    /** The account username */
+    username?: string;
+    /**
+     * The token in plain text on the db.
+     * If the database / host can be accessed this is insecure.
+     */
+    token?: string;
+}
+export type CreateImageRegistryAccountResponse = ImageRegistryAccount;
 export type UserConfig = 
 /** User that logs in with username / password */
 {
@@ -1359,8 +1397,8 @@ export interface Variable {
 }
 export type CreateVariableResponse = Variable;
 export type DeleteApiKeyForServiceUserResponse = NoData;
-export type DeleteDockerRegistryAccountResponse = DockerRegistryAccount;
 export type DeleteGitProviderAccountResponse = GitProviderAccount;
+export type DeleteImageRegistryAccountResponse = ImageRegistryAccount;
 /**
  * An public key used to authenticate new Periphery -> Core connections
  * to join Komodo as a newly created Server.
@@ -1453,6 +1491,11 @@ export interface DeploymentConfig {
      * swarm_id overrides server_id and the Deployment will be in Swarm mode.
      */
     server_id?: string;
+    /**
+     * Specify a custom container / service name,
+     * if different from Deployment name.
+     */
+    custom_name?: string;
     /**
      * The image which the deployment deploys.
      * Can either be a user inputted image, or a Komodo Build.
@@ -1550,6 +1593,12 @@ export interface DeploymentInfo {
      * This includes both the image name / tag, and the specific digest hash.
      */
     latest_image_digest?: ImageDigest;
+    /**
+     * The container / service name used at the time of the last deploy.
+     * Kept to match the Deployment to its container / service
+     * even if the name configuration changes before the next deploy.
+     */
+    deployed_name?: string;
 }
 export type Deployment = Resource<DeploymentConfig, DeploymentInfo>;
 /**
@@ -1591,14 +1640,24 @@ export interface DeploymentListItemInfo {
     state: DeploymentState;
     /** The status of the docker container (eg. up 12 hours, exited 5 minutes ago.) */
     status?: string;
+    /**
+     * The container / service name, if different than
+     * the deployment name. Uses the currently deployed name
+     * if deployed, else the configured custom name.
+     */
+    custom_name: string;
     /** The image attached to the deployment. */
     image: string;
     /** Whether there is a newer image available at the same tag. */
     update_available: boolean;
     /** The swarm that deployment is deployed on, when in Swarm mode. */
     swarm_id: string;
+    /** The name of the swarm that deployment is deployed on, when in Swarm mode. */
+    swarm_name?: string;
     /** The server that deployment is deployed on, when in Server mode. */
     server_id: string;
+    /** The name of the server that deployment is deployed on, when in Server mode. */
+    server_name?: string;
     /** An attached Komodo Build, if it exists. */
     build_id?: string;
 }
@@ -1611,6 +1670,12 @@ export interface DeploymentQuerySpecifics {
      */
     server_ids?: string[];
     /**
+     * Query only for Deployments on these Swarms.
+     * If empty, does not filter by Swarm.
+     * Only accepts Swarm id (not name).
+     */
+    swarm_ids?: string[];
+    /**
      * Query only for Deployments with these Builds attached.
      * If empty, does not filter by Build.
      * Only accepts Build id (not name).
@@ -1618,6 +1683,11 @@ export interface DeploymentQuerySpecifics {
     build_ids?: string[];
     /** Query only for Deployments with available image updates. */
     update_available?: boolean;
+    /**
+     * Query only for Deployments matching these states.
+     * If empty, does not filter by state.
+     */
+    states?: DeploymentState[];
 }
 export type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
 /** Response containing pretty formatted toml contents. */
@@ -2049,8 +2119,8 @@ export interface ContainerStats {
     pids: string;
 }
 export type GetDeploymentStatsResponse = ContainerStats;
-export type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 export type GetGitProviderAccountResponse = GitProviderAccount;
+export type GetImageRegistryAccountResponse = ImageRegistryAccount;
 export declare enum Timelength {
     /** `1-sec` */
     OneSecond = "1-sec",
@@ -2407,15 +2477,17 @@ export interface ServerActionState {
     /** Server currently pruning system */
     pruning_system: boolean;
     /** Server currently starting containers. */
-    starting_containers: boolean;
+    starting_containers: number;
     /** Server currently restarting containers. */
-    restarting_containers: boolean;
+    restarting_containers: number;
     /** Server currently pausing containers. */
-    pausing_containers: boolean;
+    pausing_containers: number;
     /** Server currently unpausing containers. */
-    unpausing_containers: boolean;
+    unpausing_containers: number;
     /** Server currently stopping containers. */
-    stopping_containers: boolean;
+    stopping_containers: number;
+    /** Server currently destroying containers. */
+    destroying_containers: number;
 }
 export type GetServerActionStateResponse = ServerActionState;
 /** Server configuration. */
@@ -2922,10 +2994,14 @@ export interface SystemInformation {
     kernel?: string;
     /** Physical core count */
     core_count?: number;
+    /** Logical core count. */
+    logical_core_count?: number;
     /** System hostname based off DNS */
     host_name?: string;
     /** The CPU's brand */
-    cpu_brand: string;
+    cpu_brand?: string;
+    /** CPU architecture (eg. x86_64, aarch64, arm64) */
+    cpu_arch?: string;
 }
 export type GetSystemInformationResponse = SystemInformation;
 export interface SystemLoadAverage {
@@ -2960,10 +3036,33 @@ export interface SystemStats {
      * It may be different than mem_total_gb - mem_used_gb.
      */
     mem_free_gb?: number;
-    /** Used memory in GB. 'Total' - 'Available' (not free) memory. */
+    /**
+     * Used memory in GB. 'Total' - 'Available' (not free) memory,
+     * with the (reclaimable) ZFS ARC cache subtracted out.
+     */
     mem_used_gb: number;
     /** Total memory in GB */
     mem_total_gb: number;
+    /**
+     * [2.3.0+]
+     * Reclaimable page cache + buffers in GB.
+     */
+    mem_buff_cache_gb?: number;
+    /**
+     * [2.3.0+]
+     * ZFS ARC cache in GB. 0 when ZFS is not present.
+     */
+    mem_zfs_arc_gb?: number;
+    /**
+     * [2.3.0+]
+     * Total swap in GB.
+     */
+    swap_total_gb?: number;
+    /**
+     * [2.3.0+]
+     * Used swap in GB.
+     */
+    swap_used_gb?: number;
     /** Breakdown of individual disks, ie their usages, sizes, and mount points */
     disks: SingleDiskUsage[];
     /** Network ingress usage in MB */
@@ -3079,11 +3178,11 @@ export type GetVariableResponse = Variable;
 export declare enum ContainerStateStatusEnum {
     Running = "running",
     Created = "created",
-    Paused = "paused",
     Restarting = "restarting",
-    Exited = "exited",
     Stopping = "stopping",
     Removing = "removing",
+    Paused = "paused",
+    Exited = "exited",
     Dead = "dead",
     Empty = ""
 }
@@ -3593,6 +3692,7 @@ export interface Container {
     Config?: ContainerConfig;
     NetworkSettings?: NetworkSettings;
 }
+export type InspectContainerResponse = Container;
 export type InspectDeploymentContainerResponse = Container;
 /** The service mode. */
 export declare enum SwarmServiceMode {
@@ -4097,7 +4197,6 @@ export interface SwarmService {
     JobStatus?: ServiceJobStatus;
 }
 export type InspectDeploymentSwarmServiceResponse = SwarmService;
-export type InspectDockerContainerResponse = Container;
 /** Describes the platform which the image in the manifest runs on, as defined in the [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md). */
 export interface OciPlatform {
     /** The CPU architecture, for example `amd64` or `ppc64`. */
@@ -4242,7 +4341,7 @@ export interface Image {
     RootFS?: ImageInspectRootFs;
     Metadata?: ImageInspectMetadata;
 }
-export type InspectDockerImageResponse = Image;
+export type InspectImageResponse = Image;
 export interface IpamConfig {
     Subnet?: string;
     IPRange?: string;
@@ -4282,140 +4381,7 @@ export interface Network {
     Options?: Record<string, string>;
     Labels?: Record<string, string>;
 }
-export type InspectDockerNetworkResponse = Network;
-export declare enum VolumeScopeEnum {
-    Empty = "",
-    Local = "local",
-    Global = "global"
-}
-export declare enum ClusterVolumeSpecAccessModeScopeEnum {
-    Empty = "",
-    Single = "single",
-    Multi = "multi"
-}
-export declare enum ClusterVolumeSpecAccessModeSharingEnum {
-    Empty = "",
-    None = "none",
-    Readonly = "readonly",
-    Onewriter = "onewriter",
-    All = "all"
-}
-/** One cluster volume secret entry. Defines a key-value pair that is passed to the plugin. */
-export interface ClusterVolumeSpecAccessModeSecrets {
-    /** Key is the name of the key of the key-value pair passed to the plugin. */
-    Key?: string;
-    /** Secret is the swarm Secret object from which to read data. This can be a Secret name or ID. The Secret data is retrieved by swarm and used as the value of the key-value pair passed to the plugin. */
-    Secret?: string;
-}
-/** A map of topological domains to topological segments. For in depth details, see documentation for the Topology object in the CSI specification. */
-export interface Topology {
-    Segments?: Record<string, string>;
-}
-/** Requirements for the accessible topology of the volume. These fields are optional. For an in-depth description of what these fields mean, see the CSI specification. */
-export interface ClusterVolumeSpecAccessModeAccessibilityRequirements {
-    /** A list of required topologies, at least one of which the volume must be accessible from. */
-    Requisite?: Topology[];
-    /** A list of topologies that the volume should attempt to be provisioned in. */
-    Preferred?: Topology[];
-}
-/** The desired capacity that the volume should be created with. If empty, the plugin will decide the capacity. */
-export interface ClusterVolumeSpecAccessModeCapacityRange {
-    /** The volume must be at least this big. The value of 0 indicates an unspecified minimum */
-    RequiredBytes?: I64;
-    /** The volume must not be bigger than this. The value of 0 indicates an unspecified maximum. */
-    LimitBytes?: I64;
-}
-export declare enum ClusterVolumeSpecAccessModeAvailabilityEnum {
-    Empty = "",
-    Active = "active",
-    Pause = "pause",
-    Drain = "drain"
-}
-/** Defines how the volume is used by tasks. */
-export interface ClusterVolumeSpecAccessMode {
-    /** The set of nodes this volume can be used on at one time. - `single` The volume may only be scheduled to one node at a time. - `multi` the volume may be scheduled to any supported number of nodes at a time. */
-    Scope?: ClusterVolumeSpecAccessModeScopeEnum;
-    /** The number and way that different tasks can use this volume at one time. - `none` The volume may only be used by one task at a time. - `readonly` The volume may be used by any number of tasks, but they all must mount the volume as readonly - `onewriter` The volume may be used by any number of tasks, but only one may mount it as read/write. - `all` The volume may have any number of readers and writers. */
-    Sharing?: ClusterVolumeSpecAccessModeSharingEnum;
-    /** Swarm Secrets that are passed to the CSI storage plugin when operating on this volume. */
-    Secrets?: ClusterVolumeSpecAccessModeSecrets[];
-    AccessibilityRequirements?: ClusterVolumeSpecAccessModeAccessibilityRequirements;
-    CapacityRange?: ClusterVolumeSpecAccessModeCapacityRange;
-    /** The availability of the volume for use in tasks. - `active` The volume is fully available for scheduling on the cluster - `pause` No new workloads should use the volume, but existing workloads are not stopped. - `drain` All workloads using this volume should be stopped and rescheduled, and no new ones should be started. */
-    Availability?: ClusterVolumeSpecAccessModeAvailabilityEnum;
-}
-/** Cluster-specific options used to create the volume. */
-export interface ClusterVolumeSpec {
-    /** Group defines the volume group of this volume. Volumes belonging to the same group can be referred to by group name when creating Services.  Referring to a volume by group instructs Swarm to treat volumes in that group interchangeably for the purpose of scheduling. Volumes with an empty string for a group technically all belong to the same, emptystring group. */
-    Group?: string;
-    AccessMode?: ClusterVolumeSpecAccessMode;
-}
-/** Information about the global status of the volume. */
-export interface ClusterVolumeInfo {
-    /** The capacity of the volume in bytes. A value of 0 indicates that the capacity is unknown. */
-    CapacityBytes?: I64;
-    /** A map of strings to strings returned from the storage plugin when the volume is created. */
-    VolumeContext?: Record<string, string>;
-    /** The ID of the volume as returned by the CSI storage plugin. This is distinct from the volume's ID as provided by Docker. This ID is never used by the user when communicating with Docker to refer to this volume. If the ID is blank, then the Volume has not been successfully created in the plugin yet. */
-    VolumeID?: string;
-    /** The topology this volume is actually accessible from. */
-    AccessibleTopology?: Topology[];
-}
-export declare enum ClusterVolumePublishStatusStateEnum {
-    Empty = "",
-    PendingPublish = "pending-publish",
-    Published = "published",
-    PendingNodeUnpublish = "pending-node-unpublish",
-    PendingControllerUnpublish = "pending-controller-unpublish"
-}
-export interface ClusterVolumePublishStatus {
-    /** The ID of the Swarm node the volume is published on. */
-    NodeID?: string;
-    /** The published state of the volume. * `pending-publish` The volume should be published to this node, but the call to the controller plugin to do so has not yet been successfully completed. * `published` The volume is published successfully to the node. * `pending-node-unpublish` The volume should be unpublished from the node, and the manager is awaiting confirmation from the worker that it has done so. * `pending-controller-unpublish` The volume is successfully unpublished from the node, but has not yet been successfully unpublished on the controller. */
-    State?: ClusterVolumePublishStatusStateEnum;
-    /** A map of strings to strings returned by the CSI controller plugin when a volume is published. */
-    PublishContext?: Record<string, string>;
-}
-/** Options and information specific to, and only present on, Swarm CSI cluster volumes. */
-export interface ClusterVolume {
-    /** The Swarm ID of this volume. Because cluster volumes are Swarm objects, they have an ID, unlike non-cluster volumes. This ID can be used to refer to the Volume instead of the name. */
-    ID?: string;
-    Version?: ObjectVersion;
-    CreatedAt?: string;
-    UpdatedAt?: string;
-    Spec?: ClusterVolumeSpec;
-    Info?: ClusterVolumeInfo;
-    /** The status of the volume as it pertains to its publishing and use on specific nodes */
-    PublishStatus?: ClusterVolumePublishStatus[];
-}
-/** Usage details about the volume. This information is used by the `GET /system/df` endpoint, and omitted in other endpoints. */
-export interface VolumeUsageData {
-    /** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
-    Size: I64;
-    /** The number of containers referencing this volume. This field is set to `-1` if the reference-count is not available. */
-    RefCount: I64;
-}
-export interface Volume {
-    /** Name of the volume. */
-    Name: string;
-    /** Name of the volume driver used by the volume. */
-    Driver: string;
-    /** Mount path of the volume on the host. */
-    Mountpoint: string;
-    /** Date/Time the volume was created. */
-    CreatedAt?: string;
-    /** Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. */
-    Status?: string[];
-    /** User-defined key/value metadata. */
-    Labels?: Record<string, string>;
-    /** The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level. */
-    Scope?: VolumeScopeEnum;
-    ClusterVolume?: ClusterVolume;
-    /** The driver specific options used when creating the volume. */
-    Options?: Record<string, string>;
-    UsageData?: VolumeUsageData;
-}
-export type InspectDockerVolumeResponse = Volume;
+export type InspectNetworkResponse = Network;
 export type InspectStackContainerResponse = Container;
 /** Swarm service list item. */
 export interface SwarmServiceListItem {
@@ -4842,6 +4808,139 @@ export interface SwarmTask {
     JobIteration?: ObjectVersion;
 }
 export type InspectSwarmTaskResponse = SwarmTask;
+export declare enum VolumeScopeEnum {
+    Empty = "",
+    Local = "local",
+    Global = "global"
+}
+export declare enum ClusterVolumeSpecAccessModeScopeEnum {
+    Empty = "",
+    Single = "single",
+    Multi = "multi"
+}
+export declare enum ClusterVolumeSpecAccessModeSharingEnum {
+    Empty = "",
+    None = "none",
+    Readonly = "readonly",
+    Onewriter = "onewriter",
+    All = "all"
+}
+/** One cluster volume secret entry. Defines a key-value pair that is passed to the plugin. */
+export interface ClusterVolumeSpecAccessModeSecrets {
+    /** Key is the name of the key of the key-value pair passed to the plugin. */
+    Key?: string;
+    /** Secret is the swarm Secret object from which to read data. This can be a Secret name or ID. The Secret data is retrieved by swarm and used as the value of the key-value pair passed to the plugin. */
+    Secret?: string;
+}
+/** A map of topological domains to topological segments. For in depth details, see documentation for the Topology object in the CSI specification. */
+export interface Topology {
+    Segments?: Record<string, string>;
+}
+/** Requirements for the accessible topology of the volume. These fields are optional. For an in-depth description of what these fields mean, see the CSI specification. */
+export interface ClusterVolumeSpecAccessModeAccessibilityRequirements {
+    /** A list of required topologies, at least one of which the volume must be accessible from. */
+    Requisite?: Topology[];
+    /** A list of topologies that the volume should attempt to be provisioned in. */
+    Preferred?: Topology[];
+}
+/** The desired capacity that the volume should be created with. If empty, the plugin will decide the capacity. */
+export interface ClusterVolumeSpecAccessModeCapacityRange {
+    /** The volume must be at least this big. The value of 0 indicates an unspecified minimum */
+    RequiredBytes?: I64;
+    /** The volume must not be bigger than this. The value of 0 indicates an unspecified maximum. */
+    LimitBytes?: I64;
+}
+export declare enum ClusterVolumeSpecAccessModeAvailabilityEnum {
+    Empty = "",
+    Active = "active",
+    Pause = "pause",
+    Drain = "drain"
+}
+/** Defines how the volume is used by tasks. */
+export interface ClusterVolumeSpecAccessMode {
+    /** The set of nodes this volume can be used on at one time. - `single` The volume may only be scheduled to one node at a time. - `multi` the volume may be scheduled to any supported number of nodes at a time. */
+    Scope?: ClusterVolumeSpecAccessModeScopeEnum;
+    /** The number and way that different tasks can use this volume at one time. - `none` The volume may only be used by one task at a time. - `readonly` The volume may be used by any number of tasks, but they all must mount the volume as readonly - `onewriter` The volume may be used by any number of tasks, but only one may mount it as read/write. - `all` The volume may have any number of readers and writers. */
+    Sharing?: ClusterVolumeSpecAccessModeSharingEnum;
+    /** Swarm Secrets that are passed to the CSI storage plugin when operating on this volume. */
+    Secrets?: ClusterVolumeSpecAccessModeSecrets[];
+    AccessibilityRequirements?: ClusterVolumeSpecAccessModeAccessibilityRequirements;
+    CapacityRange?: ClusterVolumeSpecAccessModeCapacityRange;
+    /** The availability of the volume for use in tasks. - `active` The volume is fully available for scheduling on the cluster - `pause` No new workloads should use the volume, but existing workloads are not stopped. - `drain` All workloads using this volume should be stopped and rescheduled, and no new ones should be started. */
+    Availability?: ClusterVolumeSpecAccessModeAvailabilityEnum;
+}
+/** Cluster-specific options used to create the volume. */
+export interface ClusterVolumeSpec {
+    /** Group defines the volume group of this volume. Volumes belonging to the same group can be referred to by group name when creating Services.  Referring to a volume by group instructs Swarm to treat volumes in that group interchangeably for the purpose of scheduling. Volumes with an empty string for a group technically all belong to the same, emptystring group. */
+    Group?: string;
+    AccessMode?: ClusterVolumeSpecAccessMode;
+}
+/** Information about the global status of the volume. */
+export interface ClusterVolumeInfo {
+    /** The capacity of the volume in bytes. A value of 0 indicates that the capacity is unknown. */
+    CapacityBytes?: I64;
+    /** A map of strings to strings returned from the storage plugin when the volume is created. */
+    VolumeContext?: Record<string, string>;
+    /** The ID of the volume as returned by the CSI storage plugin. This is distinct from the volume's ID as provided by Docker. This ID is never used by the user when communicating with Docker to refer to this volume. If the ID is blank, then the Volume has not been successfully created in the plugin yet. */
+    VolumeID?: string;
+    /** The topology this volume is actually accessible from. */
+    AccessibleTopology?: Topology[];
+}
+export declare enum ClusterVolumePublishStatusStateEnum {
+    Empty = "",
+    PendingPublish = "pending-publish",
+    Published = "published",
+    PendingNodeUnpublish = "pending-node-unpublish",
+    PendingControllerUnpublish = "pending-controller-unpublish"
+}
+export interface ClusterVolumePublishStatus {
+    /** The ID of the Swarm node the volume is published on. */
+    NodeID?: string;
+    /** The published state of the volume. * `pending-publish` The volume should be published to this node, but the call to the controller plugin to do so has not yet been successfully completed. * `published` The volume is published successfully to the node. * `pending-node-unpublish` The volume should be unpublished from the node, and the manager is awaiting confirmation from the worker that it has done so. * `pending-controller-unpublish` The volume is successfully unpublished from the node, but has not yet been successfully unpublished on the controller. */
+    State?: ClusterVolumePublishStatusStateEnum;
+    /** A map of strings to strings returned by the CSI controller plugin when a volume is published. */
+    PublishContext?: Record<string, string>;
+}
+/** Options and information specific to, and only present on, Swarm CSI cluster volumes. */
+export interface ClusterVolume {
+    /** The Swarm ID of this volume. Because cluster volumes are Swarm objects, they have an ID, unlike non-cluster volumes. This ID can be used to refer to the Volume instead of the name. */
+    ID?: string;
+    Version?: ObjectVersion;
+    CreatedAt?: string;
+    UpdatedAt?: string;
+    Spec?: ClusterVolumeSpec;
+    Info?: ClusterVolumeInfo;
+    /** The status of the volume as it pertains to its publishing and use on specific nodes */
+    PublishStatus?: ClusterVolumePublishStatus[];
+}
+/** Usage details about the volume. This information is used by the `GET /system/df` endpoint, and omitted in other endpoints. */
+export interface VolumeUsageData {
+    /** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
+    Size: I64;
+    /** The number of containers referencing this volume. This field is set to `-1` if the reference-count is not available. */
+    RefCount: I64;
+}
+export interface Volume {
+    /** Name of the volume. */
+    Name: string;
+    /** Name of the volume driver used by the volume. */
+    Driver: string;
+    /** Mount path of the volume on the host. */
+    Mountpoint: string;
+    /** Date/Time the volume was created. */
+    CreatedAt?: string;
+    /** Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. */
+    Status?: string[];
+    /** User-defined key/value metadata. */
+    Labels?: Record<string, string>;
+    /** The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level. */
+    Scope?: VolumeScopeEnum;
+    ClusterVolume?: ClusterVolume;
+    /** The driver specific options used when creating the volume. */
+    Options?: Record<string, string>;
+    UsageData?: VolumeUsageData;
+}
+export type InspectVolumeResponse = Volume;
 export type JsonObject = any;
 export type ListActionsResponse = ActionListItem[];
 export type ListAlertersResponse = AlerterListItem[];
@@ -4865,6 +4964,8 @@ export interface Port {
 export interface ContainerListItem {
     /** The Server which hosts the container. */
     server_id?: string;
+    /** The name of the Server which hosts the container. */
+    server_name?: string;
     /** The first name in Names, not including the initial '/' */
     name: string;
     /** The ID of this container */
@@ -4900,7 +5001,57 @@ export interface ContainerListItem {
      */
     labels?: Record<string, string>;
 }
-export type ListAllDockerContainersResponse = ContainerListItem[];
+export type ListAllContainersResponse = ContainerListItem[];
+/**
+ * Combined state options for
+ * both Server and Swarm based Stacks.
+ */
+export declare enum StackServiceState {
+    /** (Swarm) All tasks OK */
+    Healthy = "Healthy",
+    /** (Swarm) Some tasks don't match desired state */
+    Unhealthy = "Unhealthy",
+    /** (Swarm) All tasks down. */
+    Down = "Down",
+    /** (Container) Container is running */
+    Running = "Running",
+    /** (Container) Container is created */
+    Created = "Created",
+    /** (Container) Container is paused */
+    Paused = "Paused",
+    /** (Container) Container is restarting */
+    Restarting = "Restarting",
+    /** (Container) Container is exited */
+    Exited = "Exited",
+    /** (Container) Container is stopping */
+    Stopping = "Stopping",
+    /** (Container) Container is removing */
+    Removing = "Removing",
+    /** (Container) Container is dead */
+    Dead = "Dead",
+    /** Unknown case */
+    Unknown = "Unknown"
+}
+/** A stack service, whether server or swarm based. */
+export interface StackService {
+    /** The stack which the service is a part of. */
+    stack_id: string;
+    /** The name of the stack which the service is a part of. */
+    stack_name?: string;
+    /** The service name */
+    service: string;
+    /** The service image */
+    image: string;
+    /** The container (Server mode) */
+    container?: ContainerListItem;
+    /** The service (Swarm mode) */
+    swarm_service?: SwarmServiceListItem;
+    /** The service state */
+    state: StackServiceState;
+    /** The service image digests */
+    image_digests?: ImageDigest[];
+}
+export type ListAllStackServicesResponse = StackService[];
 /** An api key used to authenticate requests via request headers. */
 export interface ApiKey {
     /** Unique key associated with secret */
@@ -4938,8 +5089,35 @@ export interface ComposeProject {
     compose_files: string[];
 }
 export type ListComposeProjectsResponse = ComposeProject[];
+export type ListContainersResponse = ContainerListItem[];
 export type ListDeploymentsResponse = DeploymentListItem[];
-export type ListDockerContainersResponse = ContainerListItem[];
+export type ListFullActionsResponse = Action[];
+export type ListFullAlertersResponse = Alerter[];
+export type ListFullBuildersResponse = Builder[];
+export type ListFullBuildsResponse = Build[];
+export type ListFullDeploymentsResponse = Deployment[];
+export type ListFullProceduresResponse = Procedure[];
+export type ListFullReposResponse = Repo[];
+export type ListFullResourceSyncsResponse = ResourceSync[];
+export type ListFullServersResponse = Server[];
+export type ListFullStacksResponse = Stack[];
+export type ListFullSwarmsResponse = Swarm[];
+export type ListGitProviderAccountsResponse = GitProviderAccount[];
+export interface ProviderAccount {
+    /** The account username. Required. */
+    username: string;
+    /** The account access token. Required. */
+    token?: string;
+}
+export interface GitProvider {
+    /** The git provider domain. Default: `github.com`. */
+    domain: string;
+    /** Whether to use https. Default: true. */
+    https: boolean;
+    /** The accounts on the git provider. Required. */
+    accounts: ProviderAccount[];
+}
+export type ListGitProvidersFromConfigResponse = GitProvider[];
 /** individual image layer information in response to ImageHistory operation */
 export interface ImageHistoryResponseItem {
     Id: string;
@@ -4949,7 +5127,20 @@ export interface ImageHistoryResponseItem {
     Size: I64;
     Comment: string;
 }
-export type ListDockerImageHistoryResponse = ImageHistoryResponseItem[];
+export type ListImageHistoryResponse = ImageHistoryResponseItem[];
+export interface ImageRegistry {
+    /** The image provider domain. Default: `docker.io`. */
+    domain: string;
+    /** The accounts on the registry. Required. */
+    accounts: ProviderAccount[];
+    /**
+     * Available organizations on the registry provider.
+     * Used to push an image under an organization's repo rather than an account's repo.
+     */
+    organizations?: string[];
+}
+export type ListImageRegistriesFromConfigResponse = ImageRegistry[];
+export type ListImageRegistryAccountsResponse = ImageRegistryAccount[];
 export interface ImageListItem {
     /**
      * ID is the content-addressable ID of an image.
@@ -4976,7 +5167,7 @@ export interface ImageListItem {
     /** Whether the image is in use by any container */
     in_use: boolean;
 }
-export type ListDockerImagesResponse = ImageListItem[];
+export type ListImagesResponse = ImageListItem[];
 export interface NetworkListItem {
     name?: string;
     id?: string;
@@ -4993,60 +5184,7 @@ export interface NetworkListItem {
     /** Whether the network is attached to one or more containers */
     in_use: boolean;
 }
-export type ListDockerNetworksResponse = NetworkListItem[];
-export interface ProviderAccount {
-    /** The account username. Required. */
-    username: string;
-    /** The account access token. Required. */
-    token?: string;
-}
-export interface DockerRegistry {
-    /** The docker provider domain. Default: `docker.io`. */
-    domain: string;
-    /** The accounts on the registry. Required. */
-    accounts: ProviderAccount[];
-    /**
-     * Available organizations on the registry provider.
-     * Used to push an image under an organization's repo rather than an account's repo.
-     */
-    organizations?: string[];
-}
-export type ListDockerRegistriesFromConfigResponse = DockerRegistry[];
-export type ListDockerRegistryAccountsResponse = DockerRegistryAccount[];
-export interface VolumeListItem {
-    /** The name of the volume */
-    name: string;
-    driver: string;
-    mountpoint: string;
-    created?: string;
-    scope: VolumeScopeEnum;
-    /** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
-    size?: I64;
-    /** Whether the volume is currently attached to any container */
-    in_use: boolean;
-}
-export type ListDockerVolumesResponse = VolumeListItem[];
-export type ListFullActionsResponse = Action[];
-export type ListFullAlertersResponse = Alerter[];
-export type ListFullBuildersResponse = Builder[];
-export type ListFullBuildsResponse = Build[];
-export type ListFullDeploymentsResponse = Deployment[];
-export type ListFullProceduresResponse = Procedure[];
-export type ListFullReposResponse = Repo[];
-export type ListFullResourceSyncsResponse = ResourceSync[];
-export type ListFullServersResponse = Server[];
-export type ListFullStacksResponse = Stack[];
-export type ListFullSwarmsResponse = Swarm[];
-export type ListGitProviderAccountsResponse = GitProviderAccount[];
-export interface GitProvider {
-    /** The git provider domain. Default: `github.com`. */
-    domain: string;
-    /** Whether to use https. Default: true. */
-    https: boolean;
-    /** The accounts on the git provider. Required. */
-    accounts: ProviderAccount[];
-}
-export type ListGitProvidersFromConfigResponse = GitProvider[];
+export type ListNetworksResponse = NetworkListItem[];
 export type ListOnboardingKeysResponse = OnboardingKey[];
 export type UserTarget = 
 /** User Id */
@@ -5104,22 +5242,24 @@ export interface ProcedureListItemInfo {
 export type ProcedureListItem = ResourceListItem<ProcedureListItemInfo>;
 export type ListProceduresResponse = ProcedureListItem[];
 export declare enum RepoState {
-    /** Unknown case */
-    Unknown = "Unknown",
-    /** Last clone / pull successful (or never cloned) */
-    Ok = "Ok",
-    /** Last clone / pull failed */
-    Failed = "Failed",
     /** Currently cloning */
     Cloning = "Cloning",
     /** Currently pulling */
     Pulling = "Pulling",
     /** Currently building */
-    Building = "Building"
+    Building = "Building",
+    /** Last clone / pull successful (or never cloned) */
+    Ok = "Ok",
+    /** Last clone / pull failed */
+    Failed = "Failed",
+    /** Unknown case */
+    Unknown = "Unknown"
 }
 export interface RepoListItemInfo {
     /** The server that repo sits on. */
     server_id: string;
+    /** The name of the server that repo sits on. */
+    server_name?: string;
     /** The builder that builds the repo. */
     builder_id: string;
     /** Repo last cloned / pulled timestamp in ms. */
@@ -5172,6 +5312,8 @@ export interface ResourceSyncListItemInfo {
     resource_path: string[];
     /** Linked repo, if one is attached. */
     linked_repo: string;
+    /** The name of the linked repo, if one is attached. */
+    linked_repo_name?: string;
     /** The git provider domain. */
     git_provider: string;
     /** The Github repo used as the source of the sync resources */
@@ -5230,6 +5372,62 @@ export interface __Serror {
     trace: string[];
 }
 export type _Serror = __Serror;
+/** Realtime minimal system stats data (zero allocation) */
+export interface MinimalSystemStats {
+    /** Cpu usage percentage */
+    cpu_perc: number;
+    /** Load average (1m, 5m, 15m) */
+    load_average: SystemLoadAverage;
+    /**
+     * This is really the 'Free' memory, not the 'Available' memory.
+     * It may be different than mem_total_gb - mem_used_gb.
+     */
+    mem_free_gb: number;
+    /**
+     * Used memory in GB. 'Total' - 'Available' (not free) memory,
+     * with the (reclaimable) ZFS ARC cache subtracted out.
+     */
+    mem_used_gb: number;
+    /** Total memory in GB */
+    mem_total_gb: number;
+    /** Reclaimable page cache + buffers in GB. */
+    mem_buff_cache_gb: number;
+    /** ZFS ARC cache in GB. 0 when ZFS is not present. */
+    mem_zfs_arc_gb: number;
+    /** Total swap in GB. */
+    swap_total_gb: number;
+    /** Used swap in GB. */
+    swap_used_gb: number;
+    /** Total size of all disks combined in GB */
+    disk_total_gb: number;
+    /** Used portion of all disks combined in GB */
+    disk_used_gb: number;
+    /** Network ingress usage in MB */
+    network_ingress_bytes: number;
+    /** Network egress usage in MB */
+    network_egress_bytes: number;
+    /** The rate the system stats are being polled from the system */
+    polling_rate: Timelength;
+    /** Unix timestamp in milliseconds when stats were last polled */
+    refresh_ts: I64;
+    /** Unix timestamp in milliseconds when disk list was last refreshed */
+    refresh_list_ts: I64;
+}
+/** Just the server alerting thresholds */
+export interface ServerAlertingThresholds {
+    /** The percentage threshhold which triggers WARNING state for CPU. */
+    cpu_warning: number;
+    /** The percentage threshhold which triggers CRITICAL state for CPU. */
+    cpu_critical: number;
+    /** The percentage threshhold which triggers WARNING state for MEM. */
+    mem_warning: number;
+    /** The percentage threshhold which triggers CRITICAL state for MEM. */
+    mem_critical: number;
+    /** The percentage threshhold which triggers WARNING state for DISK. */
+    disk_warning: number;
+    /** The percentage threshhold which triggers CRITICAL state for DISK. */
+    disk_critical: number;
+}
 export interface ServerListItemInfo {
     /** The server's state. */
     state: ServerState;
@@ -5238,6 +5436,14 @@ export interface ServerListItemInfo {
      * the server, message will be given here.
      */
     err?: _Serror;
+    /** System stats, if available */
+    stats?: MinimalSystemStats;
+    /** The server alerting thresholds */
+    alerting_thresholds: ServerAlertingThresholds;
+    /** The server's number of physical cores. */
+    core_count?: number;
+    /** The server's number of logical cores. */
+    logical_core_count?: number;
     /** Region of the server. */
     region: string;
     /** Address of the server, or null if empty. */
@@ -5278,18 +5484,6 @@ export interface ServerListItemInfo {
 }
 export type ServerListItem = ResourceListItem<ServerListItemInfo>;
 export type ListServersResponse = ServerListItem[];
-export interface StackService {
-    /** The service name */
-    service: string;
-    /** The service image */
-    image: string;
-    /** The container (Server mode) */
-    container?: ContainerListItem;
-    /** The service (Swarm mode) */
-    swarm_service?: SwarmServiceListItem;
-    /** The service image digests */
-    image_digests?: ImageDigest[];
-}
 export type ListStackServicesResponse = StackService[];
 export declare enum StackState {
     /** The stack is currently re/deploying */
@@ -5318,14 +5512,20 @@ export declare enum StackState {
 export interface StackListItemInfo {
     /** The swarm that stack is deployed on, when in Swarm mode. */
     swarm_id: string;
+    /** The name of the swarm that stack is deployed on, when in Swarm mode. */
+    swarm_name?: string;
     /** The server that stack is deployed on, when in Server mode. */
     server_id: string;
+    /** The name of the server that stack is deployed on, when in Server mode. */
+    server_name?: string;
     /** Whether stack is using files on host mode */
     files_on_host: boolean;
     /** Whether stack has file contents defined. */
     file_contents: boolean;
     /** Linked repo, if one is attached. */
     linked_repo: string;
+    /** The name of the linked repo, if one is attached. */
+    linked_repo_name?: string;
     /** The git provider domain */
     git_provider: string;
     /** The configured repo */
@@ -5344,6 +5544,8 @@ export interface StackListItemInfo {
      * Otherwise, its `latest_services`
      */
     services: StackServiceWithUpdate[];
+    /** Whether stack has auto_update_all_services enabled. */
+    auto_update_all_services: boolean;
     /**
      * Whether the compose project is missing on the host.
      * Ie, it does not show up in `docker compose ls`.
@@ -5522,6 +5724,11 @@ export interface Terminal {
     name: string;
     /** The target resource of the Terminal. */
     target: TerminalTarget;
+    /**
+     * The name of the target resource (Server / Stack / Deployment).
+     * Resolved by Core when listing all terminals for a user.
+     */
+    target_name?: string;
     /** The command used to init the shell. */
     command: string;
     /** The size of the terminal history in memory. */
@@ -5537,19 +5744,58 @@ export type ListUserGroupsResponse = UserGroup[];
 export type ListUserTargetPermissionsResponse = Permission[];
 export type ListUsersResponse = User[];
 export type ListVariablesResponse = Variable[];
+export interface VolumeListItem {
+    /** The name of the volume */
+    name: string;
+    driver: string;
+    mountpoint: string;
+    created?: string;
+    scope: VolumeScopeEnum;
+    /** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
+    size?: I64;
+    /** Whether the volume is currently attached to any container */
+    in_use: boolean;
+}
+export type ListVolumesResponse = VolumeListItem[];
 export type MongoDocument = any;
 export interface ProcedureQuerySpecifics {
+    /**
+     * Query only for Procedures matching these states.
+     * If empty, does not filter by state.
+     */
+    states?: ProcedureState[];
+    /**
+     * Query only for Procedures with (or without)
+     * a schedule configured.
+     */
+    scheduled?: boolean;
 }
 export type ProcedureQuery = ResourceQuery<ProcedureQuerySpecifics>;
 export type PushRecentlyViewedResponse = NoData;
 export interface RepoQuerySpecifics {
     /** Filter repos by their repo. */
-    repos: string[];
+    repos?: string[];
+    /**
+     * Query only for Repos on these Servers.
+     * If empty, does not filter by Server.
+     * Only accepts Server id (not name).
+     */
+    server_ids?: string[];
+    /**
+     * Query only for Repos matching these states.
+     * If empty, does not filter by state.
+     */
+    states?: RepoState[];
 }
 export type RepoQuery = ResourceQuery<RepoQuerySpecifics>;
 export interface ResourceSyncQuerySpecifics {
     /** Filter syncs by their repo. */
-    repos: string[];
+    repos?: string[];
+    /**
+     * Query only for Builds with these linked repos.
+     * Only accepts Repo id (not name).
+     */
+    linked_repos?: string[];
 }
 export type ResourceSyncQuery = ResourceQuery<ResourceSyncQuerySpecifics>;
 export type SearchContainerLogResponse = Log;
@@ -5557,6 +5803,11 @@ export type SearchDeploymentLogResponse = Log;
 export type SearchStackLogResponse = Log;
 export type SearchSwarmServiceLogResponse = Log;
 export interface ServerQuerySpecifics {
+    /**
+     * Query only for Servers matching these states.
+     * If empty, does not filter by state.
+     */
+    states?: ServerState[];
 }
 /** Server-specific query */
 export type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
@@ -5569,6 +5820,12 @@ export interface StackQuerySpecifics {
      */
     server_ids?: string[];
     /**
+     * Query only for Stacks on these Swarms.
+     * If empty, does not filter by Swarm.
+     * Only accepts Swarm id (not name).
+     */
+    swarm_ids?: string[];
+    /**
      * Query only for Stacks with these linked repos.
      * Only accepts Repo id (not name).
      */
@@ -5577,6 +5834,11 @@ export interface StackQuerySpecifics {
     repos?: string[];
     /** Query only for Stack with available image updates. */
     update_available?: boolean;
+    /**
+     * Query only for Stacks matching these states.
+     * If empty, does not filter by state.
+     */
+    states?: StackState[];
 }
 export type StackQuery = ResourceQuery<StackQuerySpecifics>;
 export interface SwarmQuerySpecifics {
@@ -5584,8 +5846,8 @@ export interface SwarmQuerySpecifics {
     servers: string[];
 }
 export type SwarmQuery = ResourceQuery<SwarmQuerySpecifics>;
-export type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 export type UpdateGitProviderAccountResponse = GitProviderAccount;
+export type UpdateImageRegistryAccountResponse = ImageRegistryAccount;
 export type UpdateOnboardingKeyResponse = OnboardingKey;
 export type UpdatePermissionOnResourceTypeResponse = NoData;
 export type UpdatePermissionOnTargetResponse = NoData;
@@ -5603,8 +5865,8 @@ export type _PartialAwsBuilderConfig = Partial<AwsBuilderConfig>;
 export type _PartialBuildConfig = Partial<BuildConfig>;
 export type _PartialBuilderConfig = Partial<BuilderConfig>;
 export type _PartialDeploymentConfig = Partial<DeploymentConfig>;
-export type _PartialDockerRegistryAccount = Partial<DockerRegistryAccount>;
 export type _PartialGitProviderAccount = Partial<GitProviderAccount>;
+export type _PartialImageRegistryAccount = Partial<ImageRegistryAccount>;
 export type _PartialProcedureConfig = Partial<ProcedureConfig>;
 export type _PartialRepoConfig = Partial<RepoConfig>;
 export type _PartialResourceSyncConfig = Partial<ResourceSyncConfig>;
@@ -5671,8 +5933,12 @@ export interface AwsBuilderConfig {
     insecure_tls: boolean;
     /** Which git providers are available on the AMI */
     git_providers?: GitProvider[];
-    /** Which docker registries are available on the AMI. */
-    docker_registries?: DockerRegistry[];
+    /**
+     * Which image registries are available on the AMI.
+     *
+     * Pre v2.3.0, called `docker_registries`
+     */
+    image_registries?: ImageRegistry[];
     /** Which secrets are available on the AMI. */
     secrets?: string[];
 }
@@ -5703,6 +5969,11 @@ export interface BatchBuildRepo {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Checks for newer image than what is deployed. Response: [BatchCheckDeploymentForUpdateResponse] */
 export interface BatchCheckDeploymentForUpdate {
@@ -5719,6 +5990,11 @@ export interface BatchCheckDeploymentForUpdate {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
     /**
      * Normally resources with 'auto_update' will be
      * redeployed immediately if updates are found.
@@ -5747,6 +6023,11 @@ export interface BatchCheckStackForUpdate {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
     /**
      * Normally resources with 'auto_update' will be
      * redeployed immediately if updates are found.
@@ -5780,6 +6061,11 @@ export interface BatchCloneRepo {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /**
  * Delete all terminals on many or all Servers.
@@ -5804,6 +6090,11 @@ export interface BatchDeploy {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Deploys multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchDeployStack {
@@ -5820,6 +6111,11 @@ export interface BatchDeployStack {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Deploys multiple Stacks if changed in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchDeployStackIfChanged {
@@ -5836,6 +6132,11 @@ export interface BatchDeployStackIfChanged {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Destroys multiple Deployments in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchDestroyDeployment {
@@ -5852,6 +6153,11 @@ export interface BatchDestroyDeployment {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Destroys multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchDestroyStack {
@@ -5868,6 +6174,11 @@ export interface BatchDestroyStack {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 export interface BatchExecutionResponseItemErr {
     name: string;
@@ -5888,6 +6199,11 @@ export interface BatchPullRepo {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Pulls multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchPullStack {
@@ -5904,6 +6220,11 @@ export interface BatchPullStack {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Runs multiple Actions in parallel that match pattern. Response: [BatchExecutionResponse] */
 export interface BatchRunAction {
@@ -5920,6 +6241,11 @@ export interface BatchRunAction {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Runs multiple builds in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchRunBuild {
@@ -5936,6 +6262,11 @@ export interface BatchRunBuild {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /** Runs multiple Procedures in parallel that match pattern. Response: [BatchExecutionResponse]. */
 export interface BatchRunProcedure {
@@ -5952,6 +6283,11 @@ export interface BatchRunProcedure {
      * ```
      */
     pattern: string;
+    /**
+     * Filter matches by tag.
+     * If empty, skips tag filtering.
+     */
+    tags?: string[];
 }
 /**
  * Builds the target repo, using the attached builder. Response: [Update].
@@ -5975,6 +6311,18 @@ export interface BuildStatsDay {
     count: number;
     ts: number;
 }
+/** Cancels the target action run. Response: [Update] */
+export interface CancelAction {
+    /** Id or name */
+    action: string;
+    /**
+     * The update id associated with the specific
+     * run to cancel
+     * Must provide either `action`
+     * or `update_id`
+     */
+    update_id?: string;
+}
 /**
  * Cancels the target build.
  * Only does anything if the build is `building` when called.
@@ -5983,6 +6331,18 @@ export interface BuildStatsDay {
 export interface CancelBuild {
     /** Can be id or name */
     build: string;
+}
+/** Cancels the target procedure run. Response: [Update] */
+export interface CancelProcedure {
+    /** Id or name */
+    procedure: string;
+    /**
+     * The update id associated with the specific
+     * run to cancel
+     * Must provide either `action`
+     * or `update_id`
+     */
+    update_id?: string;
 }
 /**
  * Cancels the target repo build.
@@ -6514,13 +6874,6 @@ export interface CreateDeploymentFromContainer {
     server: string;
 }
 /**
- * **Admin only.** Create a docker registry account.
- * Response: [DockerRegistryAccount].
- */
-export interface CreateDockerRegistryAccount {
-    account: _PartialDockerRegistryAccount;
-}
-/**
  * **Admin only.** Create a git provider account.
  * Response: [GitProviderAccount].
  */
@@ -6530,6 +6883,15 @@ export interface CreateGitProviderAccount {
      * as this is generated on creation.
      */
     account: _PartialGitProviderAccount;
+}
+/**
+ * **Admin only.** Create an image registry account.
+ * Response: [ImageRegistryAccount].
+ *
+ * Pre v2.3.0, called `CreateDockerRegistryAccount`
+ */
+export interface CreateImageRegistryAccount {
+    account: _PartialImageRegistryAccount;
 }
 /**
  * **Admin only.** Create a local user.
@@ -6813,14 +7175,6 @@ export interface DeleteDeployment {
     id: string;
 }
 /**
- * **Admin only.** Delete a docker registry account.
- * Response: [DockerRegistryAccount].
- */
-export interface DeleteDockerRegistryAccount {
-    /** The id of the docker registry account to delete */
-    id: string;
-}
-/**
  * **Admin only.** Delete a git provider account.
  * Response: [DeleteGitProviderAccountResponse].
  */
@@ -6837,6 +7191,16 @@ export interface DeleteImage {
     server: string;
     /** The name of the image to delete. */
     name: string;
+}
+/**
+ * **Admin only.** Delete an image registry account.
+ * Response: [ImageRegistryAccount].
+ *
+ * Pre v2.3.0, called `DeleteDockerRegistryAccount`
+ */
+export interface DeleteImageRegistryAccount {
+    /** The id of the image registry account to delete */
+    id: string;
 }
 /**
  * Delete a docker network.
@@ -7409,6 +7773,27 @@ export interface GetContainerLog {
     timestamps?: boolean;
 }
 /**
+ * Gets a summary of data relating to all containers.
+ * Response: [GetContainersSummaryResponse].
+ *
+ * Pre v2.3.0, called `GetDockerContainersSummary`
+ */
+export interface GetContainersSummary {
+}
+/** Response for [GetContainersSummary] */
+export interface GetContainersSummaryResponse {
+    /** The total number of Containers */
+    total: number;
+    /** The number of Containers with Running state */
+    running: number;
+    /** The number of Containers with Stopped or Paused or Created state */
+    stopped: number;
+    /** The number of Containers with Restarting or Dead state */
+    unhealthy: number;
+    /** The number of Containers with Unknown state */
+    unknown: number;
+}
+/**
  * Get information about the Komodo Core API configuration.
  * Response: [GetCoreInfoResponse].
  */
@@ -7438,6 +7823,8 @@ export interface GetCoreInfoResponse {
     timezone: string;
     /** Public key for Core / Periphery authentication. */
     public_key: string;
+    /** Default pagination limit for the UI to use. */
+    default_pagination_limit: U64;
 }
 /** Get a specific deployment by name or id. Response: [Deployment]. */
 export interface GetDeployment {
@@ -7519,32 +7906,6 @@ export interface GetDeploymentsSummaryResponse {
     unknown: I64;
 }
 /**
- * Gets a summary of data relating to all containers.
- * Response: [GetDockerContainersSummaryResponse].
- */
-export interface GetDockerContainersSummary {
-}
-/** Response for [GetDockerContainersSummary] */
-export interface GetDockerContainersSummaryResponse {
-    /** The total number of Containers */
-    total: number;
-    /** The number of Containers with Running state */
-    running: number;
-    /** The number of Containers with Stopped or Paused or Created state */
-    stopped: number;
-    /** The number of Containers with Restarting or Dead state */
-    unhealthy: number;
-    /** The number of Containers with Unknown state */
-    unknown: number;
-}
-/**
- * Get a specific docker registry account.
- * Response: [GetDockerRegistryAccountResponse].
- */
-export interface GetDockerRegistryAccount {
-    id: string;
-}
-/**
  * Get a specific git provider account.
  * Response: [GetGitProviderAccountResponse].
  */
@@ -7580,6 +7941,26 @@ export interface SystemStatsRecord {
     mem_used_gb: number;
     /** Total memory in GB */
     mem_total_gb: number;
+    /**
+     * [2.3.0+]
+     * Reclaimable page cache + buffers in GB.
+     */
+    mem_buff_cache_gb?: number;
+    /**
+     * [2.3.0+]
+     * ZFS ARC cache in GB. 0 when ZFS is not present.
+     */
+    mem_zfs_arc_gb?: number;
+    /**
+     * [2.3.0+]
+     * Total swap in GB.
+     */
+    swap_total_gb?: number;
+    /**
+     * [2.3.0+]
+     * Used swap in GB.
+     */
+    swap_used_gb?: number;
     /** Disk used in GB */
     disk_used_gb: number;
     /** Total disk size in GB */
@@ -7597,6 +7978,15 @@ export interface GetHistoricalServerStatsResponse {
     stats: SystemStatsRecord[];
     /** If there is a next page of data, pass this to `page` to get it. */
     next_page?: number;
+}
+/**
+ * Get a specific image registry account.
+ * Response: [GetImageRegistryAccountResponse].
+ *
+ * Pre v2.3.0, called `GetDockerRegistryAccount`
+ */
+export interface GetImageRegistryAccount {
+    id: string;
 }
 /**
  * Get the Periphery information of the target server,
@@ -7962,6 +8352,17 @@ export interface GlobalAutoUpdate {
     skip_auto_update?: boolean;
 }
 /**
+ * Inspect a container on the server. Response: [Container].
+ *
+ * Pre v2.3.0, called `InspectDockerContainer`
+ */
+export interface InspectContainer {
+    /** Id or name */
+    server: string;
+    /** The container name */
+    container: string;
+}
+/**
  * Inspect the docker container associated with the Deployment.
  * Response: [Container].
  */
@@ -7977,33 +8378,27 @@ export interface InspectDeploymentSwarmService {
     /** Id or name */
     deployment: string;
 }
-/** Inspect a docker container on the server. Response: [Container]. */
-export interface InspectDockerContainer {
-    /** Id or name */
-    server: string;
-    /** The container name */
-    container: string;
-}
-/** Inspect a docker image on the server. Response: [Image]. */
-export interface InspectDockerImage {
+/**
+ * Inspect a container image on the server. Response: [Image].
+ *
+ * Pre v2.3.0, called `InspectDockerImage`
+ */
+export interface InspectImage {
     /** Id or name */
     server: string;
     /** The image name */
     image: string;
 }
-/** Inspect a docker network on the server. Response: [InspectDockerNetworkResponse]. */
-export interface InspectDockerNetwork {
+/**
+ * Inspect a container network on the server. Response: [InspectNetworkResponse].
+ *
+ * Pre v2.3.0, called `InspectDockerNetwork`
+ */
+export interface InspectNetwork {
     /** Id or name */
     server: string;
     /** The network name */
     network: string;
-}
-/** Inspect a docker volume on the server. Response: [Volume]. */
-export interface InspectDockerVolume {
-    /** Id or name */
-    server: string;
-    /** The volume name */
-    volume: string;
 }
 /**
  * Inspect a docker container associated with a Stack.
@@ -8101,19 +8496,94 @@ export interface InspectSwarmTask {
     /** Task id */
     task: string;
 }
+/**
+ * Inspect a container volume on the server. Response: [Volume].
+ *
+ * Pre v2.3.0, called `InspectDockerVolume`
+ */
+export interface InspectVolume {
+    /** Id or name */
+    server: string;
+    /** The volume name */
+    volume: string;
+}
 export interface LatestCommit {
     hash: string;
     message: string;
+}
+export declare enum ActionSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by state. */
+    State = "State",
+    /** Sort by next scheduled run. */
+    NextRun = "NextRun"
 }
 /** List actions matching optional query. Response: [ListActionsResponse]. */
 export interface ListActions {
     /** optional structured query to filter actions. */
     query?: ActionQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: ActionSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
+}
+export declare enum AlerterSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by endpoint type. */
+    Type = "Type",
+    /** Sort by enabled. */
+    Enabled = "Enabled"
 }
 /** List alerters matching optional query. Response: [ListAlertersResponse]. */
 export interface ListAlerters {
     /** Structured query to filter alerters. */
     query?: AlerterQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: AlerterSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * Get a paginated list of alerts sorted by timestamp descending.
@@ -8162,15 +8632,96 @@ export interface ListAlertsResponse {
      */
     next_page?: I64;
 }
+export declare enum ContainerSortBy {
+    /** Sort by container name. Default. */
+    Name = "Name",
+    /** Sort by host Server name. */
+    Server = "Server",
+    /** Sort by container state. */
+    State = "State",
+    /** Sort by image. */
+    Image = "Image",
+    /** Sort by first network. */
+    Networks = "Networks",
+    /** Sort by first port. */
+    Ports = "Ports",
+    /** Sort by first volume. */
+    Volumes = "Volumes"
+}
 /**
- * List all docker containers on the target servers.
- * Response: [ListDockerContainersResponse].
+ * List all containers on the target servers.
+ * Response: [ListAllContainersResponse].
+ *
+ * Pre v2.3.0, called `ListAllDockerContainers`
  */
-export interface ListAllDockerContainers {
+export interface ListAllContainers {
     /** Filter by server id or name. */
     servers?: string[];
-    /** Filter by container name. */
-    containers?: string[];
+    /** Filter servers by tag. */
+    tags?: string[];
+    /**
+     * Filter by container name.
+     * Returned containers have names which contain all terms.
+     */
+    terms?: string[];
+    /** Filter by container state. */
+    state?: ContainerStateStatusEnum[];
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of containers per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name.
+     */
+    sort_by?: ContainerSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
+}
+/**
+ * List all stack services part of the target stacks.
+ * Response: [ListStackServicesResponse].
+ */
+export interface ListAllStackServices {
+    /** Filter by stack name. */
+    stacks?: string[];
+    /** Filter stacks by tag. */
+    tags?: string[];
+    /**
+     * Filter by service name.
+     * Returned services have names which contain all terms.
+     */
+    terms?: string[];
+    /** Filter by service state. */
+    state?: StackServiceState[];
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of services per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /**
  * Gets list of api keys for the calling user.
@@ -8205,14 +8756,78 @@ export interface ListBuildVersions {
     /** Limit the number of included results. Default is no limit. */
     limit?: I64;
 }
+export declare enum BuilderSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by builder provider type. */
+    Provider = "Provider",
+    /** Sort by instance type. */
+    InstanceType = "InstanceType"
+}
 /** List builders matching structured query. Response: [ListBuildersResponse]. */
 export interface ListBuilders {
     query?: BuilderQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: BuilderSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
+}
+export declare enum BuildSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by source repo. */
+    Source = "Source",
+    /** Sort by state. */
+    State = "State"
 }
 /** List builds matching optional query. Response: [ListBuildsResponse]. */
 export interface ListBuilds {
     /** optional structured query to filter builds. */
     query?: BuildQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: BuildSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * Gets a list of existing values used as extra args across other builds.
@@ -8247,12 +8862,32 @@ export interface ListCommonStackExtraArgs {
     query?: StackQuery;
 }
 /**
- * List all docker compose projects on the target server.
+ * List all compose projects on the target server.
  * Response: [ListComposeProjectsResponse].
  */
 export interface ListComposeProjects {
     /** Id or name */
     server: string;
+}
+/**
+ * List all containers on the target server.
+ * Response: [ListContainersResponse].
+ *
+ * Pre v2.3.0, called `ListDockerContainers`
+ */
+export interface ListContainers {
+    /** Id or name */
+    server: string;
+}
+export declare enum DeploymentSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by image. */
+    Image = "Image",
+    /** Sort by host Server / Swarm name. */
+    Host = "Host",
+    /** Sort by state. */
+    State = "State"
 }
 /**
  * List deployments matching optional query.
@@ -8261,87 +8896,113 @@ export interface ListComposeProjects {
 export interface ListDeployments {
     /** optional structured query to filter deployments. */
     query?: DeploymentQuery;
-}
-/**
- * List all docker containers on the target server.
- * Response: [ListDockerContainersResponse].
- */
-export interface ListDockerContainers {
-    /** Id or name */
-    server: string;
-}
-/** Get image history from the server. Response: [ListDockerImageHistoryResponse]. */
-export interface ListDockerImageHistory {
-    /** Id or name */
-    server: string;
-    /** The image name */
-    image: string;
-}
-/**
- * List the docker images locally cached on the target server.
- * Response: [ListDockerImagesResponse].
- */
-export interface ListDockerImages {
-    /** Id or name */
-    server: string;
-}
-/** List the docker networks on the server. Response: [ListDockerNetworksResponse]. */
-export interface ListDockerNetworks {
-    /** Id or name */
-    server: string;
-}
-/**
- * List the docker registry providers available in Core / Periphery config files.
- * Response: [ListDockerRegistriesFromConfigResponse].
- *
- * Includes:
- * - registries in core config
- * - registries configured on builds, deployments
- * - registries on the optional Server or Builder
- */
-export interface ListDockerRegistriesFromConfig {
     /**
-     * Accepts an optional Server or Builder target to expand the core list with
-     * providers available on that specific resource.
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
      */
-    target?: ResourceTarget;
-}
-/**
- * List docker registry accounts matching optional query.
- * Response: [ListDockerRegistryAccountsResponse].
- */
-export interface ListDockerRegistryAccounts {
-    /** Optionally filter by accounts with a specific domain. */
-    domain?: string;
-    /** Optionally filter by accounts with a specific username. */
-    username?: string;
-}
-/**
- * List all docker volumes on the target server.
- * Response: [ListDockerVolumesResponse].
- */
-export interface ListDockerVolumes {
-    /** Id or name */
-    server: string;
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: DeploymentSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /** List actions matching optional query. Response: [ListFullActionsResponse]. */
 export interface ListFullActions {
     /** optional structured query to filter actions. */
     query?: ActionQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List full alerters matching optional query. Response: [ListFullAlertersResponse]. */
 export interface ListFullAlerters {
     /** Structured query to filter alerters. */
     query?: AlerterQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List builders matching structured query. Response: [ListFullBuildersResponse]. */
 export interface ListFullBuilders {
     query?: BuilderQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List builds matching optional query. Response: [ListFullBuildsResponse]. */
 export interface ListFullBuilds {
     /** optional structured query to filter builds. */
     query?: BuildQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /**
  * List deployments matching optional query.
@@ -8350,36 +9011,148 @@ export interface ListFullBuilds {
 export interface ListFullDeployments {
     /** optional structured query to filter deployments. */
     query?: DeploymentQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List procedures matching optional query. Response: [ListFullProceduresResponse]. */
 export interface ListFullProcedures {
     /** optional structured query to filter procedures. */
     query?: ProcedureQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List repos matching optional query. Response: [ListFullReposResponse]. */
 export interface ListFullRepos {
     /** optional structured query to filter repos. */
     query?: RepoQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List syncs matching optional query. Response: [ListFullResourceSyncsResponse]. */
 export interface ListFullResourceSyncs {
     /** optional structured query to filter syncs. */
     query?: ResourceSyncQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List servers matching optional query. Response: [ListFullServersResponse]. */
 export interface ListFullServers {
     /** optional structured query to filter servers. */
     query?: ServerQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List stacks matching optional query. Response: [ListFullStacksResponse]. */
 export interface ListFullStacks {
     /** optional structured query to filter stacks. */
     query?: StackQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /** List Swarms matching optional query. Response: [ListFullSwarmsResponse]. */
 export interface ListFullSwarms {
     /** optional structured query to filter swarms. */
     query?: SwarmQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
 }
 /**
  * List git provider accounts matching optional query.
@@ -8408,6 +9181,66 @@ export interface ListGitProvidersFromConfig {
     target?: ResourceTarget;
 }
 /**
+ * Get image history from the server. Response: [ListImageHistoryResponse].
+ *
+ * Pre v2.3.0, called `ListDockerImageHistory`
+ */
+export interface ListImageHistory {
+    /** Id or name */
+    server: string;
+    /** The image name */
+    image: string;
+}
+/**
+ * List the image registry providers available in Core / Periphery config files.
+ * Response: [ListImageRegistriesFromConfigResponse].
+ *
+ * Includes:
+ * - registries in core config
+ * - registries configured on builds, deployments
+ * - registries on the optional Server or Builder
+ *
+ * Pre v2.3.0, called `ListDockerRegistriesFromConfig`
+ */
+export interface ListImageRegistriesFromConfig {
+    /**
+     * Accepts an optional Server or Builder target to expand the core list with
+     * providers available on that specific resource.
+     */
+    target?: ResourceTarget;
+}
+/**
+ * List image registry accounts matching optional query.
+ * Response: [ListImageRegistryAccountsResponse].
+ *
+ * Pre v2.3.0, called `ListDockerRegistryAccounts`
+ */
+export interface ListImageRegistryAccounts {
+    /** Optionally filter by accounts with a specific domain. */
+    domain?: string;
+    /** Optionally filter by accounts with a specific username. */
+    username?: string;
+}
+/**
+ * List the container images locally cached on the target server.
+ * Response: [ListImagesResponse].
+ *
+ * Pre v2.3.0, called `ListDockerImages`
+ */
+export interface ListImages {
+    /** Id or name */
+    server: string;
+}
+/**
+ * List the container networks on the server. Response: [ListNetworksResponse].
+ *
+ * Pre v2.3.0, called `ListDockerNetworks`
+ */
+export interface ListNetworks {
+    /** Id or name */
+    server: string;
+}
+/**
  * **Admin only.** Gets list of onboarding keys.
  * Response: [ListOnboardingKeysResponse]
  */
@@ -8420,20 +9253,130 @@ export interface ListOnboardingKeys {
  */
 export interface ListPermissions {
 }
+export declare enum ProcedureSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by state. */
+    State = "State",
+    /** Sort by next scheduled run. */
+    NextRun = "NextRun"
+}
 /** List procedures matching optional query. Response: [ListProceduresResponse]. */
 export interface ListProcedures {
     /** optional structured query to filter procedures. */
     query?: ProcedureQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: ProcedureSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
+}
+export declare enum RepoSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by the git repo. */
+    Repo = "Repo",
+    /** Sort by branch. */
+    Branch = "Branch",
+    /** Sort by state. */
+    State = "State"
 }
 /** List repos matching optional query. Response: [ListReposResponse]. */
 export interface ListRepos {
     /** optional structured query to filter repos. */
     query?: RepoQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: RepoSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
+}
+export declare enum ResourceSyncSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by source repo. */
+    Source = "Source",
+    /** Sort by branch. */
+    Branch = "Branch",
+    /** Sort by state. */
+    State = "State"
 }
 /** List syncs matching optional query. Response: [ListResourceSyncsResponse]. */
 export interface ListResourceSyncs {
     /** optional structured query to filter syncs. */
     query?: ResourceSyncQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: ResourceSyncSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
+}
+export declare enum ScheduleSortBy {
+    /** Sort by target name. Default. */
+    Name = "Name",
+    /** Sort by the schedule expression. */
+    Schedule = "Schedule",
+    /** Sort by next scheduled run. */
+    NextRun = "NextRun",
+    /** Sort by enabled. */
+    Enabled = "Enabled"
 }
 /**
  * List configured schedules.
@@ -8444,6 +9387,34 @@ export interface ListSchedules {
     tags?: string[];
     /** 'All' or 'Any' */
     tag_behavior?: TagQueryBehavior;
+    /**
+     * Filter by target name.
+     * Returned schedules have names which contain all terms.
+     */
+    terms?: string[];
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of schedules per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name.
+     */
+    sort_by?: ScheduleSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * List the secret keys (not values) in the core configuration file.
@@ -8456,20 +9427,98 @@ export interface ListSecrets {
      */
     target?: ResourceTarget;
 }
+export declare enum ServerSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by region. */
+    Region = "Region",
+    /** Sort by periphery version. */
+    Version = "Version",
+    /** Sort by state. */
+    State = "State",
+    /** Sort by current cpu usage percentage. */
+    Cpu = "Cpu",
+    /** Sort by current memory usage percentage. */
+    Memory = "Memory",
+    /** Sort by current disk usage percentage. */
+    Disk = "Disk",
+    /** Sort by current 1m load average. */
+    LoadAverage = "LoadAverage",
+    /** Sort by current network usage (ingress + egress). */
+    Network = "Network"
+}
 /** List servers matching optional query. Response: [ListServersResponse]. */
 export interface ListServers {
     /** optional structured query to filter servers. */
     query?: ServerQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: ServerSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /** Lists a specific stacks services (the containers). Response: [ListStackServicesResponse]. */
 export interface ListStackServices {
     /** Id or name */
     stack: string;
 }
+export declare enum StackSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by source repo. */
+    Source = "Source",
+    /** Sort by host Server / Swarm name. */
+    Host = "Host",
+    /** Sort by state. */
+    State = "State"
+}
 /** List stacks matching optional query. Response: [ListStacksResponse]. */
 export interface ListStacks {
     /** optional structured query to filter stacks. */
     query?: StackQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: StackSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * List configs on the target Swarm.
@@ -8529,10 +9578,40 @@ export interface ListSwarmTasks {
     /** Id or name */
     swarm: string;
 }
+export declare enum SwarmSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by state. */
+    State = "State"
+}
 /** List Swarms matching optional query. Response: [ListSwarmsResponse]. */
 export interface ListSwarms {
     /** Optional structured query to filter Swarms. */
     query?: SwarmQuery;
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of resources per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name. Non-Name sorts are applied in memory
+     * after querying all matching resources.
+     */
+    sort_by?: SwarmSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * List the processes running on the target server.
@@ -8553,6 +9632,18 @@ export interface ListSystemProcesses {
 export interface ListTags {
     query?: MongoDocument;
 }
+export declare enum TerminalSortBy {
+    /** Sort by name. Default. */
+    Name = "Name",
+    /** Sort by target. */
+    Target = "Target",
+    /** Sort by init command. */
+    Command = "Command",
+    /** Sort by stored size. */
+    Size = "Size",
+    /** Sort by created timestamp. */
+    Created = "Created"
+}
 /**
  * List Terminals.
  * Response: [ListTerminalsResponse].
@@ -8562,6 +9653,34 @@ export interface ListTerminals {
     target?: TerminalTarget;
     /** Return results with resource names instead of ids. */
     use_names?: boolean;
+    /**
+     * Filter by terminal name.
+     * Returned terminals have names which contain all terms.
+     */
+    terms?: string[];
+    /**
+     * Retrieve more results by incrementing the page.
+     * `page: 0` is default.
+     */
+    page?: U64;
+    /**
+     * Set the limit for number of terminals per-page.
+     * If not provided, uses the Core config
+     * `default_pagination_limit` (default: 30).
+     *
+     * Passing `limit: 0` returns all results (unlimited).
+     *
+     * Note: the page logic relies on this being consistent
+     * across queries for more pages.
+     */
+    limit?: U64;
+    /**
+     * Sort the results by this field.
+     * Defaults to Name.
+     */
+    sort_by?: TerminalSortBy;
+    /** Reverse the sort direction. */
+    sort_desc?: boolean;
 }
 /**
  * Paginated endpoint for updates matching optional query.
@@ -8664,6 +9783,16 @@ export interface ListUsers {
  * secret variables will have their values obscured.
  */
 export interface ListVariables {
+}
+/**
+ * List all container volumes on the target server.
+ * Response: [ListVolumesResponse].
+ *
+ * Pre v2.3.0, called `ListDockerVolumes`
+ */
+export interface ListVolumes {
+    /** Id or name */
+    server: string;
 }
 export interface NameAndId {
     name: string;
@@ -9402,8 +10531,12 @@ export interface SendAlert {
 }
 /** Configuration for a Komodo Server Builder. */
 export interface ServerBuilderConfig {
-    /** The server id of the builder */
-    server_id?: string;
+    /**
+     * The server ids of the builders.
+     * If multiple are given, builds will overflow
+     * to later specified servers as needed.
+     */
+    server_ids?: string[];
 }
 /** The health of a part of the server. */
 export interface ServerHealthState {
@@ -9712,16 +10845,6 @@ export interface UpdateDeployment {
     config: _PartialDeploymentConfig;
 }
 /**
- * **Admin only.** Update a docker registry account.
- * Response: [DockerRegistryAccount].
- */
-export interface UpdateDockerRegistryAccount {
-    /** The id of the docker registry to update */
-    id: string;
-    /** The partial docker registry account. */
-    account: _PartialDockerRegistryAccount;
-}
-/**
  * **Admin only.** Update a git provider account.
  * Response: [GitProviderAccount].
  */
@@ -9730,6 +10853,18 @@ export interface UpdateGitProviderAccount {
     id: string;
     /** The partial git provider account. */
     account: _PartialGitProviderAccount;
+}
+/**
+ * **Admin only.** Update a image registry account.
+ * Response: [ImageRegistryAccount].
+ *
+ * Pre v2.3.0, called `UpdateDockerRegistryAccount`
+ */
+export interface UpdateImageRegistryAccount {
+    /** The id of the image registry to update */
+    id: string;
+    /** The partial image registry account. */
+    account: _PartialImageRegistryAccount;
 }
 /**
  * **Admin only.** Update an onboarding key.
@@ -10176,11 +11311,17 @@ export type ExecuteRequest = {
     type: "BatchRunProcedure";
     params: BatchRunProcedure;
 } | {
+    type: "CancelProcedure";
+    params: CancelProcedure;
+} | {
     type: "RunAction";
     params: RunAction;
 } | {
     type: "BatchRunAction";
     params: BatchRunAction;
+} | {
+    type: "CancelAction";
+    params: CancelAction;
 } | {
     type: "RunSync";
     params: RunSync;
@@ -10397,8 +11538,8 @@ export type ReadRequest = {
     type: "ListGitProvidersFromConfig";
     params: ListGitProvidersFromConfig;
 } | {
-    type: "ListDockerRegistriesFromConfig";
-    params: ListDockerRegistriesFromConfig;
+    type: "ListImageRegistriesFromConfig";
+    params: ListImageRegistriesFromConfig;
 } | {
     type: "GetSwarmsSummary";
     params: GetSwarmsSummary;
@@ -10487,17 +11628,17 @@ export type ReadRequest = {
     type: "ListTerminals";
     params: ListTerminals;
 } | {
-    type: "GetDockerContainersSummary";
-    params: GetDockerContainersSummary;
+    type: "GetContainersSummary";
+    params: GetContainersSummary;
 } | {
-    type: "ListAllDockerContainers";
-    params: ListAllDockerContainers;
+    type: "ListAllContainers";
+    params: ListAllContainers;
 } | {
-    type: "ListDockerContainers";
-    params: ListDockerContainers;
+    type: "ListContainers";
+    params: ListContainers;
 } | {
-    type: "InspectDockerContainer";
-    params: InspectDockerContainer;
+    type: "InspectContainer";
+    params: InspectContainer;
 } | {
     type: "GetResourceMatchingContainer";
     params: GetResourceMatchingContainer;
@@ -10511,26 +11652,26 @@ export type ReadRequest = {
     type: "ListComposeProjects";
     params: ListComposeProjects;
 } | {
-    type: "ListDockerNetworks";
-    params: ListDockerNetworks;
+    type: "ListNetworks";
+    params: ListNetworks;
 } | {
-    type: "InspectDockerNetwork";
-    params: InspectDockerNetwork;
+    type: "InspectNetwork";
+    params: InspectNetwork;
 } | {
-    type: "ListDockerImages";
-    params: ListDockerImages;
+    type: "ListImages";
+    params: ListImages;
 } | {
-    type: "InspectDockerImage";
-    params: InspectDockerImage;
+    type: "InspectImage";
+    params: InspectImage;
 } | {
-    type: "ListDockerImageHistory";
-    params: ListDockerImageHistory;
+    type: "ListImageHistory";
+    params: ListImageHistory;
 } | {
-    type: "ListDockerVolumes";
-    params: ListDockerVolumes;
+    type: "ListVolumes";
+    params: ListVolumes;
 } | {
-    type: "InspectDockerVolume";
-    params: InspectDockerVolume;
+    type: "InspectVolume";
+    params: InspectVolume;
 } | {
     type: "GetSystemInformation";
     params: GetSystemInformation;
@@ -10573,6 +11714,9 @@ export type ReadRequest = {
 } | {
     type: "ListStackServices";
     params: ListStackServices;
+} | {
+    type: "ListAllStackServices";
+    params: ListAllStackServices;
 } | {
     type: "ListCommonStackExtraArgs";
     params: ListCommonStackExtraArgs;
@@ -10793,11 +11937,11 @@ export type ReadRequest = {
     type: "ListGitProviderAccounts";
     params: ListGitProviderAccounts;
 } | {
-    type: "GetDockerRegistryAccount";
-    params: GetDockerRegistryAccount;
+    type: "GetImageRegistryAccount";
+    params: GetImageRegistryAccount;
 } | {
-    type: "ListDockerRegistryAccounts";
-    params: ListDockerRegistryAccounts;
+    type: "ListImageRegistryAccounts";
+    params: ListImageRegistryAccounts;
 } | {
     type: "ListOnboardingKeys";
     params: ListOnboardingKeys;
@@ -11184,14 +12328,14 @@ export type WriteRequest = {
     type: "DeleteGitProviderAccount";
     params: DeleteGitProviderAccount;
 } | {
-    type: "CreateDockerRegistryAccount";
-    params: CreateDockerRegistryAccount;
+    type: "CreateImageRegistryAccount";
+    params: CreateImageRegistryAccount;
 } | {
-    type: "UpdateDockerRegistryAccount";
-    params: UpdateDockerRegistryAccount;
+    type: "UpdateImageRegistryAccount";
+    params: UpdateImageRegistryAccount;
 } | {
-    type: "DeleteDockerRegistryAccount";
-    params: DeleteDockerRegistryAccount;
+    type: "DeleteImageRegistryAccount";
+    params: DeleteImageRegistryAccount;
 } | {
     type: "CloseAlert";
     params: CloseAlert;

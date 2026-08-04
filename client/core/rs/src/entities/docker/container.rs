@@ -22,6 +22,9 @@ pub struct ContainerListItem {
   /// The Server which hosts the container.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub server_id: Option<String>,
+  /// The name of the Server which hosts the container.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub server_name: Option<String>,
   /// The first name in Names, not including the initial '/'
   pub name: String,
   /// The ID of this container
@@ -273,6 +276,29 @@ pub struct ContainerState {
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ContainerSortBy {
+  /// Sort by container name. Default.
+  #[default]
+  Name,
+  /// Sort by host Server name.
+  Server,
+  /// Sort by container state.
+  State,
+  /// Sort by image.
+  Image,
+  /// Sort by first network.
+  Networks,
+  /// Sort by first port.
+  Ports,
+  /// Sort by first volume.
+  Volumes,
+}
+
+#[typeshare]
+#[derive(
   Debug,
   Clone,
   Copy,
@@ -291,11 +317,11 @@ pub struct ContainerState {
 pub enum ContainerStateStatusEnum {
   Running,
   Created,
-  Paused,
   Restarting,
-  Exited,
   Stopping,
   Removing,
+  Paused,
+  Exited,
   Dead,
   #[default]
   #[serde(rename = "")]

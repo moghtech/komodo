@@ -22,6 +22,7 @@ import {
   Text,
 } from "@mantine/core";
 import { Types } from "komodo_client";
+import { keepPreviousData } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -37,14 +38,20 @@ export default function Updates() {
     operation: params.get("operation") as Types.Operation | null,
   };
 
-  const { data: updates } = useRead("ListUpdates", {
-    query: {
-      "target.type": type ?? undefined,
-      "target.id": id ?? undefined,
-      operation: operation ?? undefined,
+  const { data: updates } = useRead(
+    "ListUpdates",
+    {
+      query: {
+        "target.type": type ?? undefined,
+        "target.id": id ?? undefined,
+        operation: operation ?? undefined,
+      },
+      page,
     },
-    page,
-  });
+    // Keep the previous rows visible while fetching after a
+    // query key change (page / filters) to prevent table flashing.
+    { placeholderData: keepPreviousData },
+  );
 
   return (
     <Page

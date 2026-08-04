@@ -9,6 +9,7 @@ import { ShowHideButton } from "mogh_ui";
 import {
   Center,
   Group,
+  lighten,
   Loader,
   Select,
   SimpleGrid,
@@ -144,6 +145,34 @@ function StatChart({
         { label: "15m", data: fifteen },
       ];
     }
+    if (type === "Memory") {
+      // Stacked GB composition, bottom -> top: Used, then reclaimable bands.
+      const series: { label: string; data: StatDatapoint[] }[] = [
+        {
+          label: "Used",
+          data: records.map((s) => ({ date: s.ts, value: s.mem_used_gb ?? 0 })),
+        },
+      ];
+      if (records.some((s) => (s.mem_buff_cache_gb ?? 0) > 0)) {
+        series.push({
+          label: "Cache/Buffers",
+          data: records.map((s) => ({
+            date: s.ts,
+            value: s.mem_buff_cache_gb ?? 0,
+          })),
+        });
+      }
+      if (records.some((s) => (s.mem_zfs_arc_gb ?? 0) > 0)) {
+        series.push({
+          label: "ZFS ARC",
+          data: records.map((s) => ({
+            date: s.ts,
+            value: s.mem_zfs_arc_gb ?? 0,
+          })),
+        });
+      }
+      return series;
+    }
     const single = records.map((stat) => ({
       date: stat.ts,
       value: getStat(stat, type),
@@ -165,6 +194,15 @@ function StatChart({
         "15m": hexColorByIntention("Warning")!,
       };
     }
+    if (type === "Memory") {
+      // Yellow ramp: base for Used, lighter for the reclaimable bands.
+      const base = hexColorByIntention("Warning")!;
+      return {
+        Used: base,
+        "Cache/Buffers": lighten(base, 0.3),
+        "ZFS ARC": lighten(base, 0.55),
+      };
+    }
     return { [type]: getColor(type) };
   }, [type]);
 
@@ -181,10 +219,24 @@ function StatChart({
 
   const isNetwork = type === "Network Ingress" || type === "Network Egress";
   const isLoadAvg = type === "Load Average";
+  const isMemory = type === "Memory";
+
+  // Cap Y axis at total RAM so the gap above the stack reads as free.
+  const memTotal = useMemo(
+    () =>
+      isMemory
+        ? (data?.stats ?? []).reduce(
+            (max, s) => Math.max(max, s.mem_total_gb ?? 0),
+            0,
+          )
+        : 0,
+    [data, isMemory],
+  );
 
   const yTickFormatter = (value: number) => {
     if (isNetwork) return fmtSizeBytes(value);
     if (isLoadAvg) return value.toFixed(1);
+    if (isMemory) return `${value.toFixed(0)} GB`;
     return `${value.toFixed(0)}%`;
   };
 
@@ -266,8 +318,14 @@ function StatChart({
               tick={{ fontSize: 10, fill: "var(--mantine-color-dimmed)" }}
               axisLine={false}
               tickLine={false}
-              width={isNetwork ? 70 : 42}
-              domain={isNetwork || isLoadAvg ? ["auto", "auto"] : [0, 100]}
+              width={isNetwork ? 70 : isMemory ? 52 : 42}
+              domain={
+                isNetwork || isLoadAvg
+                  ? ["auto", "auto"]
+                  : isMemory
+                    ? [0, memTotal > 0 ? memTotal : "auto"]
+                    : [0, 100]
+              }
             />
             <Tooltip
               contentStyle={{
@@ -278,20 +336,52 @@ function StatChart({
               }}
               labelStyle={{ color: "var(--mantine-color-dimmed)" }}
               labelFormatter={(label) => new Date(label).toLocaleString()}
+              // Memory tooltip lists top-of-stack first, matching the chart.
+              itemSorter={
+                isMemory
+                  ? (item) =>
+                      -seriesData.findIndex((s) => s.label === item.dataKey)
+                  : undefined
+              }
               formatter={(value, name) => {
                 const v = Number(value);
                 const formatted = isNetwork
                   ? fmtSizeBytes(v)
                   : isLoadAvg
                     ? v.toFixed(2)
-                    : `${v.toFixed(1)}%`;
+                    : isMemory
+                      ? `${v.toFixed(2)} GB`
+                      : `${v.toFixed(1)}%`;
                 return [formatted, name];
               }}
             />
-            {isLoadAvg && (
+            {(isLoadAvg || isMemory) && (
               <Legend
                 iconType="line"
                 wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+                // Reversed so the legend reads top-of-stack first, like the chart.
+                content={
+                  isMemory
+                    ? ({ payload }) => (
+                        <Group justify="center" gap="lg" pt={4}>
+                          {[...(payload ?? [])].reverse().map((entry) => (
+                            <Group key={String(entry.value)} gap={6} wrap="nowrap">
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  width: 14,
+                                  borderTop: `2px solid ${entry.color}`,
+                                }}
+                              />
+                              <Text fz={11} c="dimmed">
+                                {entry.value}
+                              </Text>
+                            </Group>
+                          ))}
+                        </Group>
+                      )
+                    : undefined
+                }
               />
             )}
             {seriesData.map((series) => (
@@ -299,8 +389,15 @@ function StatChart({
                 key={series.label}
                 type="monotone"
                 dataKey={series.label}
+                // Stack only for Memory; other charts overlay.
+                stackId={isMemory ? "mem" : undefined}
                 stroke={colors[series.label]}
-                fill={`url(#${gradientId(series.label)})`}
+                fill={
+                  isMemory
+                    ? colors[series.label]
+                    : `url(#${gradientId(series.label)})`
+                }
+                fillOpacity={isMemory ? 0.45 : undefined}
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 3 }}
@@ -316,7 +413,6 @@ function StatChart({
 
 function getStat(stat: Types.SystemStatsRecord, type: StatType) {
   if (type === "Cpu") return stat.cpu_perc || 0;
-  if (type === "Memory") return (100 * stat.mem_used_gb) / stat.mem_total_gb;
   if (type === "Disk") return (100 * stat.disk_used_gb) / stat.disk_total_gb;
   if (type === "Network Ingress") return stat.network_ingress_bytes || 0;
   if (type === "Network Egress") return stat.network_egress_bytes || 0;
@@ -325,7 +421,6 @@ function getStat(stat: Types.SystemStatsRecord, type: StatType) {
 
 function getColor(type: StatType) {
   if (type === "Cpu") return hexColorByIntention("Good")!;
-  if (type === "Memory") return hexColorByIntention("Warning")!;
   if (type === "Disk") return hexColorByIntention("Neutral")!;
   if (type === "Network Ingress") return hexColorByIntention("Good")!;
   if (type === "Network Egress") return hexColorByIntention("Critical")!;

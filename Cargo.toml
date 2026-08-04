@@ -9,9 +9,8 @@ members = [
 ]
 
 [workspace.package]
-version = "2.2.0"
+version = "2.3.1"
 edition = "2024"
-authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/moghtech/komodo"
 homepage = "https://komo.do"
@@ -34,34 +33,34 @@ slack = { version = "2.0.0", package = "slack_client_rs", default-features = fal
 mogh_error = { version = "1.0.4", default-features = false }
 derive_default_builder = "0.1.8"
 async_timing_util = "1.1.0"
-mogh_auth_client = "1.5.0"
-mogh_auth_server = "1.5.0"
+mogh_auth_client = "1.7.0"
+mogh_auth_server = "1.7.0"
 mogh_secret_file = "1.0.1"
 mogh_validations = "1.0.1"
 mogh_rate_limit = "1.0.1"
 partial_derive2 = "0.5.0"
-mongo_indexed = "2.0.2"
+mongo_indexed = "2.1.0"
 mogh_resolver = "1.0.0"
 mogh_config = "1.1.0"
-mogh_logger = "1.3.3"
+mogh_logger = "1.3.4"
 mogh_server = "1.5.0"
 toml_pretty = "2.0.0"
 mogh_cache = "1.1.2"
 mogh_pki = "1.1.3"
-mungos = "3.2.2"
+mungos = "3.7.0"
 svi = "1.2.0"
 
 # ASYNC
-reqwest = { version = "0.13.3", default-features = false, features = ["json", "stream", "form", "query", "rustls"] }
-tokio = { version = "1.52.2", features = ["full"] }
-tokio-util = { version = "0.7.18", features = ["io", "codec"] }
-tokio-stream = { version = "0.1.18", features = ["sync"] }
+reqwest = { version = "0.13.4", default-features = false, features = ["json", "stream", "form", "query", "rustls"] }
+tokio = { version = "1.53.1", features = ["full"] }
+tokio-util = { version = "0.7.19", features = ["io", "codec"] }
+tokio-stream = { version = "0.1.19", features = ["sync"] }
 pin-project-lite = "0.2.17"
-futures-util = "0.3.32"
-arc-swap = "1.9.0"
+futures-util = "0.3.33"
+arc-swap = "1.9.2"
 
 # SERVER
-tokio-tungstenite = { version = "0.29.0", features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.30.0", features = ["rustls-tls-native-roots"] }
 axum = { version = "0.8.9", features = ["ws", "json", "macros"] }
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
 
@@ -72,37 +71,40 @@ utoipa = "5.5.0"
 # SER/DE
 ipnetwork = { version = "0.21.1", features = ["serde"] }
 indexmap = { version = "2.14.0", features = ["serde"] }
-serde = { version = "1.0.227", features = ["derive"] }
+serde = { version = "1.0.229", features = ["derive"] }
 strum = { version = "0.28.0", features = ["derive"] }
 bson = { version = "2.15.0" } # must keep in sync with mongodb version
-toml = "1.1.2"
+toml = "1.1.3"
 serde_yaml_ng = "0.10.0"
-serde_json = "1.0.149"
-serde_qs = "1.1.0"
+serde_json = "1.0.151"
+serde_qs = "1.1.2"
 url = "2.5.8"
 
 # ERROR
-anyhow = "1.0.102"
-thiserror = "2.0.18"
+anyhow = "1.0.104"
+thiserror = "2.0.19"
+
+# SYSTEM
+libc = "0.2.189"
 
 # LOGGING
 tracing = "0.1.44"
 
 # CONFIG
-clap = { version = "4.6.1", features = ["derive"] }
+clap = { version = "4.6.4", features = ["derive"] }
 dotenvy = "0.15.7"
 envy = "0.4.2"
 
 # CRYPTO / AUTH
-uuid = { version = "1.23.1", features = ["v4", "fast-rng", "serde"] }
-rustls = { version = "0.23.40", features = ["aws-lc-rs"] }
-data-encoding = "2.10.0"
+uuid = { version = "1.24.0", features = ["v4", "fast-rng", "serde"] }
+rustls = { version = "0.23.42", features = ["aws-lc-rs"] }
+data-encoding = "2.11.0"
 urlencoding = "2.1.3"
-bcrypt = "0.19.0"
+bcrypt = "0.19.2"
 hmac = "0.13.0"
 sha1 = "0.11.0"
 sha2 = "0.11.0"
-rand = "0.10.1"
+rand = "0.10.2"
 hex = "0.4.3"
 
 # SYSTEM
@@ -111,18 +113,18 @@ portable-pty = "0.9.0"
 shell-escape = "0.1.5"
 crossterm = "0.29.0"
 bollard = "0.21.0"
-sysinfo = "0.38.4"
-shlex = "1.3.0"
+sysinfo = "0.39.6"
+shlex = "2.0.1"
 
 # CLOUD
-aws-config = "1.8.16"
-aws-sdk-ec2 = "1.224.0"
-aws-credential-types = "1.2.14"
+aws-config = "1.10.0"
+aws-sdk-ec2 = "1.241.0"
+aws-credential-types = "1.3.0"
 
 ## CRON
 english-to-cron = "0.1.7"
 chrono-tz = "0.10.4"
-chrono = "0.4.44"
+chrono = "0.4.45"
 croner = "3.0.1"
 
 # MISC
@@ -133,8 +135,8 @@ comfy-table = "7.2.2"
 typeshare = "1.0.5"
 wildcard = "0.3.0"
 colored = "3.1.1"
-bytes = "1.11.1"
-regex = "1.12.3"
+bytes = "1.12.1"
+regex = "1.13.1"
 
 [profile.release]
 strip = "debuginfo"

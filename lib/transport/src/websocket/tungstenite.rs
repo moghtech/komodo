@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::{Context, anyhow};
-use axum::http::HeaderValue;
+use axum::http::{self, HeaderValue};
 use bytes::Bytes;
 use encoding::CastBytes as _;
 use futures_util::{
@@ -15,7 +15,8 @@ use tokio::net::TcpStream;
 use tokio_tungstenite::{
   Connector, MaybeTlsStream, WebSocketStream,
   tungstenite::{
-    self, handshake::client::Response, protocol::CloseFrame,
+    self, client::IntoClientRequest as _,
+    handshake::client::Response, protocol::CloseFrame,
   },
 };
 use tokio_util::sync::CancellationToken;
@@ -183,7 +184,8 @@ impl TungsteniteWebsocket {
   pub async fn connect(
     url: &str,
   ) -> mogh_error::Result<(Self, HeaderValue)> {
-    let res = tokio_tungstenite::connect_async(url).await;
+    let res =
+      tokio_tungstenite::connect_async(make_request(url)?).await;
     Self::handle_connection_result(url, res)
   }
 
@@ -191,7 +193,7 @@ impl TungsteniteWebsocket {
     url: &str,
   ) -> mogh_error::Result<(Self, HeaderValue)> {
     let res = tokio_tungstenite::connect_async_tls_with_config(
-      url,
+      make_request(url)?,
       None,
       false,
       Some(Connector::Rustls(Arc::new(
@@ -237,6 +239,19 @@ impl TungsteniteWebsocket {
 
     Ok((Self(ws), accept))
   }
+}
+
+fn make_request(url: &str) -> mogh_error::Result<http::Request<()>> {
+  let mut request =
+    url.into_client_request().context("Invalid websocket URL")?;
+  request.headers_mut().insert(
+    "user-agent",
+    HeaderValue::from_static(concat!(
+      "komodo/",
+      env!("CARGO_PKG_VERSION")
+    )),
+  );
+  Ok(request)
 }
 
 #[derive(Debug)]

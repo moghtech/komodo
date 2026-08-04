@@ -1,7 +1,4 @@
-use std::{
-  sync::{Arc, OnceLock},
-  time::Duration,
-};
+use std::sync::{Arc, OnceLock};
 
 use anyhow::anyhow;
 use async_timing_util::wait_until_timelength;
@@ -20,7 +17,7 @@ use tokio::sync::Mutex;
 
 use crate::{
   config::monitoring_interval,
-  helpers::swarm::swarm_request_custom_timeout,
+  helpers::swarm::swarm_request,
   monitor::{
     RefreshCacheResources,
     resources::{
@@ -118,12 +115,8 @@ pub async fn refresh_swarm_cache(swarm: &Swarm, force: bool) {
   }
 
   let PollSwarmStatusResponse { inspect, lists } =
-    match swarm_request_custom_timeout(
-      &swarm.config.server_ids,
-      PollSwarmStatus {},
-      Duration::from_secs(1),
-    )
-    .await
+    match swarm_request(&swarm.config.server_ids, PollSwarmStatus {})
+      .await
     {
       Ok(info) => info,
       Err(e) => {

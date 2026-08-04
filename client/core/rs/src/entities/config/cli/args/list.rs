@@ -18,7 +18,7 @@ pub struct List {
   /// List only "in progress" / "pending" resources, like Actions / Procedures that are running (alias: `pending`)
   #[arg(
     long,
-    short = 'p',
+    short = 'i',
     alias = "pending",
     default_value_t = false
   )]
@@ -45,6 +45,10 @@ pub struct List {
   /// Can be specified multiple times. (alias `s`)
   #[arg(name = "server", long, short = 's')]
   pub servers: Vec<String>,
+  /// Filter by a particular swarm. Supports wildcard.
+  /// Can be specified multiple times. (alias `w`)
+  #[arg(name = "swarm", long, short = 'w')]
+  pub swarms: Vec<String>,
   /// Filter by a particular builder. Supports wildcard.
   /// Can be specified multiple times. (alias `b`)
   #[arg(name = "builder", long, short = 'b')]
@@ -52,6 +56,9 @@ pub struct List {
   /// Specify the format of the output.
   #[arg(long, short = 'f', default_value_t = super::CliFormat::Table)]
   pub format: super::CliFormat,
+  /// Specify page for resource list, starting at 1.
+  #[arg(long, short = 'p', default_value_t = 1)]
+  pub page: u64,
 }
 
 impl From<List> for ResourceFilters {
@@ -66,6 +73,7 @@ impl From<List> for ResourceFilters {
       names: value.names,
       tags: value.tags,
       servers: value.servers,
+      swarms: value.swarms,
       builders: value.builders,
       format: value.format,
     }
@@ -77,6 +85,9 @@ pub enum ListCommand {
   /// List Servers (aliases: `server`, `sv`)
   #[clap(alias = "server", alias = "sv")]
   Servers(ResourceFilters),
+  /// List Swarms (aliases: `swarm`, `sw`)
+  #[clap(alias = "swarm", alias = "sw")]
+  Swarms(ResourceFilters),
   /// List Stacks (aliases: `stack`, `st`)
   #[clap(alias = "stack", alias = "st")]
   Stacks(ResourceFilters),
@@ -154,6 +165,10 @@ pub struct ResourceFilters {
   /// Can be specified multiple times. (alias `s`)
   #[arg(name = "server", long, short = 's')]
   pub servers: Vec<String>,
+  /// Filter by a particular swarm. Supports wildcard.
+  /// Can be specified multiple times. (alias `w`)
+  #[arg(name = "swarm", long, short = 'w')]
+  pub swarms: Vec<String>,
   /// Filter by a particular builder. Supports wildcard.
   /// Can be specified multiple times. (alias `b`)
   #[arg(name = "builder", long, short = 'b')]
