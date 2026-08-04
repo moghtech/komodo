@@ -1,6 +1,7 @@
 import { Anchor, Group, Select, Stack, Text, TextInput } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import { useState } from "react";
+import { notifications } from "@mantine/notifications";
+import { useEffect, useState } from "react";
 import { Types } from "komodo_client";
 import {
   usePermissions,
@@ -137,6 +138,19 @@ export default function ActionConfig({ id }: { id: string }) {
               failure_alert: {
                 description: "Send an alert any time the Action fails",
               },
+            },
+          },
+          {
+            label: "Timeout",
+            labelHidden: true,
+            fields: {
+              execution_timeout: (execution_timeout, set) => (
+                <ExecutionTimeout
+                  arg={execution_timeout}
+                  set={set}
+                  disabled={disabled}
+                />
+              ),
             },
           },
           {
@@ -295,6 +309,57 @@ export default function ActionConfig({ id }: { id: string }) {
         ],
       }}
     />
+  );
+}
+
+function ExecutionTimeout({
+  arg,
+  set,
+  disabled,
+}: {
+  arg: number;
+  set: (input: Partial<Types.ActionConfig>) => void;
+  disabled: boolean;
+}) {
+  const [input, setInput] = useState(arg.toString());
+  useEffect(() => {
+    setInput(arg.toString());
+  }, [arg]);
+  // Integral and within i32, matching the server field.
+  const valid = (value: string) => {
+    const num = Number(value);
+    return Number.isInteger(num) && num >= -2147483648 && num <= 2147483647;
+  };
+  const error = valid(input)
+    ? undefined
+    : "Timeout must be a whole number of seconds";
+  return (
+    <ConfigItem
+      label="Execution timeout"
+      description="Maximum time the Action may run before its process group is killed and the run is failed. 0 or below disables the timeout."
+    >
+      <Group gap="xs">
+        <TextInput
+          w={100}
+          placeholder="time in seconds"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onBlur={(e) => {
+            if (valid(e.target.value)) {
+              set({ execution_timeout: Number(e.target.value) });
+            } else {
+              notifications.show({
+                message: "Execution timeout must be a whole number of seconds",
+                color: "red",
+              });
+            }
+          }}
+          error={error}
+          disabled={disabled}
+        />
+        seconds
+      </Group>
+    </ConfigItem>
   );
 }
 

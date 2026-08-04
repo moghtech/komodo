@@ -121,6 +121,11 @@ export interface ActionConfig {
 	 */
 	reload_deno_deps?: boolean;
 	/**
+	 * Maximum seconds the Action may run before its process group is
+	 * killed and the run failed. 0 or below means no timeout.
+	 */
+	execution_timeout: number;
+	/**
 	 * Typescript file contents using pre-initialized `komodo` client.
 	 * Supports variable / secret interpolation.
 	 */
