@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use async_timing_util::{Timelength, wait_until_timelength};
 use komodo_client::entities::{
   ResourceTargetVariant, report::KomodoReport,
@@ -60,12 +60,12 @@ async fn report(
     .get("https://mogh.tech/report/public_key")
     .send()
     .await
-    .context("Failed to query for reporting endpoint public key for signature.")?
+    .context("Failed to query for reporting endpoint public key for signature")?
     .error_for_status()
-    .context("Failed response for reporting endpoint public key for signature.")?
+    .context("Failed response for reporting endpoint public key for signature")?
     .text()
     .await
-    .context("Failed to get reporting endpoint public key for signature.")?;
+    .context("Failed to get reporting endpoint public key for signature")?;
 
   let endpoint_public_key =
     SpkiPublicKey::maybe_pem_to_raw_bytes(&endpoint_public_key)
@@ -138,7 +138,7 @@ async fn report(
     .generate_signature()
     .context("Failed to generate report signature")?;
 
-  client
+  let res = client
     .post("https://mogh.tech/report/komodo")
     .header("x-api-signature", signature)
     .header("x-api-timestamp", timestamp)
@@ -146,9 +146,18 @@ async fn report(
     .body(serialized)
     .send()
     .await
-    .context("Failed to post report.")?
-    .error_for_status()
-    .context("Failed response for report post.")?;
+    .context("Failed to post report")?;
 
-  Ok(())
+  let status = res.status();
+
+  if status.is_success() {
+    return Ok(());
+  }
+
+  let text = res
+    .text()
+    .await
+    .context("Failed report, and failed to get response body")?;
+
+  Err(anyhow!("{status}: {text}"))
 }
