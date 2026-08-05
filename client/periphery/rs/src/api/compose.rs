@@ -182,6 +182,19 @@ pub struct ComposeUp {
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
+  /// Pass `--force-recreate` to `docker compose up`.
+  ///
+  /// Set by `DeployStackIfChanged` when it acts on a `config_files` diff:
+  /// the compose service definition is unchanged in that case, so
+  /// `docker compose up -d` would consider the container up-to-date and
+  /// leave it running the old file contents.
+  ///
+  /// Deliberately NOT a `compose down` first. Taking a service down is
+  /// service-scoped in name only: `compose down <svc>` also removes every
+  /// service that depends on it, and the following `up -d <svc>` brings back
+  /// only the target and its dependencies — leaving the dependents removed.
+  #[serde(default)]
+  pub force_recreate: bool,
 }
 
 //
