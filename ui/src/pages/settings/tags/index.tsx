@@ -29,7 +29,6 @@ export default function SettingsTags() {
         columns={[
           {
             header: "Name",
-            size: 200,
             accessorKey: "name",
             cell: ({ row }) => {
               return <Tag tag={row.original} size="md" fz="md" />;
@@ -37,7 +36,6 @@ export default function SettingsTags() {
           },
           {
             header: "Color",
-            size: 200,
             cell: ({ row }) => (
               <TagColorSelector
                 tagId={row.original._id?.$oid!}
@@ -58,7 +56,6 @@ export default function SettingsTags() {
           // },
           {
             header: "Delete",
-            size: 200,
             cell: ({ row }) => (
               <DeleteTag
                 tagId={row.original._id!.$oid}

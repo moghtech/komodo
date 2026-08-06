@@ -53,7 +53,6 @@ export default function SpecificPermissionsSection({
         columns={[
           {
             accessorKey: "resource_target.type",
-            size: 150,
             header: ({ column }) => (
               <SortableHeader column={column} title="Resource" />
             ),
@@ -72,7 +71,6 @@ export default function SpecificPermissionsSection({
           },
           {
             accessorKey: "resource_target",
-            size: 250,
             header: ({ column }) => (
               <SortableHeader column={column} title="Target" />
             ),
@@ -91,8 +89,7 @@ export default function SpecificPermissionsSection({
           },
           {
             accessorKey: "level",
-            size: 150,
-            sortingFn: (a, b) =>
+            sortFn: (a, b) =>
               levelSortingFn(a.original.level, b.original.level),
             header: ({ column }) => (
               <SortableHeader column={column} title="Level" />
@@ -115,7 +112,6 @@ export default function SpecificPermissionsSection({
           },
           {
             header: "Specific",
-            size: 300,
             cell: ({ row: { original: permission } }) => {
               return (
                 <SpecificPermissionSelector

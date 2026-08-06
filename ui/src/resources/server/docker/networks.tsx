@@ -85,7 +85,6 @@ export default function ServerNetworks({
                 />
               </div>
             ),
-            size: 300,
           },
           {
             accessorKey: "driver",

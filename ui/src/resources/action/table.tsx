@@ -61,7 +61,7 @@ export default function ActionTable({
           header: ({ column }) => (
             <SortableHeader column={column} title="Next Run" />
           ),
-          sortingFn: (a, b) => {
+          sortFn: (a, b) => {
             const sa = a.original.info.next_scheduled_run;
             const sb = b.original.info.next_scheduled_run;
 

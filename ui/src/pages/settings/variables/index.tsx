@@ -67,7 +67,6 @@ export default function SettingsVariables() {
           columns={[
             {
               accessorKey: "name",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Name" />
               ),
@@ -79,7 +78,6 @@ export default function SettingsVariables() {
             },
             {
               accessorKey: "value",
-              size: 300,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Value" />
               ),
@@ -117,7 +115,6 @@ export default function SettingsVariables() {
             },
             {
               accessorKey: "description",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Description" />
               ),
@@ -153,7 +150,6 @@ export default function SettingsVariables() {
             },
             {
               header: "Secret",
-              size: 100,
               cell: ({ row }) => (
                 <Switch
                   checked={row.original.is_secret}
@@ -169,7 +165,6 @@ export default function SettingsVariables() {
             },
             {
               header: "Delete",
-              size: 200,
               cell: ({ row }) => (
                 <DeleteVariable name={row.original.name} disabled={disabled} />
               ),

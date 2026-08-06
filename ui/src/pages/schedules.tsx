@@ -100,7 +100,6 @@ export default function Schedules() {
           }}
           columns={[
             {
-              size: 200,
               id: "Name",
               accessorKey: "name",
               header: ({ column }) => (
@@ -114,7 +113,6 @@ export default function Schedules() {
               ),
             },
             {
-              size: 200,
               id: "Schedule",
               accessorKey: "schedule",
               header: ({ column }) => (
@@ -122,7 +120,6 @@ export default function Schedules() {
               ),
             },
             {
-              size: 200,
               id: "NextRun",
               accessorKey: "next_scheduled_run",
               header: ({ column }) => (
@@ -134,7 +131,6 @@ export default function Schedules() {
                   : "Not Scheduled",
             },
             {
-              size: 100,
               id: "Enabled",
               accessorKey: "enabled",
               header: ({ column }) => (

@@ -86,7 +86,6 @@ export default function SwarmTasksSection({
                   name={row.original.ID}
                 />
               ),
-              size: 150,
             },
             {
               accessorKey: "node.Hostname",
@@ -101,7 +100,6 @@ export default function SwarmTasksSection({
                   name={row.original.node?.Hostname}
                 />
               ),
-              size: 200,
             },
             {
               accessorKey: "service.Name",
@@ -116,7 +114,6 @@ export default function SwarmTasksSection({
                   name={row.original.service?.Name}
                 />
               ),
-              size: 200,
             },
             {
               accessorKey: "State",
@@ -157,7 +154,6 @@ export default function SwarmTasksSection({
                 row.original.UpdatedAt
                   ? new Date(row.original.UpdatedAt).toLocaleString()
                   : "Unknown",
-              size: 200,
             },
             // {
             //   accessorKey: "CreatedAt",

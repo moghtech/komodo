@@ -66,7 +66,6 @@ export default function SwarmServicesSection({
                   name={row.original.Name}
                 />
               ),
-              size: 200,
             },
             {
               accessorKey: "ID",
@@ -74,7 +73,6 @@ export default function SwarmServicesSection({
                 <SortableHeader column={column} title="ID" />
               ),
               cell: ({ row }) => row.original.ID ?? "Unknown",
-              size: 200,
             },
             {
               accessorKey: "UpdatedAt",
@@ -85,7 +83,6 @@ export default function SwarmServicesSection({
                 row.original.UpdatedAt
                   ? new Date(row.original.UpdatedAt).toLocaleString()
                   : "Unknown",
-              size: 200,
             },
             {
               accessorKey: "CreatedAt",
@@ -96,7 +93,6 @@ export default function SwarmServicesSection({
                 row.original.CreatedAt
                   ? new Date(row.original.CreatedAt).toLocaleString()
                   : "Unknown",
-              size: 200,
             },
           ]}
         />

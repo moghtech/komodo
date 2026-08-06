@@ -492,7 +492,7 @@ function MultiServerStatChart({
                 fontSize: 12,
               }}
               labelStyle={{ color: "var(--mantine-color-dimmed)" }}
-              labelFormatter={(label) => new Date(label).toLocaleString()}
+              labelFormatter={(label) => new Date(Number(label)).toLocaleString()}
               // List the busiest server first.
               itemSorter={(item) => -Number(item.value)}
               formatter={(value, name) => {

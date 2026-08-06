@@ -67,7 +67,6 @@ export default function SwarmNodes({
                 name={row.original.Hostname}
               />
             ),
-            size: 200,
           },
           {
             accessorKey: "ID",
@@ -75,7 +74,6 @@ export default function SwarmNodes({
               <SortableHeader column={column} title="ID" />
             ),
             cell: ({ row }) => row.original.ID ?? "Unknown",
-            size: 200,
           },
           {
             accessorKey: "Role",
@@ -149,7 +147,6 @@ export default function SwarmNodes({
               row.original.UpdatedAt
                 ? new Date(row.original.UpdatedAt).toLocaleString()
                 : "Unknown",
-            size: 200,
           },
           // {
           //   accessorKey: "CreatedAt",

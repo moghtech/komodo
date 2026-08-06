@@ -57,7 +57,6 @@ export default function DeploymentTable({
               <DeploymentUpdateAvailable id={row.original.id} small />
             </Group>
           ),
-          size: 200,
         },
         {
           id: "Image",
@@ -72,7 +71,6 @@ export default function DeploymentTable({
               },
             },
           }) => <Image buildId={build_id} image={image} />,
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -80,7 +78,7 @@ export default function DeploymentTable({
           ),
           id: "Host",
           accessorKey: "info.server_id",
-          sortingFn: (a, b) => {
+          sortFn: (a, b) => {
             const name_a = a.original.info.swarm_id
               ? a.original.info.swarm_name
               : a.original.info.server_name;
@@ -102,7 +100,6 @@ export default function DeploymentTable({
             ) : (
               <ResourceLink type="Server" id={row.original.info.server_id} />
             ),
-          size: 200,
         },
         {
           id: "State",
@@ -113,7 +110,6 @@ export default function DeploymentTable({
           cell: ({ row }) => (
             <DeploymentComponents.State id={row.original.id} />
           ),
-          size: 120,
         },
         {
           header: "Tags",
