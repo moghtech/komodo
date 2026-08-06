@@ -26,7 +26,7 @@
     "jotai-location": "^0.6.2",
     "lucide-react": "^1.29.0",
     "mogh_auth_client": "^1.7.1",
-    "mogh_ui": "^1.0.0",
+    "mogh_ui": "^1.0.1",
     "monaco-editor": "^0.56.0",
     "monaco-yaml": "^5.5.1",
     "react": "^19.2.8",
