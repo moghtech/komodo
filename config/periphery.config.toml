@@ -75,7 +75,7 @@ disable_terminals = false
 disable_container_terminals = false
 
 ## The public IP reported for this host, shown on the Server page.
-## By default Periphery resolves this by querying the OpenDNS resolvers
+## By default Periphery resolves this by querying the OpenDNS resolvers.
 ## When set, the lookup is skipped entirely.
 ## Env: PERIPHERY_PUBLIC_IP
 ## Default: empty
