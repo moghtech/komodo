@@ -380,7 +380,7 @@ pub struct PeripheryConfig {
   /// Default: false
   #[serde(default, alias = "disable_container_exec")]
   pub disable_container_terminals: bool,
-  
+
   /// The public IP reported for the host.
   /// If empty, Periphery resolves the IP by querying the OpenDNS resolvers.
   /// When set, the lookup is skipped entirely.
