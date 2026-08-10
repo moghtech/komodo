@@ -25,10 +25,13 @@ ARG DOCSITE_BASE_URL=/
 # Copy into caddy image /srv, nested under the base url path
 COPY --from=builder /builder/build /srv${DOCSITE_BASE_URL}
 
-# Add a basic caddyfile serving http
-RUN <<EOF cat > /etc/caddy/Caddyfile
+# Add a basic caddyfile serving http.
+# BASE is the base url without its trailing slash (empty when base url is "/"),
+# used to redirect e.g. /komodo -> /komodo/ so relative urls resolve correctly.
+RUN BASE="${DOCSITE_BASE_URL%/}" && cat > /etc/caddy/Caddyfile <<EOF
 :80 {
     root * /srv
+    ${BASE:+redir $BASE $BASE/ 308}
     file_server
     try_files {path} {path}.html ${DOCSITE_BASE_URL}index.html
 }
