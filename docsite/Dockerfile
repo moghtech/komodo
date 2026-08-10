@@ -1,5 +1,8 @@
 FROM node:22.12-alpine AS builder
 
+ARG DOCSITE_URL
+ARG DOCSITE_BASE_URL
+
 WORKDIR /builder
 
 COPY package.json yarn.lock ./
@@ -13,7 +16,7 @@ COPY ./docusaurus.config.ts ./docusaurus.config.ts
 COPY ./sidebars.ts ./sidebars.ts
 COPY ./tsconfig.json ./tsconfig.json
 
-RUN yarn build
+RUN DOCSITE_URL=${DOCSITE_URL} DOCSITE_BASE_URL=${DOCSITE_BASE_URL} yarn build
 
 FROM caddy:latest
 
