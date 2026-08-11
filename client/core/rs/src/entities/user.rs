@@ -68,6 +68,11 @@ pub struct User {
   #[serde(default)]
   pub linked_logins: LinkedLoginsMap,
 
+  /// User group names last synced from OIDC claims.
+  /// Used to reconcile OIDC-managed memberships without touching manual groups.
+  #[serde(default)]
+  pub oidc_synced_groups: Vec<String>,
+
   /// TOTP 2fa credentials
   #[serde(default)]
   pub totp: UserTotpConfig,
@@ -136,6 +141,7 @@ impl User {
       recents: Default::default(),
       all: Default::default(),
       linked_logins: Default::default(),
+      oidc_synced_groups: Default::default(),
       totp: Default::default(),
       passkey: Default::default(),
       external_skip_2fa: Default::default(),

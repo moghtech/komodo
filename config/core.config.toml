@@ -293,6 +293,24 @@ oidc_additional_audiences = []
 ## Default: false
 oidc_auto_redirect = false
 
+## Sync Komodo User Group memberships from an OIDC claim on every OIDC login.
+## Only memberships previously synced from OIDC are removed when claims change.
+## Env: KOMODO_OIDC_SYNC_USER_GROUPS
+## Default: false
+oidc_sync_user_groups = false
+
+## OIDC claim used for User Group sync.
+## Supports an array of strings, a single string, or a dotted path like `realm_access.roles`.
+## Env: KOMODO_OIDC_SYNC_USER_GROUPS_CLAIM
+## Default: groups
+oidc_sync_user_groups_claim = "groups"
+
+## Create Komodo User Groups found in OIDC claims when they do not exist.
+## When false, only existing Komodo User Groups are synced.
+## Env: KOMODO_OIDC_SYNC_USER_GROUPS_AUTO_CREATE
+## Default: false
+oidc_sync_user_groups_auto_create = false
+
 #########
 # OAUTH #
 #########

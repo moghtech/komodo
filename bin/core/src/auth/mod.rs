@@ -1,4 +1,7 @@
-use std::sync::{Arc, LazyLock};
+use std::{
+  collections::BTreeSet,
+  sync::{Arc, LazyLock},
+};
 
 use anyhow::{Context as _, anyhow};
 use async_timing_util::{
@@ -6,11 +9,15 @@ use async_timing_util::{
 };
 use database::{
   bson::{Document, doc, to_bson},
-  mungos::by_id::update_one_by_id,
+  mungos::{
+    by_id::update_one_by_id, find::find_collect,
+    mongodb::options::UpdateOptions,
+  },
 };
 use komodo_client::entities::{
   komodo_timestamp, optional_str,
   user::{NewUserParams, User, UserConfig, UserConfigVariant},
+  user_group::UserGroup,
 };
 use mogh_auth_client::{
   api::login::LoginProvider,
@@ -18,7 +25,7 @@ use mogh_auth_client::{
   passkey::Passkey,
 };
 use mogh_auth_server::{
-  AuthImpl,
+  AuthImpl, OidcClaims,
   provider::{
     jwt::JwtProvider, oidc::SubjectIdentifier,
     passkey::PasskeyProvider,
@@ -29,6 +36,7 @@ use mogh_auth_server::{
 use mogh_error::{AddStatusCode, AddStatusCodeError, StatusCode};
 use mogh_pki::RotatableKeyPair;
 use mogh_rate_limit::RateLimiter;
+use serde_json::{Map, Value};
 
 use crate::{
   config::{core_config, core_keys},
@@ -451,6 +459,19 @@ impl AuthImpl for KomodoAuthImpl {
     })
   }
 
+  fn on_oidc_login(
+    &self,
+    user_id: String,
+    claims: OidcClaims,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      sync_oidc_user_groups(user_id, claims)
+        .await
+        .status_code(StatusCode::INTERNAL_SERVER_ERROR)?;
+      Ok(())
+    })
+  }
+
   // ===============
   // = GITHUB AUTH =
   // ===============
@@ -825,4 +846,162 @@ impl AuthImpl for KomodoAuthImpl {
   fn server_private_key(&self) -> Option<&RotatableKeyPair> {
     Some(core_keys())
   }
+}
+
+async fn sync_oidc_user_groups(
+  user_id: String,
+  claims: OidcClaims,
+) -> anyhow::Result<()> {
+  let config = core_config();
+  if !config.oidc_sync_user_groups {
+    return Ok(());
+  }
+
+  let claimed = extract_oidc_group_names(
+    &claims,
+    &config.oidc_sync_user_groups_claim,
+  );
+
+  let db = db_client();
+  let user = get_user(&user_id).await?;
+  let previous =
+    user.oidc_synced_groups.into_iter().collect::<BTreeSet<_>>();
+
+  if config.oidc_sync_user_groups_auto_create {
+    ensure_oidc_user_groups_exist(&claimed).await?;
+  }
+
+  let synced = existing_user_group_names(&claimed).await?;
+
+  if !synced.is_empty() {
+    db.user_groups
+      .update_many(
+        doc! { "name": { "$in": synced.iter().collect::<Vec<_>>() } },
+        doc! {
+          "$addToSet": { "users": &user_id },
+          "$set": { "updated_at": komodo_timestamp() },
+        },
+      )
+      .await
+      .context("failed to add user to OIDC synced user groups")?;
+  }
+
+  let stale = previous.difference(&synced).collect::<Vec<_>>();
+  if !stale.is_empty() {
+    db.user_groups
+      .update_many(
+        doc! {
+          "name": { "$in": stale },
+          "users": &user_id,
+        },
+        doc! {
+          "$pull": { "users": &user_id },
+          "$set": { "updated_at": komodo_timestamp() },
+        },
+      )
+      .await
+      .context(
+        "failed to remove user from stale OIDC synced user groups",
+      )?;
+  }
+
+  let synced = synced.into_iter().collect::<Vec<_>>();
+  update_one_by_id(
+    &db.users,
+    &user_id,
+    doc! {
+      "$set": {
+        "oidc_synced_groups": synced,
+        "updated_at": komodo_timestamp(),
+      }
+    },
+    None,
+  )
+  .await
+  .context("failed to set user OIDC synced groups")?;
+
+  Ok(())
+}
+
+async fn ensure_oidc_user_groups_exist(
+  group_names: &BTreeSet<String>,
+) -> anyhow::Result<()> {
+  let db = db_client();
+  for name in group_names {
+    db.user_groups
+      .update_one(
+        doc! { "name": name },
+        doc! {
+          "$setOnInsert": {
+            "name": name,
+            "everyone": false,
+            "users": Vec::<String>::new(),
+            "all": Document::new(),
+            "updated_at": komodo_timestamp(),
+          }
+        },
+      )
+      .with_options(UpdateOptions::builder().upsert(true).build())
+      .await
+      .with_context(|| {
+        format!("failed to ensure OIDC synced user group {name:?}")
+      })?;
+  }
+  Ok(())
+}
+
+async fn existing_user_group_names(
+  group_names: &BTreeSet<String>,
+) -> anyhow::Result<BTreeSet<String>> {
+  if group_names.is_empty() {
+    return Ok(BTreeSet::new());
+  }
+
+  let groups: Vec<UserGroup> = find_collect(
+    &db_client().user_groups,
+    doc! { "name": { "$in": group_names.iter().collect::<Vec<_>>() } },
+    None,
+  )
+  .await
+  .context("failed to query OIDC synced user groups")?;
+
+  Ok(groups.into_iter().map(|group| group.name).collect())
+}
+
+fn extract_oidc_group_names(
+  claims: &OidcClaims,
+  claim_name: &str,
+) -> BTreeSet<String> {
+  let claim = claims
+    .claim(claim_name)
+    .or_else(|| claim_at_path(&claims.claims, claim_name));
+
+  match claim {
+    Some(Value::Array(groups)) => groups
+      .iter()
+      .filter_map(Value::as_str)
+      .map(str::trim)
+      .filter(|group| !group.is_empty())
+      .map(ToString::to_string)
+      .collect(),
+    Some(Value::String(group)) => group
+      .split(',')
+      .map(str::trim)
+      .filter(|group| !group.is_empty())
+      .map(ToString::to_string)
+      .collect(),
+    _ => BTreeSet::new(),
+  }
+}
+
+fn claim_at_path<'a>(
+  claims: &'a Map<String, Value>,
+  claim_name: &str,
+) -> Option<&'a Value> {
+  let (first, rest) = claim_name.split_once('.')?;
+  let mut value = claims.get(first)?;
+  for key in rest.split('.') {
+    value = value.as_object()?.get(key)?;
+  }
+  Some(value)
 }

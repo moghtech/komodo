@@ -178,6 +178,12 @@ pub struct Env {
   pub komodo_oidc_additional_audiences_file: Option<PathBuf>,
   /// Override `oidc_auto_redirect`
   pub komodo_oidc_auto_redirect: Option<bool>,
+  /// Override `oidc_sync_user_groups`
+  pub komodo_oidc_sync_user_groups: Option<bool>,
+  /// Override `oidc_sync_user_groups_claim`
+  pub komodo_oidc_sync_user_groups_claim: Option<String>,
+  /// Override `oidc_sync_user_groups_auto_create`
+  pub komodo_oidc_sync_user_groups_auto_create: Option<bool>,
 
   /// Override `google_oauth.enabled`
   pub komodo_google_oauth_enabled: Option<bool>,
@@ -574,6 +580,26 @@ pub struct CoreConfig {
   #[serde(default)]
   pub oidc_auto_redirect: bool,
 
+  /// Sync Komodo user group memberships from an OIDC claim on every OIDC login.
+  ///
+  /// Only memberships previously synced from OIDC are removed when claims change.
+  /// Manual group membership remains untouched.
+  #[serde(default)]
+  pub oidc_sync_user_groups: bool,
+
+  /// OIDC claim used for user group sync.
+  ///
+  /// Supports either an array of strings, a single string, or a dotted path
+  /// such as `realm_access.roles`.
+  #[serde(default = "default_oidc_sync_user_groups_claim")]
+  pub oidc_sync_user_groups_claim: String,
+
+  /// Create Komodo user groups found in OIDC claims when they do not exist.
+  ///
+  /// When false, only existing Komodo user groups are synced.
+  #[serde(default)]
+  pub oidc_sync_user_groups_auto_create: bool,
+
   // =========
   // = Oauth =
   // =========
@@ -928,6 +954,10 @@ fn default_ssl_cert_file() -> String {
   "/config/ssl/cert.pem".to_string()
 }
 
+fn default_oidc_sync_user_groups_claim() -> String {
+  String::from("groups")
+}
+
 impl Default for CoreConfig {
   fn default() -> Self {
     Self {
@@ -970,6 +1000,10 @@ impl Default for CoreConfig {
       oidc_use_full_email: Default::default(),
       oidc_additional_audiences: Default::default(),
       oidc_auto_redirect: Default::default(),
+      oidc_sync_user_groups: Default::default(),
+      oidc_sync_user_groups_claim:
+        default_oidc_sync_user_groups_claim(),
+      oidc_sync_user_groups_auto_create: Default::default(),
       google_oauth: Default::default(),
       github_oauth: Default::default(),
       auth_rate_limit_disabled: Default::default(),
@@ -1078,6 +1112,10 @@ impl CoreConfig {
         .map(|aud| empty_or_redacted(aud))
         .collect(),
       oidc_auto_redirect: config.oidc_auto_redirect,
+      oidc_sync_user_groups: config.oidc_sync_user_groups,
+      oidc_sync_user_groups_claim: config.oidc_sync_user_groups_claim,
+      oidc_sync_user_groups_auto_create: config
+        .oidc_sync_user_groups_auto_create,
       google_oauth: NamedOauthConfig {
         enabled: config.google_oauth.enabled,
         client_id: empty_or_redacted(&config.google_oauth.client_id),
