@@ -94,7 +94,6 @@ export default function ContainersSection({
             columns={[
               {
                 accessorKey: "name",
-                size: 260,
                 header: ({ column }) => (
                   <SortableHeader column={column} title="Name" />
                 ),
@@ -108,7 +107,6 @@ export default function ContainersSection({
               },
               {
                 accessorKey: "state",
-                size: 160,
                 header: ({ column }) => (
                   <SortableHeader column={column} title="State" />
                 ),
@@ -124,7 +122,6 @@ export default function ContainersSection({
               },
               {
                 accessorKey: "image",
-                size: 300,
                 header: ({ column }) => (
                   <SortableHeader column={column} title="Image" />
                 ),
@@ -139,7 +136,6 @@ export default function ContainersSection({
               },
               {
                 accessorKey: "networks.0",
-                size: 200,
                 header: ({ column }) => (
                   <SortableHeader column={column} title="Networks" />
                 ),
@@ -167,8 +163,7 @@ export default function ContainersSection({
               },
               {
                 accessorKey: "ports.0",
-                size: 200,
-                sortingFn: (a, b) => {
+                sortFn: (a, b) => {
                   const getMinHostPort = (row: typeof a) => {
                     const ports = row.original.ports ?? [];
                     if (!ports.length) return Number.POSITIVE_INFINITY;
@@ -197,7 +192,6 @@ export default function ContainersSection({
               },
               {
                 accessorKey: "volumes.0",
-                size: 200,
                 header: ({ column }) => (
                   <SortableHeader column={column} title="Volumes" />
                 ),

@@ -335,7 +335,7 @@ function StatChart({
                 fontSize: 12,
               }}
               labelStyle={{ color: "var(--mantine-color-dimmed)" }}
-              labelFormatter={(label) => new Date(label).toLocaleString()}
+              labelFormatter={(label) => new Date(Number(label)).toLocaleString()}
               // Memory tooltip lists top-of-stack first, matching the chart.
               itemSorter={
                 isMemory

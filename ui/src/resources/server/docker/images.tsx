@@ -63,7 +63,6 @@ export default function ServerImages({
                 }
               />
             ),
-            size: 200,
           },
           {
             accessorKey: "id",

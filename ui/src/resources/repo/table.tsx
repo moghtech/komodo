@@ -51,7 +51,6 @@ export default function RepoTable({
           id: "Name",
           accessorKey: "name",
           cell: ({ row }) => <ResourceLink type="Repo" id={row.original.id} />,
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -65,7 +64,6 @@ export default function RepoTable({
               link={row.original.info.repo_link}
             />
           ),
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -73,7 +71,6 @@ export default function RepoTable({
           ),
           id: "Branch",
           accessorKey: "info.branch",
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -82,7 +79,6 @@ export default function RepoTable({
           id: "State",
           accessorKey: "info.state",
           cell: ({ row }) => <RepoComponents.State id={row.original.id} />,
-          size: 120,
         },
         {
           header: "Tags",

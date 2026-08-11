@@ -3,7 +3,12 @@ import TagSelector from "@/components/tags/selector";
 import { useInvalidate, useRead, useSetTitle, useWrite } from "@/lib/hooks";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/lib/icons";
-import { DataTable, fmtDateWithMinutes, SortableHeader } from "mogh_ui";
+import {
+  DataTable,
+  DataTableFeatures,
+  fmtDateWithMinutes,
+  SortableHeader,
+} from "mogh_ui";
 import { Badge, Group, Switch, TextInput, useMatches } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { ColumnDef } from "@tanstack/react-table";
@@ -29,13 +34,12 @@ export default function SettingsOnboardingKeys() {
     xl: "md",
   });
   const columns: (
-    | ColumnDef<Types.OnboardingKey, unknown>
+    | ColumnDef<DataTableFeatures, Types.OnboardingKey, unknown>
     | false
     | undefined
   )[] = useMemo(
     () => [
       {
-        size: 150,
         accessorKey: "name",
         header: ({ column }) => <SortableHeader column={column} title="Name" />,
         cell: ({ row }) => (
@@ -54,7 +58,6 @@ export default function SettingsOnboardingKeys() {
         ),
       },
       {
-        size: 150,
         accessorKey: "copy_server",
         header: "Template",
         cell: ({ row }) => (
@@ -69,7 +72,6 @@ export default function SettingsOnboardingKeys() {
         ),
       },
       {
-        size: 200,
         accessorKey: "tags",
         header: "Tags",
         cell: ({ row }) => {
@@ -116,7 +118,6 @@ export default function SettingsOnboardingKeys() {
         },
       },
       {
-        size: 100,
         accessorKey: "privileged",
         header: ({ column }) => (
           <SortableHeader
@@ -138,7 +139,6 @@ export default function SettingsOnboardingKeys() {
         ),
       },
       {
-        size: 100,
         accessorKey: "create_builder",
         header: ({ column }) => (
           <SortableHeader column={column} title="Create Builder" />
@@ -156,7 +156,6 @@ export default function SettingsOnboardingKeys() {
         ),
       },
       {
-        size: 100,
         accessorKey: "enabled",
         header: ({ column }) => (
           <SortableHeader column={column} title="Enabled" />
@@ -174,7 +173,6 @@ export default function SettingsOnboardingKeys() {
         ),
       },
       {
-        size: 150,
         accessorKey: "expires",
         header: ({ column }) => (
           <SortableHeader column={column} title="Expires" />
@@ -196,7 +194,6 @@ export default function SettingsOnboardingKeys() {
         ),
       },
       {
-        size: 100,
         accessorKey: "public_key",
         header: "Delete",
         cell: ({ row }) => (

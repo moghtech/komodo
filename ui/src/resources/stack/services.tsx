@@ -55,7 +55,6 @@ function StackServicesSwarm({
       columns={[
         {
           accessorKey: "service",
-          size: 200,
           header: ({ column }) => (
             <SortableHeader column={column} title="Service" />
           ),
@@ -65,7 +64,6 @@ function StackServicesSwarm({
         },
         {
           accessorKey: "swarm_service.State",
-          size: 160,
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
           ),
@@ -87,14 +85,12 @@ function StackServicesSwarm({
         },
         {
           accessorKey: "swarm_service.Runtime",
-          size: 300,
           header: ({ column }) => (
             <SortableHeader column={column} title="Runtime" />
           ),
         },
         {
           accessorKey: "swarm_service.Image",
-          size: 300,
           header: ({ column }) => (
             <SortableHeader column={column} title="Image" />
           ),
@@ -105,7 +101,6 @@ function StackServicesSwarm({
         },
         {
           accessorKey: "swarm_service.Replicas",
-          size: 300,
           header: ({ column }) => (
             <SortableHeader column={column} title="Replicas" />
           ),
@@ -132,7 +127,6 @@ function StackServicesServer({
       columns={[
         {
           accessorKey: "service",
-          size: 200,
           header: ({ column }) => (
             <SortableHeader column={column} title="Service" />
           ),
@@ -142,7 +136,6 @@ function StackServicesServer({
         },
         {
           accessorKey: "container.state",
-          size: 160,
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
           ),
@@ -164,7 +157,6 @@ function StackServicesServer({
         },
         {
           accessorKey: "container.image",
-          size: 300,
           header: ({ column }) => (
             <SortableHeader column={column} title="Image" />
           ),
@@ -181,7 +173,6 @@ function StackServicesServer({
         },
         {
           accessorKey: "container.networks.0",
-          size: 200,
           header: ({ column }) => (
             <SortableHeader column={column} title="Networks" />
           ),
@@ -215,7 +206,6 @@ function StackServicesServer({
         },
         {
           accessorKey: "container.ports.0",
-          size: 200,
           header: ({ column }) => (
             <SortableHeader column={column} title="Ports" />
           ),

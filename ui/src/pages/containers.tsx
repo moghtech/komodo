@@ -96,7 +96,6 @@ export default function Containers() {
           {
             id: "Name",
             accessorKey: "name",
-            size: 260,
             header: ({ column }) => (
               <SortableHeader column={column} title="Name" />
             ),
@@ -111,8 +110,7 @@ export default function Containers() {
           {
             id: "Server",
             accessorKey: "server_id",
-            size: 200,
-            sortingFn: (a, b) => {
+            sortFn: (a, b) => {
               const sa = a.original.server_name;
               const sb = b.original.server_name;
 
@@ -134,7 +132,6 @@ export default function Containers() {
           {
             id: "State",
             accessorKey: "state",
-            size: 160,
             header: ({ column }) => (
               <SortableHeader column={column} title="State" />
             ),
@@ -151,7 +148,6 @@ export default function Containers() {
           {
             id: "Image",
             accessorKey: "image",
-            size: 300,
             header: ({ column }) => (
               <SortableHeader column={column} title="Image" />
             ),
@@ -167,7 +163,6 @@ export default function Containers() {
           {
             id: "Networks",
             accessorKey: "networks.0",
-            size: 200,
             header: ({ column }) => (
               <SortableHeader column={column} title="Networks" />
             ),
@@ -196,8 +191,7 @@ export default function Containers() {
           {
             id: "Ports",
             accessorKey: "ports.0",
-            size: 200,
-            sortingFn: (a, b) => {
+            sortFn: (a, b) => {
               const getMinHostPort = (row: typeof a) => {
                 const ports = row.original.ports ?? [];
                 if (!ports.length) return Number.POSITIVE_INFINITY;
@@ -227,7 +221,6 @@ export default function Containers() {
           {
             id: "Volumes",
             accessorKey: "volumes.0",
-            size: 200,
             header: ({ column }) => (
               <SortableHeader column={column} title="Volumes" />
             ),

@@ -83,7 +83,6 @@ function Providers({ type }: { type: "GitProvider" | "ImageRegistry" }) {
           columns={[
             {
               accessorKey: "domain",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Domain" />
               ),
@@ -141,7 +140,6 @@ function Providers({ type }: { type: "GitProvider" | "ImageRegistry" }) {
             },
             {
               accessorKey: "username",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Username" />
               ),
@@ -180,7 +178,6 @@ function Providers({ type }: { type: "GitProvider" | "ImageRegistry" }) {
             },
             {
               accessorKey: "token",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Token" />
               ),
@@ -220,7 +217,6 @@ function Providers({ type }: { type: "GitProvider" | "ImageRegistry" }) {
             },
             {
               header: "Delete",
-              maxSize: 200,
               cell: ({ row }) => (
                 <DeleteProviderAccount
                   type={type}

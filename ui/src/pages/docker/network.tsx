@@ -165,7 +165,6 @@ function NetworkInner({
                   ) : (
                     "Unknown"
                   ),
-                size: 200,
               },
               {
                 accessorKey: "IPv4Address",

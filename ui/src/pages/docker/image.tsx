@@ -176,7 +176,6 @@ function ImageInner({
                     {
                       accessorKey: "CreatedBy",
                       header: "Created By",
-                      size: 400,
                     },
                     {
                       accessorKey: "Created",
@@ -185,7 +184,6 @@ function ImageInner({
                         fmtDateWithMinutes(
                           new Date(row.original.Created * 1000),
                         ),
-                      size: 200,
                     },
                   ]}
                 />

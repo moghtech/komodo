@@ -86,6 +86,7 @@ export default function ContainerSelector({
             <Group gap="xs" ml="sm" wrap="nowrap">
               {clearable && (
                 <ActionIcon
+                  component="div"
                   size="sm"
                   variant="filled"
                   color="red"
@@ -93,7 +94,12 @@ export default function ContainerSelector({
                     e.stopPropagation();
                     onSelect?.("");
                   }}
-                  disabled={disabled || !selected}
+                  data-disabled={disabled || !selected || undefined}
+                  style={
+                    disabled || !selected
+                      ? { pointerEvents: "none" }
+                      : undefined
+                  }
                 >
                   <ICONS.Clear size="0.8rem" />
                 </ActionIcon>

@@ -10,7 +10,7 @@ export default function BuilderInstanceType({ id }: { id: string }) {
     return (
       <DividedChildren wrap="nowrap" gap="xs">
         {info.instance_type?.split(",").map((id) => (
-          <ResourceLink type="Server" id={id.trim()} />
+          <ResourceLink key={id.trim()} type="Server" id={id.trim()} />
         ))}
       </DividedChildren>
     );

@@ -61,7 +61,6 @@ export default function SwarmSecrets({
                 }
               />
             ),
-            size: 200,
           },
           {
             accessorKey: "ID",
@@ -69,7 +68,6 @@ export default function SwarmSecrets({
               <SortableHeader column={column} title="ID" />
             ),
             cell: ({ row }) => row.original.ID ?? "Unknown",
-            size: 200,
           },
           {
             accessorKey: "Driver",
@@ -100,7 +98,6 @@ export default function SwarmSecrets({
               row.original.UpdatedAt
                 ? new Date(row.original.UpdatedAt).toLocaleString()
                 : "Unknown",
-            size: 200,
           },
           {
             accessorKey: "CreatedAt",
@@ -111,7 +108,6 @@ export default function SwarmSecrets({
               row.original.CreatedAt
                 ? new Date(row.original.CreatedAt).toLocaleString()
                 : "Unknown",
-            size: 200,
           },
         ]}
       />
