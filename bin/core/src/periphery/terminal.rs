@@ -4,7 +4,7 @@ use std::{
   task::{self, Poll},
 };
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use futures_util::Stream;
 use komodo_client::entities::terminal::{
   TerminalStdinMessageVariant, TerminalTarget,
@@ -51,16 +51,19 @@ impl PeripheryClient {
     let (sender, receiver) = transport::channel::channel();
     connection.terminals.insert(channel, sender).await;
 
-    connection
+    if let Err(e) = connection
       .sender
       .send_terminal(
         channel,
         Ok(vec![TerminalStdinMessageVariant::Begin.as_byte()]),
       )
       .await
-      .context(
+    {
+      connection.terminals.remove(&channel).await;
+      return Err(e).context(
         "Failed to send TerminalMessage Begin byte to begin forwarding.",
-      )?;
+      );
+    }
 
     Ok(ConnectTerminalResponse {
       channel,
@@ -113,21 +116,27 @@ impl PeripheryClient {
       transport::channel::channel();
     connection.terminals.insert(channel, terminal_sender).await;
 
-    connection
+    if let Err(e) = connection
       .sender
       .send_terminal(
         channel,
         Ok(vec![TerminalStdinMessageVariant::Begin.as_byte()]),
       )
       .await
-      .context(
+    {
+      // No stream was created, so no `Drop` will clean this up.
+      connection.terminals.remove(&channel).await;
+      return Err(e).context(
         "Failed to send TerminalTrigger to begin forwarding.",
-      )?;
+      );
+    }
 
     Ok(ReceiverStream {
       channel,
       receiver: terminal_receiver,
       channels: connection.terminals.clone(),
+      server: self.id.clone(),
+      completed: false,
     })
   }
 }
@@ -136,6 +145,10 @@ pub struct ReceiverStream {
   channel: Uuid,
   channels: Arc<CloneCache<Uuid, Sender<anyhow::Result<Vec<u8>>>>>,
   receiver: Receiver<anyhow::Result<Vec<u8>>>,
+  server: String,
+  /// Whether the stream reached its end, as opposed to being dropped
+  /// part way through.
+  completed: bool,
 }
 
 impl Stream for ReceiverStream {
@@ -148,11 +161,14 @@ impl Stream for ReceiverStream {
       Poll::Ready(Some(Ok(bytes)))
         if bytes == END_OF_OUTPUT.as_bytes() =>
       {
+        self.completed = true;
         self.cleanup();
         Poll::Ready(None)
       }
       Poll::Ready(Some(Ok(bytes))) => Poll::Ready(Some(Ok(bytes))),
       Poll::Ready(Some(Err(e))) => Poll::Ready(Some(Err(e))),
+      // Not marked completed: the channel closing early is not the
+      // sentinel, so Periphery may still be forwarding.
       Poll::Ready(None) => {
         self.cleanup();
         Poll::Ready(None)
@@ -162,13 +178,45 @@ impl Stream for ReceiverStream {
   }
 }
 
+impl Drop for ReceiverStream {
+  fn drop(&mut self) {
+    // A stream dropped before it completes (client disconnect,
+    // cancelled Action, timeout) never sees END_OF_OUTPUT, so without
+    // this its channel is left in the map forever. Periphery keeps
+    // forwarding to it, and Core logs a missing channel for every line.
+    self.cleanup();
+  }
+}
+
 impl ReceiverStream {
   fn cleanup(&self) {
     // Not the prettiest but it should be fine
     let channels = self.channels.clone();
     let channel = self.channel;
-    tokio::spawn(async move {
+    let server = self.server.clone();
+    let completed = self.completed;
+    // `Drop` can run outside the runtime, where `spawn` would panic.
+    let Ok(handle) = tokio::runtime::Handle::try_current() else {
+      return;
+    };
+    handle.spawn(async move {
       channels.remove(&channel).await;
+      if completed {
+        return;
+      }
+      // Periphery is still forwarding, so tell it to stop, using the
+      // same message shape the interactive terminal sends on client
+      // disconnect. Looked up rather than held, so a reconnect in the
+      // meantime does not leave this sending on a dead channel.
+      let Some(connection) =
+        periphery_connections().get(&server).await
+      else {
+        return;
+      };
+      let _ = connection
+        .sender
+        .send_terminal(channel, Err(anyhow!("Stream dropped")))
+        .await;
     });
   }
 }

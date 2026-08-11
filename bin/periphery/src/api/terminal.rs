@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use anyhow::{Context, anyhow};
 use futures_util::{Stream, StreamExt, TryStreamExt};
@@ -314,6 +314,7 @@ impl Resolve<crate::api::Args> for ExecuteTerminal {
     let terminal = get_terminal(&self.terminal, &self.target).await?;
 
     let channel_id = Uuid::new_v4();
+    let cancel = CancellationToken::new();
 
     let stdout = setup_execute_command_on_terminal(
       channel_id,
@@ -322,11 +323,29 @@ impl Resolve<crate::api::Args> for ExecuteTerminal {
     )
     .await?;
 
+    // Registered like ConnectTerminal's channel, so DisconnectTerminal
+    // and a Core disconnect can cancel the forwarding task below.
+    terminal_channels()
+      .insert(
+        channel_id,
+        Arc::new(TerminalChannel {
+          sender: terminal.stdin.clone(),
+          cancel: cancel.clone(),
+        }),
+      )
+      .await;
+
+    // Cloned out here so the task does not hold the whole terminal,
+    // including its scrollback history, for as long as it runs.
+    let terminal_cancel = terminal.cancel.clone();
+
     tokio::spawn(async move {
       forward_execute_command_on_terminal_response(
         &channel.sender,
         channel_id,
         stdout,
+        terminal_cancel,
+        cancel,
       )
       .await
     });
@@ -506,20 +525,98 @@ async fn setup_execute_command_on_terminal(
   Ok(stdout)
 }
 
+/// How long to wait for Core's begin trigger before giving up, rather
+/// than holding the terminal and the channel open indefinitely.
+const BEGIN_TRIGGER_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Ends the response stream without an exit code, which Core's client
+/// reports as an early exit. Sent instead of an error, because an error
+/// aborts the HTTP body, surfacing as a failed request rather than as a
+/// command that stopped early.
+///
+/// The reason is sent as a line of output first: reacting to the missing
+/// exit code is optional for a caller, so on its own it would let a
+/// truncated command read as a complete one.
+async fn end_execute_stream(
+  sender: &Sender<EncodedTransportMessage>,
+  channel: Uuid,
+  reason: &str,
+) {
+  let reason =
+    format!("\n[komodo] {reason}, no exit code reported\n");
+  let _ = sender.send_terminal(channel, Ok(reason.into())).await;
+  if let Err(e) = sender
+    .send_terminal(channel, Ok(END_OF_OUTPUT.into()))
+    .await
+  {
+    debug!("Failed to send END_OF_OUTPUT | {e:?}");
+  }
+}
+
 async fn forward_execute_command_on_terminal_response(
   sender: &Sender<EncodedTransportMessage>,
   channel: Uuid,
   mut stdout: impl Stream<Item = Result<String, LinesCodecError>> + Unpin,
+  terminal_cancel: CancellationToken,
+  cancel: CancellationToken,
 ) {
   // This waits to begin forwarding until Core sends the Begin byte start trigger.
   // This ensures no messages are lost before channels on both sides are set up.
-  if let Err(e) = terminal_triggers().recv(&channel).await {
+  let trigger = tokio::select! {
+    // Biased: a trigger which already arrived must not lose the race to
+    // a cancel that is also ready.
+    biased;
+    res = terminal_triggers().recv(&channel) => res,
+    _ = terminal_cancel.cancelled() => {
+      Err(anyhow!("Terminal exited before begin trigger"))
+    },
+    _ = cancel.cancelled() => {
+      Err(anyhow!("Channel cancelled before begin trigger"))
+    },
+    // Core sends the trigger as soon as it has the channel id, so this
+    // only fires if it never will, eg. the connection dropped first.
+    _ = tokio::time::sleep(BEGIN_TRIGGER_TIMEOUT) => {
+      Err(anyhow!("Timed out waiting for begin trigger"))
+    },
+  };
+  if let Err(e) = trigger {
     warn!("{e:#}");
+    // Only removed by `recv` on success, so it needs removing here.
+    terminal_triggers().remove(&channel).await;
+    terminal_channels().remove(&channel).await;
+    // Unless Core is the one that cancelled, in which case the channel
+    // is already gone and sending only logs a missing channel there.
+    if !cancel.is_cancelled() {
+      end_execute_stream(sender, channel, &format!("{e:#}")).await;
+    }
     return;
   }
 
   loop {
-    match stdout.next().await {
+    // Core is gone, so nothing is waiting on the rest of the output.
+    // Checked here as well as in the `select!`, because a command
+    // printing without pause would otherwise starve that branch.
+    if cancel.is_cancelled() {
+      break;
+    }
+
+    // A command that never finishes leaves `stdout` pending forever, so
+    // the cancels are the only way out of this loop.
+    let next = tokio::select! {
+      // Biased, and no equivalent loop-top check for the terminal: on
+      // exit it cancels before dropping the PTY, so output is still
+      // queued behind a ready token, and the exit code is in it. The
+      // stream ends on its own once drained, which is the `None` arm.
+      biased;
+      next = tokio::task::coop::unconstrained(stdout.next()) => next,
+      _ = terminal_cancel.cancelled() => {
+        end_execute_stream(sender, channel, "Terminal exited").await;
+        break
+      },
+      _ = cancel.cancelled() => break,
+    };
+
+    match next {
       Some(Ok(line)) if line.as_str() == END_OF_OUTPUT => {
         if let Err(e) =
           sender.send_terminal(channel, Ok(line.into())).await
@@ -539,12 +636,93 @@ async fn forward_execute_command_on_terminal_response(
       }
       Some(Err(e)) => {
         warn!("Got stdout stream error | {e:?}");
+        end_execute_stream(sender, channel, "Output stream failed")
+          .await;
         break;
       }
       None => {
-        clean_up_terminals().await;
+        end_execute_stream(sender, channel, "Terminal output ended")
+          .await;
         break;
       }
     }
+  }
+
+  terminal_channels().remove(&channel).await;
+  clean_up_terminals().await;
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  /// A terminal cancels its token just before dropping the PTY, so by the
+  /// time forwarding sees the cancellation the remaining output is already
+  /// queued. All of it still has to be sent: the exit code is the last
+  /// thing in it, and Core's stream does not end until the sentinel
+  /// arrives.
+  ///
+  /// Built on the same stream chain as [setup_execute_command_on_terminal],
+  /// with the output split across many chunks, because that is what makes
+  /// the forwarding loop yield mid-drain. A single ready chunk would not
+  /// exercise it.
+  #[tokio::test]
+  async fn cancelled_terminal_still_forwards_buffered_output() {
+    const LINES: usize = 300;
+
+    let channel = Uuid::new_v4();
+    let (sender, mut receiver) =
+      transport::channel::channel::<EncodedTransportMessage>();
+
+    let (stdout_sender, stdout_receiver) =
+      tokio::sync::broadcast::channel::<bytes::Bytes>(8192);
+    let stdout = tokio_util::codec::FramedRead::new(
+      tokio_util::io::StreamReader::new(
+        tokio_stream::wrappers::BroadcastStream::new(stdout_receiver)
+          .map(|res| res.map_err(std::io::Error::other)),
+      ),
+      tokio_util::codec::LinesCodec::new(),
+    );
+
+    let mut output = String::new();
+    for i in 0..LINES {
+      output.push_str(&format!("line {i}\n"));
+    }
+    output.push_str(&format!("{KOMODO_EXIT_CODE}0\n"));
+    output.push_str(&format!("{END_OF_OUTPUT}\n"));
+    for chunk in output.as_bytes().chunks(3) {
+      stdout_sender
+        .send(bytes::Bytes::copy_from_slice(chunk))
+        .unwrap();
+    }
+
+    // Core has already sent the begin trigger.
+    terminal_triggers().insert(channel).await;
+    terminal_triggers().send(&channel).await.unwrap();
+
+    // The terminal is gone before forwarding even starts.
+    let terminal_cancel = CancellationToken::new();
+    terminal_cancel.cancel();
+
+    forward_execute_command_on_terminal_response(
+      &sender,
+      channel,
+      stdout,
+      terminal_cancel,
+      CancellationToken::new(),
+    )
+    .await;
+
+    drop(sender);
+    let mut sent = 0;
+    while receiver.recv().await.is_ok() {
+      sent += 1;
+    }
+    // Every line, plus the exit code and the sentinel.
+    assert_eq!(
+      sent,
+      LINES + 2,
+      "output buffered before the terminal was cancelled got dropped"
+    );
   }
 }

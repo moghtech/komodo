@@ -1,4 +1,6 @@
-use std::{path::PathBuf, process::Stdio, sync::OnceLock};
+use std::{
+  path::PathBuf, process::Stdio, sync::OnceLock, time::Duration,
+};
 
 use komodo_client::{
   entities::{komodo_timestamp, update::Log},
@@ -273,8 +275,12 @@ async fn run_command(
     }
   };
 
+  // Pinned so the kill path below can re-await the same future, rather
+  // than dropping it and discarding everything the command printed.
+  let mut wait = std::pin::pin!(child.wait_with_output());
+
   let killed_reason = tokio::select! {
-    output = child.wait_with_output() => {
+    output = wait.as_mut() => {
       return CommandOutput::from(output);
     }
     _ = on_timeout => format!(
@@ -288,8 +294,22 @@ async fn run_command(
   };
 
   kill_process_group(pid);
-  CommandOutput::from_err_message(killed_reason)
+
+  // `SIGKILL` closes the pipes, so this resolves as soon as they drain.
+  // The bound is a backstop in case something else holds them open.
+  match tokio::time::timeout(DRAIN_AFTER_KILL, wait).await {
+    Ok(Ok(output)) => {
+      CommandOutput::from_killed(output, killed_reason)
+    }
+    // Nothing to salvage, so just report why it was killed.
+    _ => CommandOutput::from_err_message(killed_reason),
+  }
 }
+
+/// How long to keep reading a killed command's output. Generous rather
+/// than tuned: the pipes close with the process group, so this is only
+/// reached if a descendant escaped the group still holding them.
+const DRAIN_AFTER_KILL: Duration = Duration::from_secs(3);
 
 /// Sends `SIGKILL` to the entire process group led by `pid`.
 ///
@@ -347,6 +367,25 @@ mod tests {
     assert!(
       pids.is_empty(),
       "backgrounded grandchild survived timeout: pids={pids:?}"
+    );
+  }
+
+  /// What a command printed before it hit the timeout is usually the only
+  /// clue about where it got stuck, so the kill must not discard it.
+  #[tokio::test]
+  async fn timeout_preserves_output() {
+    let out = run_shell_command(
+      "echo progress; echo warning >&2; sleep 31335",
+      CommandOptions::default().timeout(Duration::from_millis(300)),
+    )
+    .await;
+
+    assert!(!out.success(), "expected timeout failure: {out:?}");
+    assert_eq!(out.stdout.trim(), "progress", "stdout lost: {out:?}");
+    assert!(out.stderr.contains("warning"), "stderr lost: {out:?}");
+    assert!(
+      out.stderr.contains("timed out"),
+      "expected timeout reason: {out:?}"
     );
   }
 
