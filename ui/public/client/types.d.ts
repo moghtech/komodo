@@ -674,9 +674,17 @@ export interface BuildConfig {
     /**
      * Whether to use https to clone the repo (versus http). Default: true
      *
-     * Note. Komodo does not currently support cloning repos via ssh.
+     * Ignored if `git_ssh` is enabled.
      */
     git_https: boolean;
+    /**
+     * Clone over ssh (`git@{git_provider}:{repo}`) instead of http(s).
+     * 
+     * The ssh key is provided by the host running the clone,
+     * via its ssh config / agent - Komodo does not manage keys.
+     * `git_account` is not used in this mode.
+     */
+    git_ssh: boolean;
     /**
      * The git account used to access private repos.
      * Passing empty string can only clone public repos.
@@ -1246,6 +1254,13 @@ export interface GitProviderAccount {
      * If the database / host can be accessed this is insecure.
      */
     token?: string;
+    /**
+     * An ssh private key, in plain text on the db, used for repos
+     * cloned over ssh. Same security caveat as `token`.
+     * 
+     * Leave empty to use the ssh config of the host running the clone.
+     */
+    ssh_key?: string;
 }
 export type CreateGitProviderAccountResponse = GitProviderAccount;
 /** Configuration to access private image repositories on various registries. */
@@ -2220,9 +2235,17 @@ export interface RepoConfig {
     /**
      * Whether to use https to clone the repo (versus http). Default: true
      *
-     * Note. Komodo does not currently support cloning repos via ssh.
+     * Ignored if `git_ssh` is enabled.
      */
     git_https: boolean;
+    /**
+     * Clone over ssh (`git@{git_provider}:{repo}`) instead of http(s).
+     * 
+     * The ssh key is provided by the host running the clone,
+     * via its ssh config / agent - Komodo does not manage keys.
+     * `git_account` is not used in this mode.
+     */
+    git_ssh: boolean;
     /**
      * The git account used to access private repos.
      * Passing empty string can only clone public repos.
@@ -2311,9 +2334,17 @@ export interface ResourceSyncConfig {
     /**
      * Whether to use https to clone the repo (versus http). Default: true
      *
-     * Note. Komodo does not currently support cloning repos via ssh.
+     * Ignored if `git_ssh` is enabled.
      */
     git_https: boolean;
+    /**
+     * Clone over ssh (`git@{git_provider}:{repo}`) instead of http(s).
+     * 
+     * The ssh key is provided by the host running the clone,
+     * via its ssh config / agent - Komodo does not manage keys.
+     * `git_account` is not used in this mode.
+     */
+    git_ssh: boolean;
     /** The Github repo used as the source of the build. */
     repo?: string;
     /** The branch of the repo. */
@@ -2706,9 +2737,17 @@ export interface StackConfig {
     /**
      * Whether to use https to clone the repo (versus http). Default: true
      *
-     * Note. Komodo does not currently support cloning repos via ssh.
+     * Ignored if `git_ssh` is enabled.
      */
     git_https: boolean;
+    /**
+     * Clone over ssh (`git@{git_provider}:{repo}`) instead of http(s).
+     * 
+     * The ssh key is provided by the host running the clone,
+     * via its ssh config / agent - Komodo does not manage keys.
+     * `git_account` is not used in this mode.
+     */
+    git_ssh: boolean;
     /**
      * The git account used to access private repos.
      * Passing empty string can only clone public repos.
@@ -5106,8 +5145,14 @@ export type ListGitProviderAccountsResponse = GitProviderAccount[];
 export interface ProviderAccount {
     /** The account username. Required. */
     username: string;
-    /** The account access token. Required. */
+    /** The account access token. Required for http(s) clones. */
     token?: string;
+    /**
+     * An ssh private key, used for repos cloned over ssh.
+     * 
+     * Leave empty to use the ssh config of the host running the clone.
+     */
+    ssh_key?: string;
 }
 export interface GitProvider {
     /** The git provider domain. Default: `github.com`. */
@@ -10172,6 +10217,23 @@ export declare enum DefaultRepoFolder {
      */
     NotApplicable = "NotApplicable"
 }
+/**
+ * A credential used to access a private git repo.
+ * 
+ * Both fields may be set - the token is used for http(s) remotes,
+ * and the ssh key for ssh remotes (see `RepoExecutionArgs::ssh`).
+ */
+export interface GitCredential {
+    /** `username:token`, or a bare token. Embedded in the https remote url. */
+    token?: string;
+    /**
+     * A private key in PEM form. Written to a temporary file with mode
+     * 0600 for the duration of the git command, and passed to git via
+     * `core.sshCommand`.
+     */
+    ssh_key?: string;
+}
+
 export interface RepoExecutionArgs {
     /** Resource name (eg Build name, Repo name) */
     name: string;
@@ -10179,6 +10241,11 @@ export interface RepoExecutionArgs {
     provider: string;
     /** Use https (vs http). */
     https: boolean;
+    /**
+     * Clone over ssh (`git@{provider}:{repo}`) instead of http(s).
+     * Key handling is left to the host's ssh config / agent.
+     */
+    ssh: boolean;
     /** Configure the account used to access repo (if private) */
     account?: string;
     /**

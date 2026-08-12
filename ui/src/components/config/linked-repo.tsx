@@ -13,6 +13,7 @@ export interface LinkedRepoProps {
     git_provider: string;
     git_account: string;
     git_https: boolean;
+    git_ssh: boolean;
     repo: string;
     branch: string;
     commit: string;
@@ -55,6 +56,7 @@ export default function LinkedRepo({
             git_provider: "github.com",
             git_account: "",
             git_https: true,
+            git_ssh: false,
             repo: linkedRepo ? "" : "namespace/repo",
             branch: "main",
             commit: "",

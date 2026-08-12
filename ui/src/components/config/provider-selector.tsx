@@ -92,12 +92,15 @@ export default function ProviderSelector({
 export function ProviderSelectorConfig({
   description,
   https,
+  ssh,
   onHttpsSwitch,
   accountType,
   ...props
 }: {
   description?: string;
   https?: boolean;
+  ssh?: boolean;
+  /** Cycles the clone scheme: https:// -> http:// -> git@ */
   onHttpsSwitch?: () => void;
 } & ProviderSelectorProps) {
   const select = accountType === "git" ? "git provider" : "docker registry";
@@ -118,7 +121,7 @@ export function ProviderSelectorConfig({
             px="sm"
             py="xs"
           >
-            {`http${https ? "s" : ""}://`}
+            {ssh ? "git@" : `http${https ? "s" : ""}://`}
           </Button>
           {selector}
         </Group>

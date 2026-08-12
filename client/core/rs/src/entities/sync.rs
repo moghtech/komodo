@@ -209,11 +209,20 @@ pub struct ResourceSyncConfig {
 
   /// Whether to use https to clone the repo (versus http). Default: true
   ///
-  /// Note. Komodo does not currently support cloning repos via ssh.
+  /// Ignored if `git_ssh` is enabled.
   #[serde(default = "default_git_https")]
   #[builder(default = "default_git_https()")]
   #[partial_default(default_git_https())]
   pub git_https: bool,
+
+  /// Clone over ssh (`git@{git_provider}:{repo}`) instead of http(s).
+  ///
+  /// The ssh key is provided by the host running the clone,
+  /// via its ssh config / agent - Komodo does not manage keys.
+  /// `git_account` is not used in this mode.
+  #[serde(default)]
+  #[builder(default)]
+  pub git_ssh: bool,
 
   /// The Github repo used as the source of the build.
   #[serde(default)]
@@ -377,6 +386,7 @@ impl Default for ResourceSyncConfig {
       linked_repo: Default::default(),
       git_provider: default_git_provider(),
       git_https: default_git_https(),
+      git_ssh: false,
       repo: Default::default(),
       branch: default_branch(),
       commit: Default::default(),

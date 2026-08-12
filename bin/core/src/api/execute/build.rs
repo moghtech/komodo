@@ -46,7 +46,7 @@ use crate::{
   alert::send_alerts,
   api::write::WriteArgs,
   helpers::{
-    build_git_token,
+    build_git_credential,
     builder::{cleanup_builder_instance, connect_builder_periphery},
     channel::build_cancel_channel,
     query::{
@@ -165,8 +165,8 @@ impl Resolve<ExecuteArgs> for RunBuild {
     update.version = build.config.version;
     update_update(update.clone()).await?;
 
-    let git_token =
-      build_git_token(&mut build, repo.as_mut()).await?;
+    let git_credential =
+      build_git_credential(&mut build, repo.as_mut()).await?;
 
     let registry_tokens =
       validate_account_extract_registry_tokens(&build).await?;
@@ -260,7 +260,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
         res = periphery
           .request(api::git::PullOrCloneRepo {
             args: repo.as_ref().map(Into::into).unwrap_or((&build).into()),
-            git_token,
+            git_credential,
             environment: Default::default(),
             env_file_path: Default::default(),
             on_clone: None,

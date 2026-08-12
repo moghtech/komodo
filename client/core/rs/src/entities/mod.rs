@@ -586,6 +586,39 @@ pub enum DefaultRepoFolder {
   NotApplicable,
 }
 
+/// A credential used to access a private git repo.
+///
+/// Both fields may be set - the token is used for http(s) remotes,
+/// and the ssh key for ssh remotes (see `RepoExecutionArgs::ssh`).
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct GitCredential {
+  /// `username:token`, or a bare token. Embedded in the https remote url.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub token: Option<String>,
+  /// A private key in PEM form. Written to a temporary file with mode
+  /// 0600 for the duration of the git command, and passed to git via
+  /// `core.sshCommand`.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub ssh_key: Option<String>,
+}
+
+impl GitCredential {
+  pub fn token(token: impl Into<String>) -> Self {
+    GitCredential {
+      token: Some(token.into()),
+      ssh_key: None,
+    }
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.token.is_none() && self.ssh_key.is_none()
+  }
+}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -596,6 +629,10 @@ pub struct RepoExecutionArgs {
   pub provider: String,
   /// Use https (vs http).
   pub https: bool,
+  /// Clone over ssh (`git@{provider}:{repo}`) instead of http(s).
+  /// Key handling is left to the host's ssh config / agent.
+  #[serde(default)]
+  pub ssh: bool,
   /// Configure the account used to access repo (if private)
   pub account: Option<String>,
   /// Full repo identifier. {namespace}/{repo_name}
@@ -626,9 +663,18 @@ impl RepoExecutionArgs {
 
   pub fn remote_url(
     &self,
-    access_token: Option<&str>,
+    credential: Option<&GitCredential>,
   ) -> anyhow::Result<String> {
-    let access_token_at = match access_token {
+    let repo = self
+      .repo
+      .as_ref()
+      .context("resource has no repo attached")?;
+    if self.ssh {
+      return Ok(format!("git@{}:{repo}", self.provider));
+    }
+    let access_token_at = match credential
+      .and_then(|credential| credential.token.as_deref())
+    {
       Some(token) => match token.split_once(':') {
         Some((username, token)) => format!(
           "{}:{}@",
@@ -642,10 +688,6 @@ impl RepoExecutionArgs {
       None => String::new(),
     };
     let protocol = if self.https { "https" } else { "http" };
-    let repo = self
-      .repo
-      .as_ref()
-      .context("resource has no repo attached")?;
     Ok(format!(
       "{protocol}://{access_token_at}{}/{repo}",
       self.provider
@@ -678,6 +720,7 @@ impl From<&self::stack::Stack> for RepoExecutionArgs {
       provider: optional_string(&stack.config.git_provider)
         .unwrap_or_else(|| String::from("github.com")),
       https: stack.config.git_https,
+      ssh: stack.config.git_ssh,
       account: optional_string(&stack.config.git_account),
       repo: optional_string(&stack.config.repo),
       branch: optional_string(&stack.config.branch)
@@ -696,6 +739,7 @@ impl From<&self::build::Build> for RepoExecutionArgs {
       provider: optional_string(&build.config.git_provider)
         .unwrap_or_else(|| String::from("github.com")),
       https: build.config.git_https,
+      ssh: build.config.git_ssh,
       account: optional_string(&build.config.git_account),
       repo: optional_string(&build.config.repo),
       branch: optional_string(&build.config.branch)
@@ -714,6 +758,7 @@ impl From<&self::repo::Repo> for RepoExecutionArgs {
       provider: optional_string(&repo.config.git_provider)
         .unwrap_or_else(|| String::from("github.com")),
       https: repo.config.git_https,
+      ssh: repo.config.git_ssh,
       account: optional_string(&repo.config.git_account),
       repo: optional_string(&repo.config.repo),
       branch: optional_string(&repo.config.branch)
@@ -732,6 +777,7 @@ impl From<&self::sync::ResourceSync> for RepoExecutionArgs {
       provider: optional_string(&sync.config.git_provider)
         .unwrap_or_else(|| String::from("github.com")),
       https: sync.config.git_https,
+      ssh: sync.config.git_ssh,
       account: optional_string(&sync.config.git_account),
       repo: optional_string(&sync.config.repo),
       branch: optional_string(&sync.config.branch)
@@ -1735,5 +1781,41 @@ impl SwarmOrServer {
       return None;
     };
     Some(&server.name)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::{DefaultRepoFolder, GitCredential, RepoExecutionArgs};
+
+  fn args(ssh: bool) -> RepoExecutionArgs {
+    RepoExecutionArgs {
+      name: String::from("test"),
+      provider: String::from("github.com"),
+      https: true,
+      ssh,
+      account: Some(String::from("my-user")),
+      repo: Some(String::from("moghtech/komodo")),
+      branch: String::from("main"),
+      commit: None,
+      destination: None,
+      default_folder: DefaultRepoFolder::Repos,
+    }
+  }
+
+  #[test]
+  fn remote_url_https_embeds_token() {
+    let url = args(false)
+      .remote_url(Some(&GitCredential::token("my-user:tok")))
+      .unwrap();
+    assert_eq!(url, "https://my-user:tok@github.com/moghtech/komodo");
+  }
+
+  #[test]
+  fn remote_url_ssh_omits_token() {
+    let url = args(true)
+      .remote_url(Some(&GitCredential::token("my-user:tok")))
+      .unwrap();
+    assert_eq!(url, "git@github.com:moghtech/komodo");
   }
 }

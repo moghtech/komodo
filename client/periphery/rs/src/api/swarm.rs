@@ -1,5 +1,5 @@
 use komodo_client::entities::{
-  SearchCombinator,
+  GitCredential, SearchCombinator,
   deployment::Deployment,
   docker::{
     SwarmLists,
@@ -97,7 +97,7 @@ pub struct DeploySwarmStack {
   /// The linked repo, if it exists.
   pub repo: Option<Repo>,
   /// If provided, use it to login in. Otherwise check periphery local registries.
-  pub git_token: Option<String>,
+  pub git_credential: Option<GitCredential>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
   pub registry_token: Option<String>,
   /// Propogate any secret replacers from core interpolation.

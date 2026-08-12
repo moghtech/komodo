@@ -6,7 +6,7 @@ use database::mungos::mongodb::bson::{Bson, doc};
 use indexmap::IndexSet;
 use komodo_client::entities::SwarmOrServer;
 use komodo_client::entities::{
-  ResourceTarget,
+  GitCredential, ResourceTarget,
   build::Build,
   permission::{
     Permission, PermissionLevel, SpecificPermission, UserTarget,
@@ -53,14 +53,18 @@ pub fn empty_or_only_spaces(word: &str) -> bool {
   true
 }
 
-/// First checks db for token, then checks core config.
+fn non_empty(field: &str) -> Option<String> {
+  (!field.is_empty()).then(|| field.to_string())
+}
+
+/// First checks db for the account, then checks core config.
 /// Only errors if db call errors.
-/// Returns (token, use_https)
-pub async fn git_token(
+/// Returns the account's token and/or ssh key, if either is set.
+pub async fn git_credential(
   provider_domain: &str,
   account_username: &str,
   mut on_https_found: impl FnMut(bool),
-) -> anyhow::Result<Option<String>> {
+) -> anyhow::Result<Option<GitCredential>> {
   if provider_domain.is_empty() || account_username.is_empty() {
     return Ok(None);
   }
@@ -71,7 +75,10 @@ pub async fn git_token(
     .context("failed to query db for git provider accounts")?;
   if let Some(provider) = db_provider {
     on_https_found(provider.https);
-    return Ok(Some(provider.token));
+    return Ok(Some(GitCredential {
+      token: non_empty(&provider.token),
+      ssh_key: non_empty(&provider.ssh_key),
+    }));
   }
   Ok(
     core_config()
@@ -84,17 +91,21 @@ pub async fn git_token(
           .accounts
           .iter()
           .find(|account| account.username == account_username)
-          .map(|account| account.token.clone())
-      }),
+          .map(|account| GitCredential {
+            token: non_empty(&account.token),
+            ssh_key: non_empty(&account.ssh_key),
+          })
+      })
+      .filter(|credential| !credential.is_empty()),
   )
 }
 
-pub async fn stack_git_token(
+pub async fn stack_git_credential(
   stack: &mut Stack,
   repo: Option<&mut Repo>,
-) -> anyhow::Result<Option<String>> {
+) -> anyhow::Result<Option<GitCredential>> {
   if let Some(repo) = repo {
-    return git_token(
+    return git_credential(
       &repo.config.git_provider,
       &repo.config.git_account,
       |https| repo.config.git_https = https,
@@ -102,12 +113,12 @@ pub async fn stack_git_token(
     .await
     .with_context(|| {
       format!(
-        "Failed to get git token. Stopping run. | {} | {}",
+        "Failed to get git credential. Stopping run. | {} | {}",
         repo.config.git_provider, repo.config.git_account
       )
     });
   }
-  git_token(
+  git_credential(
     &stack.config.git_provider,
     &stack.config.git_account,
     |https| stack.config.git_https = https,
@@ -115,18 +126,18 @@ pub async fn stack_git_token(
   .await
   .with_context(|| {
     format!(
-      "Failed to get git token. Stopping run. | {} | {}",
+      "Failed to get git credential. Stopping run. | {} | {}",
       stack.config.git_provider, stack.config.git_account
     )
   })
 }
 
-pub async fn build_git_token(
+pub async fn build_git_credential(
   build: &mut Build,
   repo: Option<&mut Repo>,
-) -> anyhow::Result<Option<String>> {
+) -> anyhow::Result<Option<GitCredential>> {
   if let Some(repo) = repo {
-    return git_token(
+    return git_credential(
       &repo.config.git_provider,
       &repo.config.git_account,
       |https| repo.config.git_https = https,
@@ -134,12 +145,12 @@ pub async fn build_git_token(
     .await
     .with_context(|| {
       format!(
-        "Failed to get git token. Stopping run. | {} | {}",
+        "Failed to get git credential. Stopping run. | {} | {}",
         repo.config.git_provider, repo.config.git_account
       )
     });
   }
-  git_token(
+  git_credential(
     &build.config.git_provider,
     &build.config.git_account,
     |https| build.config.git_https = https,
@@ -147,7 +158,7 @@ pub async fn build_git_token(
   .await
   .with_context(|| {
     format!(
-      "Failed to get git token. Stopping run. | {} | {}",
+      "Failed to get git credential. Stopping run. | {} | {}",
       build.config.git_provider, build.config.git_account
     )
   })

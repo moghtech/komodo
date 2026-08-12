@@ -6,12 +6,15 @@ use std::{
 use command::{CommandOptions, run_komodo_standard_command};
 use formatting::format_serror;
 use komodo_client::entities::{
-  RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
-  komodo_timestamp, update::Log,
+  GitCredential, RepoExecutionArgs, RepoExecutionResponse,
+  all_logs_success, komodo_timestamp, update::Log,
 };
 use mogh_cache::TimeoutCache;
 
-use crate::{check_installed, get_commit_hash_log};
+use crate::{
+  check_installed, get_commit_hash_log,
+  ssh::{self, SshKeyFile},
+};
 
 /// Wait this long after a pull to allow another pull through
 const PULL_TIMEOUT: i64 = 5_000;
@@ -30,7 +33,7 @@ fn pull_cache()
 pub async fn pull<T>(
   clone_args: T,
   root_repo_dir: &Path,
-  access_token: Option<String>,
+  credential: Option<GitCredential>,
 ) -> anyhow::Result<RepoExecutionResponse>
 where
   T: Into<RepoExecutionArgs> + std::fmt::Debug,
@@ -38,7 +41,15 @@ where
   check_installed().await?;
 
   let args: RepoExecutionArgs = clone_args.into();
-  let repo_url = args.remote_url(access_token.as_deref())?;
+  let repo_url = args.remote_url(credential.as_ref())?;
+  let ssh_key = SshKeyFile::maybe_write(
+    args
+      .ssh
+      .then(|| credential.as_ref()?.ssh_key.as_deref())
+      .flatten(),
+  )
+  .await?;
+  let git = ssh::git(ssh_key.as_ref());
 
   let mut res = RepoExecutionResponse {
     path: args.path(root_repo_dir),
@@ -67,7 +78,7 @@ where
       crate::init::init_folder_as_repo(
         &res.path,
         &args,
-        access_token.as_deref(),
+        credential.as_ref(),
         &mut res.logs,
       )
       .await;
@@ -84,13 +95,13 @@ where
     )
     .await;
     // Sanitize the output
-    if let Some(token) = access_token {
+    if let Some(token) =
+      credential.as_ref().and_then(|c| c.token.as_deref())
+    {
       set_remote.command =
-        set_remote.command.replace(&token, "<TOKEN>");
-      set_remote.stdout =
-        set_remote.stdout.replace(&token, "<TOKEN>");
-      set_remote.stderr =
-        set_remote.stderr.replace(&token, "<TOKEN>");
+        set_remote.command.replace(token, "<TOKEN>");
+      set_remote.stdout = set_remote.stdout.replace(token, "<TOKEN>");
+      set_remote.stderr = set_remote.stderr.replace(token, "<TOKEN>");
     }
     res.logs.push(set_remote);
     if !all_logs_success(&res.logs) {
@@ -100,7 +111,7 @@ where
     // First fetch remote branches before checkout
     let fetch = run_komodo_standard_command(
       "Git Fetch",
-      "git fetch --all --prune",
+      format!("{git} fetch --all --prune"),
       CommandOptions::default().path(res.path.as_ref()),
     )
     .await;
@@ -122,7 +133,7 @@ where
 
     let pull_log = run_komodo_standard_command(
       "Git pull",
-      format!("git pull --rebase --force origin {}", args.branch),
+      format!("{git} pull --rebase --force origin {}", args.branch),
       CommandOptions::default().path(res.path.as_ref()),
     )
     .await;
