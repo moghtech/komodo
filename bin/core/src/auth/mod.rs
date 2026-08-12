@@ -825,4 +825,146 @@ impl AuthImpl for KomodoAuthImpl {
   fn server_private_key(&self) -> Option<&RotatableKeyPair> {
     Some(core_keys())
   }
+
+  // ===================================
+  // = PROVIDER TOKEN EXCHANGE (OAUTH) =
+  // ===================================
+
+  fn exchange_and_validate_oidc_token(
+    &self,
+    token: &str,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    let token = token.to_owned();
+    // oidc_config() borrows self — clone before Box::pin to satisfy 'static bound
+    let config = self.oidc_config().cloned();
+    let host = self.host().to_owned();
+    Box::pin(async move {
+      use mogh_auth_server::provider::oidc::load_oidc_provider;
+
+      let config = config.ok_or_else(|| {
+        anyhow!("OIDC provider is not configured")
+          .status_code(StatusCode::UNAUTHORIZED)
+      })?;
+
+      let provider =
+        load_oidc_provider("komodo", &host, "/auth/oidc", &config)
+          .await
+          .ok_or_else(|| {
+            anyhow!(
+              "Failed to load OIDC provider — check OIDC configuration"
+            )
+            .status_code(StatusCode::UNAUTHORIZED)
+          })?;
+
+      let subject = provider
+        .validate_id_token_and_extract_subject(&config, &token)
+        .status_code(StatusCode::UNAUTHORIZED)?;
+
+      find_oidc_user(&subject)
+        .await
+        .status_code(StatusCode::UNAUTHORIZED)?
+        .map(|u| u.id)
+        .ok_or_else(|| {
+          anyhow!("No Komodo user found for this OIDC identity")
+            .status_code(StatusCode::UNAUTHORIZED)
+        })
+    })
+  }
+
+  fn exchange_and_validate_github_token(
+    &self,
+    token: &str,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    let token = token.to_owned();
+    Box::pin(async move {
+      use mogh_auth_server::provider::named::github::github_provider;
+
+      // core_config() is 'static — safe to call directly inside async block
+      let config = core_config();
+      let provider =
+        github_provider(&config.host, "/auth/github", &config.github_oauth)
+          .ok_or_else(|| {
+            anyhow!("GitHub OAuth is not configured or disabled")
+              .status_code(StatusCode::UNAUTHORIZED)
+          })?;
+
+      let github_user = provider
+        .get_github_user(&token)
+        .await
+        .context("Failed to verify GitHub access token")
+        .status_code(StatusCode::UNAUTHORIZED)?;
+
+      find_github_user(&github_user.id.to_string())
+        .await
+        .status_code(StatusCode::UNAUTHORIZED)?
+        .map(|u| u.id)
+        .ok_or_else(|| {
+          anyhow!("No Komodo user found for this GitHub identity")
+            .status_code(StatusCode::UNAUTHORIZED)
+        })
+    })
+  }
+
+  fn exchange_and_validate_google_token(
+    &self,
+    token: &str,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    let token = token.to_owned();
+    Box::pin(async move {
+      #[derive(serde::Deserialize)]
+      struct GoogleTokenClaims {
+        sub: String,
+        aud: String,
+      }
+
+      // core_config() is 'static — safe to call directly inside async block
+      let google_config = &core_config().google_oauth;
+      if !google_config.enabled || google_config.client_id.is_empty() {
+        return Err(
+          anyhow!("Google OAuth is not configured or disabled")
+            .status_code(StatusCode::UNAUTHORIZED),
+        );
+      }
+
+      // Validate via Google's tokeninfo endpoint — verifies signature and expiry
+      let resp = reqwest::get(format!(
+        "https://oauth2.googleapis.com/tokeninfo?id_token={token}"
+      ))
+      .await
+      .context("Failed to reach Google tokeninfo endpoint")
+      .status_code(StatusCode::UNAUTHORIZED)?;
+
+      if !resp.status().is_success() {
+        return Err(
+          anyhow!("Google ID token is invalid or expired")
+            .status_code(StatusCode::UNAUTHORIZED),
+        );
+      }
+
+      let claims = resp
+        .json::<GoogleTokenClaims>()
+        .await
+        .context("Failed to parse Google tokeninfo response")
+        .status_code(StatusCode::UNAUTHORIZED)?;
+
+      // Verify the token was issued for this application
+      if claims.aud != google_config.client_id {
+        return Err(
+          anyhow!(
+            "Google ID token audience does not match configured client_id"
+          )
+          .status_code(StatusCode::UNAUTHORIZED),
+        );
+      }
+
+      find_google_user(&claims.sub)
+        .await
+        .status_code(StatusCode::UNAUTHORIZED)?
+        .map(|u| u.id)
+        .ok_or_else(|| {
+          anyhow!("No Komodo user found for this Google identity")
+            .status_code(StatusCode::UNAUTHORIZED)
+        })
+    })
+  }
 }
