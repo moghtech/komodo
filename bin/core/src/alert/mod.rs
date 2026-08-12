@@ -106,14 +106,18 @@ pub async fn send_alert_to_alerter(
   }
 
   match &alerter.config.endpoint {
-    AlerterEndpoint::Custom(CustomAlerterEndpoint { url }) => {
-      send_custom_alert(url, alert).await.with_context(|| {
+    AlerterEndpoint::Custom(CustomAlerterEndpoint {
+      url,
+      body_template,
+      content_type,
+    }) => send_custom_alert(url, body_template, content_type, alert)
+      .await
+      .with_context(|| {
         format!(
           "Failed to send alert to Custom Alerter {}",
           alerter.name
         )
-      })
-    }
+      }),
     AlerterEndpoint::Slack(SlackAlerterEndpoint { url }) => {
       slack::send_alert(url, alert).await.with_context(|| {
         format!(
@@ -153,6 +157,8 @@ pub async fn send_alert_to_alerter(
 
 async fn send_custom_alert(
   url: &str,
+  body_template: &Option<String>,
+  content_type: &str,
   alert: &Alert,
 ) -> anyhow::Result<()> {
   let VariablesAndSecrets { variables, secrets } =
@@ -164,9 +170,43 @@ async fn send_custom_alert(
 
   interpolator.interpolate_string(&mut url_interpolated)?;
 
-  let res = reqwest::Client::new()
-    .post(url_interpolated)
-    .json(alert)
+  let client = reqwest::Client::new();
+
+  let request = match body_template {
+    Some(template) => {
+      // Format the alert data as specified by the configured Alerter
+      let alert_string: String = match content_type {
+        "text/plain" => {
+          let alert_json_string = serde_json::to_string(&alert)
+            .context("failed to serialize alert json")?;
+          serde_json::to_string(&alert_json_string)?
+        }
+        "text/plain; pretty" => {
+          let alert_json_string =
+            serde_json::to_string_pretty(&alert)
+              .context("failed to serialize alert json")?;
+          serde_json::to_string(&alert_json_string)?
+        }
+        _ => serde_json::to_string(&alert)?,
+      };
+      // Substitute the alert data into the body template
+      let body = template.replace("{{alert}}", &alert_string);
+      // Send as text/plain regardless of the pretty variant
+      let actual_content_type =
+        if content_type == "text/plain; pretty" {
+          "text/plain"
+        } else {
+          content_type
+        };
+      client
+        .post(url_interpolated)
+        .header("Content-Type", actual_content_type)
+        .body(body)
+    }
+    None => client.post(url_interpolated).json(alert),
+  };
+
+  let res = request
     .send()
     .await
     .map_err(|e| {
