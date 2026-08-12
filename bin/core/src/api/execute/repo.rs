@@ -58,6 +58,7 @@ impl Resolve<ExecuteArgs> for BatchCloneRepo {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -65,8 +66,12 @@ impl Resolve<ExecuteArgs> for BatchCloneRepo {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchCloneRepo>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchCloneRepo>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }
@@ -103,7 +108,7 @@ impl Resolve<ExecuteArgs> for CloneRepo {
 
     // This will set action state back to default when dropped.
     // Will also check to ensure repo not already busy before updating.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.cloning = true)?;
 
     let mut update = update.clone();
@@ -174,6 +179,10 @@ impl Resolve<ExecuteArgs> for CloneRepo {
       );
     };
 
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
+
     handle_repo_update_return(update).await
   }
 }
@@ -192,7 +201,8 @@ impl Resolve<ExecuteArgs> for BatchPullRepo {
     fields(
       task_id = task_id.to_string(),
       operator = user.id,
-      pattern = self.pattern
+      pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -200,8 +210,12 @@ impl Resolve<ExecuteArgs> for BatchPullRepo {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchPullRepo>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchPullRepo>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }
@@ -238,7 +252,7 @@ impl Resolve<ExecuteArgs> for PullRepo {
 
     // This will set action state back to default when dropped.
     // Will also check to ensure repo not already busy before updating.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pulling = true)?;
 
     let mut update = update.clone();
@@ -313,6 +327,10 @@ impl Resolve<ExecuteArgs> for PullRepo {
       );
     };
 
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
+
     handle_repo_update_return(update).await
   }
 }
@@ -374,6 +392,7 @@ impl Resolve<ExecuteArgs> for BatchBuildRepo {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -381,8 +400,12 @@ impl Resolve<ExecuteArgs> for BatchBuildRepo {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchBuildRepo>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchBuildRepo>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }
@@ -423,7 +446,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
 
     // This will set action state back to default when dropped.
     // Will also check to ensure repo not already busy before updating.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.building = true)?;
 
     let mut update = update.clone();
@@ -490,7 +513,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
       repo.name.clone(),
       None,
       builder,
-      &mut update,
+      Some(&mut update),
     )
     .await
     {
@@ -501,6 +524,9 @@ impl Resolve<ExecuteArgs> for BuildRepo {
           "get builder",
           format_serror(&e.context("failed to get builder").into()),
         ));
+        // Drop action guard before updating
+        // clients to requery action state
+        drop(action_guard);
         return handle_builder_early_return(
           update, repo.id, repo.name, false,
         )
@@ -533,6 +559,9 @@ impl Resolve<ExecuteArgs> for BuildRepo {
         cleanup_builder_instance(periphery, cleanup_data, &mut update)
           .await;
         info!("builder cleaned up");
+        // Drop action guard before updating
+        // clients to requery action state
+        drop(action_guard);
         return handle_builder_early_return(update, repo.id, repo.name, true).await
       },
     };
@@ -579,6 +608,10 @@ impl Resolve<ExecuteArgs> for BuildRepo {
     // this will terminate the server.
     cleanup_builder_instance(periphery, cleanup_data, &mut update)
       .await;
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
 
     // Need to manually update the update before cache refresh,
     // and before broadcast with add_update.

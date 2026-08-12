@@ -38,8 +38,12 @@ export default function DashboardRecents() {
 
 function RecentRow({ type }: { type: UsableResource }) {
   const nav = useNavigate();
-  const _recents = useUser().data?.recents?.[type]?.slice(0, 6);
-  const _resources = useRead(`List${type}s`, {}).data;
+  const _recents = useUser().data?.recents?.[type]?.slice(0, 6) ?? [];
+  const _resources = useRead(
+    `List${type}s`,
+    { query: { names: _recents } },
+    { enabled: _recents.length > 0 },
+  ).data;
   const recents = _recents?.filter(
     (recent) => !_resources?.every((resource) => resource.id !== recent),
   );

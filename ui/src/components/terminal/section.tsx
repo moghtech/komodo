@@ -24,9 +24,11 @@ export default function TerminalSection({
     "ListTerminals",
     {
       target,
+      // Always show all terminals on the resource.
+      limit: 0,
     },
     {
-      refetchInterval: 5000,
+      refetchInterval: 5_000,
     },
   );
 

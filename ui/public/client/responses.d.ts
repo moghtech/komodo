@@ -4,7 +4,7 @@ export type ReadResponses = {
     GetCoreInfo: Types.GetCoreInfoResponse;
     ListSecrets: Types.ListSecretsResponse;
     ListGitProvidersFromConfig: Types.ListGitProvidersFromConfigResponse;
-    ListDockerRegistriesFromConfig: Types.ListDockerRegistriesFromConfigResponse;
+    ListImageRegistriesFromConfig: Types.ListImageRegistriesFromConfigResponse;
     GetSwarmsSummary: Types.GetSwarmsSummaryResponse;
     GetSwarm: Types.GetSwarmResponse;
     GetSwarmActionState: Types.GetSwarmActionStateResponse;
@@ -34,21 +34,21 @@ export type ReadResponses = {
     ListServers: Types.ListServersResponse;
     ListFullServers: Types.ListFullServersResponse;
     ListTerminals: Types.ListTerminalsResponse;
-    GetDockerContainersSummary: Types.GetDockerContainersSummaryResponse;
-    ListAllDockerContainers: Types.ListAllDockerContainersResponse;
-    ListDockerContainers: Types.ListDockerContainersResponse;
-    InspectDockerContainer: Types.InspectDockerContainerResponse;
+    GetContainersSummary: Types.GetContainersSummaryResponse;
+    ListAllContainers: Types.ListAllContainersResponse;
+    ListContainers: Types.ListContainersResponse;
+    InspectContainer: Types.InspectContainerResponse;
     GetResourceMatchingContainer: Types.GetResourceMatchingContainerResponse;
     GetContainerLog: Types.GetContainerLogResponse;
     SearchContainerLog: Types.SearchContainerLogResponse;
     ListComposeProjects: Types.ListComposeProjectsResponse;
-    ListDockerNetworks: Types.ListDockerNetworksResponse;
-    InspectDockerNetwork: Types.InspectDockerNetworkResponse;
-    ListDockerImages: Types.ListDockerImagesResponse;
-    InspectDockerImage: Types.InspectDockerImageResponse;
-    ListDockerImageHistory: Types.ListDockerImageHistoryResponse;
-    ListDockerVolumes: Types.ListDockerVolumesResponse;
-    InspectDockerVolume: Types.InspectDockerVolumeResponse;
+    ListNetworks: Types.ListNetworksResponse;
+    InspectNetwork: Types.InspectNetworkResponse;
+    ListImages: Types.ListImagesResponse;
+    InspectImage: Types.InspectImageResponse;
+    ListImageHistory: Types.ListImageHistoryResponse;
+    ListVolumes: Types.ListVolumesResponse;
+    InspectVolume: Types.InspectVolumeResponse;
     GetSystemInformation: Types.GetSystemInformationResponse;
     GetSystemStats: Types.GetSystemStatsResponse;
     GetHistoricalServerStats: Types.GetHistoricalServerStatsResponse;
@@ -63,6 +63,7 @@ export type ReadResponses = {
     ListStacks: Types.ListStacksResponse;
     ListFullStacks: Types.ListFullStacksResponse;
     ListStackServices: Types.ListStackServicesResponse;
+    ListAllStackServices: Types.ListAllStackServicesResponse;
     ListCommonStackExtraArgs: Types.ListCommonStackExtraArgsResponse;
     ListCommonStackBuildExtraArgs: Types.ListCommonStackBuildExtraArgsResponse;
     GetDeploymentsSummary: Types.GetDeploymentsSummaryResponse;
@@ -136,8 +137,8 @@ export type ReadResponses = {
     ListVariables: Types.ListVariablesResponse;
     GetGitProviderAccount: Types.GetGitProviderAccountResponse;
     ListGitProviderAccounts: Types.ListGitProviderAccountsResponse;
-    GetDockerRegistryAccount: Types.GetDockerRegistryAccountResponse;
-    ListDockerRegistryAccounts: Types.ListDockerRegistryAccountsResponse;
+    GetImageRegistryAccount: Types.GetImageRegistryAccountResponse;
+    ListImageRegistryAccounts: Types.ListImageRegistryAccountsResponse;
     ListOnboardingKeys: Types.ListOnboardingKeysResponse;
 };
 export type WriteResponses = {
@@ -251,9 +252,9 @@ export type WriteResponses = {
     CreateGitProviderAccount: Types.CreateGitProviderAccountResponse;
     UpdateGitProviderAccount: Types.UpdateGitProviderAccountResponse;
     DeleteGitProviderAccount: Types.DeleteGitProviderAccountResponse;
-    CreateDockerRegistryAccount: Types.CreateDockerRegistryAccountResponse;
-    UpdateDockerRegistryAccount: Types.UpdateDockerRegistryAccountResponse;
-    DeleteDockerRegistryAccount: Types.DeleteDockerRegistryAccountResponse;
+    CreateImageRegistryAccount: Types.CreateImageRegistryAccountResponse;
+    UpdateImageRegistryAccount: Types.UpdateImageRegistryAccountResponse;
+    DeleteImageRegistryAccount: Types.DeleteImageRegistryAccountResponse;
     CloseAlert: Types.NoData;
 };
 export type ExecuteResponses = {
@@ -293,8 +294,10 @@ export type ExecuteResponses = {
     CancelRepoBuild: Types.Update;
     RunProcedure: Types.Update;
     BatchRunProcedure: Types.BatchExecutionResponse;
+    CancelProcedure: Types.Update;
     RunAction: Types.Update;
     BatchRunAction: Types.BatchExecutionResponse;
+    CancelAction: Types.Update;
     RunSync: Types.Update;
     TestAlerter: Types.Update;
     SendAlert: Types.Update;

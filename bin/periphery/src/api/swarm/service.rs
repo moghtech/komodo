@@ -1,9 +1,10 @@
-use std::fmt::Write;
+use std::{fmt::Write, time::Duration};
 
 use anyhow::Context as _;
 use command::{
-  KomodoCommandMode, run_komodo_command_with_sanitization,
-  run_komodo_shell_command, run_komodo_standard_command,
+  CommandOptions, KomodoCommandMode,
+  run_komodo_command_with_sanitization, run_komodo_shell_command,
+  run_komodo_standard_command,
 };
 use formatting::format_serror;
 use interpolate::Interpolator;
@@ -22,6 +23,7 @@ use periphery_client::api::swarm::{
   InspectSwarmService, RemoveSwarmServices, RollbackSwarmService,
   UpdateSwarmService,
 };
+use shell_escape::unix::escape;
 use tracing::Instrument;
 
 use crate::{
@@ -82,13 +84,13 @@ impl Resolve<crate::api::Args> for GetSwarmServiceLog {
       Default::default()
     };
     let command = format!(
-      "docker service logs --tail {tail}{timestamps}{no_task_ids}{no_resolve}{details} {service}",
+      "docker service logs --tail {tail}{timestamps}{no_task_ids}{no_resolve}{details} -- {service}",
     );
     Ok(
       run_komodo_standard_command(
         "Get Swarm Service Log",
-        None,
         command,
+        CommandOptions::default().timeout(Duration::from_secs(3)),
       )
       .await,
     )
@@ -131,14 +133,15 @@ impl Resolve<crate::api::Args> for GetSwarmServiceLogSearch {
       Default::default()
     };
     let grep = format_log_grep(&terms, combinator, invert);
+    let service = escape(service.into());
     let command = format!(
       "docker service logs --tail 5000{timestamps}{no_task_ids}{no_resolve}{details} {service} 2>&1 | {grep}",
     );
     Ok(
       run_komodo_shell_command(
         "Search Swarm Service Log",
-        None,
         command,
+        CommandOptions::default().timeout(Duration::from_secs(3)),
       )
       .await,
     )
@@ -160,6 +163,8 @@ impl Resolve<crate::api::Args> for RemoveSwarmServices {
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
     let mut command = String::from("docker service rm");
+    // `--` so a service beginning with `-` is not parsed as a flag.
+    command += " --";
     for service in self.services {
       command += " ";
       command += &service;
@@ -167,8 +172,8 @@ impl Resolve<crate::api::Args> for RemoveSwarmServices {
     Ok(
       run_komodo_standard_command(
         "Remove Swarm Services",
-        None,
         command,
+        CommandOptions::default(),
       )
       .await,
     )
@@ -192,8 +197,8 @@ impl Resolve<crate::api::Args> for RollbackSwarmService {
     Ok(
       run_komodo_standard_command(
         "Rollback Swarm Service",
-        None,
-        format!("docker service rollback {}", self.service),
+        format!("docker service rollback -- {}", self.service),
+        CommandOptions::default(),
       )
       .await,
     )
@@ -267,8 +272,10 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
       }
     };
 
+    // Remove the existing service under the previously deployed name,
+    // in case the name configuration changed since the last deploy.
     let log = (RemoveSwarmServices {
-      services: vec![deployment.name.clone()],
+      services: vec![deployment.deployed_name().to_string()],
     })
     .resolve(args)
     .await;
@@ -293,8 +300,8 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
     let span = info_span!("ExecuteDockerServiceCreate");
     if let Some(log) = run_komodo_command_with_sanitization(
       "Docker Service Create",
-      None,
       command,
+      CommandOptions::default(),
       KomodoCommandMode::Shell,
       &replacers,
     )
@@ -309,24 +316,21 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
 }
 
 fn docker_service_create_command(
-  Deployment {
-    name,
-    config:
-      DeploymentConfig {
-        volumes,
-        ports,
-        network,
-        command,
-        environment,
-        labels,
-        extra_args,
-        ..
-      },
-    ..
-  }: &Deployment,
+  deployment: &Deployment,
   image: &str,
   use_with_registry_auth: bool,
 ) -> anyhow::Result<String> {
+  let name = deployment.custom_name();
+  let DeploymentConfig {
+    volumes,
+    ports,
+    network,
+    command,
+    environment,
+    labels,
+    extra_args,
+    ..
+  } = &deployment.config;
   let mut res = format!(
     "docker service create --name {name} --network {network}"
   );
@@ -430,13 +434,14 @@ impl Resolve<crate::api::Args> for UpdateSwarmService {
 
     push_extra_args(&mut command, &extra_args)?;
 
-    write!(&mut command, " {service}")?;
+    // `--` so a name beginning with `-` is not parsed as a flag.
+    write!(&mut command, " -- {service}")?;
 
     let span = info_span!("ExecuteDockerServiceCreate");
     let log = run_komodo_standard_command(
       "Docker Service Create",
-      None,
       command,
+      CommandOptions::default(),
     )
     .instrument(span)
     .await;

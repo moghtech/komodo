@@ -1,13 +1,14 @@
 import TagsFilter from "@/components/tags/filter";
 import TableTags from "@/components/tags/table";
+import ListPagination from "@/components/list-pagination";
 import {
+  useDebouncedTermSearch,
   usePermissions,
   useRead,
   useSetTitle,
-  useTags,
+  useTagsFilter,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "mogh_ui";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { ICONS } from "@/lib/icons";
@@ -16,14 +17,52 @@ import { Page } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
 import { Group, Stack, Switch } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useState } from "react";
+import { keepPreviousData } from "@tanstack/react-query";
+import { Types } from "komodo_client";
+import { useEffect, useState } from "react";
+
+const SCHEDULE_SORT_KEYS = Object.values(Types.ScheduleSortBy);
 
 export default function Schedules() {
   useSetTitle("Schedules");
-  const [search, setSearch] = useState("");
-  const { tags } = useTags();
-  const schedules = useRead("ListSchedules", { tags }).data;
-  const filtered = filterBySplit(schedules ?? [], search, (item) => item.name);
+
+  const [page, setPage] = useState(0);
+
+  const { search, setSearch, terms } = useDebouncedTermSearch({
+    onUpdate: () => setPage(0),
+  });
+
+  const tags = useTagsFilter();
+
+  // Server side sort, passed up from the table.
+  const [sort, setSort] = useState<{
+    sort_by?: Types.ScheduleSortBy;
+    sort_desc?: boolean;
+  }>({});
+
+  // Set to page 0 whenever any filter or the sort changes,
+  // otherwise the query can point past the last page and come back empty.
+  useEffect(() => {
+    setPage(0);
+  }, [terms, tags, sort.sort_by, sort.sort_desc]);
+
+  const schedules =
+    useRead(
+      "ListSchedules",
+      {
+        tags,
+        terms,
+        page,
+        sort_by: sort.sort_by,
+        sort_desc: sort.sort_desc,
+      },
+      {
+        refetchInterval: 15_000,
+        // Keep the previous rows visible while fetching after a query key
+        // change (page / sort / search / filters) to prevent table flashing.
+        placeholderData: keepPreviousData,
+      },
+    ).data ?? [];
 
   return (
     <Page
@@ -33,16 +72,35 @@ export default function Schedules() {
     >
       <Stack>
         <Group justify="end">
+          <ListPagination
+            page={page}
+            setPage={setPage}
+            count={schedules.length}
+          />
           <TagsFilter />
           <SearchInput value={search} onSearch={setSearch} />
         </Group>
 
         <DataTable
           tableKey="schedules"
-          data={filtered}
+          data={schedules}
+          manualSorting
+          onSortingStateChange={(sorting) => {
+            const sort = sorting.find((s) =>
+              SCHEDULE_SORT_KEYS.includes(s.id as Types.ScheduleSortBy),
+            );
+            setSort(
+              sort
+                ? {
+                    sort_by: sort.id as Types.ScheduleSortBy,
+                    sort_desc: sort.desc,
+                  }
+                : {},
+            );
+          }}
           columns={[
             {
-              size: 200,
+              id: "Name",
               accessorKey: "name",
               header: ({ column }) => (
                 <SortableHeader column={column} title="Target" />
@@ -55,37 +113,25 @@ export default function Schedules() {
               ),
             },
             {
-              size: 200,
+              id: "Schedule",
               accessorKey: "schedule",
               header: ({ column }) => (
                 <SortableHeader column={column} title="Schedule" />
               ),
             },
             {
-              size: 200,
+              id: "NextRun",
               accessorKey: "next_scheduled_run",
               header: ({ column }) => (
                 <SortableHeader column={column} title="Next Run" />
               ),
-              sortingFn: (a, b) => {
-                const sa = a.original.next_scheduled_run;
-                const sb = b.original.next_scheduled_run;
-
-                if (!sa && !sb) return 0;
-                if (!sa) return 1;
-                if (!sb) return -1;
-
-                if (sa > sb) return 1;
-                else if (sa < sb) return -1;
-                else return 0;
-              },
               cell: ({ row }) =>
                 row.original.next_scheduled_run
                   ? new Date(row.original.next_scheduled_run).toLocaleString()
                   : "Not Scheduled",
             },
             {
-              size: 100,
+              id: "Enabled",
               accessorKey: "enabled",
               header: ({ column }) => (
                 <SortableHeader column={column} title="Enabled" />

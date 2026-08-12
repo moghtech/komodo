@@ -10,20 +10,30 @@ export default function NewResourceWithDeployTarget({
   type,
   serverId: _serverId,
   swarmId: _swarmId,
+  buildId,
+  repoId,
 }: {
   type: "Stack" | "Deployment";
   serverId?: string;
   swarmId?: string;
+  /** Deployment only */
+  buildId?: string;
+  /** Stack only */
+  repoId?: string;
 }) {
   const [serverId, setServerId] = useState("");
   const [swarmId, setSwarmId] = useState("");
   const showSwarms = !!useRead("ListSwarms", {}).data?.length;
   return (
-    <NewResource<Types.SwarmConfig | Types.DeploymentConfig>
+    <NewResource<Types.StackConfig | Types.DeploymentConfig>
       type={type}
       config={() => ({
         server_id: _serverId ?? serverId,
         swarm_id: _swarmId ?? swarmId,
+        image: buildId
+          ? { type: "Build", params: { build_id: buildId } }
+          : undefined,
+        linked_repo: repoId,
       })}
       extraInputs={
         !(_serverId ?? _swarmId) ? (

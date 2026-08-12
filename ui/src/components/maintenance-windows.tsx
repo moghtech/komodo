@@ -88,7 +88,6 @@ export default function ConfigMaintenanceWindows({
                     <Text>{row.original.name}</Text>
                   </Group>
                 ),
-                size: 200,
               },
               {
                 accessorKey: "schedule_type",
@@ -98,7 +97,6 @@ export default function ConfigMaintenanceWindows({
                 cell: ({ row }) => (
                   <ScheduleDescription window={row.original} />
                 ),
-                size: 150,
               },
               {
                 accessorKey: "start_time",
@@ -106,7 +104,6 @@ export default function ConfigMaintenanceWindows({
                   <SortableHeader column={column} title="Start Time" />
                 ),
                 cell: ({ row }) => fmtMaintenanceWindowTime(row.original),
-                size: 180,
               },
               {
                 accessorKey: "duration_minutes",
@@ -114,7 +111,6 @@ export default function ConfigMaintenanceWindows({
                   <SortableHeader column={column} title="Duration" />
                 ),
                 accessorFn: (row) => `${row.duration_minutes} min`,
-                size: 100,
               },
               {
                 accessorKey: "enabled",
@@ -128,7 +124,6 @@ export default function ConfigMaintenanceWindows({
                     disabled={disabled}
                   />
                 ),
-                size: 120,
               },
               {
                 id: "actions",
@@ -152,7 +147,6 @@ export default function ConfigMaintenanceWindows({
                       </ActionIcon>
                     </Group>
                   ),
-                size: 100,
               },
             ]}
           />

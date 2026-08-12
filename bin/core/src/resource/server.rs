@@ -68,14 +68,23 @@ impl super::KomodoResource for Server {
     server: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = server_status_cache().get(&server.id).await;
+    let (periphery_info, system_info, system_stats) = status
+      .as_ref()
+      .map(|s| {
+        (
+          s.periphery_info.as_ref(),
+          s.system_info.as_ref(),
+          s.system_stats.as_ref(),
+        )
+      })
+      .unwrap_or_default();
     let (
       version,
       public_key,
       public_ip,
       terminals_disabled,
       container_terminals_disabled,
-    ) = match status.as_ref().and_then(|s| s.periphery_info.as_ref())
-    {
+    ) = match periphery_info {
       Some(info) => (
         Some(info.version.clone()),
         Some(info.public_key.clone()),
@@ -94,6 +103,11 @@ impl super::KomodoResource for Server {
       info: ServerListItemInfo {
         state: status.as_ref().map(|s| s.state).unwrap_or_default(),
         err: status.as_ref().and_then(|s| s.err.clone()),
+        stats: system_stats.map(Into::into),
+        alerting_thresholds: (&server.config).into(),
+        core_count: system_info.and_then(|i| i.core_count),
+        logical_core_count: system_info
+          .and_then(|i| i.logical_core_count),
         region: server.config.region,
         address: optional_string(server.config.address),
         external_address: optional_string(

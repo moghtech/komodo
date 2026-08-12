@@ -16,6 +16,10 @@ pub struct Terminal {
   pub name: String,
   /// The target resource of the Terminal.
   pub target: TerminalTarget,
+  /// The name of the target resource (Server / Stack / Deployment).
+  /// Resolved by Core when listing all terminals for a user.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub target_name: Option<String>,
   /// The command used to init the shell.
   pub command: String,
   /// The size of the terminal history in memory.
@@ -23,6 +27,25 @@ pub struct Terminal {
   /// When the Terminal was created.
   /// Unix timestamp milliseconds.
   pub created_at: I64,
+}
+
+#[typeshare]
+#[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum TerminalSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by target.
+  Target,
+  /// Sort by init command.
+  Command,
+  /// Sort by stored size.
+  Size,
+  /// Sort by created timestamp.
+  Created,
 }
 
 #[typeshare]

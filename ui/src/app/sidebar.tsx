@@ -31,6 +31,12 @@ const Sidebar = ({ close }: { close: () => void }) => {
             to="/terminals"
             {...linkProps}
           />
+          <SidebarLink
+            label="Stats"
+            icon={<ICONS.Stats size="1rem" />}
+            to="/stats"
+            {...linkProps}
+          />
 
           <Divider
             label={

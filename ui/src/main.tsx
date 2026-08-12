@@ -6,7 +6,6 @@ import { Router } from "@/router";
 import { setAuthUrl, ThemeProvider } from "mogh_ui";
 import { themeAdditionalColors } from "@/lib/color";
 import { Notifications } from "@mantine/notifications";
-import initMonaco from "@/monaco";
 
 import "@mantine/core/styles.css";
 // ‼️ import extra package styles after core package styles
@@ -17,7 +16,9 @@ import "./index.scss";
 // Import mogh_ui scss
 import "mogh_ui/index.scss";
 
-initMonaco();
+// Loaded dynamically to keep monaco-editor / monaco-yaml out of the entry chunk.
+// Doesn't need to be awaited - applies in background when ready.
+import("@/monaco").then(({ default: initMonaco }) => initMonaco());
 
 const parsedBaseUrl = new URL(document.baseURI);
 

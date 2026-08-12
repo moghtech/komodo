@@ -3,7 +3,8 @@ use std::fmt::Write;
 use anyhow::Context;
 use bollard::query_parameters::ListSecretsOptions;
 use command::{
-  run_komodo_shell_command, run_komodo_standard_command,
+  CommandOptions, run_komodo_shell_command,
+  run_komodo_standard_command,
 };
 use futures_util::{TryStreamExt as _, stream::FuturesUnordered};
 use komodo_client::entities::{
@@ -17,6 +18,7 @@ use komodo_client::entities::{
   update::Log,
 };
 use periphery_client::api::swarm::CreateSwarmSecret;
+use shell_escape::unix::escape;
 
 use super::DockerClient;
 
@@ -118,39 +120,39 @@ pub async fn create_swarm_secret(
     template_driver,
   }: &CreateSwarmSecret,
 ) -> anyhow::Result<Log> {
-  let mut command = String::from("docker secret create");
+  let mut flags = String::new();
 
   if let Some(driver) = driver {
-    write!(&mut command, " --driver {driver}")?;
+    write!(&mut flags, " --driver {}", escape(driver.into()))?;
   }
 
   for label in labels {
-    write!(&mut command, " --label {label}")?;
+    write!(&mut flags, " --label {}", escape(label.into()))?;
   }
 
   if let Some(driver) = template_driver {
-    write!(&mut command, " --template-driver {driver}")?;
+    write!(
+      &mut flags,
+      " --template-driver {}",
+      escape(driver.into())
+    )?;
   }
 
-  let mut sanitized_command = command.clone();
+  let name = escape(name.into());
+  let command = format!(
+    "printf '%s\\n' {} | docker secret create{flags} {name} -",
+    escape(data.trim().into())
+  );
+  let sanitized_command = format!(
+    "printf '%s\\n' <secret-data> | docker secret create{flags} {name} -"
+  );
 
-  write!(
-    &mut command,
-    r#" {name} - <<'EOF'
-{}
-EOF"#,
-    data.trim()
-  )?;
-
-  write!(
-    &mut sanitized_command,
-    r#" {name} - <<'EOF'
-<secret-data>
-EOF"#
-  )?;
-
-  let mut log =
-    run_komodo_shell_command("Create Secret", None, command).await;
+  let mut log = run_komodo_shell_command(
+    "Create Secret",
+    command,
+    CommandOptions::default(),
+  )
+  .await;
 
   log.command = sanitized_command;
 
@@ -161,12 +163,18 @@ pub async fn remove_swarm_secrets(
   secrets: impl Iterator<Item = &str>,
 ) -> Log {
   let mut command = String::from("docker secret rm");
+  // `--` so a name beginning with `-` is not parsed as a flag.
+  command += " --";
   for secret in secrets {
     command += " ";
     command += secret;
   }
-  run_komodo_standard_command("Remove Swarm Secrets", None, command)
-    .await
+  run_komodo_standard_command(
+    "Remove Swarm Secrets",
+    command,
+    CommandOptions::default(),
+  )
+  .await
 }
 
 pub async fn recreate_swarm_secret(
@@ -340,12 +348,13 @@ async fn switch_service_secret(
     write!(&mut command, ",mode={mode}")?;
   }
 
-  write!(&mut command, " {service}")?;
+  // `--` so a name beginning with `-` is not parsed as a flag.
+  write!(&mut command, " -- {service}")?;
 
   let log = run_komodo_standard_command(
     "Switch Service Secret",
-    None,
     command,
+    CommandOptions::default(),
   )
   .await;
 

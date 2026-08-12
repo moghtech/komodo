@@ -114,6 +114,8 @@ impl Resolve<ExecuteArgs> for SendAlert {
   ) -> Result<Self::Response, Self::Error> {
     let alerters = list_full_for_user::<Alerter>(
       Default::default(),
+      None,
+      None,
       user,
       PermissionLevel::Read.into(),
       &[],

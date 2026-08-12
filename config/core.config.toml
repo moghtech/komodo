@@ -79,6 +79,11 @@ private_key = "file:/config/keys/core.key"
 ## Optional, no default.
 # first_server_address = ""
 
+## Set the default pagination limit for the API and UI to use.
+## Env: KOMODO_DEFAULT_PAGINATION_LIMIT
+## Default: 50
+default_pagination_limit = 50
+
 ## Disables write support on resources in the UI.
 ## This protects users that that would normally have write priviledges during their UI usage,
 ## when they intend to fully rely on ResourceSyncs to manage config.
@@ -493,25 +498,6 @@ webhook_secret = "a_random_webhook_secret"
 ## Default: empty (none)
 webhook_base_url = ""
 
-## Configure Github webhook app. Enables webhook management apis.
-## <INSERT LINK TO GUIDE>
-## Env: KOMODO_GITHUB_WEBHOOK_APP_APP_ID or KOMODO_GITHUB_WEBHOOK_APP_APP_ID_FILE
-# github_webhook_app.app_id = 1234455 # Find on the app page.
-## Env: 
-##   - KOMODO_GITHUB_WEBHOOK_APP_INSTALLATIONS_IDS or KOMODO_GITHUB_WEBHOOK_APP_INSTALLATIONS_IDS_FILE
-##   - KOMODO_GITHUB_WEBHOOK_APP_INSTALLATIONS_NAMESPACES
-# github_webhook_app.installations = [
-#   ## Find the id after installing the app to user / organization. "namespace" is the username / organization name.
-#   { id = 1234, namespace = "mbecker20" }
-# ]
-
-## The path to Github webhook app private key. <INSERT LINK TO GUIDE>
-## This is defaulted to `/github/private-key.pem`, and doesn't need to be changed if running core in Docker.
-## Just mount the private key pem file on the host to `/github/private-key.pem` in the container.
-## Eg. `/your/path/to/key.pem : /github/private-key.pem`
-## Env: KOMODO_GITHUB_WEBHOOK_APP_PK_PATH
-# github_webhook_app.pk_path = "/path/to/pk.pem"
-
 ###########
 # LOGGING #
 ###########
@@ -623,15 +609,15 @@ aws.secret_access_key = ""
 ## They allow these Resources to pull private images.
 ## They cannot be configured on the environment.
 
-## configure docker registries
-# [[docker_registry]]
+## configure image registries
+# [[image_registry]]
 # domain = "docker.io"
 # accounts = [
 # 	{ username = "mbecker2020", token = "access_token_for_account" }
 # ]
 # organizations = ["DockerhubOrganization"]
 
-# [[docker_registry]]
+# [[image_registry]]
 # domain = "git.mogh.tech" # use a custom provider, like self-hosted gitea
 # accounts = [
 # 	{ username = "mbecker20", token = "access_token_for_account" },

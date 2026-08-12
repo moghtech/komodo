@@ -50,7 +50,7 @@ function NetworkInner({
     data: network,
     isPending,
     isError,
-  } = useRead("InspectDockerNetwork", {
+  } = useRead("InspectNetwork", {
     server: serverId,
     network: networkName,
   });
@@ -165,7 +165,6 @@ function NetworkInner({
                   ) : (
                     "Unknown"
                   ),
-                size: 200,
               },
               {
                 accessorKey: "IPv4Address",

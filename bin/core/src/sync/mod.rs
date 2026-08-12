@@ -7,6 +7,7 @@ use komodo_client::entities::{
   tag::Tag,
   toml::{ResourceToml, ResourcesToml},
 };
+use partial_derive2::PartialDiff as _;
 use toml::ToToml;
 
 use crate::resource::KomodoResource;
@@ -15,6 +16,7 @@ pub mod deploy;
 pub mod execute;
 pub mod file;
 pub mod remote;
+pub mod replace_ids;
 pub mod resources;
 pub mod toml;
 pub mod user_groups;
@@ -87,16 +89,19 @@ pub trait ResourceSyncTrait: ToToml + Sized {
     )
   }
 
-  /// Apply any changes to incoming toml partial config
-  /// before it is diffed against existing config
-  fn validate_partial_config(_config: &mut Self::PartialConfig) {}
+  // /// Apply any changes to incoming toml partial config
+  // /// before it is diffed against existing config
+  // fn validate_partial_config(_config: &mut Self::PartialConfig) {}
 
   /// Diffs the declared toml (partial) against the full existing config.
   /// Removes all fields from toml (partial) that haven't changed.
   fn get_diff(
-    original: Self::Config,
+    mut original: Self::Config,
     update: Self::PartialConfig,
-  ) -> anyhow::Result<Self::ConfigDiff>;
+  ) -> anyhow::Result<Self::ConfigDiff> {
+    Self::replace_ids(&mut original);
+    Ok(original.partial_diff(update))
+  }
 
   /// Apply any changes to computed config diff
   /// before logging

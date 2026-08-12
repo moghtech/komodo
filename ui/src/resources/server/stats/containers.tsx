@@ -19,7 +19,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
   });
   const isServerAvailable = useIsServerAvailable(id);
   const containers = useRead(
-    "ListDockerContainers",
+    "ListContainers",
     {
       server: id,
     },
@@ -58,7 +58,6 @@ export default function ServerContainerStats({ id }: { id: string }) {
           columns={[
             {
               accessorKey: "name",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Name" />
               ),
@@ -72,19 +71,17 @@ export default function ServerContainerStats({ id }: { id: string }) {
             },
             {
               accessorKey: "stats.cpu_perc",
-              size: 100,
               header: ({ column }) => (
                 <SortableHeader column={column} title="CPU" />
               ),
             },
             {
               accessorKey: "stats.mem_perc",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Memory" />
               ),
               cell: ({ row }) => (
-                <Group gap="xs">
+                <Group wrap="nowrap" gap="xs">
                   <Text>{row.original.stats?.mem_perc}</Text>
                   <Text c="muted" size="sm">
                     ({row.original.stats?.mem_usage})
@@ -94,21 +91,18 @@ export default function ServerContainerStats({ id }: { id: string }) {
             },
             {
               accessorKey: "stats.net_io",
-              size: 150,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Net I/O" />
               ),
             },
             {
               accessorKey: "stats.block_io",
-              size: 150,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Block I/O" />
               ),
             },
             {
               accessorKey: "stats.pids",
-              size: 100,
               header: ({ column }) => (
                 <SortableHeader column={column} title="PIDs" />
               ),

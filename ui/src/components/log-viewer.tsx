@@ -71,8 +71,6 @@ export default function LogViewer({
     }
   };
 
-  console.log(lines);
-
   return (
     <ScrollArea
       h={h}

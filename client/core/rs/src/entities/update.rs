@@ -1,6 +1,6 @@
 use async_timing_util::unix_timestamp_ms;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{AsRefStr, Display, EnumString};
 use typeshare::typeshare;
 
 use crate::entities::{
@@ -203,22 +203,30 @@ impl Log {
       (true, true) => String::from("No log"),
     }
   }
+
+  #[cfg(feature = "svi")]
+  pub fn sanitize(&mut self, replacers: &Vec<(String, String)>) {
+    self.command = svi::replace_in_string(&self.command, replacers);
+    self.stdout = svi::replace_in_string(&self.stdout, replacers);
+    self.stderr = svi::replace_in_string(&self.stderr, replacers);
+  }
 }
 
 /// An update's status
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
+  Default,
   Debug,
-  Display,
-  EnumString,
-  PartialEq,
-  Hash,
-  Eq,
   Clone,
   Copy,
-  Default,
+  PartialEq,
+  Eq,
+  Hash,
+  Serialize,
+  Deserialize,
+  Display,
+  EnumString,
+  AsRefStr,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum UpdateStatus {

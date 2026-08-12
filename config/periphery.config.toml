@@ -270,15 +270,15 @@ pretty_startup_config = false
 # REGISTRY PROVIDERS #
 ######################
 
-## Configure Periphery based docker registries
-# [[docker_registry]]
+## Configure Periphery based image registries
+# [[image_registry]]
 # domain = "docker.io"
 # accounts = [
 # 	{ username = "mbecker2020", token = "access_token_for_account" }
 # ]
 # organizations = ["DockerhubOrganization"]
 
-# [[docker_registry]]
+# [[image_registry]]
 # domain = "git.mogh.tech" # use a custom provider, like self-hosted gitea
 # accounts = [
 # 	{ username = "mbecker20", token = "access_token_for_account" },

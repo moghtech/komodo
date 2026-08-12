@@ -1,6 +1,5 @@
 import NewTag from "@/components/tags/new";
 import Tag from "@/components/tags/tag";
-import UserAvatar from "@/components/user-avatar";
 import { useRead, useSetTitle, useUser } from "@/lib/hooks";
 import { DataTable } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
@@ -30,7 +29,6 @@ export default function SettingsTags() {
         columns={[
           {
             header: "Name",
-            size: 200,
             accessorKey: "name",
             cell: ({ row }) => {
               return <Tag tag={row.original} size="md" fz="md" />;
@@ -38,7 +36,6 @@ export default function SettingsTags() {
           },
           {
             header: "Color",
-            size: 200,
             cell: ({ row }) => (
               <TagColorSelector
                 tagId={row.original._id?.$oid!}
@@ -47,19 +44,18 @@ export default function SettingsTags() {
               />
             ),
           },
-          {
-            header: "Owner",
-            size: 200,
-            cell: ({ row }) =>
-              row.original.owner ? (
-                <UserAvatar userId={row.original.owner} fz="md" />
-              ) : (
-                "Unknown"
-              ),
-          },
+          // {
+          //   header: "Owner",
+          //   size: 200,
+          //   cell: ({ row }) =>
+          //     row.original.owner ? (
+          //       <UserAvatar userId={row.original.owner} fz="md" />
+          //     ) : (
+          //       "Unknown"
+          //     ),
+          // },
           {
             header: "Delete",
-            size: 200,
             cell: ({ row }) => (
               <DeleteTag
                 tagId={row.original._id!.$oid}

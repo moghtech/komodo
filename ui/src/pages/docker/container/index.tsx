@@ -55,14 +55,14 @@ function ContainerInner({
     id: serverId,
   });
   const listContainer = useRead(
-    "ListDockerContainers",
+    "ListContainers",
     {
       server: serverId,
     },
     { refetchInterval: 10_000 },
   ).data?.find((container) => container.name === containerName);
   const inspect = useRead(
-    "InspectDockerContainer",
+    "InspectContainer",
     {
       server: serverId,
       container: containerName,

@@ -10,7 +10,11 @@ import { ICONS } from "@/lib/icons";
 import { ConfirmButton } from "mogh_ui";
 import { useFullResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";
-import { fileContentsEmpty, resourceSyncNoChanges } from "@/lib/utils";
+import {
+  EXECUTION_ACTION_STATE_REQUERY_MS,
+  fileContentsEmpty,
+  resourceSyncNoChanges,
+} from "@/lib/utils";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export function RefreshSync({ id }: { id: string }) {
@@ -39,11 +43,18 @@ export function RefreshSync({ id }: { id: string }) {
 }
 
 export function ExecuteSync({ id }: { id: string }) {
-  const { mutateAsync: execute, isPending } = useExecute("RunSync");
+  const invalidate = useInvalidate();
+  const { mutateAsync: execute, isPending } = useExecute("RunSync", {
+    onSuccess: () =>
+      setTimeout(
+        () => invalidate(["GetResourceSyncActionState"]),
+        EXECUTION_ACTION_STATE_REQUERY_MS,
+      ),
+  });
   const syncing = useRead(
     "GetResourceSyncActionState",
     { sync: id },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data?.syncing;
   const sync = useFullResourceSync(id);
   const { view } = useResourceSyncTabsView(sync);

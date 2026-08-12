@@ -47,7 +47,9 @@ impl Resolve<ReadArgs> for ListUpdates {
       query,
       FindOptions::builder()
         .sort(doc! { "start_ts": -1 })
-        .skip(self.page as u64 * UPDATES_PER_PAGE as u64)
+        .skip(
+          (self.page as u64).saturating_mul(UPDATES_PER_PAGE as u64),
+        )
         .limit(UPDATES_PER_PAGE)
         .build(),
     )

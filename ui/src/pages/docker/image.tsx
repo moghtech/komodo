@@ -52,13 +52,13 @@ function ImageInner({
     data: image,
     isPending,
     isError,
-  } = useRead("InspectDockerImage", {
+  } = useRead("InspectImage", {
     server: serverId,
     image: imageName,
   });
 
   const containers = useRead(
-    "ListDockerContainers",
+    "ListContainers",
     {
       server: serverId,
     },
@@ -67,7 +67,7 @@ function ImageInner({
     !image?.Id ? false : container.image_id === image?.Id,
   );
 
-  const history = useRead("ListDockerImageHistory", {
+  const history = useRead("ListImageHistory", {
     server: serverId,
     image: imageName,
   }).data;
@@ -176,7 +176,6 @@ function ImageInner({
                     {
                       accessorKey: "CreatedBy",
                       header: "Created By",
-                      size: 400,
                     },
                     {
                       accessorKey: "Created",
@@ -185,7 +184,6 @@ function ImageInner({
                         fmtDateWithMinutes(
                           new Date(row.original.Created * 1000),
                         ),
-                      size: 200,
                     },
                   ]}
                 />

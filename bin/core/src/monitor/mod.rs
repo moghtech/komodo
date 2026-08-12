@@ -52,17 +52,18 @@ pub fn spawn_monitoring_loops() {
 
 fn spawn_server_monitoring_loop() {
   tokio::spawn(async move {
-    refresh_all_server_cache(komodo_timestamp()).await;
+    refresh_all_server_cache().await;
     let interval = monitoring_interval();
     loop {
       let ts = (wait_until_timelength(interval, ADDITIONAL_MS).await
         - ADDITIONAL_MS) as i64;
-      refresh_all_server_cache(ts).await;
+      refresh_all_server_cache().await;
+      tokio::join!(check_alerts(ts), record_server_stats(ts));
     }
   });
 }
 
-async fn refresh_all_server_cache(ts: i64) {
+async fn refresh_all_server_cache() {
   let servers =
     match find_collect(&db_client().servers, None, None).await {
       Ok(servers) => servers,
@@ -77,7 +78,6 @@ async fn refresh_all_server_cache(ts: i64) {
     refresh_server_cache(&server, false).await;
   });
   join_all(futures).await;
-  tokio::join!(check_alerts(ts), record_server_stats(ts));
 }
 
 /// Makes sure cache for server doesn't update too frequently / simultaneously.
@@ -193,7 +193,8 @@ pub fn refresh_server_cache(
 
     if let Some(docker) = &mut docker {
       docker.containers.iter_mut().for_each(|container| {
-        container.server_id = Some(server.id.clone())
+        container.server_id = Some(server.id.clone());
+        container.server_name = Some(server.name.clone());
       });
     }
 

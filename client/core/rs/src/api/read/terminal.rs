@@ -2,7 +2,10 @@ use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::terminal::{Terminal, TerminalTarget};
+use crate::entities::{
+  U64,
+  terminal::{Terminal, TerminalSortBy, TerminalTarget},
+};
 
 use super::KomodoReadRequest;
 
@@ -34,6 +37,35 @@ pub struct ListTerminals {
   /// Return results with resource names instead of ids.
   #[serde(default)]
   pub use_names: bool,
+
+  /// Filter by terminal name.
+  /// Returned terminals have names which contain all terms.
+  #[serde(default)]
+  pub terms: Vec<String>,
+
+  /// Retrieve more results by incrementing the page.
+  /// `page: 0` is default.
+  #[serde(default)]
+  pub page: U64,
+
+  /// Set the limit for number of terminals per-page.
+  /// If not provided, uses the Core config
+  /// `default_pagination_limit` (default: 30).
+  ///
+  /// Passing `limit: 0` returns all results (unlimited).
+  ///
+  /// Note: the page logic relies on this being consistent
+  /// across queries for more pages.
+  pub limit: Option<U64>,
+
+  /// Sort the results by this field.
+  /// Defaults to Name.
+  #[serde(default)]
+  pub sort_by: TerminalSortBy,
+
+  /// Reverse the sort direction.
+  #[serde(default)]
+  pub sort_desc: bool,
 }
 
 #[typeshare]

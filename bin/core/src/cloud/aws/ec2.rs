@@ -88,7 +88,7 @@ pub async fn launch_ec2_instance(
     port: _,
     use_https: _,
     git_providers: _,
-    docker_registries: _,
+    image_registries: _,
     secrets: _,
   } = config;
   let instance_type = handle_unknown_instance_type(

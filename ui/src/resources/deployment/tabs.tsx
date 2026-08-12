@@ -19,7 +19,7 @@ type DeploymentTabsView = "Config" | "Tasks" | "Log" | "Inspect" | "Terminals";
 
 export default function DeploymentTabs({ id }: { id: string }) {
   const [_view, setView] = useLocalStorage<DeploymentTabsView>({
-    key: "deployment-tabs-v1",
+    key: `deployment-${id}-tab-v2`,
     defaultValue: "Config",
   });
   const info = useDeployment(id)?.info;
@@ -42,11 +42,12 @@ export default function DeploymentTabs({ id }: { id: string }) {
   const terminalDisabled =
     !specificTerminal ||
     containerTerminalsDisabled ||
-    state !== Types.DeploymentState.Running;
+    state !== Types.DeploymentState.Running ||
+    !!info?.swarm_id;
 
   const view =
     (logsDisabled && _view === "Log") ||
-    (downOrUnknown && _view === "Tasks") ||
+    ((downOrUnknown || !info?.swarm_id) && _view === "Tasks") ||
     (inspectDisabled && _view === "Inspect") ||
     (terminalDisabled && _view === "Terminals")
       ? "Config"
@@ -78,7 +79,6 @@ export default function DeploymentTabs({ id }: { id: string }) {
         value: "Terminals",
         icon: ICONS.Terminal,
         disabled: terminalDisabled,
-        hidden: !!info?.swarm_id,
       },
     ],
     [logsDisabled, inspectDisabled, terminalDisabled, info?.swarm_id],

@@ -1,9 +1,9 @@
 import ExportToml from "@/components/export-toml";
 import ResourceUpdates from "@/components/updates/resource";
 import {
+  useListItemQuery,
   usePermissions,
   usePushRecentlyViewed,
-  useRead,
   useResourceParamType,
   useSetTitle,
 } from "@/lib/hooks";
@@ -36,7 +36,9 @@ export default function Resource() {
 
 function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
   const RC = ResourceComponents[type];
-  const resources = useRead(`List${type}s`, {}).data;
+  // Same query as `useListItem` under the hood, so they share the cache entry.
+  // Used to distinguish "still loading" from "resource doesn't exist".
+  const resources = useListItemQuery(type, id).data;
   const resource = RC.useListItem(id);
 
   const { canCreate, canExecute } = usePermissions({ type, id });

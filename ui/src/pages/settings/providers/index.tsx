@@ -23,12 +23,12 @@ export default function SettingsProviders() {
   return (
     <Stack gap="xl">
       <Providers type="GitProvider" />
-      <Providers type="DockerRegistry" />
+      <Providers type="ImageRegistry" />
     </Stack>
   );
 }
 
-function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
+function Providers({ type }: { type: "GitProvider" | "ImageRegistry" }) {
   const user = useUser().data;
   const disabled = !user?.admin;
   useSetTitle("Providers");
@@ -62,9 +62,9 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
   return (
     <>
       <Section
-        title={type === "DockerRegistry" ? "Registry Accounts" : "Git Accounts"}
+        title={type === "ImageRegistry" ? "Registry Accounts" : "Git Accounts"}
         icon={
-          type === "DockerRegistry" ? (
+          type === "ImageRegistry" ? (
             <ICONS.Image size="1.3rem" />
           ) : (
             <ICONS.Repo size="1.3rem" />
@@ -83,7 +83,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
           columns={[
             {
               accessorKey: "domain",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Domain" />
               ),
@@ -141,7 +140,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             },
             {
               accessorKey: "username",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Username" />
               ),
@@ -180,7 +178,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             },
             {
               accessorKey: "token",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Token" />
               ),
@@ -220,7 +217,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             },
             {
               header: "Delete",
-              maxSize: 200,
               cell: ({ row }) => (
                 <DeleteProviderAccount
                   type={type}

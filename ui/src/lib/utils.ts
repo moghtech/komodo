@@ -2,6 +2,9 @@ import { UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
+import { RowSelectionState } from "@tanstack/react-table";
+
+export const EXECUTION_ACTION_STATE_REQUERY_MS = 500;
 
 export function objectKeys<T extends object>(o: T): (keyof T)[] {
   return Object.keys(o) as (keyof T)[];
@@ -122,6 +125,16 @@ export function hasMinimumPermissions(
   return true;
 }
 
+/**
+ * Returns true if the search term is shorthand for the given resource type keyword,
+ * eg. term 'cont' matches keyword 'containers'. This lets searches like 'cont my-name'
+ * scope to containers matching 'my-name'. Requires at least 3 characters so short
+ * terms like 'on' are still used to search by name.
+ */
+export function termMatchesTypeKeyword(keyword: string, term: string) {
+  return term.length >= 3 && keyword.startsWith(term);
+}
+
 export function usableResourcePath(resource: UsableResource) {
   if (resource === "ResourceSync") return "resource-syncs";
   return `${resource.toLowerCase()}s`;
@@ -169,15 +182,8 @@ export function logToHtml(log: string) {
   return convert_ansi.toHtml(sanitized);
 }
 
-export function getUpdateQuery(
-  target: Types.ResourceTarget,
-  deployments: Types.DeploymentListItem[] | undefined,
-) {
-  const build_id =
-    target.type === "Deployment"
-      ? deployments?.find((d) => d.id === target.id)?.info.build_id
-      : undefined;
-  if (build_id) {
+export function getUpdateQuery(target: Types.ResourceTarget, buildId?: string) {
+  if (buildId) {
     return {
       $or: [
         {
@@ -186,7 +192,7 @@ export function getUpdateQuery(
         },
         {
           "target.type": "Build",
-          "target.id": build_id,
+          "target.id": buildId,
           operation: {
             $in: [Types.Operation.RunBuild, Types.Operation.CancelBuild],
           },
@@ -277,4 +283,40 @@ export function listsEqual(a: string[], b: string[]) {
     }
   }
   return true;
+}
+
+export function setSelectedStateHandler(
+  state: React.SetStateAction<RowSelectionState>,
+  selectionState: RowSelectionState,
+  setSelectedList: (list: string[]) => void,
+) {
+  switch (typeof state) {
+    case "function":
+      setSelectedList(
+        Object.entries(state(selectionState))
+          .filter((item) => item[1])
+          .map((item) => item[0]),
+      );
+      break;
+    case "object":
+      setSelectedList(
+        Object.entries(state)
+          .filter((item) => item[1])
+          .map((item) => item[0]),
+      );
+      break;
+  }
+}
+
+export function parseVersion(version: string): Types.Version {
+  const [major, minor, patch] = version
+    // In case of 'v2.0.0' fmt
+    .replaceAll("v", "")
+    .split(".")
+    .map(Number);
+  return {
+    major,
+    minor,
+    patch,
+  };
 }
