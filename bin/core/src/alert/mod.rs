@@ -19,6 +19,7 @@ use crate::{config::core_config, state::db_client};
 
 mod discord;
 mod ntfy;
+mod pinglet;
 mod pushover;
 mod slack;
 
@@ -148,6 +149,17 @@ pub async fn send_alert_to_alerter(
         )
       })
     }
+    AlerterEndpoint::Pinglet(PingletAlerterEndpoint {
+      url,
+      token,
+    }) => pinglet::send_alert(url, token.as_deref(), alert)
+      .await
+      .with_context(|| {
+        format!(
+          "Failed to send alert to Pinglet Alerter {}",
+          alerter.name
+        )
+      }),
   }
 }
 

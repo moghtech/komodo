@@ -170,6 +170,9 @@ pub enum AlerterEndpoint {
 
   /// Send alert to Pushover
   Pushover(PushoverAlerterEndpoint),
+
+  /// Send alert to Pinglet
+  Pinglet(PingletAlerterEndpoint),
 }
 
 impl Default for AlerterEndpoint {
@@ -317,6 +320,39 @@ fn default_pushover_url() -> String {
   String::from(
     "https://api.pushover.net/1/messages.json?token=XXXXXXXXXXXXX&user=XXXXXXXXXXXXX",
   )
+}
+
+/// Configuration for a Pinglet alerter.
+#[typeshare]
+#[derive(
+  Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct PingletAlerterEndpoint {
+  /// The Pinglet topic publish URL,
+  /// ie `https://app.pinglet.co.uk/<namespace>/<topic>`
+  #[serde(default = "default_pinglet_url")]
+  #[builder(default = "default_pinglet_url()")]
+  pub url: String,
+
+  /// The Pinglet API key, sent as a Bearer token.
+  /// Supports variable / secret interpolation,
+  /// eg `[[PINGLET_API_KEY]]`.
+  pub token: Option<String>,
+}
+
+impl Default for PingletAlerterEndpoint {
+  fn default() -> Self {
+    Self {
+      url: default_pinglet_url(),
+      token: None,
+    }
+  }
+}
+
+fn default_pinglet_url() -> String {
+  String::from("https://app.pinglet.co.uk/namespace/komodo")
 }
 
 // QUERY
