@@ -5042,6 +5042,14 @@
             "null"
           ]
         },
+        "execution_timeout": {
+          "description": "Maximum seconds the Action may run before its process group is\nkilled and the run failed. 0 or below means no timeout.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
         "file_contents": {
           "description": "Typescript file contents using pre-initialized `komodo` client.\nSupports variable / secret interpolation.",
           "type": [

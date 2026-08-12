@@ -2,6 +2,7 @@ use std::{
   collections::HashSet,
   path::{Path, PathBuf},
   sync::OnceLock,
+  time::Duration,
 };
 
 use anyhow::Context as _;
@@ -133,6 +134,10 @@ impl Resolve<ExecuteArgs> for RunAction {
 
     let mut update = update.clone();
 
+    let timeout = (action.config.execution_timeout > 0).then(|| {
+      Duration::from_secs(action.config.execution_timeout as u64)
+    });
+
     update_update(update.clone()).await?;
 
     let default_args = parse_action_arguments(
@@ -219,7 +224,7 @@ impl Resolve<ExecuteArgs> for RunAction {
           "deno run --allow-all{https_cert_flag}{reload} {}",
           path.display()
         ),
-        CommandOptions::default().cancel(cancel),
+        CommandOptions::default().cancel(cancel).timeout(timeout),
       )
       .await;
 
