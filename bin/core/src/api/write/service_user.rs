@@ -223,3 +223,65 @@ impl Resolve<WriteArgs> for DeleteApiKeyForServiceUser {
     Ok(DeleteApiKeyForServiceUserResponse {})
   }
 }
+
+impl Resolve<WriteArgs> for RotateApiKey {
+  #[instrument(
+    "RotateApiKey",
+    skip_all,
+    fields(
+      operator = user.id,
+      key = self.key,
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> mogh_error::Result<RotateApiKeyResponse> {
+    let db = db_client();
+
+    let api_key = db
+      .api_keys
+      .find_one(doc! { "key": &self.key })
+      .await
+      .context("failed to query db for api key")?
+      .context("did not find matching api key")?;
+
+    if api_key.user_id != user.id {
+      if !user.admin {
+        return Err(
+          anyhow!("Can only rotate your own api keys")
+            .status_code(StatusCode::FORBIDDEN),
+        );
+      }
+
+      let owner = find_one_by_id(&db.users, &api_key.user_id)
+        .await
+        .context("failed to query db for user")?
+        .context("no user found with id")?;
+
+      let UserConfig::Service { .. } = &owner.config else {
+        return Err(
+          anyhow!("Admins can only rotate Service User api keys")
+            .status_code(StatusCode::FORBIDDEN),
+        );
+      };
+    }
+
+    let res = create_api_key(
+      &KomodoAuthImpl,
+      api_key.user_id,
+      CreateApiKey {
+        name: api_key.name,
+        expires: api_key.expires as u64,
+      },
+    )
+    .await?;
+
+    db.api_keys
+      .delete_one(doc! { "key": self.key })
+      .await
+      .context("Created new api key, but failed to delete the old one. Delete it manually.")?;
+
+    Ok(res)
+  }
+}

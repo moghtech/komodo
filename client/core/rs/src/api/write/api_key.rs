@@ -71,3 +71,36 @@ pub struct DeleteApiKeyForServiceUser {
 
 #[typeshare]
 pub type DeleteApiKeyForServiceUserResponse = NoData;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RotateApiKey",
+  description = "Rotate an api key. Generates a new key / secret pair with the same name and expiry, and deletes the old one. Users can rotate their own api keys. Admins can also rotate service user api keys.",
+  request_body(content = RotateApiKey),
+  responses(
+    (status = 200, description = "The new api key and secret"),
+  ),
+)]
+pub fn rotate_api_key() {}
+
+/// Rotate an api key. Generates a new key / secret pair
+/// with the same name and expiry, and deletes the old one.
+/// Users can rotate their own api keys.
+/// Admins can also rotate service user api keys.
+/// Response: [CreateApiKeyResponse].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(RotateApiKeyResponse)]
+#[error(mogh_error::Error)]
+pub struct RotateApiKey {
+  /// The api key to rotate
+  pub key: String,
+}
+
+#[typeshare]
+pub type RotateApiKeyResponse = CreateApiKeyResponse;

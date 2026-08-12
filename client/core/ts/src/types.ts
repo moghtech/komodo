@@ -7086,6 +7086,20 @@ export interface CreateApiKeyForServiceUser {
 	expires?: I64;
 }
 
+/**
+ * Rotate an api key. Generates a new key / secret pair
+ * with the same name and expiry, and deletes the old one.
+ * Users can rotate their own api keys.
+ * Admins can also rotate service user api keys.
+ * Response: [CreateApiKeyResponse].
+ */
+export interface RotateApiKey {
+	/** The api key to rotate */
+	key: string;
+}
+
+export type RotateApiKeyResponse = CreateApiKeyResponse;
+
 /** Create a build. Response: [Build]. */
 export interface CreateBuild {
 	/** The name given to newly created build. */
@@ -12262,6 +12276,7 @@ export type WriteRequest =
 	| { type: "UpdateServiceUserDescription", params: UpdateServiceUserDescription }
 	| { type: "CreateApiKeyForServiceUser", params: CreateApiKeyForServiceUser }
 	| { type: "DeleteApiKeyForServiceUser", params: DeleteApiKeyForServiceUser }
+	| { type: "RotateApiKey", params: RotateApiKey }
 	| { type: "CreateUserGroup", params: CreateUserGroup }
 	| { type: "RenameUserGroup", params: RenameUserGroup }
 	| { type: "DeleteUserGroup", params: DeleteUserGroup }

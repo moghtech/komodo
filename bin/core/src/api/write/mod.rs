@@ -179,6 +179,9 @@ pub enum WriteRequest {
   CreateApiKeyForServiceUser(CreateApiKeyForServiceUser),
   DeleteApiKeyForServiceUser(DeleteApiKeyForServiceUser),
 
+  // ==== API KEY ====
+  RotateApiKey(RotateApiKey),
+
   // ==== USER GROUP ====
   CreateUserGroup(CreateUserGroup),
   RenameUserGroup(RenameUserGroup),

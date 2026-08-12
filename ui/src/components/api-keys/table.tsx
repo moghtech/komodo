@@ -9,6 +9,8 @@ const ONE_DAY_MS = 1000 * 60 * 60 * 24;
 
 export interface ApiKeysTableProps {
   keys: Types.ApiKey[];
+  onRotate: (key: string) => void;
+  rotatePending: boolean;
   onDelete: (key: string) => void;
   deletePending: boolean;
   noBorder?: boolean;
@@ -16,6 +18,8 @@ export interface ApiKeysTableProps {
 
 export default function ApiKeysTable({
   keys,
+  onRotate,
+  rotatePending,
   onDelete,
   deletePending,
   noBorder,
@@ -59,6 +63,18 @@ export default function ApiKeysTable({
               </Text>
             );
           },
+        },
+        {
+          header: "Rotate",
+          cell: ({ row }) => (
+            <ConfirmButton
+              icon={<ICONS.RotateKey size="1rem" />}
+              onClick={() => onRotate(row.original.key)}
+              loading={rotatePending}
+            >
+              Rotate
+            </ConfirmButton>
+          ),
         },
         {
           header: "Delete",
