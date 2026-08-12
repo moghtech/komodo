@@ -304,15 +304,36 @@ impl Resolve<crate::api::Args> for build::Build {
     // Do this in fallible block to ensure
     // cancel token removed from cache on failure.
     let command = async {
-      // Add VERSION to build args (if not already there)
       let mut build_args = environment_vars_from_str(build_args)
-        .context("Invalid build_args")?;
+      .context("Invalid build_args")?;
+
+      // Add IMAGE_NAME to build args
+      if !build_args.iter().any(|a| a.variable == "IMAGE_NAME") {
+        build_args.push(EnvironmentVar {
+          variable: String::from("IMAGE_NAME"),
+          value: if build.config.image_name.is_empty() {
+            build.name.clone()
+          } else {
+            build.config.image_name.clone()
+          },
+        });
+      }
+      // Maybe Add IMAGE_TAG to build args
+      if !build.config.image_tag.is_empty() 
+        && !build_args.iter().any(|a| a.variable == "IMAGE_TAG") {
+        build_args.push(EnvironmentVar {
+          variable: String::from("IMAGE_TAG"),
+          value: build.config.image_tag.clone(),
+        });
+      }
+      // Add VERSION to build args
       if !build_args.iter().any(|a| a.variable == "VERSION") {
         build_args.push(EnvironmentVar {
           variable: String::from("VERSION"),
           value: build.config.version.to_string(),
         });
       }
+
       let build_args = parse_build_args(&build_args);
 
       let secret_args = environment_vars_from_str(secret_args)
