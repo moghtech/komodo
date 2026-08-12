@@ -11,6 +11,7 @@ import { LoadingScreen, useAuthState } from "mogh_ui";
 import { useUser } from "@/lib/hooks";
 import { MoghAuth } from "komodo_client";
 import App from "@/app";
+import { KOMODO_BASE_PATH } from "@/main";
 
 const Login = lazy(() => import("@/pages/login"));
 const UserDisabled = lazy(() => import("@/pages/user-disabled"));
@@ -55,7 +56,7 @@ export const Router = () => {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={KOMODO_BASE_PATH || undefined}>
       <Routes>
         <Route path="login" element={<Login />} />
         <Route element={<RequireAuth />}>

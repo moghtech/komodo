@@ -20,15 +20,18 @@ import "mogh_ui/index.scss";
 // Doesn't need to be awaited - applies in background when ready.
 import("@/monaco").then(({ default: initMonaco }) => initMonaco());
 
-export const KOMODO_BASE_URL =
-  import.meta.env.VITE_KOMODO_HOST ?? location.origin;
-export const UPDATE_WS_URL =
-  KOMODO_BASE_URL.replace("http", "ws") + "/ws/update";
+const parsedBaseUrl = new URL(document.baseURI);
+
+export const KOMODO_BASE_PATH = parsedBaseUrl.pathname.replace(/\/+$/, "");
+
+export const KOMODO_BASE_URL = `${parsedBaseUrl.origin}${KOMODO_BASE_PATH}`;
+
+export const UPDATE_WS_URL = `${KOMODO_BASE_URL.replace(/^http/, "ws")}/ws/update`;
 const client = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
-setAuthUrl(KOMODO_BASE_URL + "/auth");
+setAuthUrl(`${KOMODO_BASE_URL}/auth`);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
