@@ -111,6 +111,7 @@ pub async fn pull_or_clone_stack(
   let git_token = crate::helpers::git_token(git_token, &args)?;
 
   PullOrCloneRepo {
+    cancel_id: None,
     args,
     git_token,
     // All the extra pull functions

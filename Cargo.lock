@@ -2464,6 +2464,7 @@ dependencies = [
  "komodo_client",
  "mogh_cache",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]

@@ -7,6 +7,7 @@ use komodo_client::entities::{
   RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
   update::Log,
 };
+use tokio_util::sync::CancellationToken;
 
 use crate::{check_installed, get_commit_hash_log};
 
@@ -20,6 +21,19 @@ pub async fn clone<T>(
   clone_args: T,
   root_repo_dir: &Path,
   access_token: Option<String>,
+) -> anyhow::Result<RepoExecutionResponse>
+where
+  T: Into<RepoExecutionArgs> + std::fmt::Debug,
+{
+  clone_with_cancel(clone_args, root_repo_dir, access_token, None)
+    .await
+}
+
+pub async fn clone_with_cancel<T>(
+  clone_args: T,
+  root_repo_dir: &Path,
+  access_token: Option<String>,
+  cancel: Option<CancellationToken>,
 ) -> anyhow::Result<RepoExecutionResponse>
 where
   T: Into<RepoExecutionArgs> + std::fmt::Debug,
@@ -75,7 +89,7 @@ where
   let mut log = run_komodo_standard_command(
     "Clone Repo",
     command,
-    CommandOptions::default(),
+    CommandOptions::default().cancel(cancel.clone()),
   )
   .await;
 
@@ -95,7 +109,9 @@ where
     let reset_log = run_komodo_standard_command(
       "set commit",
       format!("git reset --hard {commit}",),
-      CommandOptions::default().path(res.path.as_path()),
+      CommandOptions::default()
+        .path(res.path.as_path())
+        .cancel(cancel),
     )
     .await;
     res.logs.push(reset_log);
