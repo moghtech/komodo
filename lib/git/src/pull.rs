@@ -10,6 +10,7 @@ use komodo_client::entities::{
   komodo_timestamp, update::Log,
 };
 use mogh_cache::TimeoutCache;
+use tokio_util::sync::CancellationToken;
 
 use crate::{check_installed, get_commit_hash_log};
 
@@ -31,6 +32,19 @@ pub async fn pull<T>(
   clone_args: T,
   root_repo_dir: &Path,
   access_token: Option<String>,
+) -> anyhow::Result<RepoExecutionResponse>
+where
+  T: Into<RepoExecutionArgs> + std::fmt::Debug,
+{
+  pull_with_cancel(clone_args, root_repo_dir, access_token, None)
+    .await
+}
+
+pub async fn pull_with_cancel<T>(
+  clone_args: T,
+  root_repo_dir: &Path,
+  access_token: Option<String>,
+  cancel: Option<CancellationToken>,
 ) -> anyhow::Result<RepoExecutionResponse>
 where
   T: Into<RepoExecutionArgs> + std::fmt::Debug,
@@ -64,11 +78,12 @@ where
     // Check for '.git' path to see if the folder is initialized as a git repo
     let dot_git_path = res.path.join(".git");
     if !dot_git_path.exists() {
-      crate::init::init_folder_as_repo(
+      crate::init::init_folder_as_repo_with_cancel(
         &res.path,
         &args,
         access_token.as_deref(),
         &mut res.logs,
+        cancel.clone(),
       )
       .await;
       if !all_logs_success(&res.logs) {
@@ -80,7 +95,9 @@ where
     let mut set_remote = run_komodo_standard_command(
       "Set Git Remote",
       format!("git remote set-url origin {repo_url}"),
-      CommandOptions::default().path(res.path.as_ref()),
+      CommandOptions::default()
+        .path(res.path.as_ref())
+        .cancel(cancel.clone()),
     )
     .await;
     // Sanitize the output
@@ -101,7 +118,9 @@ where
     let fetch = run_komodo_standard_command(
       "Git Fetch",
       "git fetch --all --prune",
-      CommandOptions::default().path(res.path.as_ref()),
+      CommandOptions::default()
+        .path(res.path.as_ref())
+        .cancel(cancel.clone()),
     )
     .await;
     if !fetch.success {
@@ -112,7 +131,9 @@ where
     let checkout = run_komodo_standard_command(
       "Checkout branch",
       format!("git checkout -f {}", args.branch),
-      CommandOptions::default().path(res.path.as_ref()),
+      CommandOptions::default()
+        .path(res.path.as_ref())
+        .cancel(cancel.clone()),
     )
     .await;
     res.logs.push(checkout);
@@ -123,7 +144,9 @@ where
     let pull_log = run_komodo_standard_command(
       "Git pull",
       format!("git pull --rebase --force origin {}", args.branch),
-      CommandOptions::default().path(res.path.as_ref()),
+      CommandOptions::default()
+        .path(res.path.as_ref())
+        .cancel(cancel.clone()),
     )
     .await;
     res.logs.push(pull_log);
@@ -135,7 +158,9 @@ where
       let reset_log = run_komodo_standard_command(
         "Set commit",
         format!("git reset --hard {commit}"),
-        CommandOptions::default().path(res.path.as_ref()),
+        CommandOptions::default()
+          .path(res.path.as_ref())
+          .cancel(cancel),
       )
       .await;
       res.logs.push(reset_log);

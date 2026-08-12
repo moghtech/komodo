@@ -11,9 +11,11 @@ use periphery_client::api::git::{
 };
 use std::path::PathBuf;
 use tokio::fs;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
   config::periphery_config, helpers::handle_post_repo_execution,
+  state::build_cancel_cache,
 };
 
 impl Resolve<crate::api::Args> for GetLatestCommit {
@@ -141,6 +143,7 @@ impl Resolve<crate::api::Args> for PullOrCloneRepo {
   ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let PullOrCloneRepo {
       args,
+      cancel_id,
       git_token,
       environment,
       env_file_path,
@@ -153,8 +156,29 @@ impl Resolve<crate::api::Args> for PullOrCloneRepo {
     let token = crate::helpers::git_token(git_token, &args)?;
     let parent_dir = default_folder(args.default_folder)?;
 
-    let (res, cloned) =
-      git::pull_or_clone(args, &parent_dir, token).await?;
+    let cancel = cancel_id.as_ref().map(|id| {
+      let cancel = CancellationToken::new();
+      (id, cancel)
+    });
+    if let Some((id, cancel)) = &cancel {
+      build_cancel_cache()
+        .insert((*id).clone(), cancel.clone())
+        .await;
+    }
+
+    let result = git::pull_or_clone_with_cancel(
+      args,
+      &parent_dir,
+      token,
+      cancel.as_ref().map(|(_, token)| token.clone()),
+    )
+    .await;
+
+    if let Some((id, _)) = &cancel {
+      build_cancel_cache().remove(id).await;
+    }
+
+    let (res, cloned) = result?;
 
     handle_post_repo_execution(
       res,

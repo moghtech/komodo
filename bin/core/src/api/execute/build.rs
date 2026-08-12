@@ -260,6 +260,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
         res = periphery
           .request(api::git::PullOrCloneRepo {
             args: repo.as_ref().map(Into::into).unwrap_or((&build).into()),
+            cancel_id: Some(build.id.clone()),
             git_token,
             environment: Default::default(),
             env_file_path: Default::default(),
@@ -270,6 +271,13 @@ impl Resolve<ExecuteArgs> for RunBuild {
           }) => res,
         _ = cancel.cancelled() => {
           debug!("Build cancelled during repo clone, cleaning up builder");
+          if let Err(e) = periphery.request(api::build::CancelBuild {
+            id: build.id.clone()
+          })
+          .await
+          .context("Failed to cancel git execution on Server") {
+            update.push_error_log("Cancel Git", format_serror(&e.into()));
+          }
           update.push_error_log("Build cancelled", String::from("Build cancelled during repo clone"));
           cleanup_builder_instance(periphery, cleanup_data, &mut update)
             .await;

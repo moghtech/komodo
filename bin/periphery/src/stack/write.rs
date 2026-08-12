@@ -179,6 +179,7 @@ async fn write_stack_linked_repo<'a>(
     .await?
   } else {
     PullOrCloneRepo {
+      cancel_id: None,
       args,
       git_token,
       environment: repo.config.env_vars()?,
@@ -264,6 +265,7 @@ async fn write_stack_inline_repo<'a>(
     .await?
   } else {
     PullOrCloneRepo {
+      cancel_id: None,
       args,
       git_token,
       environment: Default::default(),

@@ -15,12 +15,12 @@ mod pull;
 mod pull_or_clone;
 
 pub use crate::{
-  clone::clone,
+  clone::{clone, clone_with_cancel},
   commit::{commit_all, commit_file, write_commit_file},
   init::init_folder_as_repo,
   installed::check_installed,
-  pull::pull,
-  pull_or_clone::pull_or_clone,
+  pull::{pull, pull_with_cancel},
+  pull_or_clone::{pull_or_clone, pull_or_clone_with_cancel},
 };
 
 pub async fn get_commit_hash_info(

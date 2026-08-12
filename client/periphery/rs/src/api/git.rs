@@ -72,6 +72,9 @@ pub struct PullRepo {
 #[error(anyhow::Error)]
 pub struct PullOrCloneRepo {
   pub args: RepoExecutionArgs,
+  /// Optional id used to cancel the git operation through `CancelBuild`.
+  #[serde(default)]
+  pub cancel_id: Option<String>,
   /// Override git token with one sent from core.
   pub git_token: Option<String>,
   #[serde(default)]

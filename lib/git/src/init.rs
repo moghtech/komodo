@@ -5,6 +5,7 @@ use formatting::format_serror;
 use komodo_client::entities::{
   RepoExecutionArgs, all_logs_success, update::Log,
 };
+use tokio_util::sync::CancellationToken;
 
 use crate::check_installed;
 
@@ -13,6 +14,23 @@ pub async fn init_folder_as_repo(
   args: &RepoExecutionArgs,
   access_token: Option<&str>,
   logs: &mut Vec<Log>,
+) {
+  init_folder_as_repo_with_cancel(
+    folder_path,
+    args,
+    access_token,
+    logs,
+    None,
+  )
+  .await
+}
+
+pub async fn init_folder_as_repo_with_cancel(
+  folder_path: &Path,
+  args: &RepoExecutionArgs,
+  access_token: Option<&str>,
+  logs: &mut Vec<Log>,
+  cancel: Option<CancellationToken>,
 ) {
   if let Err(e) = check_installed().await {
     logs.push(Log::error("Git Init", format_serror(&e.into())));
@@ -23,7 +41,9 @@ pub async fn init_folder_as_repo(
   let init_repo = run_komodo_standard_command(
     "Git Init",
     "git init",
-    CommandOptions::default().path(folder_path),
+    CommandOptions::default()
+      .path(folder_path)
+      .cancel(cancel.clone()),
   )
   .await;
   logs.push(init_repo);
@@ -44,7 +64,9 @@ pub async fn init_folder_as_repo(
   let mut set_remote = run_komodo_standard_command(
     "Add git remote",
     format!("git remote add origin {repo_url}"),
-    CommandOptions::default().path(folder_path),
+    CommandOptions::default()
+      .path(folder_path)
+      .cancel(cancel.clone()),
   )
   .await;
   // Sanitize the output
@@ -62,7 +84,7 @@ pub async fn init_folder_as_repo(
   let init_repo = run_komodo_standard_command(
     "Set Branch",
     format!("git switch -c {}", args.branch),
-    CommandOptions::default().path(folder_path),
+    CommandOptions::default().path(folder_path).cancel(cancel),
   )
   .await;
   if !init_repo.success {
