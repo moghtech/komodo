@@ -117,6 +117,9 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       disable_container_terminals: env
         .periphery_disable_container_terminals
         .unwrap_or(config.disable_container_terminals),
+      public_ip: env
+        .periphery_public_ip
+        .unwrap_or(config.public_ip),
       stats_polling_rate: env
         .periphery_stats_polling_rate
         .unwrap_or(config.stats_polling_rate),
