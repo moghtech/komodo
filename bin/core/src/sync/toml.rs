@@ -199,6 +199,27 @@ impl ToToml for Stack {
 }
 
 impl ToToml for Deployment {
+  fn push_additional(
+    resource: ResourceToml<Self::PartialConfig>,
+    toml: &mut String,
+  ) {
+    // Same hazard the Builder impl below works around, one level deeper. For a
+    // Build image, `edit_config_object` renames `build_id` to `build` and drops
+    // `version` when it is 0.0.0 (`latest`). If the build is also unset, every
+    // key is gone, `skip_empty_object` removes the whole `params` table, and the
+    // emitted `image.type = "Build"` cannot be deserialized back, because
+    // `DeploymentImage` is adjacently tagged. Restore the empty table so the
+    // file stays readable.
+    let empty_params = matches!(
+      &resource.config.image,
+      Some(DeploymentImage::Build { build_id, version })
+        if build_id.is_empty() && version.is_none()
+    );
+    if empty_params {
+      toml.push_str("\nimage.params = {}");
+    }
+  }
+
   fn edit_config_object(
     resource: &ResourceToml<Self::PartialConfig>,
     config: IndexMap<String, serde_json::Value>,
