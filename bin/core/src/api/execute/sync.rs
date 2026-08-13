@@ -274,6 +274,7 @@ impl Resolve<ExecuteArgs> for RunSync {
       user_groups_to_create,
       user_groups_to_update,
       user_groups_to_delete,
+      dropped_permission_targets,
     ) = if match_resource_type.is_none()
       && match_resources.is_none()
       && sync.config.include_user_groups
@@ -303,6 +304,9 @@ impl Resolve<ExecuteArgs> for RunSync {
       && user_groups_to_create.is_empty()
       && user_groups_to_update.is_empty()
       && user_groups_to_delete.is_empty()
+      // A sync whose only finding is a dropped permission target still has
+      // something to say, so it must not exit as "nothing to do" here.
+      && dropped_permission_targets.is_empty()
       && variables_to_create.is_empty()
       && variables_to_update.is_empty()
       && variables_to_delete.is_empty()
@@ -432,13 +436,16 @@ impl Resolve<ExecuteArgs> for RunSync {
     } else {
       None
     };
-    if let Some((to_create, to_update, to_delete)) =
+    if let Some((to_create, to_update, to_delete, dropped_targets)) =
       user_group_updates
     {
       maybe_extend(
         &mut update.logs,
         crate::sync::user_groups::run_updates(
-          to_create, to_update, to_delete,
+          to_create,
+          to_update,
+          to_delete,
+          dropped_targets,
         )
         .await,
       );

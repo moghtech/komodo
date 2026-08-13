@@ -173,15 +173,20 @@ pub async fn get_updates_for_view(
       .permissions
       .retain(|p| p.level > PermissionLevel::None);
 
-    user_group.permissions =
-      expand_user_group_permissions(user_group.permissions)
-        .await
-        .with_context(|| {
-          format!(
-            "failed to expand user group {} permissions",
-            user_group.name
-          )
-        })?;
+    // Discarded on purpose. This function backs the sync VIEW, which is
+    // recomputed continuously, so reporting here would be noise rather than news.
+    user_group.permissions = expand_user_group_permissions(
+      user_group.permissions,
+      &user_group.name,
+      &mut Vec::new(),
+    )
+    .await
+    .with_context(|| {
+      format!(
+        "failed to expand user group {} permissions",
+        user_group.name
+      )
+    })?;
 
     let (_original_id, original) =
       match map.get(&user_group.name).cloned() {
@@ -222,6 +227,8 @@ pub async fn get_updates_for_view(
   Ok(diffs)
 }
 
+/// The fourth member is the permission targets that matched no existing
+/// resource. Their permissions are not applied, so [run_updates] reports them.
 pub async fn get_updates_for_execution(
   user_groups: Vec<UserGroupToml>,
   delete: bool,
@@ -229,6 +236,7 @@ pub async fn get_updates_for_execution(
   Vec<UserGroupToml>,
   Vec<UpdateItem>,
   Vec<DeleteItem>,
+  Vec<String>,
 )> {
   let map = find_collect(&db_client().user_groups, None, None)
     .await
@@ -248,6 +256,7 @@ pub async fn get_updates_for_execution(
   let mut to_create = Vec::<UserGroupToml>::new();
   let mut to_update = Vec::<UpdateItem>::new();
   let mut to_delete = Vec::<DeleteItem>::new();
+  let mut dropped = Vec::<String>::new();
 
   if delete {
     for user_group in map.values() {
@@ -261,7 +270,7 @@ pub async fn get_updates_for_execution(
   }
 
   if user_groups.is_empty() {
-    return Ok((to_create, to_update, to_delete));
+    return Ok((to_create, to_update, to_delete, dropped));
   }
 
   let id_to_user = find_collect(&db_client().users, None, None)
@@ -280,15 +289,18 @@ pub async fn get_updates_for_execution(
       .permissions
       .retain(|p| p.level > PermissionLevel::None);
 
-    user_group.permissions =
-      expand_user_group_permissions(user_group.permissions)
-        .await
-        .with_context(|| {
-          format!(
-            "Failed to expand user group {} permissions",
-            user_group.name
-          )
-        })?;
+    user_group.permissions = expand_user_group_permissions(
+      user_group.permissions,
+      &user_group.name,
+      &mut dropped,
+    )
+    .await
+    .with_context(|| {
+      format!(
+        "Failed to expand user group {} permissions",
+        user_group.name
+      )
+    })?;
 
     let original = match map.get(&user_group.name).cloned() {
       Some(original) => original,
@@ -472,7 +484,10 @@ pub async fn get_updates_for_execution(
     }
   }
 
-  Ok((to_create, to_update, to_delete))
+  dropped.sort_unstable();
+  dropped.dedup();
+
+  Ok((to_create, to_update, to_delete, dropped))
 }
 
 /// order permissions in deterministic way
@@ -495,16 +510,30 @@ pub async fn run_updates(
   to_create: Vec<UserGroupToml>,
   to_update: Vec<UpdateItem>,
   to_delete: Vec<DeleteItem>,
+  dropped_targets: Vec<String>,
 ) -> Option<Log> {
   if to_create.is_empty()
     && to_update.is_empty()
     && to_delete.is_empty()
+    && dropped_targets.is_empty()
   {
     return None;
   }
 
   let mut has_error = false;
   let mut log = String::from("running updates on UserGroups");
+
+  // Reported, not fatal. A target can match nothing because it names a
+  // resource that does not exist, or because a pattern legitimately matches
+  // nothing right now, and the sync cannot tell those apart. Either way the
+  // permission is NOT applied, which is the part a reader needs to know.
+  for target in dropped_targets {
+    log.push_str(&format!(
+      "\n{}: permission target matched no existing resource, so it was NOT applied | {}",
+      colored("WARN", Color::Red),
+      bold(&target)
+    ));
+  }
 
   // Create the non-existant user groups
   for user_group in to_create {
@@ -788,9 +817,18 @@ async fn run_update_permissions(
   }
 }
 
-/// Expands any regex defined targets into the full list
+/// Expands any regex defined targets into the full list.
+///
+/// A resource target that matches no existing resource expands to nothing and
+/// its permission is therefore never applied. Those are pushed to `dropped` so
+/// the caller can report them, because the alternative is a permission that the
+/// TOML declares, the sync reports success for, and nobody ever gets. System
+/// targets are excluded: they are not name matched, so no-match says nothing
+/// about them.
 async fn expand_user_group_permissions(
   permissions: Vec<PermissionToml>,
+  user_group: &str,
+  dropped: &mut Vec<String>,
 ) -> anyhow::Result<Vec<PermissionToml>> {
   let mut expanded =
     Vec::<PermissionToml>::with_capacity(permissions.capacity());
@@ -799,9 +837,16 @@ async fn expand_user_group_permissions(
   for permission in permissions {
     let (variant, id) = permission.target.extract_variant_id();
     if id.is_empty() {
+      // An id is a resource name or a regex over names, so an empty one
+      // matches nothing and the permission is dropped. Same outcome as the
+      // no-match check below, different cause, so it gets its own wording.
+      dropped.push(format!(
+        "user group: {user_group} | target: {variant} with an empty id"
+      ));
       continue;
     }
     let matcher = Matcher::new(id)?;
+    let before = expanded.len();
     match variant {
       ResourceTargetVariant::Swarm => {
         let permissions = all_resources
@@ -937,7 +982,16 @@ async fn expand_user_group_permissions(
           });
         expanded.extend(permissions);
       }
-      ResourceTargetVariant::System => {}
+      // Not reported here: a System target is not name matched, so the
+      // no-match wording would mislead. Its id is "system" rather than empty,
+      // so the guard above does not skip it, and this `continue` is what keeps
+      // it out of the no-match check below.
+      ResourceTargetVariant::System => continue,
+    }
+    if expanded.len() == before {
+      dropped.push(format!(
+        "user group: {user_group} | target: {variant} {id}"
+      ));
     }
   }
 
