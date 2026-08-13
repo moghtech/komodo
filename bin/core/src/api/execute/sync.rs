@@ -266,6 +266,10 @@ impl Resolve<ExecuteArgs> for RunSync {
     } else {
       Default::default()
     };
+    // Cloned because this early result is used ONLY for the no-changes check
+    // below. Applying it would be wrong: see the recompute further down, next to
+    // where the UserGroups are actually applied.
+    let user_groups_toml = resources.user_groups.clone();
     let (
       user_groups_to_create,
       user_groups_to_update,
@@ -335,15 +339,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       )
       .await,
     );
-    maybe_extend(
-      &mut update.logs,
-      crate::sync::user_groups::run_updates(
-        user_groups_to_create,
-        user_groups_to_update,
-        user_groups_to_delete,
-      )
-      .await,
-    );
 
     maybe_extend(
       &mut update.logs,
@@ -399,6 +394,55 @@ impl Resolve<ExecuteArgs> for RunSync {
       &mut update.logs,
       Procedure::execute_sync_updates(procedure_deltas).await,
     );
+
+    // Depends on everything: a UserGroup permission names a resource, so its
+    // targets can only be resolved once this sync's own resources exist.
+    //
+    // Recomputed rather than reusing the result from above, because that one
+    // expanded the permission targets against a resource cache captured BEFORE
+    // this sync created anything. `expand_user_group_permissions` keeps only the
+    // targets it can match in that cache, so a permission on a resource created
+    // by this same sync was silently dropped and the sync still reported success.
+    // `resource::create` refreshes the cache, so by here the targets resolve.
+    let user_group_updates = if match_resource_type.is_none()
+      && match_resources.is_none()
+      && sync.config.include_user_groups
+    {
+      match crate::sync::user_groups::get_updates_for_execution(
+        user_groups_toml,
+        delete,
+      )
+      .await
+      {
+        Ok(updates) => Some(updates),
+        // Deliberately not fatal. Every resource phase has already been
+        // applied by this point, so aborting here would skip the deploy cache
+        // and the sync's own `last_sync_ts` bookkeeping. Report and continue.
+        Err(e) => {
+          update.push_error_log(
+            "Update UserGroups",
+            format_serror(
+              &e.context("failed to compute UserGroup updates")
+                .into(),
+            ),
+          );
+          None
+        }
+      }
+    } else {
+      None
+    };
+    if let Some((to_create, to_update, to_delete)) =
+      user_group_updates
+    {
+      maybe_extend(
+        &mut update.logs,
+        crate::sync::user_groups::run_updates(
+          to_create, to_update, to_delete,
+        )
+        .await,
+      );
+    }
 
     // Execute the deploy cache
     deploy_from_cache(deploy_cache, &mut update.logs).await;
