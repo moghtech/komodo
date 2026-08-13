@@ -381,7 +381,7 @@ export function KomodoClient(url: string, options: InitOptions) {
      * ```
      *
      * NOTE. These calls return immediately when the update is created, NOT when the execution task finishes.
-     * To have the call only return when the task finishes, use [execute_and_poll_until_complete].
+     * To have the call only return when the task finishes, use [execute_and_poll].
      *
      * https://docs.rs/komodo_client/latest/komodo_client/api/execute/index.html
      */
