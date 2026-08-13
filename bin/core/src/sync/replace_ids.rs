@@ -114,15 +114,19 @@ impl ReplaceIds for Deployment {
         .unwrap_or(&String::new()),
     );
 
+    // Leave the id alone when the lookup misses, rather than blanking it.
+    // `Deployment::edit_config_object` renames this field to `build` and
+    // REMOVES `version` when it is 0.0.0 (which means `latest`), so a blanked
+    // id leaves the `params` table empty. `skip_empty_object` then drops the
+    // table, and `DeploymentImage` is adjacently tagged, so the emitted
+    // `image.type = "Build"` cannot be read back: `missing field \`params\``.
+    // Nothing clears this reference when the Build is deleted, unlike
+    // `delete_from_alerters` for alerter targets, so a dangling id is normal.
     if let DeploymentImage::Build { build_id, .. } = &mut config.image
     {
-      build_id.clone_from(
-        all
-          .builds
-          .get(build_id)
-          .map(|b| &b.name)
-          .unwrap_or(&String::new()),
-      );
+      if let Some(build) = all.builds.get(build_id) {
+        build_id.clone_from(&build.name);
+      }
     }
   }
 }
