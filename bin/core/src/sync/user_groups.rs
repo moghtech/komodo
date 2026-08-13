@@ -822,9 +822,9 @@ async fn run_update_permissions(
 /// A resource target that matches no existing resource expands to nothing and
 /// its permission is therefore never applied. Those are pushed to `dropped` so
 /// the caller can report them, because the alternative is a permission that the
-/// TOML declares, the sync reports success for, and nobody ever gets. System
-/// targets are excluded: they are not name matched, so no-match says nothing
-/// about them.
+/// TOML declares, the sync reports success for, and nobody ever gets. A System
+/// target is passed through untouched: it names no resource, so there is
+/// nothing to match it against.
 async fn expand_user_group_permissions(
   permissions: Vec<PermissionToml>,
   user_group: &str,
@@ -982,11 +982,15 @@ async fn expand_user_group_permissions(
           });
         expanded.extend(permissions);
       }
-      // Not reported here: a System target is not name matched, so the
-      // no-match wording would mislead. Its id is "system" rather than empty,
-      // so the guard above does not skip it, and this `continue` is what keeps
-      // it out of the no-match check below.
-      ResourceTargetVariant::System => continue,
+      // Passed through rather than name matched. A System target names no
+      // resource, so there is nothing to match it against, and dropping it
+      // here is what made the export / import round trip lossy: the export
+      // writes System permissions into the file, and a target missing from
+      // this list is later revoked by `to_remove`.
+      ResourceTargetVariant::System => {
+        expanded.push(permission);
+        continue;
+      }
     }
     if expanded.len() == before {
       dropped.push(format!(
