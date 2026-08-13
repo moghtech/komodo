@@ -1,7 +1,7 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
 FROM rust:1.97.1-trixie AS builder
-RUN cargo install cargo-strip
+RUN cargo install cargo-strip cargo-edit
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -10,6 +10,11 @@ COPY ./client/core/rs ./client/core/rs
 COPY ./client/periphery ./client/periphery
 COPY ./bin/periphery ./bin/periphery
 COPY ./xtask ./xtask
+
+# Set Version
+ARG VERSION="0.0.0"
+ARG IMAGE_TAG=""
+RUN cargo set-version ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
 
 # Compile app
 RUN cargo build -p komodo_periphery --release && cargo strip

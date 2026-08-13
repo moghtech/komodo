@@ -12,12 +12,20 @@ COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
-RUN cargo install cargo-strip
-COPY --from=planner /builder/recipe.json recipe.json
+RUN cargo install cargo-strip cargo-edit
+
 # Build JUST dependencies - cached layer
+COPY --from=planner /builder/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
-# NOW copy again (this time into builder) and build app
+
+# NOW copy again (this time into builder), set version, and build app
 COPY . .
+
+# Set Version
+ARG VERSION="0.0.0"
+ARG IMAGE_TAG=""
+RUN cargo set-version ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
+
 RUN \
   cargo build --release --bin core && \
   cargo build --release --bin periphery && \

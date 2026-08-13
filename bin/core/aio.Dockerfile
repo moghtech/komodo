@@ -2,7 +2,7 @@
 
 # Build Core
 FROM rust:1.97.1-trixie AS core-builder
-RUN cargo install cargo-strip
+RUN cargo install cargo-strip cargo-edit
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -12,6 +12,11 @@ COPY ./client/periphery ./client/periphery
 COPY ./bin/core ./bin/core
 COPY ./bin/cli ./bin/cli
 COPY ./xtask ./xtask
+
+# Set Version
+ARG VERSION="0.0.0"
+ARG IMAGE_TAG=""
+RUN cargo set-version ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
 
 # Compile app
 RUN cargo build -p komodo_core --release && \

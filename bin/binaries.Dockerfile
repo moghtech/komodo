@@ -2,7 +2,7 @@
 ## for a specific architecture. Requires OpenSSL 3 or later.
 
 FROM rust:1.97.1-bookworm AS builder
-RUN cargo install cargo-strip
+RUN cargo install cargo-strip cargo-edit
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -13,6 +13,11 @@ COPY ./bin/core ./bin/core
 COPY ./bin/periphery ./bin/periphery
 COPY ./bin/cli ./bin/cli
 COPY ./xtask ./xtask
+
+# Set Version
+ARG VERSION="0.0.0"
+ARG IMAGE_TAG=""
+RUN cargo set-version ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
 
 # Compile bin
 RUN \
