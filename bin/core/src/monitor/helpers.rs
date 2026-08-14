@@ -157,6 +157,8 @@ fn get_server_health(
     mount,
     used_gb,
     total_gb,
+    healthy,
+    temperature,
     ..
   } in disks
   {
@@ -171,6 +173,22 @@ fn get_server_health(
     {
       state.should_close_alert = true;
     };
+
+    if healthy == &Some(false) {
+      state.level = SeverityLevel::Critical;
+      state.should_close_alert = false;
+    }
+
+    if *temperature >= 60 {
+      state.level = SeverityLevel::Critical;
+      state.should_close_alert = false;
+    } else if *temperature >= 50 {
+      if state.level < SeverityLevel::Warning {
+        state.level = SeverityLevel::Warning;
+      }
+      state.should_close_alert = false;
+    }
+
     health.disks.insert(mount.clone(), state);
   }
 

@@ -7,8 +7,13 @@ use komodo_client::entities::stats::{
 };
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
 
-use crate::{config::periphery_config, state::stats_client};
+use crate::{
+  config::periphery_config,
+  state::stats_client,
+  stats::disk::{get_smart_data, volume_to_device_mapper},
+};
 
+mod disk;
 mod mem;
 
 /// This should be called before starting the server in main.rs.
@@ -146,11 +151,26 @@ impl StatsClient {
           disk.file_system().to_string_lossy().to_string();
         let disk_total = disk.total_space() as f64 / BYTES_PER_GB;
         let disk_free = disk.available_space() as f64 / BYTES_PER_GB;
+        let real_path =
+          volume_to_device_mapper(&disk.name().to_string_lossy())
+            .unwrap_or(disk.name().to_string_lossy().to_string());
+        let mut healthy = None;
+        let mut power_on_hours = 0;
+        let mut temperature = 0;
+        if let Some(smart_data) = get_smart_data(&real_path) {
+          healthy = Some(smart_data.smart_status.passed);
+          power_on_hours = smart_data.power_on_time.hours;
+          temperature = smart_data.temperature.current;
+        }
+
         SingleDiskUsage {
           mount: disk.mount_point().to_owned(),
           used_gb: disk_total - disk_free,
           total_gb: disk_total,
           file_system,
+          healthy,
+          power_on_hours,
+          temperature,
         }
       })
       .collect()

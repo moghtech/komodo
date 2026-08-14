@@ -2,7 +2,7 @@ import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Section } from "mogh_ui";
 import { ShowHideButton } from "mogh_ui";
-import { Group, Text } from "@mantine/core";
+import { Badge, Group, Text, Tooltip } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 
@@ -87,6 +87,36 @@ export default function ServerDisks({
                 <>{row.original.percentage.toFixed(2)}% Full</>
               ),
             },
+            {
+               header: "Health",
+               cell: ({ row }) => {
+                 const healthy = row.original.healthy;
+                 const hours = row.original.power_on_hours;
+                 const temperature = row.original.temperature;
+
+                 const label = `Power-on Time: ${hours} hours (${(hours / 24 / 365).toFixed(1)} years)\nTemperature: ${temperature}ºC`;
+
+                 if (healthy === true) {
+                   return (
+                     <Tooltip label={label} withArrow position="top" style={{ whiteSpace: 'pre-line' }}>
+                       <Badge color="green" style={{ cursor: "pointer" }}>
+                         Passed
+                       </Badge>
+                     </Tooltip>
+                   );
+                 }
+                 if (healthy === false) {
+                   return (
+                     <Tooltip label={label} withArrow position="top" style={{ whiteSpace: 'pre-line' }}>
+                       <Badge color="red" style={{ cursor: "pointer" }}>
+                         Failed
+                       </Badge>
+                     </Tooltip>
+                   );
+                 }
+                 return <Text c="dimmed" size="sm">N/A</Text>;
+               },
+             }
           ]}
         />
       )}

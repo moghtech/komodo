@@ -228,49 +228,37 @@ pub async fn send_alert(
       path,
       used_gb,
       total_gb,
+      healthy,
+      temperature,
     } => {
       let region = fmt_region(region);
       let percentage = 100.0 * used_gb / total_gb;
-      match alert.level {
-        SeverityLevel::Ok => {
-          let text = format!(
-            "{level} | *{name}*{region} disk usage at *{percentage:.1}%* | mount point: *{path:?}* 💿"
-          );
-          let blocks = vec![
-            Block::header(level),
-            Block::section(format!(
-              "*{name}*{region} disk usage at *{percentage:.1}%* 💿"
-            )),
-            Block::section(format!(
-              "mount point: {path:?} | using *{used_gb:.1} GiB* / *{total_gb:.1} GiB*"
-            )),
-            Block::section(resource_link(
-              ResourceTargetVariant::Server,
-              id,
-            )),
-          ];
-          (text, blocks.into())
-        }
-        _ => {
-          let text = format!(
-            "{level} | *{name}*{region} disk usage at *{percentage:.1}%* | mount point: *{path:?}* 💿"
-          );
-          let blocks = vec![
-            Block::header(level),
-            Block::section(format!(
-              "*{name}*{region} disk usage at *{percentage:.1}%* 💿"
-            )),
-            Block::section(format!(
-              "mount point: {path:?} | using *{used_gb:.1} GiB* / *{total_gb:.1} GiB*"
-            )),
-            Block::section(resource_link(
-              ResourceTargetVariant::Server,
-              id,
-            )),
-          ];
-          (text, blocks.into())
-        }
+      let mut extra = String::new();
+      if *healthy == Some(false) {
+        extra.push_str("\nSMART Health: *FAILED* ❌");
       }
+      if let Some(temp) = temperature
+        && *temp > 0
+      {
+        extra.push_str(&format!("\nTemperature: *{temp}°C*"));
+      }
+      let text = format!(
+        "{level} | *{name}*{region} disk alert at *{percentage:.1}%* | mount point: *{path:?}* 💿"
+      );
+      let blocks = vec![
+        Block::header(level),
+        Block::section(format!(
+          "*{name}*{region} disk alert at *{percentage:.1}%* 💿"
+        )),
+        Block::section(format!(
+          "mount point: {path:?} | using *{used_gb:.1} GiB* / *{total_gb:.1} GiB*{extra}"
+        )),
+        Block::section(resource_link(
+          ResourceTargetVariant::Server,
+          id,
+        )),
+      ];
+      (text, blocks.into())
     }
     AlertData::ContainerStateChange {
       name,

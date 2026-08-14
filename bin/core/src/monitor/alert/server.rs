@@ -531,6 +531,8 @@ pub async fn alert_servers(
                   .map(|d| d.total_gb)
                   .unwrap_or_default(),
                 used_gb: disk.map(|d| d.used_gb).unwrap_or_default(),
+                healthy: disk.and_then(|d| d.healthy),
+                temperature: disk.map(|d| d.temperature),
               },
             };
             alerts_to_open
@@ -557,6 +559,8 @@ pub async fn alert_servers(
               path: path.to_owned(),
               total_gb: disk.map(|d| d.total_gb).unwrap_or_default(),
               used_gb: disk.map(|d| d.used_gb).unwrap_or_default(),
+              healthy: disk.and_then(|d| d.healthy),
+              temperature: disk.map(|d| d.temperature),
             };
             alerts_to_update
               .push((alert, server.config.send_disk_alerts));
@@ -584,6 +588,8 @@ pub async fn alert_servers(
             path: path.to_owned(),
             total_gb: disk.map(|d| d.total_gb).unwrap_or_default(),
             used_gb: disk.map(|d| d.used_gb).unwrap_or_default(),
+            healthy: disk.and_then(|d| d.healthy),
+            temperature: disk.map(|d| d.temperature),
           };
           alerts_to_close
             .push((alert, server.config.send_disk_alerts))

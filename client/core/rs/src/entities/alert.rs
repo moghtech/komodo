@@ -155,6 +155,10 @@ pub enum AlertData {
     used_gb: f64,
     /// The total size of the disk in GB
     total_gb: f64,
+    /// The last SMART test results
+    healthy: Option<bool>,
+    /// The current temperature
+    temperature: Option<u64>,
   },
 
   /// A server has a version mismatch with the core.
