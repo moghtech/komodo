@@ -79,38 +79,19 @@ Make sure your Rust toolchain is up to date and install the CLI tools:
 
 ```sh
 rustup update
-cargo install typeshare-cli runnables-cli
+cargo install typeshare-cli runnables-cli mprocs
 run link-client
 ```
 
 ### Starting the services
 
-Start a Mongo instance in Docker:
+Run `run dev` to start the database, Core, Periphery, and UI all at once using [mprocs](https://github.com/pvolok/mprocs). Each process gets its own scrollable pane — use the arrow keys to switch between them and `Ctrl-Q` to quit.
 
 ```sh
-docker run -d --name komodo-mongo \
--p 27017:27017 \
--v komodo-mongo-data:/data/db \
--v komodo-mongo-config:/data/configdb \
--e MONGO_INITDB_ROOT_USERNAME=komodo \
--e MONGO_INITDB_ROOT_PASSWORD=komodo \
-mongo
+run dev
 ```
 
-In separate terminals, run Core, Periphery, and UI.
-
-```sh
-run dev-core
-```
-
-```sh
-run dev-periphery
-
-```sh
-run dev-ui      # Start in dev (watch) mode
-```
-
-Once everything is running, open `http://localhost:5173` and create a user account.
+Once Core and the UI are running, open `http://localhost:5173` and create a user account.
 
 ### Rebuilding the frontend client
 
