@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{I64, Timelength};
+use crate::entities::{I64, Timelength, U64};
 
 /// System information of a server
 #[typeshare]
@@ -232,6 +232,10 @@ pub struct SingleDiskUsage {
   pub total_gb: f64,
   /// SMART health status
   pub healthy: Option<bool>,
+  /// The amount of hours the device has been running
+  pub power_on_hours: U64,
+  /// The current temperature of the drive
+  pub temperature: U64,
 }
 
 /// Info for network interface usage.

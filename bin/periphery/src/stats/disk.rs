@@ -2,31 +2,46 @@ use std::process::Command;
 
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq, Eq, Default)]
 pub struct SmartStatus {
-  pub passed: Option<bool>,
+  pub passed: bool,
 }
 
-#[derive(Deserialize, Debug)]
-struct SmartReport {
-  pub smart_status: Option<SmartStatus>,
+#[derive(Deserialize, Debug, PartialEq, Eq, Default)]
+pub struct PowerOnTime {
+  #[serde(default)]
+  pub hours: u64,
 }
 
-/// Parse smartctl JSON output string to extract health status.
-pub fn parse_smart_status(json_str: &str) -> Option<bool> {
-  let report: SmartReport = serde_json::from_str(json_str).ok()?;
-  report.smart_status?.passed
+#[derive(Deserialize, Debug, PartialEq, Eq, Default)]
+pub struct Temperature {
+  #[serde(default)]
+  pub current: u64,
 }
 
-/// given a device path it will try to get the SMART data about it returning true/false to indicate healthy or not otherwise it returns None
-pub fn get_smart_data(device_path: &str) -> Option<bool> {
+#[derive(Deserialize, Debug, PartialEq, Eq)]
+pub struct SmartReport {
+  pub smart_status: SmartStatus,
+  #[serde(default)]
+  pub power_on_time: PowerOnTime,
+  #[serde(default)]
+  pub temperature: Temperature,
+}
+
+/// Parse smartctl JSON output string to extract SMART report
+fn parse_smart_report(json_str: &str) -> Option<SmartReport> {
+  serde_json::from_str(json_str).ok()
+}
+
+/// given a device path it will try to get the SMART data about a disk
+pub fn get_smart_data(device_path: &str) -> Option<SmartReport> {
   let output = Command::new("smartctl")
-    .args(["-H", device_path, "-j"])
+    .args(["-a", "-j", device_path])
     .output()
     .ok()?;
   if output.status.success() || !output.stdout.is_empty() {
     let json_str = String::from_utf8_lossy(&output.stdout);
-    return parse_smart_status(&json_str);
+    return parse_smart_report(&json_str);
   }
   None
 }
@@ -87,51 +102,52 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_parse_healthy_drive() {
+  fn test_parse_healthy_drive_full_metrics() {
     let json = r#"{
-      "smart_status": {
-        "passed": true
-      }
+      "smart_status": { "passed": true },
+      "power_on_time": { "hours": 14200 },
+      "temperature": { "current": 34 }
     }"#;
-    assert_eq!(parse_smart_status(json), Some(true));
+    assert_eq!(
+      parse_smart_report(json),
+      Some(SmartReport {
+        smart_status: SmartStatus { passed: true },
+        power_on_time: PowerOnTime { hours: 14200 },
+        temperature: Temperature { current: 34 },
+      })
+    );
+  }
+
+  #[test]
+  fn test_parse_missing_optional_fields() {
+    let json = r#"{
+      "smart_status": { "passed": true }
+    }"#;
+    assert_eq!(
+      parse_smart_report(json),
+      Some(SmartReport {
+        smart_status: SmartStatus { passed: true },
+        power_on_time: PowerOnTime { hours: 0 },
+        temperature: Temperature { current: 0 },
+      })
+    );
   }
 
   #[test]
   fn test_parse_failing_drive() {
     let json = r#"{
-      "smart_status": {
-        "passed": false
-      }
+      "smart_status": { "passed": false },
+      "power_on_time": { "hours": 50000 },
+      "temperature": { "current": 55 }
     }"#;
-    assert_eq!(parse_smart_status(json), Some(false));
+    let report = parse_smart_report(json).unwrap();
+    assert!(!report.smart_status.passed);
   }
 
   #[test]
-  fn test_parse_nvme_drive() {
-    let json = r#"{
-      "smart_status": {
-        "passed": true,
-        "nvme": {
-          "value": 0
-        }
-      }
-    }"#;
-    assert_eq!(parse_smart_status(json), Some(true));
-  }
-
-  #[test]
-  fn test_parse_unsupported_or_missing_smart() {
-    let json = r#"{
-      "device": {
-        "name": "/dev/loop0",
-        "type": "loop"
-      }
-    }"#;
-    assert_eq!(parse_smart_status(json), None);
-  }
-
-  #[test]
-  fn test_parse_invalid_json() {
-    assert_eq!(parse_smart_status("invalid json string"), None);
+  fn test_parse_unsupported_or_invalid() {
+    let json = r#"{ "device": { "name": "/dev/loop0" } }"#;
+    assert_eq!(parse_smart_report(json), None);
+    assert_eq!(parse_smart_report("invalid json"), None);
   }
 }

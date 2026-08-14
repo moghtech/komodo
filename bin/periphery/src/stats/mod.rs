@@ -154,12 +154,23 @@ impl StatsClient {
         let real_path =
           volume_to_device_mapper(&disk.name().to_string_lossy())
             .unwrap_or(disk.name().to_string_lossy().to_string());
+        let mut healthy = None;
+        let mut power_on_hours = 0;
+        let mut temperature = 0;
+        if let Some(smart_data) = get_smart_data(&real_path) {
+          healthy = Some(smart_data.smart_status.passed);
+          power_on_hours = smart_data.power_on_time.hours;
+          temperature = smart_data.temperature.current;
+        }
+
         SingleDiskUsage {
           mount: disk.mount_point().to_owned(),
           used_gb: disk_total - disk_free,
           total_gb: disk_total,
           file_system,
-          healthy: get_smart_data(&real_path),
+          healthy,
+          power_on_hours,
+          temperature,
         }
       })
       .collect()
