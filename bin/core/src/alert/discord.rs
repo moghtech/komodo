@@ -117,12 +117,23 @@ pub async fn send_alert(
       path,
       used_gb,
       total_gb,
+      healthy,
+      temperature,
     } => {
       let region = fmt_region(region);
       let link = resource_link(ResourceTargetVariant::Server, id);
       let percentage = 100.0 * used_gb / total_gb;
+      let mut extra = String::new();
+      if *healthy == Some(false) {
+        extra.push_str("\nSMART Health: **FAILED** ❌");
+      }
+      if let Some(temp) = temperature
+        && *temp > 0
+      {
+        extra.push_str(&format!("\nTemperature: **{temp}°C**"));
+      }
       format!(
-        "{level} | **{name}**{region} disk usage at **{percentage:.1}%** 💿\nmount point: `{path:?}`\nusing **{used_gb:.1} GiB** / **{total_gb:.1} GiB**\n{link}"
+        "{level} | **{name}**{region} disk alert at **{percentage:.1}%** 💿\nmount point: `{path:?}`\nusing **{used_gb:.1} GiB** / **{total_gb:.1} GiB**{extra}\n{link}"
       )
     }
     AlertData::ContainerStateChange {
