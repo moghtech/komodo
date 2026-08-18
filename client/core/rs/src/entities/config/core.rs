@@ -707,7 +707,7 @@ pub struct CoreConfig {
   // ==================
   /// Interval at which to poll resources for any updates / automated actions.
   /// Options: `15-sec`, `1-min`, `5-min`, `15-min`, `1-hr`
-  /// Default: `5-min`.  
+  /// Default: `1-hr`.
   #[serde(default = "default_poll_interval")]
   pub resource_poll_interval: Timelength,
 
