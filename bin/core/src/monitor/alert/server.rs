@@ -544,7 +544,7 @@ pub async fn alert_servers(
           true,
         ) => {
           // modify alert level only if it has increased and not in maintenance
-          if !in_maintenance && health.level < alert.level {
+          if !in_maintenance && alert.level < health.level {
             let disk =
               server_status.system_stats.as_ref().and_then(|stats| {
                 stats.disks.iter().find(|disk| disk.mount == *path)
