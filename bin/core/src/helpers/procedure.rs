@@ -13,6 +13,7 @@ use komodo_client::{
     permission::PermissionLevel,
     procedure::{Procedure, ProcedureStage},
     repo::Repo,
+    resource::ResourceQuery,
     stack::Stack,
     update::Update,
     user::procedure_user,
@@ -33,7 +34,10 @@ use crate::{
   state::{all_resources_cache, db_client},
 };
 
-use super::update::{init_execution_update, update_update};
+use super::{
+  query::get_all_tags,
+  update::{init_execution_update, update_update},
+};
 
 pub async fn execute_procedure(
   procedure: &Procedure,
@@ -109,95 +113,41 @@ async fn execute_procedure_stage(
   update: &Mutex<Update>,
 ) -> anyhow::Result<()> {
   let mut executions = Vec::with_capacity(_executions.capacity());
-  for execution in _executions {
-    match execution {
-      Execution::BatchRunAction(exec) => {
-        extend_batch_exection::<BatchRunAction>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
+  // Expands the batch executions into their matching
+  // single executions, and passes through the rest.
+  macro_rules! expand_batch_executions {
+    ($($Variant:ident),* $(,)?) => {
+      for execution in _executions {
+        match execution {
+          $(
+            Execution::$Variant(exec) => {
+              extend_batch_execution::<$Variant>(
+                &exec.pattern,
+                &exec.tags,
+                &mut executions,
+              )
+              .await?;
+            }
+          )*
+          execution => executions.push(execution),
+        }
       }
-      Execution::BatchRunProcedure(exec) => {
-        extend_batch_exection::<BatchRunProcedure>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchRunBuild(exec) => {
-        extend_batch_exection::<BatchRunBuild>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchCloneRepo(exec) => {
-        extend_batch_exection::<BatchCloneRepo>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchPullRepo(exec) => {
-        extend_batch_exection::<BatchPullRepo>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchBuildRepo(exec) => {
-        extend_batch_exection::<BatchBuildRepo>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchDeploy(exec) => {
-        extend_batch_exection::<BatchDeploy>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchDestroyDeployment(exec) => {
-        extend_batch_exection::<BatchDestroyDeployment>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchDeployStack(exec) => {
-        extend_batch_exection::<BatchDeployStack>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchDeployStackIfChanged(exec) => {
-        extend_batch_exection::<BatchDeployStackIfChanged>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchPullStack(exec) => {
-        extend_batch_exection::<BatchPullStack>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      Execution::BatchDestroyStack(exec) => {
-        extend_batch_exection::<BatchDestroyStack>(
-          &exec.pattern,
-          &mut executions,
-        )
-        .await?;
-      }
-      execution => executions.push(execution),
-    }
+    };
   }
+  expand_batch_executions!(
+    BatchRunAction,
+    BatchRunProcedure,
+    BatchRunBuild,
+    BatchCloneRepo,
+    BatchPullRepo,
+    BatchBuildRepo,
+    BatchDeploy,
+    BatchDestroyDeployment,
+    BatchDeployStack,
+    BatchDeployStackIfChanged,
+    BatchPullStack,
+    BatchDestroyStack,
+  );
   let futures = executions.into_iter().map(|execution| async move {
     let now = Instant::now();
     add_line_to_update(
@@ -550,18 +500,27 @@ async fn add_line_to_update(update: &Mutex<Update>, line: &str) {
   };
 }
 
-async fn extend_batch_exection<E: ExtendBatch>(
+async fn extend_batch_execution<E: ExtendBatch>(
   pattern: &str,
+  tags: &[String],
   executions: &mut Vec<Execution>,
 ) -> anyhow::Result<()> {
+  let all_tags = if tags.is_empty() {
+    Vec::new()
+  } else {
+    get_all_tags(None).await?
+  };
   let more = list_full_for_user_using_pattern::<E::Resource>(
     pattern,
-    Default::default(),
+    ResourceQuery {
+      tags: tags.to_vec(),
+      ..Default::default()
+    },
     None,
     None,
     procedure_user(),
     PermissionLevel::Read.into(),
-    &[],
+    &all_tags,
   )
   .await?
   .into_iter()
