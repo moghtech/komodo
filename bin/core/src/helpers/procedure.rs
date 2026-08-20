@@ -13,6 +13,7 @@ use komodo_client::{
     permission::PermissionLevel,
     procedure::{Procedure, ProcedureStage},
     repo::Repo,
+    resource::ResourceQuery,
     stack::Stack,
     update::Update,
     user::procedure_user,
@@ -33,7 +34,10 @@ use crate::{
   state::{all_resources_cache, db_client},
 };
 
-use super::update::{init_execution_update, update_update};
+use super::{
+  query::get_all_tags,
+  update::{init_execution_update, update_update},
+};
 
 pub async fn execute_procedure(
   procedure: &Procedure,
@@ -114,6 +118,7 @@ async fn execute_procedure_stage(
       Execution::BatchRunAction(exec) => {
         extend_batch_exection::<BatchRunAction>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -121,6 +126,7 @@ async fn execute_procedure_stage(
       Execution::BatchRunProcedure(exec) => {
         extend_batch_exection::<BatchRunProcedure>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -128,6 +134,7 @@ async fn execute_procedure_stage(
       Execution::BatchRunBuild(exec) => {
         extend_batch_exection::<BatchRunBuild>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -135,6 +142,7 @@ async fn execute_procedure_stage(
       Execution::BatchCloneRepo(exec) => {
         extend_batch_exection::<BatchCloneRepo>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -142,6 +150,7 @@ async fn execute_procedure_stage(
       Execution::BatchPullRepo(exec) => {
         extend_batch_exection::<BatchPullRepo>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -149,6 +158,7 @@ async fn execute_procedure_stage(
       Execution::BatchBuildRepo(exec) => {
         extend_batch_exection::<BatchBuildRepo>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -156,6 +166,7 @@ async fn execute_procedure_stage(
       Execution::BatchDeploy(exec) => {
         extend_batch_exection::<BatchDeploy>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -163,6 +174,7 @@ async fn execute_procedure_stage(
       Execution::BatchDestroyDeployment(exec) => {
         extend_batch_exection::<BatchDestroyDeployment>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -170,6 +182,7 @@ async fn execute_procedure_stage(
       Execution::BatchDeployStack(exec) => {
         extend_batch_exection::<BatchDeployStack>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -177,6 +190,7 @@ async fn execute_procedure_stage(
       Execution::BatchDeployStackIfChanged(exec) => {
         extend_batch_exection::<BatchDeployStackIfChanged>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -184,6 +198,7 @@ async fn execute_procedure_stage(
       Execution::BatchPullStack(exec) => {
         extend_batch_exection::<BatchPullStack>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -191,6 +206,7 @@ async fn execute_procedure_stage(
       Execution::BatchDestroyStack(exec) => {
         extend_batch_exection::<BatchDestroyStack>(
           &exec.pattern,
+          &exec.tags,
           &mut executions,
         )
         .await?;
@@ -552,22 +568,37 @@ async fn add_line_to_update(update: &Mutex<Update>, line: &str) {
 
 async fn extend_batch_exection<E: ExtendBatch>(
   pattern: &str,
+  tags: &[String],
   executions: &mut Vec<Execution>,
 ) -> anyhow::Result<()> {
+  let all_tags = if tags.is_empty() {
+    vec![]
+  } else {
+    get_all_tags(None).await?
+  };
   let more = list_full_for_user_using_pattern::<E::Resource>(
     pattern,
-    Default::default(),
+    batch_resource_query(tags),
     None,
     None,
     procedure_user(),
     PermissionLevel::Read.into(),
-    &[],
+    &all_tags,
   )
   .await?
   .into_iter()
   .map(|resource| E::single_execution(resource.name));
   executions.extend(more);
   Ok(())
+}
+
+fn batch_resource_query<T: Default>(
+  tags: &[String],
+) -> ResourceQuery<T> {
+  ResourceQuery {
+    tags: tags.to_vec(),
+    ..Default::default()
+  }
 }
 
 trait ExtendBatch {
@@ -807,5 +838,30 @@ pub fn replace_procedure_stage_ids_with_names(
         RemoveSwarmSecrets => swarm, swarms;
       );
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use komodo_client::entities::resource::TagQueryBehavior;
+
+  use super::batch_resource_query;
+
+  #[test]
+  fn batch_resource_query_preserves_tags() {
+    let tags =
+      vec!["auto-pull".to_string(), "production".to_string()];
+
+    let query = batch_resource_query::<()>(&tags);
+
+    assert_eq!(query.tags, tags);
+    assert!(matches!(query.tag_behavior, TagQueryBehavior::All));
+  }
+
+  #[test]
+  fn batch_resource_query_with_empty_tags_is_unfiltered() {
+    let query = batch_resource_query::<()>(&[]);
+
+    assert!(query.tags.is_empty());
   }
 }
