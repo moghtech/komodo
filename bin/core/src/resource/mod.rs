@@ -205,6 +205,15 @@ pub trait KomodoResource {
     update: &mut Update,
   ) -> anyhow::Result<()>;
 
+  /// Values which must be removed from persisted create/update records for
+  /// this resource. Most resources rely only on Komodo Secret interpolation;
+  /// resource types with direct secret-bearing config can override this.
+  fn update_secret_replacers(
+    _resource: &Resource<Self::Config, Self::Info>,
+  ) -> anyhow::Result<Vec<(String, String)>> {
+    Ok(Vec::new())
+  }
+
   // =======
   // RENAME
   // =======
@@ -717,6 +726,9 @@ pub async fn create<T: KomodoResource>(
 
   T::post_create(&resource, &mut update).await?;
 
+  let replacers = T::update_secret_replacers(&resource)?;
+  update.sanitize(&replacers);
+
   refresh_all_resources_cache().await;
 
   update.finalize();
@@ -740,6 +752,7 @@ pub async fn update<T: KomodoResource>(
     PermissionLevel::Write.into(),
   )
   .await?;
+  let mut replacers = T::update_secret_replacers(&resource)?;
 
   if T::busy(&resource.id).await? {
     return Err(anyhow!("{} busy", T::resource_type()));
@@ -812,7 +825,9 @@ pub async fn update<T: KomodoResource>(
 
   let updated = get::<T>(id_or_name).await?;
 
+  replacers.extend(T::update_secret_replacers(&updated)?);
   T::post_update(&updated, &mut update).await?;
+  update.sanitize(&replacers);
 
   refresh_all_resources_cache().await;
 

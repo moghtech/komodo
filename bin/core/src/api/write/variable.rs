@@ -1,5 +1,6 @@
 use anyhow::{Context, anyhow};
 use database::mungos::mongodb::bson::doc;
+use interpolate::REDACTED;
 use komodo_client::{
   api::write::*,
   entities::{Operation, ResourceTarget, variable::Variable},
@@ -18,6 +19,17 @@ use crate::{
 };
 
 use super::WriteArgs;
+
+fn variable_record(variable: &Variable) -> String {
+  if variable.is_secret {
+    format!(
+      "Variable {{\n    name: {:?},\n    value: {REDACTED:?},\n    description: {:?},\n    is_secret: true,\n}}",
+      variable.name, variable.description
+    )
+  } else {
+    format!("{variable:#?}")
+  }
+}
 
 impl Resolve<WriteArgs> for CreateVariable {
   #[instrument(
@@ -73,7 +85,7 @@ impl Resolve<WriteArgs> for CreateVariable {
     );
 
     update
-      .push_simple_log("Create Variable", format!("{variable:#?}"));
+      .push_simple_log("Create Variable", variable_record(&variable));
 
     update.finalize();
 
@@ -133,8 +145,7 @@ impl Resolve<WriteArgs> for UpdateVariableValue {
 
     let log = if variable.is_secret {
       format!(
-        "<span class=\"text-muted-foreground\">variable</span>: '{name}'\n<span class=\"text-muted-foreground\">from</span>: <span class=\"text-red-500\">{}</span>\n<span class=\"text-muted-foreground\">to</span>:   <span class=\"text-green-500\">{value}</span>",
-        variable.value.replace(|_| true, "#")
+        "<span class=\"text-muted-foreground\">variable</span>: '{name}'\n<span class=\"text-muted-foreground\">from</span>: <span class=\"text-red-500\">{REDACTED}</span>\n<span class=\"text-muted-foreground\">to</span>:   <span class=\"text-green-500\">{REDACTED}</span>"
       )
     } else {
       format!(
@@ -255,11 +266,33 @@ impl Resolve<WriteArgs> for DeleteVariable {
     );
 
     update
-      .push_simple_log("Delete Variable", format!("{variable:#?}"));
+      .push_simple_log("Delete Variable", variable_record(&variable));
     update.finalize();
 
     add_update(update).await?;
 
     Ok(variable)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn secret_variable_record_omits_synthetic_marker() {
+    const MARKER: &str = "komodo-redaction-marker-4d9c1d48f7b84a9e";
+    let variable = Variable {
+      name: "SYNTHETIC_SECRET".to_string(),
+      value: MARKER.to_string(),
+      description: "redaction acceptance".to_string(),
+      is_secret: true,
+    };
+
+    let record = variable_record(&variable);
+
+    assert!(!record.contains(MARKER));
+    assert!(record.contains(REDACTED));
+    assert!(record.contains("SYNTHETIC_SECRET"));
   }
 }

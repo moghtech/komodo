@@ -5,7 +5,7 @@ use database::mungos::mongodb::bson::{
   doc, oid::ObjectId, to_bson, to_document,
 };
 use formatting::format_serror;
-use interpolate::Interpolator;
+use interpolate::{Interpolator, stack_environment_secret_replacers};
 use komodo_client::{
   api::{execute::*, write::RefreshStackCache},
   entities::{
@@ -182,7 +182,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
 
       interpolator.secret_replacers
     } else {
-      Default::default()
+      stack_environment_secret_replacers(&stack.config.environment)?
     };
 
     let DeployStackResponse {
@@ -886,7 +886,7 @@ pub async fn pull_stack_inner(
     }
     interpolator.secret_replacers
   } else {
-    Default::default()
+    stack_environment_secret_replacers(&stack.config.environment)?
   };
 
   let res = periphery_client(server)
@@ -1376,7 +1376,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
 
       interpolator.secret_replacers
     } else {
-      Default::default()
+      stack_environment_secret_replacers(&stack.config.environment)?
     };
 
     let log = periphery_client(&server)

@@ -107,6 +107,22 @@ impl Update {
     self.end_ts = Some(komodo_timestamp());
     self.status = UpdateStatus::Complete;
   }
+
+  /// Removes secret values from every persisted free-form field on an
+  /// update. This is intentionally broader than [Log::sanitize] so resource
+  /// audit snapshots cannot bypass the same redaction seam.
+  #[cfg(feature = "svi")]
+  pub fn sanitize(&mut self, replacers: &Vec<(String, String)>) {
+    for log in &mut self.logs {
+      log.sanitize(replacers);
+    }
+    self.other_data =
+      svi::replace_in_string(&self.other_data, replacers);
+    self.prev_toml =
+      svi::replace_in_string(&self.prev_toml, replacers);
+    self.current_toml =
+      svi::replace_in_string(&self.current_toml, replacers);
+  }
 }
 
 /// Minimal representation of an action performed by Komodo.
@@ -209,6 +225,30 @@ impl Log {
     self.command = svi::replace_in_string(&self.command, replacers);
     self.stdout = svi::replace_in_string(&self.stdout, replacers);
     self.stderr = svi::replace_in_string(&self.stderr, replacers);
+  }
+}
+
+#[cfg(all(test, feature = "svi"))]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn update_sanitizes_logs_and_audit_snapshots() {
+    const MARKER: &str = "komodo-redaction-marker-4d9c1d48f7b84a9e";
+    let mut update = Update {
+      logs: vec![Log::simple("Synthetic", MARKER.to_string())],
+      other_data: MARKER.to_string(),
+      prev_toml: format!("environment = 'SECRET={MARKER}'"),
+      current_toml: format!("environment = 'SECRET={MARKER}'"),
+      ..Default::default()
+    };
+
+    update
+      .sanitize(&vec![(MARKER.to_string(), "SECRET".to_string())]);
+    let serialized = serde_json::to_string(&update).unwrap();
+
+    assert!(!serialized.contains(MARKER));
+    assert!(serialized.contains("<SECRET>"));
   }
 }
 
