@@ -65,7 +65,6 @@ impl Resolve<WriteArgs> for CreateStack {
     fields(
       operator = user.id,
       stack = self.name,
-      config = serde_json::to_string(&self.config).unwrap(),
     )
   )]
   async fn resolve(
@@ -127,7 +126,6 @@ impl Resolve<WriteArgs> for UpdateStack {
     fields(
       operator = user.id,
       stack = self.id,
-      update = serde_json::to_string(&self.config).unwrap(),
     )
   )]
   async fn resolve(
@@ -1137,5 +1135,36 @@ impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
       })
       .collect();
     Ok(res)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  fn resolve_attribute<'a>(
+    source: &'a str,
+    implementation: &str,
+  ) -> &'a str {
+    let implementation = source
+      .split_once(implementation)
+      .expect("missing Stack write implementation")
+      .1;
+    implementation
+      .split_once("async fn resolve")
+      .expect("missing Stack write resolver")
+      .0
+  }
+
+  #[test]
+  fn stack_write_spans_do_not_serialize_config() {
+    let source = include_str!("stack.rs");
+    for implementation in [
+      "impl Resolve<WriteArgs> for CreateStack",
+      "impl Resolve<WriteArgs> for UpdateStack",
+    ] {
+      assert!(
+        !resolve_attribute(source, implementation)
+          .contains("self.config")
+      );
+    }
   }
 }

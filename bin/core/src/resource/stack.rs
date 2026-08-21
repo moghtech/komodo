@@ -2,6 +2,7 @@ use anyhow::Context;
 use database::mungos::mongodb::Collection;
 use formatting::format_serror;
 use indexmap::IndexSet;
+use interpolate::stack_environment_secret_replacers;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
@@ -343,6 +344,16 @@ impl super::KomodoResource for Stack {
     update: &mut Update,
   ) -> anyhow::Result<()> {
     Self::post_create(updated, update).await
+  }
+
+  fn update_secret_replacers(
+    stack: &Resource<Self::Config, Self::Info>,
+  ) -> anyhow::Result<Vec<(String, String)>> {
+    Ok(
+      stack_environment_secret_replacers(&stack.config.environment)?
+        .into_iter()
+        .collect(),
+    )
   }
 
   // RENAME
