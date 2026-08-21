@@ -48,6 +48,38 @@ export default defineConfig({
     // through prebundling to get CJS -> ESM interop.
     include: ["path-browserify"],
   },
+  build: {
+    // The only chunks above the default 500 kB warning limit are
+    // monaco-editor's core (~2.7 MB) and prettier's typescript parser
+    // (~900 kB). Both are already async — mogh_ui lazy-loads the editor
+    // implementation, so they only download when an editor mounts — and
+    // neither can be split further (each is one static import graph).
+    // Raise the limit above them so the warning still catches an eager
+    // chunk regression instead of firing on every build.
+    chunkSizeWarningLimit: 2800,
+    rolldownOptions: {
+      output: {
+        // Split stable vendor code out of the main chunk so app-code
+        // changes don't invalidate the browser cache for react/mantine.
+        codeSplitting: {
+          groups: [
+            {
+              name: "react",
+              test: /node_modules[\\/](react|react-dom|scheduler|react-router)[\\/]/,
+            },
+            {
+              name: "mantine",
+              test: /node_modules[\\/](@mantine|@floating-ui|react-transition-group|react-remove-scroll)[\\/]/,
+            },
+            {
+              name: "tanstack",
+              test: /node_modules[\\/]@tanstack[\\/]/,
+            },
+          ],
+        },
+      },
+    },
+  },
   css: {
     preprocessorOptions: {
       scss: {
