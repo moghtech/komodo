@@ -1,20 +1,20 @@
 import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
-import { filterBySplit, levelSortingFn } from "@/lib/utils";
+import { levelSortingFn } from "@/lib/utils";
 import {
   RESOURCE_TARGETS,
   ResourceComponents,
   UsableResource,
 } from "@/resources";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section, { SectionProps } from "@/ui/section";
+import { DataTable, SortableHeader, filterBySplit } from "mogh_ui";
+import { Section, SectionProps } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import PermissionLevelSelector from "./level-selector";
 import SpecificPermissionSelector from "./specific-selector";
-import SearchInput from "@/ui/search-input";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { SearchInput } from "mogh_ui";
+import { LabelledSwitch } from "mogh_ui";
 
 export interface BasePermissionsSectionProps extends SectionProps {
   userTarget: Types.UserTarget;
@@ -84,7 +84,6 @@ export default function BasePermissionsSection({
       }
       title="Base Permissions on Resource Types"
       titleFz="h3"
-     
       actions={
         <Group>
           <SearchInput value={search} onSearch={setSearch} />
@@ -103,7 +102,6 @@ export default function BasePermissionsSection({
         columns={[
           {
             accessorKey: "type",
-            size: 150,
             header: ({ column }) => (
               <SortableHeader column={column} title="Resource Type" />
             ),
@@ -120,8 +118,7 @@ export default function BasePermissionsSection({
           },
           {
             accessorKey: "level",
-            size: 150,
-            sortingFn: (a, b) =>
+            sortFn: (a, b) =>
               levelSortingFn(a.original.level, b.original.level),
             header: ({ column }) => (
               <SortableHeader column={column} title="Level" />
@@ -144,7 +141,6 @@ export default function BasePermissionsSection({
           },
           {
             header: "Specific",
-            size: 300,
             cell: ({ row }) => {
               return (
                 <SpecificPermissionSelector

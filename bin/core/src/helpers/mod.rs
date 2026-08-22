@@ -169,7 +169,7 @@ pub async fn registry_token(
   }
   Ok(
     core_config()
-      .docker_registries
+      .image_registries
       .iter()
       .find(|provider| provider.domain == provider_domain)
       .and_then(|provider| {

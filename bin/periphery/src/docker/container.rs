@@ -10,7 +10,7 @@ use crate::state::container_stats;
 
 use super::{
   DockerClient, convert_health_config, convert_mount,
-  convert_mount_point_type, convert_resources_ulimits,
+  convert_resources_ulimits,
 };
 
 impl DockerClient {
@@ -37,6 +37,7 @@ impl DockerClient {
         let stats = stats.get(&name).cloned();
         anyhow::Ok(ContainerListItem {
           server_id: None,
+          server_name: None,
           name,
           stats,
           id: container.id,
@@ -360,10 +361,7 @@ impl DockerClient {
         .unwrap_or_default()
         .into_iter()
         .map(|mount| MountPoint {
-          typ: mount
-            .typ
-            .map(convert_mount_point_type)
-            .unwrap_or_default(),
+          typ: mount.typ,
           name: mount.name,
           source: mount.source,
           destination: mount.destination,
@@ -482,6 +480,9 @@ fn convert_summary_container_state(
     bollard::config::ContainerSummaryStateEnum::EXITED => {
       ContainerStateStatusEnum::Exited
     }
+    bollard::config::ContainerSummaryStateEnum::STOPPING => {
+      ContainerStateStatusEnum::Stopping
+    }
     bollard::config::ContainerSummaryStateEnum::REMOVING => {
       ContainerStateStatusEnum::Removing
     }
@@ -515,6 +516,9 @@ fn convert_container_state_status(
     }
     bollard::config::ContainerStateStatusEnum::REMOVING => {
       ContainerStateStatusEnum::Removing
+    }
+    bollard::config::ContainerStateStatusEnum::STOPPING => {
+      ContainerStateStatusEnum::Stopping
     }
     bollard::config::ContainerStateStatusEnum::DEAD => {
       ContainerStateStatusEnum::Dead

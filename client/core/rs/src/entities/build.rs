@@ -56,30 +56,7 @@ impl Build {
     }
     image_registry
       .iter()
-      .map(
-        |ImageRegistryConfig {
-           domain,
-           account,
-           organization,
-         }| {
-          match (
-            !domain.is_empty(),
-            !organization.is_empty(),
-            !account.is_empty(),
-          ) {
-            // If organization and account provided, name under organization.
-            (true, true, true) => {
-              format!("{domain}/{organization}/{name}")
-            }
-            // Just domain / account provided
-            (true, false, true) => {
-              format!("{domain}/{account}/{name}")
-            }
-            // Otherwise, just use name (local only)
-            _ => name.to_string(),
-          }
-        },
-      )
+      .map(|registry| registry.full_image_name(name))
       .collect()
   }
 
@@ -93,7 +70,7 @@ impl Build {
       version,
       image_tag,
       include_latest_tag,
-      include_version_tags: include_version_tag,
+      include_version_tags,
       include_commit_tag,
       ..
     } = &self.config;
@@ -118,7 +95,7 @@ impl Build {
         tags.push(format!("{image_name}:latest{image_tag_postfix}"));
       }
       // `:1.19.5` + `:1.19` etc. / `1.19.5-tag`
-      if *include_version_tag {
+      if *include_version_tags {
         tags
           .push(format!("{image_name}:{version}{image_tag_postfix}"));
         tags.push(format!(
@@ -152,6 +129,70 @@ impl Build {
     }
     Ok(res)
   }
+
+  /// Used in build -> deployment flow to choose
+  /// the associated image to deploy.
+  pub fn get_deployment_image_name(&self) -> String {
+    let Build {
+      name,
+      config:
+        BuildConfig {
+          image_name,
+          image_registry,
+          ..
+        },
+      ..
+    } = self;
+    let name = if image_name.is_empty() {
+      name
+    } else {
+      image_name
+    };
+    if let Some(registry) = image_registry.first() {
+      registry.full_image_name(name)
+    } else {
+      name.to_string()
+    }
+  }
+
+  /// Used in build -> deployment flow to choose the
+  /// associated latest tag.
+  ///
+  /// Priority:
+  ///   - Semver version
+  ///   - Commit hash
+  ///   - Latest tag
+  pub fn get_deployment_image_tag(&self, version: Version) -> String {
+    let Build {
+      config:
+        BuildConfig {
+          image_tag,
+          include_version_tags,
+          include_commit_tag,
+          repo,
+          linked_repo,
+          ..
+        },
+      ..
+    } = self;
+
+    let image_tag_postfix = if image_tag.is_empty() {
+      format_args!("")
+    } else {
+      format_args!("-{image_tag}")
+    };
+
+    if *include_version_tags {
+      format!("{version}{image_tag_postfix}")
+    } else if (!repo.is_empty() || !linked_repo.is_empty())
+      && *include_commit_tag
+      && let Some(hash) = &self.info.built_hash
+    {
+      format!("{hash}{image_tag_postfix}")
+    } else {
+      String::from("latest")
+    }
+  }
 }
 
 #[typeshare]
@@ -177,6 +218,9 @@ pub struct BuildListItemInfo {
 
   /// Linked repo, if one is attached.
   pub linked_repo: String,
+  /// The name of the linked repo, if one is attached.
+  #[serde(default)]
+  pub linked_repo_name: String,
   /// The git provider domain
   pub git_provider: String,
   /// The repo used as the source of the build
@@ -260,18 +304,30 @@ pub type _PartialBuildConfig = PartialBuildConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct BuildConfig {
   /// Which builder is used to build the image.
   #[serde(default, alias = "builder")]
   #[partial_attr(serde(alias = "builder"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "builder"))
+  )]
   #[builder(default)]
   pub builder_id: String,
 
   /// The current version of the build.
   #[serde(default)]
   #[builder(default)]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(default, schema_with = "version_schema"))
+  )]
   pub version: Version,
 
   /// Whether to automatically increment the patch on every build.
@@ -523,6 +579,26 @@ fn default_webhook_enabled() -> bool {
   true
 }
 
+#[cfg(feature = "schemars")]
+fn version_schema(
+  _: &mut schemars::SchemaGenerator,
+) -> schemars::Schema {
+  schemars::json_schema!({
+    "description": "The current version of the build.",
+    "anyOf": [
+      {
+        "$ref": "#/$defs/Version"
+      },
+      {
+        "type": "string"
+      },
+      {
+        "type": "null"
+      }
+    ]
+  })
+}
+
 impl Default for BuildConfig {
   fn default() -> Self {
     Self {
@@ -577,6 +653,7 @@ impl utoipa::ToSchema for PartialBuildConfig {}
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ImageRegistryConfig {
   /// Specify the registry provider domain, eg `docker.io`.
   /// If not provided, will not push to any registry.
@@ -598,6 +675,30 @@ impl ImageRegistryConfig {
     static DEFAULT: OnceLock<ImageRegistryConfig> = OnceLock::new();
     DEFAULT.get_or_init(Default::default)
   }
+
+  pub fn full_image_name(&self, short_name: &str) -> String {
+    let Self {
+      domain,
+      organization,
+      account,
+    } = self;
+    match (
+      !domain.is_empty(),
+      !organization.is_empty(),
+      !account.is_empty(),
+    ) {
+      // If organization and account provided, name under organization.
+      (true, true, true) => {
+        format!("{domain}/{organization}/{short_name}")
+      }
+      // Just domain / account provided
+      (true, false, true) => {
+        format!("{domain}/{account}/{short_name}")
+      }
+      // Otherwise, just use name (local only)
+      _ => short_name.to_string(),
+    }
+  }
 }
 
 #[typeshare]
@@ -612,6 +713,21 @@ pub type BuildQuery = ResourceQuery<BuildQuerySpecifics>;
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum BuildSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by source repo.
+  Source,
+  /// Sort by state.
+  State,
+}
+
+#[typeshare]
+#[derive(
   Debug, Clone, Default, Serialize, Deserialize, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -622,10 +738,20 @@ pub struct BuildQuerySpecifics {
   #[serde(default)]
   pub repos: Vec<String>,
 
+  /// Query only for Builds with these linked repos.
+  /// Only accepts Repo id (not name).
+  #[serde(default)]
+  pub linked_repos: Vec<String>,
+
   /// query for builds last built more recently than this timestamp
   /// defaults to 0 which is a no op
   #[serde(default)]
   pub built_since: I64,
+
+  /// Query only for Builds matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<BuildState>,
 }
 
 impl super::resource::AddFilters for BuildQuerySpecifics {
@@ -638,6 +764,12 @@ impl super::resource::AddFilters for BuildQuerySpecifics {
     }
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });
+    }
+    if !self.linked_repos.is_empty() {
+      filters.insert(
+        "config.linked_repo",
+        doc! { "$in": &self.linked_repos },
+      );
     }
     if self.built_since > 0 {
       filters.insert(

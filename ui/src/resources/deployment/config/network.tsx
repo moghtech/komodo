@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { Select, TextInput } from "@mantine/core";
 import { useState } from "react";
 
@@ -20,7 +20,7 @@ export default function DeploymentNetworkSelector({
 }: DeploymentNetworkSelectorProps) {
   const _networks =
     useRead(
-      swarmId ? "ListSwarmNetworks" : "ListDockerNetworks",
+      swarmId ? "ListSwarmNetworks" : "ListNetworks",
       { swarm: swarmId, server: serverId! },
       { enabled: !!swarmId || !!serverId },
     )

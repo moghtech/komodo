@@ -5,8 +5,8 @@ use std::{
 
 use anyhow::Context;
 use command::{
-  KomodoCommandMode, run_komodo_command_with_sanitization,
-  run_standard_command,
+  CommandOptions, KomodoCommandMode,
+  run_komodo_command_with_sanitization, run_standard_command,
 };
 use environment::write_env_file;
 use interpolate::Interpolator;
@@ -19,6 +19,7 @@ use komodo_client::{
   parsers::QUOTE_PATTERN,
 };
 use periphery_client::api::git::PeripheryRepoExecutionResponse;
+use shell_escape::unix::escape;
 
 use crate::config::periphery_config;
 
@@ -121,12 +122,15 @@ pub fn format_log_grep(
   let maybe_invert = if invert { " -v" } else { Default::default() };
   match combinator {
     SearchCombinator::Or => {
-      format!("grep{maybe_invert} -E '{}'", terms.join("|"))
+      format!(
+        "grep{maybe_invert} -E {}",
+        escape(terms.join("|").into())
+      )
     }
     SearchCombinator::And => {
       format!(
-        "grep{maybe_invert} -P '^(?=.*{})'",
-        terms.join(")(?=.*")
+        "grep{maybe_invert} -P {}",
+        escape(format!("^(?=.*{})", terms.join(")(?=.*")).into())
       )
     }
   }
@@ -187,9 +191,13 @@ pub async fn handle_post_repo_execution(
       .collect::<PathBuf>();
     if let Some(log) = run_komodo_command_with_sanitization(
       "On Clone",
-      path.as_path(),
       on_clone.command,
-      KomodoCommandMode::Multiline,
+      CommandOptions::default().path(path.as_path()),
+      if on_clone.shell_mode {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Multiline
+      },
       &replacers,
     )
     .await
@@ -212,9 +220,13 @@ pub async fn handle_post_repo_execution(
       .collect::<PathBuf>();
     if let Some(log) = run_komodo_command_with_sanitization(
       "On Pull",
-      path.as_path(),
       on_pull.command,
-      KomodoCommandMode::Multiline,
+      CommandOptions::default().path(path.as_path()),
+      if on_pull.shell_mode {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Multiline
+      },
       &replacers,
     )
     .await
@@ -263,7 +275,7 @@ pub fn registry_token(
   account_username: &str,
 ) -> anyhow::Result<&'static str> {
   periphery_config()
-    .docker_registries
+    .image_registries
     .iter()
     .find(|registry| registry.domain == domain)
     .and_then(|registry| {
@@ -276,37 +288,31 @@ pub fn registry_token(
 //  Public IP over DNS
 // ====================
 
-type OpenDNSResolver = hickory_resolver::Resolver<
-  hickory_resolver::name_server::TokioConnectionProvider,
->;
+type OpenDNSResolver = hickory_resolver::TokioResolver;
 
 fn opendns_resolver() -> &'static OpenDNSResolver {
   static OPENDNS_RESOLVER: OnceLock<OpenDNSResolver> =
     OnceLock::new();
   OPENDNS_RESOLVER.get_or_init(|| {
-    // OpenDNS resolver ipv4s
-    let ips = [
+    // OpenDNS resolver ipv4s.
+    let name_servers = [
       IpAddr::from_str("208.67.220.220").unwrap(),
       IpAddr::from_str("208.67.222.222").unwrap(),
-    ];
-
-    // trust_negative_responses=true means NXDOMAIN/empty NOERROR from an
-    // authoritative upstream won’t be retried on other servers.
-    let ns =
-      hickory_resolver::config::NameServerConfigGroup::from_ips_clear(
-        &ips, 53, true,
-      );
+    ]
+    .into_iter()
+    .map(hickory_resolver::config::NameServerConfig::udp_and_tcp)
+    .collect();
 
     hickory_resolver::Resolver::builder_with_config(
       hickory_resolver::config::ResolverConfig::from_parts(
         None,
         vec![],
-        ns,
+        name_servers,
       ),
-      hickory_resolver::name_server::TokioConnectionProvider::default(
-      ),
+      hickory_resolver::net::runtime::TokioRuntimeProvider::default(),
     )
     .build()
+    .expect("Failed to build OpenDNS resolver")
   })
 }
 
@@ -319,7 +325,7 @@ pub async fn resolve_host_public_ip() -> anyhow::Result<String> {
       .context(
         "Failed to query OpenDNS resolvers for host public IP",
       )?
-      .into_iter()
+      .iter()
       .map(|ip| ip.to_string())
       .next()
       .context("OpenDNS call for public IP didn't return anything")
@@ -365,7 +371,8 @@ async fn generate_self_signed_ssl_certs() {
   let command = format!(
     "openssl req -x509 -newkey rsa:4096 -keyout {key_path} -out {cert_path} -sha256 -days 3650 -nodes -subj \"/C=XX/CN=periphery\""
   );
-  let log = run_standard_command(&command, None).await;
+  let log =
+    run_standard_command(&command, CommandOptions::default()).await;
 
   if log.success() {
     info!("✅ SSL Certs generated");

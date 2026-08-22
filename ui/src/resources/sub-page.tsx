@@ -1,16 +1,20 @@
 import { UsableResource } from ".";
-import EntityHeader, { EntityHeaderProps } from "@/ui/entity-header";
+import {
+  EntityHeader,
+  EntityHeaderProps,
+  EntityPage,
+  EntityPageProps,
+} from "mogh_ui";
 import { ReactNode } from "react";
-import EntityPage, { EntityPageProps } from "@/ui/entity-page";
 import { Group, Stack, Text } from "@mantine/core";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import ResourceLink from "./link";
 import ResourceDescription from "./description";
 import { usableResourcePath } from "@/lib/utils";
 import ResourceUpdates from "@/components/updates/resource";
 import { usePermissions } from "@/lib/hooks";
-import Section from "@/ui/section";
-import { ICONS } from "@/theme/icons";
+import { Section } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 
 export interface ResourceSubPageProps extends EntityHeaderProps {
   parentType: UsableResource;
@@ -73,7 +77,6 @@ export default function ResourceSubPage({
         {canExecute && executions && (
           <Section
             title="Execute"
-           
             icon={<ICONS.Execution size="1.3rem" />}
             my="md"
           >

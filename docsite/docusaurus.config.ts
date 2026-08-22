@@ -11,11 +11,10 @@ const config: Config = {
   favicon: "img/favicon.ico",
 
   // Set the production url of your site here
-  url: "https://komo.do",
+  url: process.env.DOCSITE_URL || "https://komo.do",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  // baseUrl: "/komodo/",
-  baseUrl: "/",
+  baseUrl: process.env.DOCSITE_BASE_URL || "/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.

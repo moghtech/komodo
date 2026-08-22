@@ -226,8 +226,10 @@ pub async fn init_execution_update(
       (CancelRepoBuild, Repo, repo),
       // Procedure
       (RunProcedure, Procedure, procedure),
+      (CancelProcedure, Procedure, procedure),
       // Action
       (RunAction, Action, action),
+      (CancelAction, Action, action),
       // Resource Sync
       (RunSync, ResourceSync, sync),
       // Stack (simple)

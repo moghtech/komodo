@@ -10,10 +10,11 @@ import {
   Text,
 } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useRead, useSearchCombobox } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { filterBySplit } from "@/lib/utils";
+import { useRead } from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
+import { filterBySplit } from "mogh_ui";
 import { DOCKER_LINK_ICONS } from "@/components/docker/link";
+import { useSearchCombobox } from "mogh_ui";
 
 export interface ContainerSelectorProps extends ComboboxProps {
   serverId: string;
@@ -39,7 +40,7 @@ export default function ContainerSelector({
   clearable,
   ...comboboxProps
 }: ContainerSelectorProps) {
-  const containers = useRead("ListDockerContainers", {
+  const containers = useRead("ListContainers", {
     server: serverId,
   }).data?.filter((container) => !state || container.state === state);
 
@@ -85,6 +86,7 @@ export default function ContainerSelector({
             <Group gap="xs" ml="sm" wrap="nowrap">
               {clearable && (
                 <ActionIcon
+                  component="div"
                   size="sm"
                   variant="filled"
                   color="red"
@@ -92,7 +94,12 @@ export default function ContainerSelector({
                     e.stopPropagation();
                     onSelect?.("");
                   }}
-                  disabled={disabled || !selected}
+                  data-disabled={disabled || !selected || undefined}
+                  style={
+                    disabled || !selected
+                      ? { pointerEvents: "none" }
+                      : undefined
+                  }
                 >
                   <ICONS.Clear size="0.8rem" />
                 </ActionIcon>

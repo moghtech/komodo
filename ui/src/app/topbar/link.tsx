@@ -1,20 +1,9 @@
-import { Button, ButtonProps } from "@mantine/core";
-import { Link } from "react-router-dom";
+import { ButtonLink, ButtonLinkProps } from "mogh_ui";
 
-export interface TopbarLinkProps extends ButtonProps {
+export interface TopbarLinkProps extends ButtonLinkProps {
   to: string;
 }
 
 export default function TopbarLink({ to, ...props }: TopbarLinkProps) {
-  return (
-    <Button
-      visibleFrom="md"
-      variant="subtle"
-      px="xs"
-      fz="sm"
-      className="hover-underline"
-      renderRoot={(props) => <Link to={to} target="_blank" {...props} />}
-      {...props}
-    />
-  );
+  return <ButtonLink visibleFrom="md" to={to} {...props} />;
 }

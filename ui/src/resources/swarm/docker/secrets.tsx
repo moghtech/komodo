@@ -1,12 +1,12 @@
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ReactNode } from "react";
 import { useSwarmDockerSearch } from ".";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Badge, Group } from "@mantine/core";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import SwarmResourceLink from "@/components/swarm/link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import NewSwarmSecret from "@/resources/swarm/new/secret";
 
 export default function SwarmSecrets({
@@ -61,7 +61,6 @@ export default function SwarmSecrets({
                 }
               />
             ),
-            size: 200,
           },
           {
             accessorKey: "ID",
@@ -69,7 +68,6 @@ export default function SwarmSecrets({
               <SortableHeader column={column} title="ID" />
             ),
             cell: ({ row }) => row.original.ID ?? "Unknown",
-            size: 200,
           },
           {
             accessorKey: "Driver",
@@ -100,7 +98,6 @@ export default function SwarmSecrets({
               row.original.UpdatedAt
                 ? new Date(row.original.UpdatedAt).toLocaleString()
                 : "Unknown",
-            size: 200,
           },
           {
             accessorKey: "CreatedAt",
@@ -111,7 +108,6 @@ export default function SwarmSecrets({
               row.original.CreatedAt
                 ? new Date(row.original.CreatedAt).toLocaleString()
                 : "Unknown",
-            size: 200,
           },
         ]}
       />

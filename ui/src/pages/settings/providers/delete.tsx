@@ -1,13 +1,13 @@
 import { useInvalidate, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import ConfirmButton from "@/ui/confirm-button";
+import { ICONS } from "@/lib/icons";
+import { ConfirmButton } from "mogh_ui";
 import { notifications } from "@mantine/notifications";
 
 export default function DeleteProviderAccount({
   type,
   id,
 }: {
-  type: "GitProvider" | "DockerRegistry";
+  type: "GitProvider" | "ImageRegistry";
   id: string;
 }) {
   const invalidate = useInvalidate();

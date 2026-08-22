@@ -10,7 +10,7 @@ use crate::deserializers::{
 
 use super::{
   MergePartial,
-  config::{DockerRegistry, GitProvider},
+  config::{GitProvider, ImageRegistry},
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
 };
 
@@ -125,6 +125,7 @@ impl Default for BuilderConfig {
     utoipa::ToSchema
   ))
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::large_enum_variant)]
 pub enum PartialBuilderConfig {
@@ -255,14 +256,14 @@ impl MaybeNone for BuilderConfigDiff {
 impl From<PartialBuilderConfig> for BuilderConfig {
   fn from(value: PartialBuilderConfig) -> BuilderConfig {
     match value {
-      PartialBuilderConfig::Url(server) => {
-        BuilderConfig::Url(server.into())
+      PartialBuilderConfig::Url(config) => {
+        BuilderConfig::Url(config.into())
       }
-      PartialBuilderConfig::Server(server) => {
-        BuilderConfig::Server(server.into())
+      PartialBuilderConfig::Server(config) => {
+        BuilderConfig::Server(config.into())
       }
-      PartialBuilderConfig::Aws(builder) => {
-        BuilderConfig::Aws(builder.into())
+      PartialBuilderConfig::Aws(config) => {
+        BuilderConfig::Aws(config.into())
       }
     }
   }
@@ -310,7 +311,9 @@ impl MergePartial for BuilderConfig {
       PartialBuilderConfig::Server(partial) => match self {
         BuilderConfig::Server(config) => {
           let config = ServerBuilderConfig {
-            server_id: partial.server_id.unwrap_or(config.server_id),
+            server_ids: partial
+              .server_ids
+              .unwrap_or(config.server_ids),
           };
           BuilderConfig::Server(config)
         }
@@ -350,9 +353,9 @@ impl MergePartial for BuilderConfig {
             git_providers: partial
               .git_providers
               .unwrap_or(config.git_providers),
-            docker_registries: partial
-              .docker_registries
-              .unwrap_or(config.docker_registries),
+            image_registries: partial
+              .image_registries
+              .unwrap_or(config.image_registries),
             secrets: partial.secrets.unwrap_or(config.secrets),
           };
           BuilderConfig::Aws(config)
@@ -370,13 +373,10 @@ pub type _PartialUrlBuilderConfig = PartialUrlBuilderConfig;
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[cfg_attr(
-  not(feature = "utoipa"),
-  partial_derive(Serialize, Deserialize, Debug, Clone, Default)
-)]
-#[cfg_attr(
-  feature = "utoipa",
-  partial_derive(Serialize, Deserialize, Debug, Clone, Default,)
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
 )]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
@@ -451,13 +451,36 @@ pub type _PartialServerBuilderConfig = PartialServerBuilderConfig;
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ServerBuilderConfig {
-  /// The server id of the builder
-  #[serde(default, alias = "server")]
-  #[partial_attr(serde(alias = "server"))]
-  pub server_id: String,
+  /// The server ids of the builders.
+  /// If multiple are given, builds will overflow
+  /// to later specified servers as needed.
+  #[serde(
+    default,
+    alias = "server_id",
+    alias = "server",
+    alias = "servers",
+    deserialize_with = "string_list_deserializer"
+  )]
+  #[partial_attr(serde(
+    default,
+    alias = "server_id",
+    alias = "server",
+    alias = "servers",
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default)]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "servers"))
+  )]
+  pub server_ids: Vec<String>,
 }
 
 impl ServerBuilderConfig {
@@ -485,6 +508,10 @@ pub type _PartialAwsBuilderConfig = PartialAwsBuilderConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct AwsBuilderConfig {
@@ -571,10 +598,12 @@ pub struct AwsBuilderConfig {
   #[serde(default)]
   #[builder(default)]
   pub git_providers: Vec<GitProvider>,
-  /// Which docker registries are available on the AMI.
+  /// Which image registries are available on the AMI.
+  ///
+  /// Pre v2.3.0, called `docker_registries`
   #[serde(default)]
   #[builder(default)]
-  pub docker_registries: Vec<DockerRegistry>,
+  pub image_registries: Vec<ImageRegistry>,
   /// Which secrets are available on the AMI.
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
@@ -603,7 +632,7 @@ impl Default for AwsBuilderConfig {
       periphery_public_key: Default::default(),
       insecure_tls: default_insecure_tls(),
       git_providers: Default::default(),
-      docker_registries: Default::default(),
+      image_registries: Default::default(),
       secrets: Default::default(),
     }
   }
@@ -648,6 +677,21 @@ impl utoipa::ToSchema for PartialAwsBuilderConfig {}
 
 #[typeshare]
 pub type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
+
+#[typeshare]
+#[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum BuilderSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by builder provider type.
+  Provider,
+  /// Sort by instance type.
+  InstanceType,
+}
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]

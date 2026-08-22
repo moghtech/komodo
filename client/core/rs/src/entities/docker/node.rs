@@ -129,6 +129,7 @@ pub struct NodeSpec {
   ValueEnum,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum NodeSpecRoleEnum {
   #[default]
   #[serde(rename = "")]
@@ -155,6 +156,7 @@ pub enum NodeSpecRoleEnum {
   ValueEnum,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum NodeSpecAvailabilityEnum {
   #[default]
   #[serde(rename = "")]

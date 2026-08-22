@@ -1,4 +1,4 @@
-import { DataTable } from "@/ui/data-table";
+import { DataTable } from "mogh_ui";
 import {
   ActionIcon,
   Button,
@@ -10,10 +10,10 @@ import {
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { defaultEnabledExecution } from ".";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ProcedureExecutionSelector from "./execution-selector";
 import { PROCEDURE_EXECUTIONS, ProcedureMinExecutionType } from "./executions";
-import EnableSwitch from "@/ui/enable-switch";
+import { EnableSwitch } from "mogh_ui";
 import { ArrowDown, ArrowUp, Ellipsis, Plus, Trash } from "lucide-react";
 
 export interface ProcedureStageProps {
@@ -131,7 +131,6 @@ export default function ProcedureStage({
         columns={[
           {
             header: "Execution",
-            size: 250,
             cell: ({ row: { original, index } }) => (
               <ProcedureExecutionSelector
                 disabled={disabled}
@@ -160,7 +159,6 @@ export default function ProcedureStage({
           },
           {
             header: "Target",
-            size: 250,
             cell: ({
               row: {
                 original: {
@@ -195,7 +193,6 @@ export default function ProcedureStage({
           },
           {
             header: "Add / Remove",
-            size: 150,
             cell: ({ row: { index } }) => (
               <Group>
                 <ActionIcon
@@ -232,7 +229,6 @@ export default function ProcedureStage({
           },
           {
             header: "Enabled",
-            size: 100,
             cell: ({
               row: {
                 original: { enabled },

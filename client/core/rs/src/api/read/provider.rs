@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::provider::{
-  DockerRegistryAccount, GitProviderAccount,
+  GitProviderAccount, ImageRegistryAccount,
 };
 
 use super::KomodoReadRequest;
@@ -74,53 +74,57 @@ pub type ListGitProviderAccountsResponse = Vec<GitProviderAccount>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/GetDockerRegistryAccount",
-  description = "Get a specific docker registry account.",
-  request_body(content = GetDockerRegistryAccount),
+  path = "/GetImageRegistryAccount",
+  description = "Get a specific image registry account.",
+  request_body(content = GetImageRegistryAccount),
   responses(
-    (status = 200, description = "The docker registry account", body = GetDockerRegistryAccountResponse),
+    (status = 200, description = "The image registry account", body = GetImageRegistryAccountResponse),
   ),
 )]
-pub fn get_docker_registry_account() {}
+pub fn get_image_registry_account() {}
 
-/// Get a specific docker registry account.
-/// Response: [GetDockerRegistryAccountResponse].
+/// Get a specific image registry account.
+/// Response: [GetImageRegistryAccountResponse].
+///
+/// Pre v2.3.0, called `GetDockerRegistryAccount`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(GetDockerRegistryAccountResponse)]
+#[response(GetImageRegistryAccountResponse)]
 #[error(mogh_error::Error)]
-pub struct GetDockerRegistryAccount {
+pub struct GetImageRegistryAccount {
   pub id: String,
 }
 
 #[typeshare]
-pub type GetDockerRegistryAccountResponse = DockerRegistryAccount;
+pub type GetImageRegistryAccountResponse = ImageRegistryAccount;
 
 //
 
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/ListDockerRegistryAccounts",
-  description = "List docker registry accounts matching optional query.",
-  request_body(content = ListDockerRegistryAccounts),
+  path = "/ListImageRegistryAccounts",
+  description = "List image registry accounts matching optional query.",
+  request_body(content = ListImageRegistryAccounts),
   responses(
-    (status = 200, description = "The list of docker registry accounts", body = ListDockerRegistryAccountsResponse),
+    (status = 200, description = "The list of image registry accounts", body = ListImageRegistryAccountsResponse),
   ),
 )]
-pub fn list_docker_registry_accounts() {}
+pub fn list_image_registry_accounts() {}
 
-/// List docker registry accounts matching optional query.
-/// Response: [ListDockerRegistryAccountsResponse].
+/// List image registry accounts matching optional query.
+/// Response: [ListImageRegistryAccountsResponse].
+///
+/// Pre v2.3.0, called `ListDockerRegistryAccounts`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(ListDockerRegistryAccountsResponse)]
+#[response(ListImageRegistryAccountsResponse)]
 #[error(mogh_error::Error)]
-pub struct ListDockerRegistryAccounts {
+pub struct ListImageRegistryAccounts {
   /// Optionally filter by accounts with a specific domain.
   pub domain: Option<String>,
   /// Optionally filter by accounts with a specific username.
@@ -128,5 +132,5 @@ pub struct ListDockerRegistryAccounts {
 }
 
 #[typeshare]
-pub type ListDockerRegistryAccountsResponse =
-  Vec<DockerRegistryAccount>;
+pub type ListImageRegistryAccountsResponse =
+  Vec<ImageRegistryAccount>;

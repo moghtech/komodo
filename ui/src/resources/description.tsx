@@ -1,9 +1,9 @@
 import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { UsableResource } from ".";
 import { notifications } from "@mantine/notifications";
-import TextUpdateModal from "@/ui/text-update-modal";
+import { TextUpdateModal } from "mogh_ui";
 import { Button, Text } from "@mantine/core";
-import { fmtUpperCamelcase } from "@/lib/formatting";
+import { fmtUpperCamelcase } from "mogh_ui";
 
 export default function ResourceDescription({
   type,
@@ -59,9 +59,9 @@ export default function ResourceDescription({
         >
           <Text
             className="text-ellipsis"
-            maw={{ xl: 600, xl2: 750, xl3: 900, xl4: 1050 }}
+            maw={{ base: 350, md: 600, xl2: 750, xl3: 900, xl4: 1050 }}
           >
-            {resource?.description || "Set Description"}
+            {resource?.description?.split("\n")[0] || "Set Description"}
           </Text>
         </Button>
       )}

@@ -19,6 +19,7 @@ mod monitor;
 mod network;
 mod periphery;
 mod permission;
+mod report;
 mod resource;
 mod schedule;
 mod stack;
@@ -71,6 +72,7 @@ async fn app() -> anyhow::Result<()> {
     resource::spawn_action_state_refresh_loop();
     schedule::spawn_schedule_executor();
     helpers::prune::spawn_prune_loop();
+    report::spawn_reporting_loop();
   }
   .instrument(startup_span)
   .await;

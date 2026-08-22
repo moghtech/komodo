@@ -267,7 +267,7 @@ pub struct Mount {
   ///   - `tmpfs` Create a tmpfs with the given options. The mount source cannot be specified for tmpfs. - `npipe` Mounts a named pipe from the host into the container. Must exist prior to creating the container.
   ///   - `cluster` a Swarm cluster volume
   #[serde(default, rename = "Type")]
-  pub typ: MountTypeEnum,
+  pub typ: MountType,
 
   /// Whether the mount should be read-only.
   #[serde(rename = "ReadOnly")]
@@ -301,10 +301,8 @@ pub struct Mount {
   Default,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum MountTypeEnum {
+pub enum MountType {
   #[default]
-  #[serde(rename = "")]
-  Empty,
   #[serde(rename = "bind")]
   Bind,
   #[serde(rename = "volume")]
@@ -642,4 +640,16 @@ pub struct TlsInfo {
   /// The base64-url-safe-encoded raw public key bytes of the issuer.
   #[serde(rename = "CertIssuerPublicKey")]
   pub cert_issuer_public_key: Option<String>,
+}
+
+/// A map of topological domains to topological segments. For in depth details, see documentation for the Topology object in the CSI specification.
+#[typeshare]
+#[derive(
+  Debug, Clone, Default, PartialEq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct Topology {
+  #[serde(rename = "Segments")]
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub segments: Option<HashMap<String, String>>,
 }

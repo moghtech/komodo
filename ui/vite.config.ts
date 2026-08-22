@@ -12,15 +12,46 @@ export default defineConfig({
     allowedHosts: process.env.ALLOWED_HOSTS?.split(","),
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      { find: "@", replacement: path.resolve(import.meta.dirname, "./src") },
+      // monaco-editor >= 0.53 has an exports map ("./*.js": "./esm/vs/*.js"),
+      // so legacy deep imports like "monaco-editor/esm/vs/..." no longer
+      // resolve. monaco-worker-manager (used by monaco-yaml's worker) still
+      // imports the legacy path — rewrite it to the exports-map form.
+      {
+        find: /^monaco-editor\/esm\/vs\/(.*)$/,
+        replacement: "monaco-editor/$1",
+      },
+    ],
+    dedupe: [
+      "@mantine/core",
+      "@mantine/form",
+      "@mantine/hooks",
+      "@mantine/notifications",
+      "@monaco-editor/react",
+      "@tanstack/react-table",
+      "@tanstack/react-query",
+      "lucide-react",
+      "mogh_auth_client",
+      "monaco-editor",
+      "monaco-yaml",
+      "react",
+      "react-dom",
+      "react-router-dom",
+    ],
+  },
+  optimizeDeps: {
+    exclude: ["mogh_ui"],
+    // path-browserify is a CJS dep of monaco-yaml's yaml.worker. Vite's dep
+    // scanner doesn't traverse `?worker` graphs, so without this it gets
+    // served raw ("module is not defined" inside the worker). Force it
+    // through prebundling to get CJS -> ESM interop.
+    include: ["path-browserify"],
   },
   css: {
     preprocessorOptions: {
       scss: {
-        // api: "modern-compiler",
-        additionalData: `@use "${path.join(process.cwd(), "src/theme/index").replace(/\\/g, "/")}" as theme;`,
+        additionalData: '@use "mogh_ui/theme.scss" as theme;',
       },
     },
   },

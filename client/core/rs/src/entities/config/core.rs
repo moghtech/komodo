@@ -23,7 +23,7 @@ use crate::{
   },
 };
 
-use super::{DockerRegistry, GitProvider, empty_or_redacted};
+use super::{GitProvider, ImageRegistry, empty_or_redacted};
 
 /// # Komodo Core Environment Variables
 ///
@@ -118,12 +118,18 @@ pub struct Env {
 
   /// Override `transparent_mode`
   pub komodo_transparent_mode: Option<bool>,
+  /// Override `default_pagination_limit`
+  pub komodo_default_pagination_limit: Option<u64>,
   /// Override `ui_write_disabled`
   pub komodo_ui_write_disabled: Option<bool>,
   /// Override `enable_new_users`
   pub komodo_enable_new_users: Option<bool>,
   /// Override `disable_user_registration`
   pub komodo_disable_user_registration: Option<bool>,
+  /// Override `disable_local_user_registration`
+  pub komodo_disable_local_user_registration: Option<bool>,
+  /// Override `disable_oidc_user_registration`
+  pub komodo_disable_oidc_user_registration: Option<bool>,
   /// Override `lock_login_credentials_for`
   pub komodo_lock_login_credentials_for: Option<Vec<String>>,
   /// Override `disable_confirm_dialog`
@@ -170,6 +176,8 @@ pub struct Env {
   pub komodo_oidc_additional_audiences: Option<Vec<String>>,
   /// Override `oidc_additional_audiences` from file
   pub komodo_oidc_additional_audiences_file: Option<PathBuf>,
+  /// Override `oidc_auto_redirect`
+  pub komodo_oidc_auto_redirect: Option<bool>,
 
   /// Override `google_oauth.enabled`
   pub komodo_google_oauth_enabled: Option<bool>,
@@ -206,6 +214,17 @@ pub struct Env {
   pub komodo_cors_allow_credentials: Option<bool>,
   /// Override `session_allow_cross_site`
   pub komodo_session_allow_cross_site: Option<bool>,
+
+  /// Override `x_content_type_options`
+  pub komodo_x_content_type_options: Option<String>,
+  /// Override `x_frame_options`
+  pub komodo_x_frame_options: Option<String>,
+  /// Override `x_xss_protection`
+  pub komodo_x_xss_protection: Option<String>,
+  /// Override `x_referrer_policy`
+  pub komodo_referrer_policy: Option<String>,
+  /// Override `content_security_policy`
+  pub komodo_content_security_policy: Option<String>,
 
   /// Override `database.uri`
   #[serde(alias = "komodo_mongo_uri")]
@@ -276,6 +295,11 @@ pub struct Env {
   pub komodo_ssl_key_file: Option<String>,
   /// Override `ssl_cert_file`
   pub komodo_ssl_cert_file: Option<String>,
+
+  /// Override `reporting_enabled`
+  pub komodo_reporting_enabled: Option<bool>,
+  /// Override `reporting_private_key`
+  pub komodo_reporting_private_key: Option<String>,
 
   /// Override `ui_path`
   pub komodo_ui_path: Option<String>,
@@ -380,6 +404,11 @@ pub struct CoreConfig {
   #[serde(default)]
   pub timezone: String,
 
+  /// Set the default pagination limit for the API and UI to use.
+  /// Default: 50
+  #[serde(default = "default_default_pagination_limit")]
+  pub default_pagination_limit: u64,
+
   /// Disable user ability to use the UI to update resource configuration.
   #[serde(default)]
   pub ui_write_disabled: bool,
@@ -457,6 +486,20 @@ pub struct CoreConfig {
   #[serde(default)]
   pub disable_user_registration: bool,
 
+  /// Disable local (username/password) user registration only.
+  /// When set, the "Sign Up" button is hidden and local signups are blocked,
+  /// but OIDC and other external provider signups are still allowed.
+  /// If not set, falls back to `disable_user_registration`.
+  #[serde(default)]
+  pub disable_local_user_registration: Option<bool>,
+
+  /// Disable OIDC user registration only.
+  /// When set, new users cannot register via OIDC,
+  /// but local and other provider signups are still allowed.
+  /// If not set, falls back to `disable_user_registration`.
+  #[serde(default)]
+  pub disable_oidc_user_registration: Option<bool>,
+
   /// List of usernames for which the update username / password
   /// APIs are disabled. Used by demo to lock the 'demo' : 'demo' login.
   ///
@@ -525,6 +568,12 @@ pub struct CoreConfig {
   #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub oidc_additional_audiences: Vec<String>,
 
+  /// Automatically redirect unauthenticated users to the OIDC provider
+  /// instead of showing the login page.
+  /// Users can bypass the redirect by appending `?disableAutoLogin` to the login URL.
+  #[serde(default)]
+  pub oidc_auto_redirect: bool,
+
   // =========
   // = Oauth =
   // =========
@@ -570,6 +619,37 @@ pub struct CoreConfig {
   /// as the session cookie will be lost on redirect with auth provider.
   #[serde(default)]
   pub session_allow_cross_site: bool,
+
+  // ====================
+  // = Security Headers =
+  // ====================
+  /// `X-Content-Type-Options` header value.
+  /// Default is `nosniff`. Set as empty string
+  /// to omit the header.
+  #[serde(default = "default_x_content_type_options")]
+  pub x_content_type_options: String,
+  /// `X-Frame-Options` header value. Return an empty string to
+  /// omit the header entirely and allow iframe on any origin. Use `"SAMEORIGIN"` to allow
+  /// same-origin embedding only. Defaults to `"DENY"`.
+  #[serde(default = "default_x_frame_options")]
+  pub x_frame_options: String,
+  /// `X-XSS-PROTECTION` header value. Return an empty string to
+  /// omit the header entirely. Default: `1; mode=block`
+  #[serde(default = "default_x_xss_protection")]
+  pub x_xss_protection: String,
+  /// Apply Referrer Policy directives.
+  /// If empty string, no header is applied.
+  /// Default: `strict-origin-when-cross-origin`
+  #[serde(default = "default_referrer_policy")]
+  pub referrer_policy: String,
+  /// Apply Content Security Policy directives.
+  /// If empty string, no header is applied.
+  /// Default: None
+  ///
+  /// Example:
+  /// `default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'`
+  #[serde(default)]
+  pub content_security_policy: String,
 
   // ============
   // = Webhooks =
@@ -658,14 +738,17 @@ pub struct CoreConfig {
   // ======================
   // = Registry Providers =
   // ======================
-  /// Configure docker credentials used to push / pull images.
-  /// Supports any docker image repository.
+  /// Configure image registry credentials used to push / pull images.
+  ///
+  /// Pre v2.3.0, called `docker_registries`
   #[serde(
     default,
+    alias = "image_registry",
     alias = "docker_registry",
+    alias = "docker_registries",
     skip_serializing_if = "Vec::is_empty"
   )]
-  pub docker_registries: Vec<DockerRegistry>,
+  pub image_registries: Vec<ImageRegistry>,
 
   // ===========
   // = Secrets =
@@ -692,6 +775,28 @@ pub struct CoreConfig {
   /// Default: `/config/ssl/cert.pem`.
   #[serde(default = "default_ssl_cert_file")]
   pub ssl_cert_file: String,
+
+  // =============
+  // = Reporting =
+  // =============
+  /// If passed, enables semi-anonymous reporting to https://mogh.tech/komodo/report.
+  /// Reports are only identified by the specific
+  /// private key ([CoreConfig::reporting_private_key]) used
+  /// to sign the report.
+  #[serde(default)]
+  pub reporting_enabled: bool,
+
+  /// Private key to sign the core reports.
+  ///
+  /// Supports openssl generated pem file, `openssl genpkey -algorithm X25519 -out private.key`.
+  /// To load from file, use `private_key = "file:/path/to/private.key"`.
+  ///
+  /// If a file is specified and does not exist, will try to generate one at the path
+  /// and use it going forward.
+  ///
+  /// Default: file:/config/keys/reporting.key
+  #[serde(default = "default_reporting_private_key")]
+  pub reporting_private_key: String,
 
   // =========
   // = Other =
@@ -743,6 +848,14 @@ fn default_private_key() -> String {
   String::from("file:/config/keys/core.key")
 }
 
+fn default_reporting_private_key() -> String {
+  String::from("file:/config/keys/reporting.key")
+}
+
+fn default_default_pagination_limit() -> u64 {
+  50
+}
+
 fn default_ui_path() -> String {
   "/app/ui".to_string()
 }
@@ -765,6 +878,22 @@ fn default_auth_rate_limit_max_attempts() -> u16 {
 
 fn default_auth_rate_limit_window_seconds() -> u64 {
   15
+}
+
+fn default_x_content_type_options() -> String {
+  String::from("nosniff")
+}
+
+fn default_x_frame_options() -> String {
+  String::from("DENY")
+}
+
+fn default_x_xss_protection() -> String {
+  String::from("1; mode=block")
+}
+
+fn default_referrer_policy() -> String {
+  String::from("strict-origin-when-cross-origin")
 }
 
 fn default_sync_directory() -> PathBuf {
@@ -807,10 +936,11 @@ impl Default for CoreConfig {
       port: default_core_port(),
       bind_ip: default_core_bind_ip(),
       internet_interface: Default::default(),
-      private_key: Default::default(),
+      private_key: default_private_key(),
       periphery_public_keys: Default::default(),
       passkey: Default::default(),
       timezone: Default::default(),
+      default_pagination_limit: default_default_pagination_limit(),
       ui_write_disabled: Default::default(),
       disable_confirm_dialog: Default::default(),
       disable_websocket_reconnect: Default::default(),
@@ -826,6 +956,8 @@ impl Default for CoreConfig {
       transparent_mode: Default::default(),
       enable_new_users: Default::default(),
       disable_user_registration: Default::default(),
+      disable_local_user_registration: Default::default(),
+      disable_oidc_user_registration: Default::default(),
       lock_login_credentials_for: Default::default(),
       disable_non_admin_create: Default::default(),
       jwt_secret: Default::default(),
@@ -837,6 +969,7 @@ impl Default for CoreConfig {
       oidc_client_secret: Default::default(),
       oidc_use_full_email: Default::default(),
       oidc_additional_audiences: Default::default(),
+      oidc_auto_redirect: Default::default(),
       google_oauth: Default::default(),
       github_oauth: Default::default(),
       auth_rate_limit_disabled: Default::default(),
@@ -847,6 +980,11 @@ impl Default for CoreConfig {
       cors_allowed_origins: Default::default(),
       cors_allow_credentials: Default::default(),
       session_allow_cross_site: Default::default(),
+      x_content_type_options: default_x_content_type_options(),
+      x_frame_options: default_x_frame_options(),
+      x_xss_protection: default_x_xss_protection(),
+      referrer_policy: default_referrer_policy(),
+      content_security_policy: Default::default(),
       webhook_secret: Default::default(),
       webhook_base_url: Default::default(),
       logging: Default::default(),
@@ -858,11 +996,13 @@ impl Default for CoreConfig {
       monitoring_interval: default_monitoring_interval(),
       aws: Default::default(),
       git_providers: Default::default(),
-      docker_registries: Default::default(),
+      image_registries: Default::default(),
       secrets: Default::default(),
       ssl_enabled: Default::default(),
       ssl_key_file: default_ssl_key_file(),
       ssl_cert_file: default_ssl_cert_file(),
+      reporting_enabled: Default::default(),
+      reporting_private_key: default_reporting_private_key(),
       ui_path: default_ui_path(),
       ui_index_force_no_cache: Default::default(),
       sync_directory: default_sync_directory(),
@@ -888,6 +1028,7 @@ impl CoreConfig {
       periphery_public_keys: config.periphery_public_keys,
       passkey: config.passkey.as_deref().map(empty_or_redacted),
       timezone: config.timezone,
+      default_pagination_limit: config.default_pagination_limit,
       first_server_address: config.first_server_address,
       first_server_name: config.first_server_name,
       jwt_secret: empty_or_redacted(&config.jwt_secret),
@@ -909,6 +1050,10 @@ impl CoreConfig {
       enable_fancy_toml: config.enable_fancy_toml,
       enable_new_users: config.enable_new_users,
       disable_user_registration: config.disable_user_registration,
+      disable_local_user_registration: config
+        .disable_local_user_registration,
+      disable_oidc_user_registration: config
+        .disable_oidc_user_registration,
       disable_non_admin_create: config.disable_non_admin_create,
       lock_login_credentials_for: config.lock_login_credentials_for,
       local_auth: config.local_auth,
@@ -932,6 +1077,7 @@ impl CoreConfig {
         .iter()
         .map(|aud| empty_or_redacted(aud))
         .collect(),
+      oidc_auto_redirect: config.oidc_auto_redirect,
       google_oauth: NamedOauthConfig {
         enabled: config.google_oauth.enabled,
         client_id: empty_or_redacted(&config.google_oauth.client_id),
@@ -954,6 +1100,11 @@ impl CoreConfig {
       cors_allowed_origins: config.cors_allowed_origins,
       cors_allow_credentials: config.cors_allow_credentials,
       session_allow_cross_site: config.session_allow_cross_site,
+      x_content_type_options: config.x_content_type_options,
+      x_frame_options: config.x_frame_options,
+      x_xss_protection: config.x_xss_protection,
+      referrer_policy: config.referrer_policy,
+      content_security_policy: config.content_security_policy,
       webhook_secret: empty_or_redacted(&config.webhook_secret),
       webhook_base_url: config.webhook_base_url,
       database: config.database.sanitized(),
@@ -978,8 +1129,8 @@ impl CoreConfig {
           provider
         })
         .collect(),
-      docker_registries: config
-        .docker_registries
+      image_registries: config
+        .image_registries
         .into_iter()
         .map(|mut provider| {
           provider.accounts.iter_mut().for_each(|account| {
@@ -988,10 +1139,18 @@ impl CoreConfig {
           provider
         })
         .collect(),
-
       ssl_enabled: config.ssl_enabled,
       ssl_key_file: config.ssl_key_file,
       ssl_cert_file: config.ssl_cert_file,
+      reporting_enabled: config.reporting_enabled,
+      reporting_private_key: if self
+        .reporting_private_key
+        .starts_with("file:")
+      {
+        self.reporting_private_key.clone()
+      } else {
+        empty_or_redacted(&self.reporting_private_key)
+      },
       ui_path: config.ui_path,
       ui_index_force_no_cache: config.ui_index_force_no_cache,
       repo_directory: config.repo_directory,
@@ -1031,6 +1190,21 @@ impl mogh_server::ServerConfig for &CoreConfig {
   }
   fn ssl_cert_file(&self) -> &str {
     &self.ssl_cert_file
+  }
+  fn x_content_type_options(&self) -> &str {
+    &self.x_content_type_options
+  }
+  fn x_frame_options(&self) -> &str {
+    &self.x_frame_options
+  }
+  fn x_xss_protection(&self) -> &str {
+    &self.x_xss_protection
+  }
+  fn referrer_policy(&self) -> &str {
+    &self.referrer_policy
+  }
+  fn content_security_policy(&self) -> &str {
+    &self.content_security_policy
   }
 }
 

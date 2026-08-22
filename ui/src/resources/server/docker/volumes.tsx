@@ -1,13 +1,14 @@
 import { ReactNode } from "react";
 import { useServerDockerSearch } from ".";
-import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import Section from "@/ui/section";
+import { useDockerSelectionState, useRead } from "@/lib/hooks";
+import DockerBatchExecutions from "@/components/docker/batch-executions";
+import { filterBySplit } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Prune } from "../executions";
 import { Badge, Group } from "@mantine/core";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import DockerResourceLink from "@/components/docker/link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function ServerVolumes({
   id,
@@ -17,28 +18,34 @@ export default function ServerVolumes({
   titleOther: ReactNode;
 }) {
   const [search, setSearch] = useServerDockerSearch();
+  const selectionState = useDockerSelectionState("Volume");
   const volumes =
-    useRead("ListDockerVolumes", { server: id }, { refetchInterval: 10_000 })
-      .data ?? [];
+    useRead("ListVolumes", { server: id }, { refetchInterval: 10_000 }).data ??
+    [];
 
   const allInUse = volumes.every((volume) => volume.in_use);
 
   const filtered = filterBySplit(volumes, search, (volume) => volume.name);
 
   return (
-    <Section
-      titleOther={titleOther}
-      actions={
+    <Section titleOther={titleOther}>
+      <Group justify="space-between">
         <Group>
+          <DockerBatchExecutions type="Volume" />
           {!allInUse && <Prune serverId={id} type="Volumes" />}
-          <SearchInput value={search} onSearch={setSearch} />
         </Group>
-      }
-    >
+
+        <SearchInput value={search} onSearch={setSearch} />
+      </Group>
+
       <DataTable
         mih="60vh"
         tableKey="server-volumes"
         data={filtered}
+        selectOptions={{
+          selectKey: ({ name }) => `${id} ${name}`,
+          state: selectionState,
+        }}
         columns={[
           {
             accessorKey: "name",
@@ -55,7 +62,6 @@ export default function ServerVolumes({
                 }
               />
             ),
-            size: 200,
           },
           {
             accessorKey: "driver",

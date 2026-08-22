@@ -1,40 +1,54 @@
 import TagsFilter from "@/components/tags/filter";
-import { useFilterResources, useRead } from "@/lib/hooks";
+import { keepPreviousData } from "@tanstack/react-query";
+import {
+  useDebouncedTermSearch,
+  useRead,
+  useTagsFilter,
+  useTemplatesQueryBehavior,
+} from "@/lib/hooks";
 import { usableResourcePath } from "@/lib/utils";
 import {
   RequiredResourceComponents,
   ResourceComponents,
   UsableResource,
 } from "@/resources";
-import { ICONS } from "@/theme/icons";
-import Section from "@/ui/section";
+import { ICONS } from "@/lib/icons";
+import { Section } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
-import { Types } from "komodo_client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import ListPagination from "@/components/list-pagination";
 import { Link } from "react-router-dom";
 import DashboardNoResources from "./no-resources";
-import ShowHideButton from "@/ui/show-hide-button";
-import SearchInput from "@/ui/search-input";
+import { ShowHideButton } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
+import TemplateQuerySelector from "@/components/template-query-selector";
 
 export default function DashboardTables() {
-  const [search, setSearch] = useState("");
+  const { search, setSearch, terms } = useDebouncedTermSearch();
+
+  const Tables = useMemo(
+    () =>
+      Object.entries(ResourceComponents).map(([type, RC]) => (
+        <TableSection
+          key={type}
+          type={type as UsableResource}
+          RC={RC}
+          terms={terms}
+        />
+      )),
+    [terms],
+  );
   return (
     <Stack gap="xl">
       <Group justify="end">
+        <TemplateQuerySelector />
         <TagsFilter />
         <SearchInput value={search} onSearch={setSearch} />
       </Group>
 
       <DashboardNoResources />
 
-      {Object.entries(ResourceComponents).map(([type, RC]) => (
-        <TableSection
-          key={type}
-          type={type as UsableResource}
-          RC={RC}
-          search={search}
-        />
-      ))}
+      {Tables}
     </Stack>
   );
 }
@@ -42,24 +56,53 @@ export default function DashboardTables() {
 function TableSection({
   type,
   RC,
-  search,
+  terms,
 }: {
   type: UsableResource;
   RC: RequiredResourceComponents;
-  search?: string;
+  terms: string[];
 }) {
-  const resources = useRead(`List${type}s`, {}).data;
+  const [show, setShow] = useState(true);
+  const tags = useTagsFilter();
+  const [templates] = useTemplatesQueryBehavior();
 
-  const filtered = useFilterResources(
-    resources as Types.ResourceListItem<unknown>[],
-    search,
+  const [page, setPage] = useState(0);
+  // Server side sort, passed up from the table.
+  const [sort, setSort] = useState<{
+    sort_by?: string;
+    sort_desc?: boolean;
+  }>({});
+  // Set to page 0 whenever any filter or the sort changes,
+  // otherwise the query can point past the last page and come back empty.
+  useEffect(() => {
+    setPage(0);
+  }, [terms, tags, templates, sort.sort_by, sort.sort_desc]);
+
+  const resources =
+    useRead(
+      `List${type}s`,
+      {
+        query: { terms, tags, templates },
+        page,
+        sort_by: sort.sort_by as any,
+        sort_desc: sort.sort_desc,
+      },
+      {
+        refetchInterval: 15_000,
+        // Keep the previous rows visible while fetching after a query key
+        // change (page / sort / search / filters) to prevent table flashing.
+        placeholderData: keepPreviousData,
+      },
+    ).data ?? [];
+
+  const Table = useMemo(
+    () => show && <RC.Table resources={resources} onServerSort={setSort} />,
+    [resources, show],
   );
 
-  let count = filtered.length;
-
-  const [show, setShow] = useState(true);
-
-  if (!count) return;
+  // Keep the section visible on empty pages past the first,
+  // so the pagination controls remain available to navigate back.
+  if (!resources.length && page === 0) return;
 
   const Icon = ICONS[type];
 
@@ -67,6 +110,7 @@ function TableSection({
     <Section
       key={type}
       icon={<Icon size="1.3rem" />}
+      gap="0.2rem"
       titleNode={
         <Text
           fz="h2"
@@ -77,9 +121,20 @@ function TableSection({
           {type + "s"}
         </Text>
       }
-      actions={<ShowHideButton show={show} setShow={setShow} />}
+      titleRight={
+        <Group>
+          <ShowHideButton show={show} setShow={setShow} />
+          <RC.New />
+          <RC.BatchExecutions />
+          <ListPagination
+            page={page}
+            setPage={setPage}
+            count={resources.length}
+          />
+        </Group>
+      }
     >
-      {show && <RC.Table resources={filtered} />}
+      {Table}
     </Section>
   );
 }

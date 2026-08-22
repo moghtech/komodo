@@ -1,21 +1,21 @@
 import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import { ReactNode, useState } from "react";
 import { useSwarmDockerSearch } from "..";
-import Section from "@/ui/section";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { Section } from "mogh_ui";
+import { DataTable, SortableHeader } from "mogh_ui";
 import SwarmResourceLink from "@/components/swarm/link";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import {
   swarmNodeAvailabilityIntention,
   swarmNodeRoleIntention,
   swarmNodeStateIntention,
 } from "@/lib/color";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import { RowSelectionState } from "@tanstack/react-table";
 import UpdateSwarmNode from "./update";
 import { HoverCard } from "@mantine/core";
-import LabelsGroup from "@/ui/labels-group";
+import { LabelsGroup } from "mogh_ui";
 
 export default function SwarmNodes({
   id,
@@ -67,7 +67,6 @@ export default function SwarmNodes({
                 name={row.original.Hostname}
               />
             ),
-            size: 200,
           },
           {
             accessorKey: "ID",
@@ -75,7 +74,6 @@ export default function SwarmNodes({
               <SortableHeader column={column} title="ID" />
             ),
             cell: ({ row }) => row.original.ID ?? "Unknown",
-            size: 200,
           },
           {
             accessorKey: "Role",
@@ -149,7 +147,6 @@ export default function SwarmNodes({
               row.original.UpdatedAt
                 ? new Date(row.original.UpdatedAt).toLocaleString()
                 : "Unknown",
-            size: 200,
           },
           // {
           //   accessorKey: "CreatedAt",

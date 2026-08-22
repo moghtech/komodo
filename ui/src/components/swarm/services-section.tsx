@@ -1,12 +1,12 @@
-import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section, { SectionProps } from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
+import { filterBySplit } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Section, SectionProps } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import SwarmResourceLink from "./link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export interface SwarmServicesSectionProps extends SectionProps {
   id: string;
@@ -66,7 +66,6 @@ export default function SwarmServicesSection({
                   name={row.original.Name}
                 />
               ),
-              size: 200,
             },
             {
               accessorKey: "ID",
@@ -74,7 +73,6 @@ export default function SwarmServicesSection({
                 <SortableHeader column={column} title="ID" />
               ),
               cell: ({ row }) => row.original.ID ?? "Unknown",
-              size: 200,
             },
             {
               accessorKey: "UpdatedAt",
@@ -85,7 +83,6 @@ export default function SwarmServicesSection({
                 row.original.UpdatedAt
                   ? new Date(row.original.UpdatedAt).toLocaleString()
                   : "Unknown",
-              size: 200,
             },
             {
               accessorKey: "CreatedAt",
@@ -96,7 +93,6 @@ export default function SwarmServicesSection({
                 row.original.CreatedAt
                   ? new Date(row.original.CreatedAt).toLocaleString()
                   : "Unknown",
-              size: 200,
             },
           ]}
         />

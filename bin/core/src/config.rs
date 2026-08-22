@@ -235,6 +235,9 @@ pub fn core_config() -> &'static CoreConfig {
         env.komodo_oidc_additional_audiences,
       )
       .unwrap_or(config.oidc_additional_audiences),
+      oidc_auto_redirect: env
+        .komodo_oidc_auto_redirect
+        .unwrap_or(config.oidc_auto_redirect),
       google_oauth: NamedOauthConfig {
         enabled: env
           .komodo_google_oauth_enabled
@@ -312,6 +315,21 @@ pub fn core_config() -> &'static CoreConfig {
       session_allow_cross_site: env
         .komodo_session_allow_cross_site
         .unwrap_or(config.session_allow_cross_site),
+      x_content_type_options: env
+        .komodo_x_content_type_options
+        .unwrap_or(config.x_content_type_options),
+      x_frame_options: env
+        .komodo_x_frame_options
+        .unwrap_or(config.x_frame_options),
+      x_xss_protection: env
+        .komodo_x_xss_protection
+        .unwrap_or(config.x_xss_protection),
+      referrer_policy: env
+        .komodo_referrer_policy
+        .unwrap_or(config.referrer_policy),
+      content_security_policy: env
+        .komodo_content_security_policy
+        .unwrap_or(config.content_security_policy),
       resource_poll_interval: env
         .komodo_resource_poll_interval
         .unwrap_or(config.resource_poll_interval),
@@ -330,6 +348,9 @@ pub fn core_config() -> &'static CoreConfig {
       transparent_mode: env
         .komodo_transparent_mode
         .unwrap_or(config.transparent_mode),
+      default_pagination_limit: env
+        .komodo_default_pagination_limit
+        .unwrap_or(config.default_pagination_limit),
       ui_write_disabled: env
         .komodo_ui_write_disabled
         .unwrap_or(config.ui_write_disabled),
@@ -345,6 +366,12 @@ pub fn core_config() -> &'static CoreConfig {
       disable_user_registration: env
         .komodo_disable_user_registration
         .unwrap_or(config.disable_user_registration),
+      disable_local_user_registration: env
+        .komodo_disable_local_user_registration
+        .or(config.disable_local_user_registration),
+      disable_oidc_user_registration: env
+        .komodo_disable_oidc_user_registration
+        .or(config.disable_oidc_user_registration),
       disable_non_admin_create: env
         .komodo_disable_non_admin_create
         .unwrap_or(config.disable_non_admin_create),
@@ -406,6 +433,12 @@ pub fn core_config() -> &'static CoreConfig {
       ssl_cert_file: env
         .komodo_ssl_cert_file
         .unwrap_or(config.ssl_cert_file),
+      reporting_enabled: env
+        .komodo_reporting_enabled
+        .unwrap_or(config.reporting_enabled),
+      reporting_private_key: env
+        .komodo_reporting_private_key
+        .unwrap_or(config.reporting_private_key),
       ui_path: env.komodo_ui_path.unwrap_or(config.ui_path),
       ui_index_force_no_cache: env
         .komodo_ui_index_force_no_cache
@@ -423,7 +456,7 @@ pub fn core_config() -> &'static CoreConfig {
       // These can't be overridden on env
       secrets: config.secrets,
       git_providers: config.git_providers,
-      docker_registries: config.docker_registries,
+      image_registries: config.image_registries,
     }
   })
 }

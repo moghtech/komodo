@@ -1,8 +1,14 @@
-import { stackStateIntention, hexColorByIntention } from "@/lib/color";
-import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { stackStateIntention } from "@/lib/color";
+import {
+  useInvalidate,
+  useListItem,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import { RequiredResourceComponents } from "@/resources";
 import StackTable from "./table";
 import StackTabs from "./tabs";
@@ -32,13 +38,16 @@ import ResourceLink from "@/resources/link";
 import HashCompare from "@/components/hash-compare";
 import StackUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
+import { hexColorByIntention } from "mogh_ui";
 
-export function useStack(id: string | undefined, useName?: boolean) {
-  return useRead("ListStacks", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+export function useStack(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Stack", id, useName, refetchInterval);
 }
 
 export function useFullStack(id: string) {
@@ -48,9 +57,11 @@ export function useFullStack(id: string) {
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
   Types.StackInfo,
-  Types.StackListItemInfo
+  Types.StackListItemInfo,
+  Types.StackQuerySpecifics
 > = {
-  useList: () => useRead("ListStacks", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListStacks", { query, limit, page }).data,
   useListItem: useStack,
   useFull: useFullStack,
 
@@ -115,7 +126,7 @@ export const StackComponents: RequiredResourceComponents<
   Table: StackTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const info = useRead("ListStacks", {}).data?.find((r) => r.id === id)?.info;
+    const info = useStack(id)?.info;
     const color = noColor
       ? undefined
       : info &&

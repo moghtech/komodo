@@ -1,9 +1,9 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use anyhow::{Context, anyhow};
 use async_timing_util::wait_until_timelength;
 use bollard::{models, query_parameters::StatsOptionsBuilder};
-use command::run_standard_command;
+use command::{CommandOptions, run_standard_command};
 use futures_util::StreamExt;
 use komodo_client::entities::docker::{
   container::ContainerStats,
@@ -59,13 +59,19 @@ pub async fn get_container_stats(
                            \"Name\":\"{{ .Name }}\", \
                            \"NetIO\":\"{{ .NetIO }}\",\
                            \"PIDs\":\"{{ .PIDs }}\"}'";
+  // `--` follows the flags, so a name beginning with `-` is not
+  // parsed as a flag and the flags are not parsed as container names.
   let container_name = match container_name {
-    Some(name) => format!(" {name}"),
+    Some(name) => format!(" -- {name}"),
     None => "".to_string(),
   };
   let command =
-    format!("docker stats{container_name} --no-stream {format}");
-  let output = run_standard_command(&command, None).await;
+    format!("docker stats --no-stream {format}{container_name}");
+  let output = run_standard_command(
+    &command,
+    CommandOptions::default().timeout(Duration::from_secs(10)),
+  )
+  .await;
   if output.success() {
     output
       .stdout

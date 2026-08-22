@@ -3,13 +3,15 @@
 Community-built tools, guides, and alerter integrations for Komodo.
 
 ## 3rd Party Tools
-- [Ansible Role Komodo](https://github.com/bpbradley/ansible-role-komodo) by [bpbradley](https://github.com/bpbradley)
 - [Komodo Import](https://foxxmd.github.io/komodo-import/docs/quickstart/) by [FoxxMD](https://github.com/FoxxMD)
+- [Ansible Role Komodo](https://github.com/bpbradley/ansible-role-komodo) by [bpbradley](https://github.com/bpbradley)
+- [Terraform Provider Komodo](https://registry.terraform.io/providers/sebastianfs82/komodo/latest/docs) by [sebastianfs82](https://github.com/sebastianfs82)
 ## Posts and Guides
 - [Migrating to Komodo](https://blog.foxxmd.dev/posts/migrating-to-komodo) by [FoxxMD](https://github.com/FoxxMD)
 - [FAQ, Tips, and Tricks](https://blog.foxxmd.dev/posts/komodo-tips-tricks) by [FoxxMD](https://github.com/FoxxMD)
 - [Compose Environments Explained](https://blog.foxxmd.dev/posts/compose-envs-explained) by [FoxxMD](https://github.com/FoxxMD)
 - [How To: Automate version updates for your self-hosted Docker containers with Gitea, Renovate, and Komodo](https://nickcunningh.am/blog/how-to-automate-version-updates-for-your-self-hosted-docker-containers-with-gitea-renovate-and-komodo) by [TheNickOfTime](https://github.com/TheNickOfTime)
+- [Scaling Renovate + Komodo](https://blog.foxxmd.dev/posts/scaling-renovate/) by [FoxxMD](https://github.com/FoxxMD)
 - [Setting up Komodo, comparison to Portainer, and FAQ](https://skyblog.one/komodo-the-better-alternative-to-portainer-for-container-management) by [Skyfay](https://skyblog.one/authors/)
 ## Community Alerters
 These provide alerting implementations which can be used with the `Custom` Alerter type.

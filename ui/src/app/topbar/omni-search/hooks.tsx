@@ -1,33 +1,37 @@
 import {
-  ResourceMap,
   SettingsView,
   useAllResources,
   useRead,
   useSettingsView,
   useUser,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { terminalLink, usableResourcePath } from "@/lib/utils";
+import { ICONS } from "@/lib/icons";
+import {
+  terminalLink,
+  termMatchesTypeKeyword,
+  usableResourcePath,
+} from "@/lib/utils";
 import { RESOURCE_TARGETS, ResourceComponents } from "@/resources";
 import {
-  spotlight,
+  createSpotlight,
   SpotlightActionData,
   SpotlightActionGroupData,
 } from "@mantine/spotlight";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TemplateMarker } from "@/components/template-marker";
 import { DOCKER_LINK_ICONS } from "@/components/docker/link";
 import { Types } from "komodo_client";
+import { hexColorByIntention, useDebounce } from "mogh_ui";
+import { containerStateIntention, swarmStateIntention } from "@/lib/color";
+import { keepPreviousData } from "@tanstack/react-query";
 
 const ITEM_LIMIT = 7;
-let count = 0;
 
-export function useOmniSearch(): {
-  search: string;
-  setSearch: (value: string) => void;
-  actions: SpotlightActionGroupData[];
-} {
+// Use a dedicated store to allow selection control below.
+const [spotlightStore, spotlight] = createSpotlight();
+
+export function useOmniSearch(opened: boolean) {
   const navigate = useNavigate();
   const nav = useCallback(
     (to: string) => {
@@ -43,42 +47,69 @@ export function useOmniSearch(): {
       search
         .toLowerCase()
         .split(" ")
+        .map((term) => term.trim())
         .filter((term) => term),
     [search],
   );
 
-  const _containers = useRead(
-    "ListAllDockerContainers",
-    {},
-    { refetchInterval: 15_000 },
-  ).data;
-  const containers = useMemo(() => {
-    return _containers?.filter((c) => {
-      if (searchTerms.length === 0) return true;
-      const lower = c.name.toLowerCase();
-      return searchTerms.every(
-        (term) => lower.includes(term) || "containers".includes(term),
-      );
-    });
-  }, [_containers, searchTerms]);
+  const debouncedTerms = useDebounce(searchTerms, 500);
 
-  const _terminals = useRead(
-    "ListTerminals",
-    {},
-    { refetchInterval: 15_000 },
-  ).data;
-  const terminals = useMemo(() => {
-    return _terminals?.filter((c) => {
-      if (searchTerms.length === 0) return true;
-      const lower = c.name.toLowerCase();
-      return searchTerms.every(
-        (term) => lower.includes(term) || "terminals".includes(term),
-      );
-    });
-  }, [_terminals, searchTerms]);
+  const containersQuery: Types.ListAllContainers = useMemo(
+    () => ({
+      terms: debouncedTerms
+        // Allows search like 'cont my name' to return containers matching 'my name'
+        .filter((term) => !termMatchesTypeKeyword("containers", term)),
+      limit: 10,
+      page: 0,
+    }),
+    [debouncedTerms],
+  );
+
+  const containers = useRead("ListAllContainers", containersQuery, {
+    refetchInterval: 15_000,
+    // Only fetch when open and there is query typed
+    enabled: opened && !!debouncedTerms.length,
+    // Keep the previous results visible while fetching after a search
+    // change to prevent resource flashing.
+    placeholderData: keepPreviousData,
+  }).data;
+
+  const servicesQuery: Types.ListAllStackServices = useMemo(
+    () => ({
+      terms: debouncedTerms
+        // Allows search like 'serv my name' to return services matching 'my name'
+        .filter((term) => !termMatchesTypeKeyword("services", term)),
+      limit: 10,
+      page: 0,
+    }),
+    [debouncedTerms],
+  );
+
+  const services = useRead("ListAllStackServices", servicesQuery, {
+    refetchInterval: 15_000,
+    enabled: opened && !!debouncedTerms.length,
+    placeholderData: keepPreviousData,
+  }).data;
+
+  const terminalsQuery: Types.ListTerminals = useMemo(
+    () => ({
+      terms: debouncedTerms
+        // Allows search like 'term my name' to return terminals matching 'my name'
+        .filter((term) => !termMatchesTypeKeyword("terminals", term)),
+      limit: 10,
+      page: 0,
+    }),
+    [debouncedTerms],
+  );
+
+  const terminals = useRead("ListTerminals", terminalsQuery, {
+    refetchInterval: 15_000,
+    enabled: opened,
+    placeholderData: keepPreviousData,
+  }).data;
 
   const user = useUser().data;
-  const resources = useAllResources(15_000);
+  const resources = useAllResources(debouncedTerms, 10, 15_000, opened);
   const [_, setSettingsView] = useSettingsView();
 
   const _actions = useMemo(() => {
@@ -124,6 +155,12 @@ export function useOmniSearch(): {
             onClick: () => nav("/terminals"),
           },
           {
+            id: "Stats",
+            label: "Stats",
+            leftSection: <ICONS.Stats size="1.3rem" />,
+            onClick: () => nav("/stats"),
+          },
+          {
             id: "Schedules",
             label: "Schedules",
             leftSection: <ICONS.Schedule size="1.3rem" />,
@@ -159,7 +196,8 @@ export function useOmniSearch(): {
 
       ...RESOURCE_TARGETS.map((_type) => {
         const type = _type === "ResourceSync" ? "Sync" : _type;
-        const lowerType = type.toLowerCase();
+        // Matches the server side term stripping in useAllResources
+        const typeKeyword = type.toLowerCase() + "s";
         const Components = ResourceComponents[_type];
         return {
           group: type + "s",
@@ -171,14 +209,17 @@ export function useOmniSearch(): {
                   searchTerms.length === 0 ||
                   searchTerms.every(
                     (term) =>
-                      lowerName.includes(term) || lowerType.includes(term),
+                      lowerName.includes(term) ||
+                      termMatchesTypeKeyword(typeKeyword, term),
                   )
                 );
               })
               .map((resource) => {
                 const info = resource.info as {
-                  swarm_id: string;
-                  server_id: string;
+                  swarm_id?: string;
+                  swarm_name?: string;
+                  server_id?: string;
+                  server_name?: string;
                 };
                 return {
                   id: type + " " + resource.name,
@@ -192,15 +233,9 @@ export function useOmniSearch(): {
                     <TemplateMarker type={_type} />
                   ),
                   description: info.swarm_id
-                    ? "Swarm: " +
-                      resources.Swarm?.find(
-                        (swarm) => info.swarm_id === swarm.id,
-                      )?.name
+                    ? "Swarm: " + info.swarm_name
                     : info.server_id
-                      ? "Server: " +
-                        resources.Server?.find(
-                          (server) => info.server_id === server.id,
-                        )?.name
+                      ? "Server: " + info.server_name
                       : undefined,
                 };
               }) ?? [],
@@ -208,16 +243,31 @@ export function useOmniSearch(): {
       }),
 
       {
+        group: "Services",
+        actions:
+          services?.map((service) => {
+            const intention = service?.swarm_service?.State
+              ? swarmStateIntention(service?.swarm_service?.State)
+              : containerStateIntention(service?.container?.state);
+            const color = hexColorByIntention(intention);
+            return {
+              id: service.stack_id + " " + service.service,
+              label: service.service,
+              description: "Stack: " + service.stack_name,
+              onClick: () =>
+                nav(`/stacks/${service.stack_id}/service/${service.service}`),
+              leftSection: <ICONS.Service size="1.3rem" color={color} />,
+            };
+          }) ?? [],
+      },
+
+      {
         group: "Containers",
         actions:
           containers?.map((container) => ({
-            id: container.server_id ?? "" + " " + container.name,
+            id: (container.server_id ?? "") + " " + container.name,
             label: container.name,
-            description:
-              "Server: " +
-              resources.Server?.find(
-                (server) => container.server_id === server.id,
-              )?.name,
+            description: "Server: " + container.server_name,
             onClick: () =>
               nav(
                 `/servers/${container.server_id}/container/${container.name}`,
@@ -238,31 +288,62 @@ export function useOmniSearch(): {
           terminals?.map((terminal) => ({
             id: JSON.stringify(terminal.target) + " " + terminal.name,
             label: terminal.name,
-            description: terminalTargetDescription(terminal.target, resources),
+            description: terminalTargetDescription(
+              terminal.target,
+              terminal.target_name,
+            ),
             onClick: () => nav(terminalLink(terminal)),
             leftSection: <ICONS.Terminal size="1.3rem" />,
           })) ?? [],
       },
     ];
-  }, [resources]);
+  }, [
+    resources,
+    containers,
+    services,
+    terminals,
+    searchTerms,
+    user,
+    nav,
+    setSettingsView,
+  ]);
+
+  useEffect(() => {
+    // Mantine only auto selects the first action when the query changes,
+    // but the omni search actions settle later (debounce + fetch),
+    // which can leave nothing selected. Select the first action
+    // whenever newly settled actions render.
+    const { listId } = spotlightStore.getState();
+    const list = listId ? document.getElementById(listId) : null;
+    if (!list) return;
+    list.querySelector("[data-selected]")?.removeAttribute("data-selected");
+    const first = list.querySelector("[data-action]");
+    if (first) {
+      first.setAttribute("data-selected", "true");
+      first.scrollIntoView({ block: "nearest" });
+    }
+    spotlightStore.updateState((state) => ({
+      ...state,
+      selected: first ? 0 : -1,
+    }));
+  }, [_actions]);
 
   // LIMIT the action count for performance.
-  // Reset count on render before creating actual actions.
-  count = 0;
+  let count = 0;
   const actions: SpotlightActionGroupData[] = [];
   for (const group of _actions) {
     const groupActions = [];
     for (const action of group.actions) {
-      groupActions.push(action);
-      count += 1;
-      if (count > ITEM_LIMIT) {
+      if (count >= ITEM_LIMIT) {
         break;
       }
+      groupActions.push(action);
+      count += 1;
     }
     if (groupActions.length) {
       actions.push({ group: group.group, actions: groupActions });
     }
-    if (count > ITEM_LIMIT) {
+    if (count >= ITEM_LIMIT) {
       break;
     }
   }
@@ -271,42 +352,25 @@ export function useOmniSearch(): {
     search,
     setSearch,
     actions,
+    spotlight,
+    spotlightStore,
   };
 }
 
 function terminalTargetDescription(
   target: Types.TerminalTarget,
-  resources: ResourceMap,
+  target_name: string | undefined,
 ) {
   switch (target.type) {
     case "Server":
-      return (
-        "Server: " +
-        resources.Server?.find((server) => target.params.server === server.id)
-          ?.name
-      );
+      return "Server: " + target_name;
     case "Container":
       return (
-        "Server: " +
-        resources.Server?.find((server) => target.params.server === server.id)
-          ?.name +
-        ", Container: " +
-        target.params.container
+        "Server: " + target_name + ", Container: " + target.params.container
       );
     case "Stack":
-      return (
-        "Stack: " +
-        resources.Stack?.find((stack) => target.params.stack === stack.id)
-          ?.name +
-        ", Service: " +
-        target.params.service
-      );
+      return "Stack: " + target_name + ", Service: " + target.params.service;
     case "Deployment":
-      return (
-        "Deployment: " +
-        resources.Deployment?.find(
-          (deployment) => target.params.deployment === deployment.id,
-        )?.name
-      );
+      return "Deployment: " + target_name;
   }
 }

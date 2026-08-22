@@ -1,5 +1,7 @@
-use anyhow::Context;
-use database::mungos::mongodb::Collection;
+use anyhow::{Context, anyhow};
+use database::mungos::{
+  by_id::update_one_by_id, mongodb::Collection, mongodb::bson::doc,
+};
 use formatting::format_serror;
 use indexmap::IndexSet;
 use komodo_client::entities::{
@@ -11,7 +13,7 @@ use komodo_client::entities::{
     DeploymentListItemInfo, DeploymentQuerySpecifics,
     DeploymentState, PartialDeploymentConfig, conversions_from_str,
   },
-  environment_vars_from_str,
+  environment_vars_from_str, optional_string,
   permission::{
     PermissionLevel, PermissionLevelAndSpecifics, SpecificPermission,
   },
@@ -23,7 +25,8 @@ use komodo_client::entities::{
   user::User,
 };
 use periphery_client::api::{
-  container::RemoveContainer, swarm::RemoveSwarmServices,
+  container::{RemoveContainer, RenameContainer},
+  swarm::RemoveSwarmServices,
 };
 
 use crate::{
@@ -34,7 +37,10 @@ use crate::{
     swarm::swarm_request,
   },
   monitor::{refresh_server_cache, refresh_swarm_cache},
-  state::{action_states, db_client, deployment_status_cache},
+  state::{
+    action_states, all_resources_cache, db_client,
+    deployment_status_cache,
+  },
 };
 
 use super::get_check_permissions;
@@ -90,31 +96,31 @@ impl super::KomodoResource for Deployment {
     deployment: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = deployment_status_cache().get(&deployment.id).await;
-    let state = if action_states()
-      .deployment
-      .get(&deployment.id)
+    let state = get_deployment_state(&deployment.id)
       .await
-      .map(|s| s.get().map(|s| s.deploying))
-      .transpose()
-      .ok()
-      .flatten()
-      .unwrap_or_default()
-    {
-      DeploymentState::Deploying
-    } else {
-      status.as_ref().map(|s| s.curr.state).unwrap_or_default()
-    };
+      .unwrap_or_default();
+    let all = all_resources_cache().load();
+    let server_name = all
+      .servers
+      .get(&deployment.config.server_id)
+      .map(|server| server.name.clone())
+      .unwrap_or_default();
+    let swarm_name = all
+      .swarms
+      .get(&deployment.config.swarm_id)
+      .map(|swarm| swarm.name.clone())
+      .unwrap_or_default();
     let (build_image, build_id) = match deployment.config.image {
       DeploymentImage::Build { build_id, version } => {
-        let (build_name, build_id, build_version) =
-          super::get::<Build>(&build_id)
-            .await
-            .map(|b| (b.name, b.id, b.config.version))
-            .unwrap_or((
-              String::from("unknown"),
-              String::new(),
-              Default::default(),
-            ));
+        let (build_name, build_id, build_version) = all
+          .builds
+          .get(&build_id)
+          .map(|b| (b.name.clone(), b.id.clone(), b.config.version))
+          .unwrap_or((
+            String::from("unknown"),
+            String::new(),
+            Default::default(),
+          ));
         let version = if version.is_none() {
           build_version.to_string()
         } else {
@@ -168,10 +174,14 @@ impl super::KomodoResource for Deployment {
         status: status.as_ref().and_then(|s| {
           s.curr.container.as_ref().and_then(|c| c.status.to_owned())
         }),
+        custom_name: optional_string(deployment.info.deployed_name)
+          .unwrap_or(deployment.config.custom_name),
         image,
         update_available,
         swarm_id: deployment.config.swarm_id,
+        swarm_name,
         server_id: deployment.config.server_id,
+        server_name,
         build_id,
       },
     }
@@ -244,11 +254,12 @@ impl super::KomodoResource for Deployment {
   }
 
   async fn validate_update_config(
-    _id: &str,
+    id: &str,
     config: &mut Self::PartialConfig,
     user: &User,
   ) -> anyhow::Result<()> {
-    validate_config(config, user).await
+    validate_config(config, user).await?;
+    handle_custom_name_update(id, config).await
   }
 
   async fn post_update(
@@ -314,7 +325,7 @@ impl super::KomodoResource for Deployment {
       SwarmOrServer::Swarm(swarm) => match swarm_request(
         &swarm.config.server_ids,
         RemoveSwarmServices {
-          services: vec![deployment.name.clone()],
+          services: vec![deployment.deployed_name().to_string()],
         },
       )
       .await
@@ -352,7 +363,7 @@ impl super::KomodoResource for Deployment {
         };
         match periphery
           .request(RemoveContainer {
-            name: deployment.name.clone(),
+            name: deployment.deployed_name().to_string(),
             signal: deployment.config.termination_signal.into(),
             time: deployment.config.termination_timeout.into(),
           })
@@ -436,8 +447,96 @@ async fn validate_config(
     environment_vars_from_str(environment)
       .context("Invalid environment")?;
   }
+  if let Some(custom_name) = &config.custom_name
+    && !custom_name.trim().is_empty()
+  {
+    config.custom_name =
+      Some(to_container_compatible_name(custom_name));
+  }
   if let Some(extra_args) = &mut config.extra_args {
     extra_args.retain(|v| !empty_or_only_spaces(v))
+  }
+  Ok(())
+}
+
+/// Handles a config update which changes the custom container name:
+///   - Server mode: the container is renamed to keep the Deployment
+///     matched to it. This runs before the update is written to the
+///     database, so a failed rename rejects the update and nothing
+///     is left mismatched.
+///   - Swarm mode: services cannot be renamed, so the current
+///     service name is pinned in info.deployed_name, and stays
+///     in use until the next deploy recreates the service.
+async fn handle_custom_name_update(
+  id: &str,
+  config: &PartialDeploymentConfig,
+) -> anyhow::Result<()> {
+  let Some(custom_name) = &config.custom_name else {
+    return Ok(());
+  };
+  let deployment = super::get::<Deployment>(id).await?;
+  // custom_name is already made container compatible by validate_config.
+  let new_container_name = if custom_name.is_empty() {
+    deployment.name.as_str()
+  } else {
+    custom_name.as_str()
+  };
+  if deployment.custom_name() == new_container_name {
+    return Ok(());
+  }
+  if deployment.config.swarm_id.is_empty()
+    && !deployment.config.server_id.is_empty()
+  {
+    let container_state =
+      get_deployment_state(&deployment.id).await?;
+    if container_state == DeploymentState::Unknown {
+      return Err(anyhow!(
+        "Cannot change custom container name when container status is unknown"
+      ));
+    }
+    if container_state == DeploymentState::NotDeployed {
+      return Ok(());
+    }
+    let server =
+      super::get::<Server>(&deployment.config.server_id).await?;
+    periphery_client(&server)
+      .await?
+      .request(RenameContainer {
+        curr_name: deployment.deployed_name().to_string(),
+        new_name: new_container_name.to_string(),
+      })
+      .await
+      .context("Failed to rename container to the new custom name")?;
+    // Keep the tracked deployed name matched to the renamed container.
+    update_one_by_id(
+      &db_client().deployments,
+      &deployment.id,
+      database::mungos::update::Update::Set(
+        doc! { "info.deployed_name": new_container_name },
+      ),
+      None,
+    )
+    .await
+    .context(
+      "Failed to update deployed name on db after container rename",
+    )?;
+  } else if !deployment.config.swarm_id.is_empty()
+    && deployment.info.deployed_name.is_empty()
+    // Includes the Unknown state, in case a service
+    // is still running under the current name.
+    && get_deployment_state(&deployment.id).await?
+      != DeploymentState::NotDeployed
+  {
+    update_one_by_id(
+      &db_client().deployments,
+      &deployment.id,
+      database::mungos::update::Update::Set(
+        doc! { "info.deployed_name": deployment.deployed_name() },
+      ),
+      None,
+    )
+    .await
+    .context("Failed to pin deployed service name on db")?;
   }
   Ok(())
 }

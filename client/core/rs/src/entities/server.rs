@@ -10,7 +10,9 @@ use crate::{
   deserializers::{
     option_string_list_deserializer, string_list_deserializer,
   },
-  entities::{_Serror, MaintenanceWindow, Timelength},
+  entities::{
+    _Serror, MaintenanceWindow, Timelength, stats::MinimalSystemStats,
+  },
 };
 
 use super::{
@@ -40,6 +42,14 @@ pub struct ServerListItemInfo {
   /// If there is an error reaching
   /// the server, message will be given here.
   pub err: Option<_Serror>,
+  /// System stats, if available
+  pub stats: Option<MinimalSystemStats>,
+  /// The server alerting thresholds
+  pub alerting_thresholds: ServerAlertingThresholds,
+  /// The server's number of physical cores.
+  pub core_count: Option<u32>,
+  /// The server's number of logical cores.
+  pub logical_core_count: Option<u32>,
   /// Region of the server.
   pub region: String,
   /// Address of the server, or null if empty.
@@ -96,6 +106,10 @@ pub type _PartialServerConfig = PartialServerConfig;
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ServerConfig {
@@ -351,6 +365,49 @@ impl utoipa::PartialSchema for PartialServerConfig {
 #[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialServerConfig {}
 
+/// Just the server alerting thresholds
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct ServerAlertingThresholds {
+  /// The percentage threshhold which triggers WARNING state for CPU.
+  #[serde(default = "default_cpu_warning")]
+  pub cpu_warning: f32,
+
+  /// The percentage threshhold which triggers CRITICAL state for CPU.
+  #[serde(default = "default_cpu_critical")]
+  pub cpu_critical: f32,
+
+  /// The percentage threshhold which triggers WARNING state for MEM.
+  #[serde(default = "default_mem_warning")]
+  pub mem_warning: f64,
+
+  /// The percentage threshhold which triggers CRITICAL state for MEM.
+  #[serde(default = "default_mem_critical")]
+  pub mem_critical: f64,
+
+  /// The percentage threshhold which triggers WARNING state for DISK.
+  #[serde(default = "default_disk_warning")]
+  pub disk_warning: f64,
+
+  /// The percentage threshhold which triggers CRITICAL state for DISK.
+  #[serde(default = "default_disk_critical")]
+  pub disk_critical: f64,
+}
+
+impl From<&ServerConfig> for ServerAlertingThresholds {
+  fn from(config: &ServerConfig) -> Self {
+    ServerAlertingThresholds {
+      cpu_warning: config.cpu_warning,
+      cpu_critical: config.cpu_critical,
+      mem_warning: config.mem_warning,
+      mem_critical: config.mem_critical,
+      disk_warning: config.disk_warning,
+      disk_critical: config.disk_critical,
+    }
+  }
+}
+
 /// The health of a part of the server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
@@ -395,7 +452,7 @@ pub struct PeripheryInformation {
 
 /// Current pending actions on the server.
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerActionState {
   /// Server currently pruning networks
@@ -413,15 +470,17 @@ pub struct ServerActionState {
   /// Server currently pruning system
   pub pruning_system: bool,
   /// Server currently starting containers.
-  pub starting_containers: bool,
+  pub starting_containers: u32,
   /// Server currently restarting containers.
-  pub restarting_containers: bool,
+  pub restarting_containers: u32,
   /// Server currently pausing containers.
-  pub pausing_containers: bool,
+  pub pausing_containers: u32,
   /// Server currently unpausing containers.
-  pub unpausing_containers: bool,
+  pub unpausing_containers: u32,
   /// Server currently stopping containers.
-  pub stopping_containers: bool,
+  pub stopping_containers: u32,
+  /// Server currently destroying containers.
+  pub destroying_containers: u32,
 }
 
 #[typeshare]
@@ -456,8 +515,40 @@ pub enum ServerState {
 pub type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 
 #[typeshare]
+#[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ServerSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by region.
+  Region,
+  /// Sort by periphery version.
+  Version,
+  /// Sort by state.
+  State,
+  /// Sort by current cpu usage percentage.
+  Cpu,
+  /// Sort by current memory usage percentage.
+  Memory,
+  /// Sort by current disk usage percentage.
+  Disk,
+  /// Sort by current 1m load average.
+  LoadAverage,
+  /// Sort by current network usage (ingress + egress).
+  Network,
+}
+
+#[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct ServerQuerySpecifics {}
+pub struct ServerQuerySpecifics {
+  /// Query only for Servers matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<ServerState>,
+}
 
 impl AddFilters for ServerQuerySpecifics {}

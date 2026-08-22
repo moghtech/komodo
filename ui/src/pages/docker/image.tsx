@@ -1,16 +1,15 @@
 import ContainersSection from "@/components/docker/containers-section";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import InspectSection from "@/components/inspect-section";
-import { fmtDateWithMinutes, fmtSizeBytes } from "@/lib/formatting";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import { useServer } from "@/resources/server";
 import ResourceSubPage from "@/resources/sub-page";
-import { ICONS } from "@/theme/icons";
-import ConfirmButton from "@/ui/confirm-button";
-import { DataTable } from "@/ui/data-table";
-import PageGuard from "@/ui/page-guard";
-import Section from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ICONS } from "@/lib/icons";
+import { ConfirmButton, fmtDateWithMinutes, fmtSizeBytes } from "mogh_ui";
+import { DataTable } from "mogh_ui";
+import { PageGuard } from "mogh_ui";
+import { Section } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import { Box, Center, Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useState } from "react";
@@ -53,13 +52,13 @@ function ImageInner({
     data: image,
     isPending,
     isError,
-  } = useRead("InspectDockerImage", {
+  } = useRead("InspectImage", {
     server: serverId,
     image: imageName,
   });
 
   const containers = useRead(
-    "ListDockerContainers",
+    "ListContainers",
     {
       server: serverId,
     },
@@ -68,7 +67,7 @@ function ImageInner({
     !image?.Id ? false : container.image_id === image?.Id,
   );
 
-  const history = useRead("ListDockerImageHistory", {
+  const history = useRead("ListImageHistory", {
     server: serverId,
     image: imageName,
   }).data;
@@ -177,7 +176,6 @@ function ImageInner({
                     {
                       accessorKey: "CreatedBy",
                       header: "Created By",
-                      size: 400,
                     },
                     {
                       accessorKey: "Created",
@@ -186,7 +184,6 @@ function ImageInner({
                         fmtDateWithMinutes(
                           new Date(row.original.Created * 1000),
                         ),
-                      size: 200,
                     },
                   ]}
                 />

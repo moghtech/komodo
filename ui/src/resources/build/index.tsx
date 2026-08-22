@@ -1,9 +1,15 @@
-import { buildStateIntention, hexColorByIntention } from "@/lib/color";
-import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { buildStateIntention } from "@/lib/color";
+import {
+  useInvalidate,
+  useListItem,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
+import { StatusBadge } from "mogh_ui";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
 import { ActionIcon, Box, Group, Text } from "@mantine/core";
@@ -15,14 +21,17 @@ import ResourceLink from "../link";
 import FileSource from "@/components/file-source";
 import HashCompare from "@/components/hash-compare";
 import ResourceHeader from "../header";
-import BatchExecutions from "@/components/batch-executions";
+import BatchExecutions from "@/resources/batch-executions";
 import { useState } from "react";
 import ResourceSelector from "../selector";
+import { hexColorByIntention } from "mogh_ui";
 
-export function useBuild(id: string | undefined, useName?: boolean) {
-  return useRead("ListBuilds", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+export function useBuild(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Build", id, useName, refetchInterval);
 }
 
 export function useFullBuild(id: string) {
@@ -32,9 +41,11 @@ export function useFullBuild(id: string) {
 export const BuildComponents: RequiredResourceComponents<
   Types.BuildConfig,
   Types.BuildInfo,
-  Types.BuildListItemInfo
+  Types.BuildListItemInfo,
+  Types.BuildQuerySpecifics
 > = {
-  useList: () => useRead("ListBuilds", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListBuilds", { query, limit, page }).data,
   useListItem: useBuild,
   useFull: useFullBuild,
 
@@ -68,12 +79,15 @@ export const BuildComponents: RequiredResourceComponents<
 
   Description: () => <>Build container images.</>,
 
-  New: ({ builderId: _builderId }) => {
+  New: ({ builderId: _builderId, repoId }) => {
     const [builderId, setBuilderId] = useState("");
     return (
       <NewResource<Types.BuildConfig>
         type="Build"
-        config={() => ({ builder_id: _builderId ?? builderId })}
+        config={() => ({
+          builder_id: _builderId ?? builderId,
+          linked_repo: repoId,
+        })}
         extraInputs={
           !_builderId && (
             <ResourceSelector
@@ -105,8 +119,7 @@ export const BuildComponents: RequiredResourceComponents<
   Table: BuildTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListBuilds", {}).data?.find((r) => r.id === id)?.info
-      .state;
+    const state = useBuild(id)?.info.state;
     const color = noColor
       ? undefined
       : state && hexColorByIntention(buildStateIntention(state));

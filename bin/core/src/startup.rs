@@ -281,7 +281,7 @@ async fn ensure_first_server_and_builder() {
     name: name.to_string(),
     config: PartialBuilderConfig::Server(
       PartialServerBuilderConfig {
-        server_id: Some(server.id),
+        server_ids: Some(vec![server.id]),
       },
     ),
   })

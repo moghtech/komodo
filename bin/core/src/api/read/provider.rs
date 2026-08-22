@@ -61,11 +61,11 @@ impl Resolve<ReadArgs> for ListGitProviderAccounts {
   }
 }
 
-impl Resolve<ReadArgs> for GetDockerRegistryAccount {
+impl Resolve<ReadArgs> for GetImageRegistryAccount {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<GetDockerRegistryAccountResponse> {
+  ) -> mogh_error::Result<GetImageRegistryAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can read docker registry accounts")
@@ -83,11 +83,11 @@ impl Resolve<ReadArgs> for GetDockerRegistryAccount {
   }
 }
 
-impl Resolve<ReadArgs> for ListDockerRegistryAccounts {
+impl Resolve<ReadArgs> for ListImageRegistryAccounts {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> mogh_error::Result<ListDockerRegistryAccountsResponse> {
+  ) -> mogh_error::Result<ListImageRegistryAccountsResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can read docker registry accounts")

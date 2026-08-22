@@ -180,7 +180,7 @@ pub fn periphery_config() -> &'static PeripheryConfig {
         .or(config.ssl_cert_file),
       secrets: config.secrets,
       git_providers: config.git_providers,
-      docker_registries: config.docker_registries,
+      image_registries: config.image_registries,
     }
   })
 }

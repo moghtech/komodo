@@ -1,35 +1,52 @@
-import { useRead, useResourceName, useSelectedResources } from "@/lib/hooks";
+import { useResourceSelectionState } from "@/lib/hooks";
 import { Types } from "komodo_client";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Group, BoxProps } from "@mantine/core";
 import TableTags from "@/components/tags/table";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { DeploymentComponents } from ".";
 import ResourceLink from "@/resources/link";
 import DeploymentUpdateAvailable from "./update-available";
 
+const SORT_KEYS = ["Name", "Image", "Host", "State"];
+
 export default function DeploymentTable({
   resources,
+  onServerSort,
   ...boxProps
 }: {
   resources: Types.DeploymentListItem[];
+  /** When provided, sorting is handled server side,
+   * and sort updates are passed to this callback. */
+  onServerSort?: (sort: {
+    sort_by?: string;
+    sort_desc?: boolean;
+  }) => void;
 } & BoxProps) {
-  const swarmName = useResourceName("Swarm");
-  const serverName = useResourceName("Server");
-
-  const [_, setSelectedResources] = useSelectedResources("Deployment");
+  const selectionState = useResourceSelectionState("Deployment");
 
   return (
     <DataTable
       {...boxProps}
+      manualSorting={!!onServerSort}
+      onSortingStateChange={
+        onServerSort &&
+        ((sorting) => {
+          const sort = sorting.find((s) => SORT_KEYS.includes(s.id));
+          onServerSort(
+            sort ? { sort_by: sort.id, sort_desc: sort.desc } : {},
+          );
+        })
+      }
       tableKey="deployments"
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: selectionState,
       }}
       columns={[
         {
+          id: "Name",
           accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
@@ -40,9 +57,9 @@ export default function DeploymentTable({
               <DeploymentUpdateAvailable id={row.original.id} small />
             </Group>
           ),
-          size: 200,
         },
         {
+          id: "Image",
           accessorKey: "info.image",
           header: ({ column }) => (
             <SortableHeader column={column} title="Image" />
@@ -54,20 +71,20 @@ export default function DeploymentTable({
               },
             },
           }) => <Image buildId={build_id} image={image} />,
-          size: 200,
         },
         {
           header: ({ column }) => (
             <SortableHeader column={column} title="Host" />
           ),
+          id: "Host",
           accessorKey: "info.server_id",
-          sortingFn: (a, b) => {
+          sortFn: (a, b) => {
             const name_a = a.original.info.swarm_id
-              ? swarmName(a.original.info.swarm_id)
-              : serverName(a.original.info.server_id);
+              ? a.original.info.swarm_name
+              : a.original.info.server_name;
             const name_b = b.original.info.swarm_id
-              ? swarmName(b.original.info.swarm_id)
-              : serverName(b.original.info.server_id);
+              ? b.original.info.swarm_name
+              : b.original.info.server_name;
 
             if (!name_a && !name_b) return 0;
             if (!name_a) return 1;
@@ -83,9 +100,9 @@ export default function DeploymentTable({
             ) : (
               <ResourceLink type="Server" id={row.original.info.server_id} />
             ),
-          size: 200,
         },
         {
+          id: "State",
           accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
@@ -93,7 +110,6 @@ export default function DeploymentTable({
           cell: ({ row }) => (
             <DeploymentComponents.State id={row.original.id} />
           ),
-          size: 120,
         },
         {
           header: "Tags",
@@ -111,21 +127,17 @@ const Image = ({
   buildId: string | undefined;
   image: string;
 }) => {
-  const builds = useRead("ListBuilds", {}).data;
   if (buildId) {
-    const build = builds?.find((build) => build.id === buildId);
-    if (build) {
-      return <ResourceLink type="Build" id={buildId} />;
-    } else {
-      return undefined;
-    }
+    return <ResourceLink type="Build" id={buildId} />;
   } else {
-    const [img] = image.split(":");
-    return (
-      <Group wrap="nowrap">
-        <ICONS.Image size="1rem" />
-        {img}
-      </Group>
-    );
+    const img = image?.split(":")?.[0];
+    if (img) {
+      return (
+        <Group wrap="nowrap">
+          <ICONS.Image size="1rem" />
+          {img}
+        </Group>
+      );
+    }
   }
 };

@@ -79,6 +79,11 @@ private_key = "file:/config/keys/core.key"
 ## Optional, no default.
 # first_server_address = ""
 
+## Set the default pagination limit for the API and UI to use.
+## Env: KOMODO_DEFAULT_PAGINATION_LIMIT
+## Default: 50
+default_pagination_limit = 50
+
 ## Disables write support on resources in the UI.
 ## This protects users that that would normally have write priviledges during their UI usage,
 ## when they intend to fully rely on ResourceSyncs to manage config.
@@ -166,6 +171,20 @@ init_admin_password = "changeme"
 ## Env: KOMODO_DISABLE_USER_REGISTRATION
 ## Default: false
 disable_user_registration = false
+
+## Disable local (username/password) user registration only.
+## When set to true, the "Sign Up" button is hidden and local signups are blocked,
+## but OIDC and other external provider signups may still be allowed.
+## If not set, falls back to `disable_user_registration`.
+## Env: KOMODO_DISABLE_LOCAL_USER_REGISTRATION
+# disable_local_user_registration = true
+
+## Disable OIDC user registration only.
+## When set to true, new users cannot register via OIDC,
+## but local and other provider signups may still be allowed.
+## If not set, falls back to `disable_user_registration`.
+## Env: KOMODO_DISABLE_OIDC_USER_REGISTRATION
+# disable_oidc_user_registration = true
 
 ## New users will be automatically enabled when they sign up.
 ## Otherwise, new users will be disabled on first login.
@@ -267,6 +286,13 @@ oidc_use_full_email = false
 ## Default: empty
 oidc_additional_audiences = []
 
+## Automatically redirect unauthenticated users to the OIDC provider
+## instead of showing the login page.
+## Users can bypass the redirect by appending `?disableAutoLogin` to the login URL.
+## Env: KOMODO_OIDC_AUTO_REDIRECT
+## Default: false
+oidc_auto_redirect = false
+
 #########
 # OAUTH #
 #########
@@ -324,9 +350,9 @@ auth_rate_limit_max_attempts = 5
 ## Default: 15
 auth_rate_limit_window_seconds = 15
 
-##################
-# CORS / SESSION #
-##################
+############################
+# CORS / SESSION / HEADERS #
+############################
 
 ## Specifically set list of CORS allowed origins.
 ## If empty, allows all origins (`*`).
@@ -343,7 +369,43 @@ cors_allow_credentials = false
 
 ## Enabling this sets 'SameSite=None', which allows externally
 ## hosted UIs to use the login flows.
+## Env: KOMODO_SESSION_ALLOW_CROSS_SITE
+## Default: false
 session_allow_cross_site = false
+
+## `X-Content-Type-Options` header value.
+## Set as empty string to omit the header.
+## Env: KOMODO_X_CONTENT_TYPE_OPTIONS
+## Default: "nosniff"
+x_content_type_options = "nosniff"
+
+## `X-Frame-Options` header value.
+## Set as empty string to omit the header.
+## Use "SAMEORIGIN" to allow same-origin embedding only.
+## Env: KOMODO_X_FRAME_OPTIONS
+## Default: "DENY"
+x_frame_options = "DENY"
+
+## `X-Xss-Protection` header value.
+## Set as empty string to omit the header.
+## Env: KOMODO_X_XSS_PROTECTION
+## Default: "1; mode=block"
+x_xss_protection = "1; mode=block"
+
+## Apply Referrer Policy directives.
+## If empty string, no header is applied.
+## Env: KOMODO_REFERRER_POLICY
+## Default: "strict-origin-when-cross-origin"
+referrer_policy = "strict-origin-when-cross-origin"
+
+## Apply Content Security Policy directives.
+## If empty string, no header is applied.
+## Env: KOMODO_CONTENT_SECURITY_POLICY
+## Default: ""
+##
+## Example:
+## `default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'`
+content_security_policy = ""
 
 ##################
 # POLL INTERVALS #
@@ -435,25 +497,6 @@ webhook_secret = "a_random_webhook_secret"
 ## Env: KOMODO_WEBHOOK_BASE_URL
 ## Default: empty (none)
 webhook_base_url = ""
-
-## Configure Github webhook app. Enables webhook management apis.
-## <INSERT LINK TO GUIDE>
-## Env: KOMODO_GITHUB_WEBHOOK_APP_APP_ID or KOMODO_GITHUB_WEBHOOK_APP_APP_ID_FILE
-# github_webhook_app.app_id = 1234455 # Find on the app page.
-## Env: 
-##   - KOMODO_GITHUB_WEBHOOK_APP_INSTALLATIONS_IDS or KOMODO_GITHUB_WEBHOOK_APP_INSTALLATIONS_IDS_FILE
-##   - KOMODO_GITHUB_WEBHOOK_APP_INSTALLATIONS_NAMESPACES
-# github_webhook_app.installations = [
-#   ## Find the id after installing the app to user / organization. "namespace" is the username / organization name.
-#   { id = 1234, namespace = "mbecker20" }
-# ]
-
-## The path to Github webhook app private key. <INSERT LINK TO GUIDE>
-## This is defaulted to `/github/private-key.pem`, and doesn't need to be changed if running core in Docker.
-## Just mount the private key pem file on the host to `/github/private-key.pem` in the container.
-## Eg. `/your/path/to/key.pem : /github/private-key.pem`
-## Env: KOMODO_GITHUB_WEBHOOK_APP_PK_PATH
-# github_webhook_app.pk_path = "/path/to/pk.pem"
 
 ###########
 # LOGGING #
@@ -566,15 +609,15 @@ aws.secret_access_key = ""
 ## They allow these Resources to pull private images.
 ## They cannot be configured on the environment.
 
-## configure docker registries
-# [[docker_registry]]
+## configure image registries
+# [[image_registry]]
 # domain = "docker.io"
 # accounts = [
 # 	{ username = "mbecker2020", token = "access_token_for_account" }
 # ]
 # organizations = ["DockerhubOrganization"]
 
-# [[docker_registry]]
+# [[image_registry]]
 # domain = "git.mogh.tech" # use a custom provider, like self-hosted gitea
 # accounts = [
 # 	{ username = "mbecker20", token = "access_token_for_account" },

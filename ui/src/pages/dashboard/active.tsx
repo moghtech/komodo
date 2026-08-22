@@ -2,17 +2,16 @@ import {
   actionStateIntention,
   buildStateIntention,
   deploymentStateIntention,
-  hexColorByIntention,
   procedureStateIntention,
   repoStateIntention,
   stackStateIntention,
 } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
-import { ICONS } from "@/theme/icons";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section from "@/ui/section";
-import StatusBadge from "@/ui/status-badge";
+import { ICONS } from "@/lib/icons";
+import { DataTable, hexColorByIntention, SortableHeader } from "mogh_ui";
+import { Section } from "mogh_ui";
+import { StatusBadge } from "mogh_ui";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Circle } from "lucide-react";
@@ -20,41 +19,89 @@ import { ReactNode } from "react";
 
 export default function DashboardActiveResources() {
   const stacks =
-    useRead("ListStacks", {}).data?.filter((stack) =>
-      [
-        Types.StackState.Deploying,
-        Types.StackState.Restarting,
-        Types.StackState.Removing,
-      ].includes(stack.info.state),
-    ) ?? [];
+    useRead(
+      "ListStacks",
+      {
+      query: {
+        specific: {
+          states: [
+            Types.StackState.Deploying,
+            Types.StackState.Restarting,
+            Types.StackState.Removing,
+          ],
+        },
+      },
+      limit: 0,
+      },
+      { refetchInterval: 10_000 },
+    ).data ?? [];
   const deployments =
-    useRead("ListDeployments", {}).data?.filter((deployment) =>
-      [
-        Types.DeploymentState.Deploying,
-        Types.DeploymentState.Restarting,
-        Types.DeploymentState.Removing,
-      ].includes(deployment.info.state),
-    ) ?? [];
+    useRead(
+      "ListDeployments",
+      {
+      query: {
+        specific: {
+          states: [
+            Types.DeploymentState.Deploying,
+            Types.DeploymentState.Restarting,
+            Types.DeploymentState.Removing,
+          ],
+        },
+      },
+      limit: 0,
+      },
+      { refetchInterval: 10_000 },
+    ).data ?? [];
   const builds =
-    useRead("ListBuilds", {}).data?.filter(
-      (build) => build.info.state === Types.BuildState.Building,
-    ) ?? [];
+    useRead(
+      "ListBuilds",
+      {
+      query: {
+        specific: { states: [Types.BuildState.Building] },
+      },
+      limit: 0,
+      },
+      { refetchInterval: 10_000 },
+    ).data ?? [];
   const repos =
-    useRead("ListRepos", {}).data?.filter((repo) =>
-      [
-        Types.RepoState.Building,
-        Types.RepoState.Cloning,
-        Types.RepoState.Pulling,
-      ].includes(repo.info.state),
-    ) ?? [];
+    useRead(
+      "ListRepos",
+      {
+      query: {
+        specific: {
+          states: [
+            Types.RepoState.Building,
+            Types.RepoState.Cloning,
+            Types.RepoState.Pulling,
+          ],
+        },
+      },
+      limit: 0,
+      },
+      { refetchInterval: 10_000 },
+    ).data ?? [];
   const procedures =
-    useRead("ListProcedures", {}).data?.filter(
-      (procedure) => procedure.info.state === Types.ProcedureState.Running,
-    ) ?? [];
+    useRead(
+      "ListProcedures",
+      {
+      query: {
+        specific: { states: [Types.ProcedureState.Running] },
+      },
+      limit: 0,
+      },
+      { refetchInterval: 10_000 },
+    ).data ?? [];
   const actions =
-    useRead("ListActions", {}).data?.filter(
-      (action) => action.info.state === Types.ActionState.Running,
-    ) ?? [];
+    useRead(
+      "ListActions",
+      {
+      query: {
+        specific: { states: [Types.ActionState.Running] },
+      },
+      limit: 0,
+      },
+      { refetchInterval: 10_000 },
+    ).data ?? [];
   const globalAutoUpdates =
     useRead("ListUpdates", {
       query: {

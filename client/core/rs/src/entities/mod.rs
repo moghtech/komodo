@@ -51,6 +51,8 @@ pub mod procedure;
 pub mod provider;
 /// Subtypes of [Repo][repo::Repo].
 pub mod repo;
+/// Subtypes of [CoreReport][core_report::CoreReport]
+pub mod report;
 /// Subtypes of [Resource][resource::Resource].
 pub mod resource;
 /// Subtypes of [Schedule][schedule::Schedule]
@@ -103,6 +105,7 @@ pub type _Serror = Serror;
   Debug, Clone, Default, PartialEq, Serialize, Deserialize, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct NoData {}
 
 pub trait MergePartial: Sized {
@@ -155,13 +158,34 @@ pub fn to_path_compatible_name(name: &str) -> String {
   name.trim().replace([' ', '\n'], "_").to_string()
 }
 
-/// Enforce common container naming rules.
-/// [a-zA-Z0-9_.-]
+/// Enforce docker container / service naming rules:
+/// [a-zA-Z0-9][a-zA-Z0-9_.-]*
+/// Any other characters are replaced with '_',
+/// and leading non-alphanumeric characters are stripped.
+/// This also guards against shell injection through the name,
+/// as it is passed to shell commands like 'docker stop {name}'.
 pub fn to_container_compatible_name(name: &str) -> String {
-  name.trim().replace([' ', ',', '\n', '&'], "_").to_string()
+  name
+    .trim()
+    .chars()
+    .map(|c| {
+      if c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-') {
+        c
+      } else {
+        '_'
+      }
+    })
+    .collect::<String>()
+    .trim_start_matches(|c: char| !c.is_ascii_alphanumeric())
+    .to_string()
 }
 
-/// Enforce common docker naming rules, such as only lowercase, and no '.'.
+/// Enforce common docker naming rules, such as only lowercase, and no '.':
+/// [a-z0-9][a-z0-9_-]*
+/// Any other characters are replaced with '_',
+/// and leading non-alphanumeric characters are stripped.
+/// This also guards against shell injection through the name,
+/// as it is passed to shell commands like 'docker compose -p {name}'.
 /// These apply to:
 ///   - Stacks (docker project name)
 ///   - Builds (docker image name)
@@ -169,9 +193,21 @@ pub fn to_container_compatible_name(name: &str) -> String {
 ///   - Volumes
 pub fn to_docker_compatible_name(name: &str) -> String {
   name
-    .to_lowercase()
-    .replace([' ', '.', ',', '\n', '&'], "_")
     .trim()
+    .to_lowercase()
+    .chars()
+    .map(|c| {
+      if c.is_ascii_lowercase()
+        || c.is_ascii_digit()
+        || matches!(c, '_' | '-')
+      {
+        c
+      } else {
+        '_'
+      }
+    })
+    .collect::<String>()
+    .trim_start_matches(|c: char| !c.is_ascii_alphanumeric())
     .to_string()
 }
 
@@ -210,11 +246,14 @@ pub struct __Serror {
   Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SystemCommand {
   #[serde(default)]
   pub path: String,
   #[serde(default, deserialize_with = "file_contents_deserializer")]
   pub command: String,
+  #[serde(default)]
+  pub shell_mode: bool,
 }
 
 impl SystemCommand {
@@ -238,6 +277,7 @@ impl SystemCommand {
 #[typeshare]
 #[derive(Serialize, Debug, Clone, Copy, Default, PartialEq)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Version {
   pub major: i32,
   pub minor: i32,
@@ -488,6 +528,7 @@ impl ImageDigest {
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct MaintenanceWindow {
   /// Name for the maintenance window (required)
   pub name: String,
@@ -920,6 +961,7 @@ pub enum DayOfWeek {
   Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MaintenanceScheduleType {
   /// Daily at the specified time
   #[default]
@@ -1274,6 +1316,7 @@ pub enum Operation {
   RenameProcedure,
   DeleteProcedure,
   RunProcedure,
+  CancelProcedure,
 
   // Action
   CreateAction,
@@ -1281,6 +1324,7 @@ pub enum Operation {
   RenameAction,
   DeleteAction,
   RunAction,
+  CancelAction,
 
   // Sync
   CreateResourceSync,
@@ -1364,6 +1408,7 @@ pub enum SearchCombinator {
   EnumString,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(rename_all = "UPPERCASE")]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum TerminationSignal {
@@ -1421,6 +1466,11 @@ pub enum TerminationSignal {
     utoipa::ToSchema,
   ))
 )]
+#[cfg_attr(
+  feature = "schemars",
+  strum_discriminants(derive(schemars::JsonSchema))
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(tag = "type", content = "id")]
 pub enum ResourceTarget {
   System(String),
@@ -1577,6 +1627,7 @@ impl ResourceTargetVariant {
   Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum ScheduleFormat {
   #[default]
   English,
@@ -1588,6 +1639,7 @@ pub enum ScheduleFormat {
   Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum FileFormat {
   #[default]

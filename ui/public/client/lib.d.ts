@@ -120,10 +120,10 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      */
     execute_and_poll: <T extends ExecuteRequest["type"], Req extends Extract<ExecuteRequest, {
         type: T;
-    }>>(type: T, params: Req["params"]) => Promise<Update | (Update | {
+    }>>(type: T, params: Req["params"]) => Promise<(Update | {
         status: "Err";
         data: import("./types.js").BatchExecutionResponseItemErr;
-    })[]>;
+    })[] | Update>;
     /**
      * Poll an Update (returned by the `execute` calls) until the `status` is `Complete`.
      * https://docs.rs/komodo_client/latest/komodo_client/entities/update/struct.Update.html#structfield.status.

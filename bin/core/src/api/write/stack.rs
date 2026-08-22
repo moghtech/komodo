@@ -19,7 +19,11 @@ use komodo_client::{
     all_logs_success, komodo_timestamp,
     permission::PermissionLevel,
     repo::Repo,
-    stack::{Stack, StackInfo, StackServiceWithUpdate, StackState},
+    resource::ResourceQuery,
+    stack::{
+      Stack, StackInfo, StackServiceNames, StackServiceWithUpdate,
+      StackState,
+    },
     update::Update,
     user::{auto_redeploy_user, stack_user, system_user},
   },
@@ -36,7 +40,7 @@ use crate::{
   api::execute::{self, ExecuteRequest, ExecutionResult},
   config::core_config,
   helpers::{
-    query::get_swarm_or_server,
+    query::{get_all_tags, get_swarm_or_server},
     stack_git_token, swarm_or_server_request,
     update::{add_update, make_update, poll_update_until_complete},
   },
@@ -776,7 +780,13 @@ pub async fn check_stack_for_update_inner(
 
     if image.is_empty() ||
       // Images with a hardcoded digest can't have update.
-      image.contains('@')
+      image.contains('@') ||
+      // Services explicitly excluded from global auto-update checks.
+      // Manual checks should still evaluate all services.
+      (wait_for_auto_update &&
+        stack.config.auto_update_skip_services.contains(
+          &service.service_name,
+        ))
     {
       service.image_digest = None;
       continue;
@@ -815,6 +825,11 @@ pub async fn check_stack_for_update_inner(
       services: extract_services_from_stack(&stack)
         .into_iter()
         .map(|service| StackServiceWithUpdate {
+          latest_image: find_latest_image(
+            &service.service_name,
+            &service.image,
+            &stack.info.latest_services,
+          ),
           service: service.service_name,
           image: service.image,
           update_available: false,
@@ -835,6 +850,11 @@ pub async fn check_stack_for_update_inner(
         .services
         .iter()
         .map(|service| StackServiceWithUpdate {
+          latest_image: find_latest_image(
+            &service.service,
+            &service.image,
+            &stack.info.latest_services,
+          ),
           service: service.service.clone(),
           image: service.image.clone(),
           update_available: false,
@@ -850,6 +870,11 @@ pub async fn check_stack_for_update_inner(
       service: service.service.clone(),
       image: service.image.clone(),
       update_available: false,
+      latest_image: find_latest_image(
+        &service.service,
+        &service.image,
+        &stack.info.latest_services,
+      ),
     };
 
     let Some(current_digests) = &service.image_digests else {
@@ -1025,6 +1050,22 @@ pub async fn check_stack_for_update_inner(
   })
 }
 
+fn find_latest_image(
+  service_name: &str,
+  current_image: &str,
+  latest_services: &[StackServiceNames],
+) -> Option<String> {
+  latest_services.iter().find_map(|latest| {
+    if latest.service_name == service_name
+      && latest.image != current_image
+    {
+      Some(latest.image.clone())
+    } else {
+      None
+    }
+  })
+}
+
 //
 
 impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
@@ -1034,6 +1075,7 @@ impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
     fields(
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
       skip_auto_update = self.skip_auto_update,
       wait_for_auto_update = self.wait_for_auto_update,
     )
@@ -1042,12 +1084,23 @@ impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> Result<Self::Response, Self::Error> {
+    let all_tags = if self.tags.is_empty() {
+      vec![]
+    } else {
+      get_all_tags(None).await?
+    };
+
     let stacks = list_full_for_user_using_pattern::<Stack>(
       &self.pattern,
-      Default::default(),
+      ResourceQuery {
+        tags: self.tags,
+        ..Default::default()
+      },
+      None,
+      None,
       user,
       PermissionLevel::Execute.into(),
-      &[],
+      &all_tags,
     )
     .await?;
 

@@ -1,15 +1,15 @@
 import { useRead } from "@/lib/hooks";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Section } from "mogh_ui";
+import { ShowHideButton } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit } from "mogh_ui";
 import DockerResourceLink from "@/components/docker/link";
 import { useIsServerAvailable } from "../hooks";
-import SearchInput from "@/ui/search-input";
-import { ICONS } from "@/theme/icons";
+import { SearchInput } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 
 export default function ServerContainerStats({ id }: { id: string }) {
   const [search, setSearch] = useState("");
@@ -19,7 +19,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
   });
   const isServerAvailable = useIsServerAvailable(id);
   const containers = useRead(
-    "ListDockerContainers",
+    "ListContainers",
     {
       server: id,
     },
@@ -58,7 +58,6 @@ export default function ServerContainerStats({ id }: { id: string }) {
           columns={[
             {
               accessorKey: "name",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Name" />
               ),
@@ -72,19 +71,17 @@ export default function ServerContainerStats({ id }: { id: string }) {
             },
             {
               accessorKey: "stats.cpu_perc",
-              size: 100,
               header: ({ column }) => (
                 <SortableHeader column={column} title="CPU" />
               ),
             },
             {
               accessorKey: "stats.mem_perc",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Memory" />
               ),
               cell: ({ row }) => (
-                <Group gap="xs">
+                <Group wrap="nowrap" gap="xs">
                   <Text>{row.original.stats?.mem_perc}</Text>
                   <Text c="muted" size="sm">
                     ({row.original.stats?.mem_usage})
@@ -94,21 +91,18 @@ export default function ServerContainerStats({ id }: { id: string }) {
             },
             {
               accessorKey: "stats.net_io",
-              size: 150,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Net I/O" />
               ),
             },
             {
               accessorKey: "stats.block_io",
-              size: 150,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Block I/O" />
               ),
             },
             {
               accessorKey: "stats.pids",
-              size: 100,
               header: ({ column }) => (
                 <SortableHeader column={column} title="PIDs" />
               ),

@@ -1,20 +1,16 @@
-import {
-  fmtDateWithMinutes,
-  fmtDuration,
-  fmtUpperCamelcase,
-} from "@/lib/formatting";
+import { fmtDateWithMinutes, fmtDuration, fmtUpperCamelcase } from "mogh_ui";
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { ActionIcon, Drawer, Group, Stack, Text } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Clock, Link2 } from "lucide-react";
-import CopyButton from "@/ui/copy-button";
-import { MonacoEditor } from "@/components/monaco";
-import LoadingScreen from "@/ui/loading-screen";
+import { CopyButton } from "mogh_ui";
+import { MonacoEditor } from "mogh_ui";
+import { LoadingScreen } from "mogh_ui";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
 import { notifications } from "@mantine/notifications";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { To, useLocation, useNavigate } from "react-router-dom";
 
 const alertDetailsAtom = atom<string>();

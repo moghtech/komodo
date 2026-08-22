@@ -1,11 +1,11 @@
 import { useRead } from "@/lib/hooks";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { ActionIcon, Badge, Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import ProviderSelector from "./provider-selector";
 import AccountSelector from "./account-selector";
 import OrganizationSelector from "./organization-selector";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export interface ImageRegistryConfig {
   registry: Types.ImageRegistryConfig | undefined;
@@ -25,7 +25,7 @@ export default function ImageRegistryConfig({
   imageName,
 }: ImageRegistryConfig) {
   // This is the only way to get organizations for now
-  const config_provider = useRead("ListDockerRegistriesFromConfig", {
+  const config_provider = useRead("ListImageRegistriesFromConfig", {
     target: builderId ? { type: "Builder", id: builderId } : undefined,
   }).data?.find((provider) => {
     return provider.domain === registry?.domain;

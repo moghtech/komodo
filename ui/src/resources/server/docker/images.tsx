@@ -1,14 +1,14 @@
 import { ReactNode } from "react";
 import { useServerDockerSearch } from ".";
-import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import Section from "@/ui/section";
+import { useDockerSelectionState, useRead } from "@/lib/hooks";
+import DockerBatchExecutions from "@/components/docker/batch-executions";
+import { filterBySplit } from "mogh_ui";
+import { fmtSizeBytes, Section } from "mogh_ui";
 import { Badge, Group } from "@mantine/core";
 import { Prune } from "../executions";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import DockerResourceLink from "@/components/docker/link";
-import { fmtSizeBytes } from "@/lib/formatting";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function ServerImages({
   id,
@@ -18,28 +18,34 @@ export default function ServerImages({
   titleOther: ReactNode;
 }) {
   const [search, setSearch] = useServerDockerSearch();
+  const selectionState = useDockerSelectionState("Image");
   const images =
-    useRead("ListDockerImages", { server: id }, { refetchInterval: 10_000 })
-      .data ?? [];
+    useRead("ListImages", { server: id }, { refetchInterval: 10_000 }).data ??
+    [];
 
   const allInUse = images.every((image) => image.in_use);
 
   const filtered = filterBySplit(images, search, (image) => image.name);
 
   return (
-    <Section
-      titleOther={titleOther}
-      actions={
+    <Section titleOther={titleOther}>
+      <Group justify="space-between">
         <Group>
+          <DockerBatchExecutions type="Image" />
           {!allInUse && <Prune serverId={id} type="Images" />}
-          <SearchInput value={search} onSearch={setSearch} />
         </Group>
-      }
-    >
+
+        <SearchInput value={search} onSearch={setSearch} />
+      </Group>
+
       <DataTable
         mih="60vh"
         tableKey="server-images"
         data={filtered}
+        selectOptions={{
+          selectKey: ({ name }) => `${id} ${name}`,
+          state: selectionState,
+        }}
         columns={[
           {
             accessorKey: "name",
@@ -57,7 +63,6 @@ export default function ServerImages({
                 }
               />
             ),
-            size: 200,
           },
           {
             accessorKey: "id",

@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::I64;
+use crate::entities::{I64, docker::Topology};
 
-use super::{ObjectVersion, PortBinding};
+use super::ObjectVersion;
 
 #[typeshare]
 #[derive(
@@ -145,8 +145,8 @@ pub struct ClusterVolumeInfo {
   pub volume_id: Option<String>,
 
   /// The topology this volume is actually accessible from.
-  #[serde(default, rename = "AccessibleTopology")]
-  pub accessible_topology: Vec<Topology>,
+  #[serde(rename = "AccessibleTopology")]
+  pub accessible_topology: Option<Vec<Topology>>,
 }
 
 #[typeshare]
@@ -319,16 +319,13 @@ pub struct ClusterVolumeSpecAccessModeSecrets {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessModeAccessibilityRequirements {
   /// A list of required topologies, at least one of which the volume must be accessible from.
-  #[serde(default, rename = "Requisite")]
-  pub requisite: Vec<Topology>,
+  #[serde(rename = "Requisite")]
+  pub requisite: Option<Vec<Topology>>,
 
   /// A list of topologies that the volume should attempt to be provisioned in.
-  #[serde(default, rename = "Preferred")]
-  pub preferred: Vec<Topology>,
+  #[serde(rename = "Preferred")]
+  pub preferred: Option<Vec<Topology>>,
 }
-
-#[typeshare]
-pub type Topology = HashMap<String, Vec<PortBinding>>;
 
 /// The desired capacity that the volume should be created with. If empty, the plugin will decide the capacity.
 #[typeshare]

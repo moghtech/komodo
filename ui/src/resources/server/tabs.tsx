@@ -2,16 +2,13 @@ import { usePermissions, useRead } from "@/lib/hooks";
 import { useLocalStorage } from "@mantine/hooks";
 import { useServer } from ".";
 import { useMemo } from "react";
-import {
-  MobileFriendlyTabsSelector,
-  TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+import { MobileFriendlyTabsSelector, TabNoContent } from "mogh_ui";
 import { Types } from "komodo_client";
 import TerminalSection from "@/components/terminal/section";
 import { Tabs } from "@mantine/core";
-import { colorByIntention, serverStateIntention } from "@/lib/color";
+import { serverStateIntention } from "@/lib/color";
 import ServerConfig from "./config";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ServerDockerResources from "./docker";
 import ServerStats from "./stats";
 import ServerHostedResourcesSection from "./resources";
@@ -33,19 +30,22 @@ export default function ServerTabs({ id }: { id: string }) {
     !specificTerminal || (serverInfo?.terminals_disabled ?? true);
 
   const stacks =
-    useRead("ListStacks", {}).data?.filter(
-      (stack) => stack.info.server_id === id,
-    ) ?? [];
+    useRead("ListStacks", {
+      query: { specific: { server_ids: [id] } },
+      limit: 1,
+    }).data ?? [];
   const noStacks = stacks.length === 0;
   const deployments =
-    useRead("ListDeployments", {}).data?.filter(
-      (deployment) => deployment.info.server_id === id,
-    ) ?? [];
+    useRead("ListDeployments", {
+      query: { specific: { server_ids: [id] } },
+      limit: 1,
+    }).data ?? [];
   const noDeployments = deployments.length === 0;
   const repos =
-    useRead("ListRepos", {}).data?.filter(
-      (repo) => repo.info.server_id === id,
-    ) ?? [];
+    useRead("ListRepos", {
+      query: { specific: { server_ids: [id] } },
+      limit: 1,
+    }).data ?? [];
   const noRepos = repos.length === 0;
 
   const noResources = noDeployments && noRepos && noStacks;
@@ -110,13 +110,7 @@ export default function ServerTabs({ id }: { id: string }) {
       break;
     case "Resources":
       View = (
-        <ServerHostedResourcesSection
-          serverId={id}
-          stacks={stacks}
-          deployments={deployments}
-          repos={repos}
-          titleOther={Selector}
-        />
+        <ServerHostedResourcesSection serverId={id} titleOther={Selector} />
       );
       break;
     case "Terminals":
@@ -126,13 +120,11 @@ export default function ServerTabs({ id }: { id: string }) {
 
   return (
     <Tabs
-      color={colorByIntention(
-        serverStateIntention(
-          serverInfo?.state,
-          !!coreVersion &&
-            !!serverInfo?.version &&
-            coreVersion !== serverInfo.version,
-        ),
+      color={serverStateIntention(
+        serverInfo?.state,
+        !!coreVersion &&
+          !!serverInfo?.version &&
+          coreVersion !== serverInfo.version,
       )}
       value={view}
     >
