@@ -3084,7 +3084,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_client"
-version = "0.0.0"
+version = "2.3.3"
 dependencies = [
  "anyhow",
  "async_timing_util",
