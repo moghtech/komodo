@@ -74,7 +74,7 @@ pub async fn list_swarm_stacks(
   let res = run_komodo_standard_command(
     "List Swarm Stacks",
     "docker stack ls --format json",
-    CommandOptions::default().timeout(Duration::from_secs(3)),
+    CommandOptions::default().timeout(Duration::from_secs(10)),
   )
   .await;
 
@@ -133,7 +133,7 @@ pub async fn list_swarm_stack_service_ids(
   let res = run_komodo_standard_command(
     "List Swarm Stack Services",
     format!("docker stack services --format json -- {stack}"),
-    CommandOptions::default().timeout(Duration::from_secs(3)),
+    CommandOptions::default().timeout(Duration::from_secs(10)),
   )
   .await;
 
@@ -163,7 +163,7 @@ pub async fn list_swarm_stack_tasks(
   let res = run_komodo_standard_command(
     "List Swarm Stack Tasks",
     format!("docker stack ps --format json --no-trunc -- {stack}"),
-    CommandOptions::default().timeout(Duration::from_secs(3)),
+    CommandOptions::default().timeout(Duration::from_secs(10)),
   )
   .await;
 

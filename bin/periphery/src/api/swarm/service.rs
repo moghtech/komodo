@@ -90,7 +90,7 @@ impl Resolve<crate::api::Args> for GetSwarmServiceLog {
       run_komodo_standard_command(
         "Get Swarm Service Log",
         command,
-        CommandOptions::default().timeout(Duration::from_secs(3)),
+        CommandOptions::default().timeout(Duration::from_secs(10)),
       )
       .await,
     )
@@ -141,7 +141,7 @@ impl Resolve<crate::api::Args> for GetSwarmServiceLogSearch {
       run_komodo_shell_command(
         "Search Swarm Service Log",
         command,
-        CommandOptions::default().timeout(Duration::from_secs(3)),
+        CommandOptions::default().timeout(Duration::from_secs(10)),
       )
       .await,
     )

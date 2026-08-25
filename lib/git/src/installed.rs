@@ -7,7 +7,7 @@ use command::{CommandOptions, run_standard_command};
 pub async fn check_installed() -> anyhow::Result<()> {
   if run_standard_command(
     "which git",
-    CommandOptions::default().timeout(Duration::from_secs(1)),
+    CommandOptions::default().timeout(Duration::from_secs(2)),
   )
   .await
   .success()

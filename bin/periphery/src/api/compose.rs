@@ -61,7 +61,7 @@ impl Resolve<crate::api::Args> for GetComposeLog {
       run_komodo_standard_command(
         "Get Stack Log",
         command,
-        CommandOptions::default().timeout(Duration::from_secs(3)),
+        CommandOptions::default().timeout(Duration::from_secs(10)),
       )
       .await,
     )
@@ -101,7 +101,7 @@ impl Resolve<crate::api::Args> for GetComposeLogSearch {
       run_komodo_shell_command(
         "Search Stack Log",
         command,
-        CommandOptions::default().timeout(Duration::from_secs(3)),
+        CommandOptions::default().timeout(Duration::from_secs(10)),
       )
       .await,
     )
