@@ -14,13 +14,12 @@ import {
   UsableResource,
 } from "@/resources";
 import { AddResourceTags, ResourceTags } from "@/resources/tags";
-import { DividedChildren } from "mogh_ui";
-import { Section } from "mogh_ui";
+import { DividedChildren, EntityPage } from "mogh_ui";
+import { Section, PageBreadcrumbs } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Link, useParams } from "react-router-dom";
-import { EntityPage } from "mogh_ui";
-import { usableResourcePath } from "@/lib/utils";
+import { resourceTypeCrumb, usableResourcePath } from "@/lib/utils";
 import ResourceDescription from "@/resources/description";
 import ResourceNotFound from "@/resources/not-found";
 import NewResource from "@/resources/new";
@@ -66,6 +65,17 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
         (SETTINGS_RESOURCES.includes(type)
           ? "settings"
           : usableResourcePath(type))
+      }
+      breadcrumbs={
+        <PageBreadcrumbs
+          items={[
+            ...(SETTINGS_RESOURCES.includes(type)
+              ? [{ label: "Settings", to: "/settings" }]
+              : []),
+            resourceTypeCrumb(type),
+            { label: resource.name },
+          ]}
+        />
       }
       actions={
         <>

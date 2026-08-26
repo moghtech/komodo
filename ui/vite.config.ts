@@ -46,7 +46,13 @@ export default defineConfig({
     // scanner doesn't traverse `?worker` graphs, so without this it gets
     // served raw ("module is not defined" inside the worker). Force it
     // through prebundling to get CJS -> ESM interop.
-    include: ["path-browserify"],
+    // @mantine/form and @tanstack/react-table are runtime-imported only via
+    // the excluded (linked) mogh_ui — app src imports of react-table are
+    // type-only, which the scanner erases — so they get served raw and their
+    // nested CJS deps (fast-deep-equal, use-sync-external-store) break with
+    // "does not provide an export named ...". Prebundling the packages
+    // inlines those CJS deps with proper interop.
+    include: ["path-browserify", "@mantine/form", "@tanstack/react-table"],
   },
   build: {
     // The only chunks above the default 500 kB warning limit are
