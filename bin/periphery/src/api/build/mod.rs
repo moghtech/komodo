@@ -319,7 +319,7 @@ impl Resolve<crate::api::Args> for build::Build {
         });
       }
       // Maybe Add IMAGE_TAG to build args
-      if !build.config.image_tag.is_empty() 
+      if !build.config.image_tag.is_empty()
         && !build_args.iter().any(|a| a.variable == "IMAGE_TAG") {
         build_args.push(EnvironmentVar {
           variable: String::from("IMAGE_TAG"),
