@@ -16,7 +16,7 @@ COPY ./xtask ./xtask
 # Set Version
 ARG VERSION="0.0.0"
 ARG IMAGE_TAG=""
-RUN cargo set-version ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
+RUN cargo set-version -p komodo_core ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
 
 # Compile app
 RUN cargo build -p komodo_core --release && \

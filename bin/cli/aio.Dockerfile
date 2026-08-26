@@ -11,7 +11,7 @@ COPY ./bin/cli ./bin/cli
 # Set Version
 ARG VERSION="0.0.0"
 ARG IMAGE_TAG=""
-RUN cargo set-version ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
+RUN cargo set-version -p komodo_cli ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
 
 # Compile bin
 RUN cargo build -p komodo_cli --release && cargo strip
