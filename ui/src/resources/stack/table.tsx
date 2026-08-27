@@ -59,7 +59,6 @@ export default function StackTable({
               </Group>
             );
           },
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -68,7 +67,6 @@ export default function StackTable({
           id: "Source",
           accessorKey: "info.repo",
           cell: ({ row }) => <FileSource info={row.original.info} />,
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -76,7 +74,7 @@ export default function StackTable({
           ),
           id: "Host",
           accessorKey: "info.server_id",
-          sortingFn: (a, b) => {
+          sortFn: (a, b) => {
             const name_a = a.original.info.swarm_id
               ? a.original.info.swarm_name
               : a.original.info.server_name;
@@ -98,7 +96,6 @@ export default function StackTable({
             ) : (
               <ResourceLink type="Server" id={row.original.info.server_id} />
             ),
-          size: 200,
         },
         {
           id: "State",
@@ -107,7 +104,6 @@ export default function StackTable({
             <SortableHeader column={column} title="State" />
           ),
           cell: ({ row }) => <StackComponents.State id={row.original.id} />,
-          size: 120,
         },
         {
           header: "Tags",

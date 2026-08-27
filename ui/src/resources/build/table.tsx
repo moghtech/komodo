@@ -52,7 +52,6 @@ export default function BuildTable({
           id: "Name",
           accessorKey: "name",
           cell: ({ row }) => <ResourceLink type="Build" id={row.original.id} />,
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -61,12 +60,10 @@ export default function BuildTable({
           id: "Source",
           accessorKey: "info.repo",
           cell: ({ row }) => <FileSource info={row.original.info} />,
-          size: 200,
         },
         {
           header: "Version",
           accessorFn: ({ info }) => fmtVersion(info.version),
-          size: 120,
         },
         {
           id: "State",
@@ -75,7 +72,6 @@ export default function BuildTable({
             <SortableHeader column={column} title="State" />
           ),
           cell: ({ row }) => <BuildComponents.State id={row.original.id} />,
-          size: 120,
         },
         {
           header: "Tags",

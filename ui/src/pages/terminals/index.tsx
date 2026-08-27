@@ -123,7 +123,6 @@ export default function Terminals() {
               ),
             },
             {
-              size: 200,
               id: "Target",
               accessorKey: "target",
               header: ({ column }) => (
@@ -146,7 +145,6 @@ export default function Terminals() {
               ),
             },
             {
-              size: 100,
               id: "Size",
               accessorKey: "stored_size_kb",
               header: ({ column }) => (

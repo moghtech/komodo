@@ -53,7 +53,6 @@ export default function StandardServerTable({
       }}
       columns={[
         {
-          size: 250,
           id: "Name",
           accessorKey: "name",
           header: ({ column }) => (
@@ -64,12 +63,11 @@ export default function StandardServerTable({
           ),
         },
         {
-          size: 100,
           accessorKey: "id",
           // The resource count is computed on the client,
           // it cannot be sorted server side.
           enableSorting: !onServerSort,
-          sortingFn: (a, b) => {
+          sortFn: (a, b) => {
             const sa = resourcesCount(a.original.id);
             const sb = resourcesCount(b.original.id);
 
@@ -89,7 +87,6 @@ export default function StandardServerTable({
           },
         },
         {
-          size: 200,
           id: "Region",
           accessorKey: "info.region",
           header: ({ column }) => (
@@ -97,7 +94,6 @@ export default function StandardServerTable({
           ),
         },
         {
-          size: 150,
           id: "Version",
           accessorKey: "info.version",
           header: ({ column }) => (
@@ -106,7 +102,6 @@ export default function StandardServerTable({
           // cell: ({ row }) => <ServerVersion id={row.original.id} />,
         },
         {
-          size: 150,
           id: "State",
           accessorKey: "info.state",
           header: ({ column }) => (

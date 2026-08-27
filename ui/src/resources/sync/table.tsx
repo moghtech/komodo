@@ -52,7 +52,6 @@ export default function ResourceSyncTable({
           cell: ({ row }) => (
             <ResourceLink type="ResourceSync" id={row.original.id} />
           ),
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -61,7 +60,6 @@ export default function ResourceSyncTable({
           id: "Source",
           accessorKey: "info.repo",
           cell: ({ row }) => <FileSource info={row.original.info} />,
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -69,7 +67,6 @@ export default function ResourceSyncTable({
           ),
           id: "Branch",
           accessorKey: "info.branch",
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -80,7 +77,6 @@ export default function ResourceSyncTable({
           cell: ({ row }) => (
             <ResourceSyncComponents.State id={row.original.id} />
           ),
-          size: 120,
         },
         {
           header: "Tags",

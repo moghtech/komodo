@@ -62,7 +62,6 @@ export default function ServerVolumes({
                 }
               />
             ),
-            size: 200,
           },
           {
             accessorKey: "driver",

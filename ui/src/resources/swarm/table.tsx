@@ -50,7 +50,6 @@ export default function SwarmTable({
           id: "Name",
           accessorKey: "name",
           cell: ({ row }) => <ResourceLink type="Swarm" id={row.original.id} />,
-          size: 200,
         },
         {
           header: ({ column }) => (
@@ -59,7 +58,6 @@ export default function SwarmTable({
           id: "State",
           accessorKey: "info.state",
           cell: ({ row }) => <SwarmComponents.State id={row.original.id} />,
-          size: 120,
         },
         {
           header: "Tags",

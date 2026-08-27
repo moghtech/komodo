@@ -102,7 +102,6 @@ export default function BasePermissionsSection({
         columns={[
           {
             accessorKey: "type",
-            size: 150,
             header: ({ column }) => (
               <SortableHeader column={column} title="Resource Type" />
             ),
@@ -119,8 +118,7 @@ export default function BasePermissionsSection({
           },
           {
             accessorKey: "level",
-            size: 150,
-            sortingFn: (a, b) =>
+            sortFn: (a, b) =>
               levelSortingFn(a.original.level, b.original.level),
             header: ({ column }) => (
               <SortableHeader column={column} title="Level" />
@@ -143,7 +141,6 @@ export default function BasePermissionsSection({
           },
           {
             header: "Specific",
-            size: 300,
             cell: ({ row }) => {
               return (
                 <SpecificPermissionSelector

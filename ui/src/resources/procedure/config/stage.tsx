@@ -131,7 +131,6 @@ export default function ProcedureStage({
         columns={[
           {
             header: "Execution",
-            size: 250,
             cell: ({ row: { original, index } }) => (
               <ProcedureExecutionSelector
                 disabled={disabled}
@@ -160,7 +159,6 @@ export default function ProcedureStage({
           },
           {
             header: "Target",
-            size: 250,
             cell: ({
               row: {
                 original: {
@@ -195,7 +193,6 @@ export default function ProcedureStage({
           },
           {
             header: "Add / Remove",
-            size: 150,
             cell: ({ row: { index } }) => (
               <Group>
                 <ActionIcon
@@ -232,7 +229,6 @@ export default function ProcedureStage({
           },
           {
             header: "Enabled",
-            size: 100,
             cell: ({
               row: {
                 original: { enabled },
