@@ -2,7 +2,7 @@ import { useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import UpdateCard from "./card";
 import { Button, Box, BoxProps, Stack, Center } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Link } from "react-router-dom";
 
 export interface UpdateListProps extends BoxProps {

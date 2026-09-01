@@ -9,9 +9,9 @@ import { notifications } from "@mantine/notifications";
 import { useDeployment } from ".";
 import { Types } from "komodo_client";
 import { ActionIcon, Box, Button, HoverCard } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
-import { hexColorByIntention } from "@/lib/color";
+import { hexColorByIntention } from "mogh_ui";
 
 export default function DeploymentUpdateAvailable({
   id,
@@ -32,12 +32,12 @@ export default function DeploymentUpdateAvailable({
       },
     },
   );
+
   const deploying = useRead(
     "GetDeploymentActionState",
     { deployment: id },
-    { refetchInterval: 5_000 },
+    { refetchInterval: 5_000, enabled: !small && canExecute },
   ).data?.deploying;
-
   const pending = isPending || deploying;
 
   const deployment = useDeployment(id);

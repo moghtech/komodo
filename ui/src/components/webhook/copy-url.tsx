@@ -1,6 +1,6 @@
 import { useRead, WebhookIntegration } from "@/lib/hooks";
-import { ConfigItem, ConfigItemProps } from "@/ui/config/item";
-import CopyText from "@/ui/copy-text";
+import { ConfigItem, ConfigItemProps } from "mogh_ui";
+import { CopyText } from "mogh_ui";
 
 export interface CopyWebhookUrlProps extends Omit<ConfigItemProps, "children"> {
   integration: WebhookIntegration;

@@ -1,12 +1,12 @@
 import { ReactNode } from "react";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import { hexColorByIntention, containerStateIntention } from "@/lib/color";
+import { ICONS } from "@/lib/icons";
+import { containerStateIntention } from "@/lib/color";
 import { Box, Group, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
-
-export type DockerResourceType = "Container" | "Network" | "Image" | "Volume";
+import { hexColorByIntention } from "mogh_ui";
+import { DockerResourceType } from ".";
 
 export interface DockerResourceLinkProps {
   type: DockerResourceType;
@@ -61,7 +61,7 @@ export const DOCKER_LINK_ICONS: {
 } = {
   Container: ({ serverId, name, size = "1rem" }) => {
     const state =
-      useRead("ListDockerContainers", { server: serverId }).data?.find(
+      useRead("ListContainers", { server: serverId }).data?.find(
         (container) => container.name === name,
       )?.state ?? Types.ContainerStateStatusEnum.Empty;
     return (
@@ -73,7 +73,7 @@ export const DOCKER_LINK_ICONS: {
   },
   Network: ({ serverId, name, size = "1rem" }) => {
     const containers =
-      useRead("ListDockerContainers", { server: serverId }).data ?? [];
+      useRead("ListContainers", { server: serverId }).data ?? [];
     const noContainers = !name
       ? false
       : containers.every((container) => !container.networks?.includes(name));
@@ -88,7 +88,7 @@ export const DOCKER_LINK_ICONS: {
   },
   Image: ({ serverId, name, size = "1rem" }) => {
     const containers =
-      useRead("ListDockerContainers", { server: serverId }).data ?? [];
+      useRead("ListContainers", { server: serverId }).data ?? [];
     const noContainers = !name
       ? false
       : containers.every((container) => container.image_id !== name);
@@ -97,7 +97,7 @@ export const DOCKER_LINK_ICONS: {
   },
   Volume: ({ serverId, name, size = "1rem" }) => {
     const containers =
-      useRead("ListDockerContainers", { server: serverId }).data ?? [];
+      useRead("ListContainers", { server: serverId }).data ?? [];
     const noContainers = !name
       ? false
       : containers.every((container) => !container.volumes?.includes(name));

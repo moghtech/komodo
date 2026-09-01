@@ -84,9 +84,9 @@ pub async fn push_updates_for_view<Resource: ResourceSyncTrait>(
           proposed_resource.config.into();
         proposed_resource.config = propsed_config.into();
 
-        Resource::validate_partial_config(
-          &mut proposed_resource.config,
-        );
+        // Resource::validate_partial_config(
+        //   &mut proposed_resource.config,
+        // );
 
         let proposed = super::toml::resource_toml_to_toml_string::<
           Resource,

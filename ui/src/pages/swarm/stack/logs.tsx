@@ -1,5 +1,5 @@
 import LogSection from "@/components/log-section";
-import { SectionProps } from "@/ui/section";
+import { SectionProps } from "mogh_ui";
 import { Select } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useState } from "react";

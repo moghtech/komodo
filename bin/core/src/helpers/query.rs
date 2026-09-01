@@ -45,7 +45,7 @@ use crate::{
   state::{
     action_state_cache, action_states, db_client,
     deployment_status_cache, procedure_state_cache,
-    stack_status_cache,
+    server_status_cache, stack_status_cache,
   },
 };
 
@@ -95,6 +95,38 @@ pub async fn get_server_state(server: &Server) -> ServerState {
     Ok(_) => ServerState::Ok,
     Err(_) => ServerState::NotOk,
   }
+}
+
+/// The Server state as computed for the server list items,
+/// from the in memory status cache.
+pub async fn get_cached_server_state(id: &String) -> ServerState {
+  server_status_cache()
+    .get(id)
+    .await
+    .map(|status| status.state)
+    .unwrap_or_default()
+}
+
+/// The Stack state as computed for the stack list items,
+/// from the in memory action states / status cache.
+pub async fn get_cached_stack_state(id: &String) -> StackState {
+  if action_states()
+    .stack
+    .get(id)
+    .await
+    .map(|s| s.get().map(|s| s.deploying))
+    .transpose()
+    .ok()
+    .flatten()
+    .unwrap_or_default()
+  {
+    return StackState::Deploying;
+  }
+  stack_status_cache()
+    .get(id)
+    .await
+    .map(|status| status.curr.state)
+    .unwrap_or_default()
 }
 
 pub async fn get_deployment_state(

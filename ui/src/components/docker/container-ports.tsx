@@ -9,12 +9,11 @@ import {
   Text,
 } from "@mantine/core";
 import { Types } from "komodo_client";
+import { DividedChildren, hexColorByIntention } from "mogh_ui";
 import { EthernetPort } from "lucide-react";
-import { colorByIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { fmtPortMount } from "@/lib/formatting";
 import { useServerAddress } from "@/resources/server/hooks";
-import DividedChildren from "@/ui/divided-children";
 
 export interface ContainerPortsProps extends GroupProps {
   ports: Types.Port[];
@@ -32,18 +31,10 @@ export default function ContainerPorts({
 }: ContainerPortsProps) {
   const portsMap = useContainerPortsMap(ports);
 
-  if (Object.keys(portsMap).length > 0) {
-    console.log("mapped", portsMap);
-  }
-
   const sortedNumericPorts = Object.keys(portsMap)
     .map(Number)
     .filter((port) => !Number.isNaN(port))
     .sort((a, b) => a - b);
-
-  if (Object.keys(portsMap).length > 0) {
-    console.log("sorted", sortedNumericPorts);
-  }
 
   type Group = { start: number; end: number; ports: Types.Port[] };
 
@@ -62,8 +53,6 @@ export default function ContainerPorts({
   if (!groupedPorts.length) {
     return null;
   }
-
-  console.log("grouped", groupedPorts);
 
   return (
     <DividedChildren gap={gap} wrap="nowrap" {...groupProps}>
@@ -131,7 +120,7 @@ export function ContainerPort({
           gap="sm"
           wrap="nowrap"
         >
-          <EthernetPort size="1rem" color={colorByIntention("Good")} />
+          <EthernetPort size="1rem" color={hexColorByIntention("Good")} />
           {displayText}
         </Group>
       </HoverCard.Target>
@@ -149,7 +138,7 @@ export function ContainerPort({
           >
             {link ? (
               <>
-                <ICONS.Link size="1rem" color={colorByIntention("Good")} />
+                <ICONS.Link size="1rem" color={hexColorByIntention("Good")} />
                 {link}
               </>
             ) : (

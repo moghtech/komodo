@@ -1,13 +1,15 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::Context;
-use command::{run_komodo_standard_command, run_standard_command};
+use command::{
+  CommandOptions, run_komodo_standard_command, run_standard_command,
+};
 use formatting::format_serror;
 use komodo_client::entities::{
   RepoExecutionResponse, all_logs_success, update::Log,
 };
 
-use crate::get_commit_hash_log;
+use crate::{check_installed, get_commit_hash_log};
 
 /// Write file, add, commit, force push.
 /// Repo must be cloned.
@@ -91,12 +93,19 @@ pub async fn commit_file_inner(
   file: &Path,
   branch: &str,
 ) {
+  if let Err(e) = check_installed().await {
+    res
+      .logs
+      .push(Log::error("Commit", format_serror(&e.into())));
+    return;
+  };
+
   ensure_global_git_config_set().await;
 
   let add_log = run_komodo_standard_command(
     "Add Files",
-    repo_dir,
     format!("git add {}", file.display()),
+    CommandOptions::default().path(repo_dir),
   )
   .await;
   res.logs.push(add_log);
@@ -106,10 +115,10 @@ pub async fn commit_file_inner(
 
   let commit_log = run_komodo_standard_command(
     "Commit",
-    repo_dir,
     format!(
       r#"git commit -m "[Komodo] {commit_msg}: update {file:?}""#,
     ),
+    CommandOptions::default().path(repo_dir),
   )
   .await;
 
@@ -140,8 +149,8 @@ pub async fn commit_file_inner(
 
   let push_log = run_komodo_standard_command(
     "Push",
-    repo_dir,
     format!("git push --set-upstream origin {branch}"),
+    CommandOptions::default().path(repo_dir),
   )
   .await;
 
@@ -155,8 +164,6 @@ pub async fn commit_all(
   message: &str,
   branch: &str,
 ) -> RepoExecutionResponse {
-  ensure_global_git_config_set().await;
-
   let mut res = RepoExecutionResponse {
     path: repo_dir.to_path_buf(),
     logs: Vec::new(),
@@ -164,9 +171,21 @@ pub async fn commit_all(
     commit_message: None,
   };
 
-  let add_log =
-    run_komodo_standard_command("Add Files", repo_dir, "git add -A")
-      .await;
+  if let Err(e) = check_installed().await {
+    res
+      .logs
+      .push(Log::error("Commit", format_serror(&e.into())));
+    return res;
+  };
+
+  ensure_global_git_config_set().await;
+
+  let add_log = run_komodo_standard_command(
+    "Add Files",
+    "git add -A",
+    CommandOptions::default().path(repo_dir),
+  )
+  .await;
   res.logs.push(add_log);
   if !all_logs_success(&res.logs) {
     return res;
@@ -174,8 +193,8 @@ pub async fn commit_all(
 
   let commit_log = run_komodo_standard_command(
     "Commit",
-    repo_dir,
     format!(r#"git commit -m "[Komodo] {message}""#),
+    CommandOptions::default().path(repo_dir),
   )
   .await;
   res.logs.push(commit_log);
@@ -200,8 +219,8 @@ pub async fn commit_all(
 
   let push_log = run_komodo_standard_command(
     "Push",
-    repo_dir,
     format!("git push --set-upstream origin {branch}"),
+    CommandOptions::default().path(repo_dir),
   )
   .await;
   res.logs.push(push_log);
@@ -212,23 +231,25 @@ pub async fn commit_all(
 async fn ensure_global_git_config_set() {
   let res = run_standard_command(
     "git config --global --get user.email",
-    None,
+    CommandOptions::default(),
   )
   .await;
   if !res.success() {
     let _ = run_standard_command(
       "git config --global user.email komodo@komo.do",
-      None,
+      CommandOptions::default(),
     )
     .await;
   }
-  let res =
-    run_standard_command("git config --global --get user.name", None)
-      .await;
+  let res = run_standard_command(
+    "git config --global --get user.name",
+    CommandOptions::default(),
+  )
+  .await;
   if !res.success() {
     let _ = run_standard_command(
       "git config --global user.name komodo",
-      None,
+      CommandOptions::default(),
     )
     .await;
   }

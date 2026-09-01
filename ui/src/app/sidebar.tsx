@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { usableResourcePath } from "@/lib/utils";
 import { SIDEBAR_RESOURCES } from "@/resources";
 import { Button, Divider, ScrollArea, Stack, Text } from "@mantine/core";
@@ -29,6 +29,12 @@ const Sidebar = ({ close }: { close: () => void }) => {
             label="Terminals"
             icon={<ICONS.Terminal size="1rem" />}
             to="/terminals"
+            {...linkProps}
+          />
+          <SidebarLink
+            label="Stats"
+            icon={<ICONS.Stats size="1rem" />}
+            to="/stats"
             {...linkProps}
           />
 

@@ -7,16 +7,16 @@ use futures_util::{
   FutureExt, TryStreamExt, stream::FuturesUnordered,
 };
 use komodo_client::{
-  api::read::{
-    InspectDockerContainer, ListAllDockerContainers, ListServers,
-  },
+  api::read::{self, ListAllContainers, ListServers},
   entities::{
     config::cli::args::container::{
       Container, ContainerCommand, InspectContainer,
     },
     docker::{
       self,
-      container::{ContainerListItem, ContainerStateStatusEnum},
+      container::{
+        ContainerListItem, ContainerSortBy, ContainerStateStatusEnum,
+      },
     },
   },
 };
@@ -44,11 +44,12 @@ async fn list_containers(
     down,
     links,
     reverse,
-    containers: names,
+    containers: terms,
     images,
     networks,
     servers,
     format,
+    page,
     command: _,
   }: &Container,
 ) -> anyhow::Result<()> {
@@ -60,9 +61,16 @@ async fn list_containers(
         .into_iter()
         .map(|s| (s.id.clone(), s))
         .collect::<HashMap<_, _>>())),
-    client.read(ListAllDockerContainers {
+    client.read(ListAllContainers {
       servers: Default::default(),
-      containers: Default::default(),
+      tags: Default::default(),
+      terms: terms.clone(),
+      state: Default::default(),
+      limit: Some(100),
+      // Page is more naturally given starting as 1, 2, 3.
+      page: if *page == 0 { 0 } else { *page - 1 },
+      sort_by: ContainerSortBy::Server,
+      sort_desc: false,
     }),
   )?;
 
@@ -78,7 +86,6 @@ async fn list_containers(
     (Some(server.name.as_str()), c)
   });
 
-  let names = parse_wildcards(names);
   let servers = parse_wildcards(servers);
   let images = parse_wildcards(images);
   let networks = parse_wildcards(networks);
@@ -105,7 +112,6 @@ async fn list_containers(
       );
       state_check
         && network_check
-        && matches_wildcards(&names, &[c.name.as_str()])
         && matches_wildcards(
           &servers,
           &server_name
@@ -145,9 +151,15 @@ pub async fn inspect_container(
         .into_iter()
         .map(|s| (s.id.clone(), s))
         .collect::<HashMap<_, _>>())),
-    client.read(ListAllDockerContainers {
-      servers: Default::default(),
-      containers: Default::default()
+    client.read(ListAllContainers {
+      servers: inspect.servers.clone(),
+      tags: Default::default(),
+      terms: vec![inspect.container.clone()],
+      state: Default::default(),
+      limit: Some(0),
+      page: 0,
+      sort_by: ContainerSortBy::Server,
+      sort_desc: false,
     }),
   )?;
 
@@ -162,25 +174,11 @@ pub async fn inspect_container(
     c.server_id = Some(server.name.clone());
   });
 
-  let names = [inspect.container.to_string()];
-  let names = parse_wildcards(&names);
-  let servers = parse_wildcards(&inspect.servers);
-
   let mut containers = containers
     .into_iter()
-    .filter(|c| {
-      matches_wildcards(&names, &[c.name.as_str()])
-        && matches_wildcards(
-          &servers,
-          &c.server_id
-            .as_deref()
-            .map(|i| vec![i])
-            .unwrap_or_default(),
-        )
-    })
     .map(|c| async move {
       client
-        .read(InspectDockerContainer {
+        .read(read::InspectContainer {
           container: c.name,
           server: c.server_id.context("No server...")?,
         })

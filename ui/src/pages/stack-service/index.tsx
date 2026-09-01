@@ -12,7 +12,7 @@ import { useStack } from "@/resources/stack";
 import { useContainerPortsMap, useRead, useSetTitle } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ResourceLink from "@/resources/link";
 import SwarmResourceLink from "@/components/swarm/link";
 import DockerResourceLink from "@/components/docker/link";
@@ -60,7 +60,11 @@ function StackServiceInner({
 }) {
   const stack = useStack(stackId);
   useSetTitle(`${stack?.name} | ${serviceName}`);
-  const services = useRead("ListStackServices", { stack: stackId }).data;
+  const services = useRead(
+    "ListStackServices",
+    { stack: stackId },
+    { refetchInterval: 10_000 },
+  ).data;
   const service = services?.find((s) => s.service === serviceName);
 
   const container = service?.container;

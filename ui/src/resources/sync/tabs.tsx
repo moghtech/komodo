@@ -1,13 +1,10 @@
 import { useMemo } from "react";
 import { useFullResourceSync, useResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";
-import {
-  MobileFriendlyTabsSelector,
-  TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+import { MobileFriendlyTabsSelector, TabNoContent } from "mogh_ui";
 import { Tabs } from "@mantine/core";
 import ResourceSyncConfig from "./config";
-import { colorByIntention, resourceSyncStateIntention } from "@/lib/color";
+import { resourceSyncStateIntention } from "@/lib/color";
 import ResourceSyncInfo from "./info";
 import ResourceSyncPending from "./pending";
 
@@ -64,10 +61,7 @@ export default function ResourceSyncTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs
-      color={colorByIntention(resourceSyncStateIntention(info?.state))}
-      value={view}
-    >
+    <Tabs color={resourceSyncStateIntention(info?.state)} value={view}>
       {View}
     </Tabs>
   );

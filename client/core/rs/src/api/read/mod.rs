@@ -53,8 +53,8 @@ pub use user_group::*;
 pub use variable::*;
 
 use crate::entities::{
-  ResourceTarget, Timelength,
-  config::{DockerRegistry, GitProvider},
+  ResourceTarget, Timelength, U64,
+  config::{GitProvider, ImageRegistry},
 };
 
 #[cfg(feature = "utoipa")]
@@ -144,8 +144,10 @@ pub struct GetCoreInfoResponse {
   pub enable_fancy_toml: bool,
   /// TZ identifier Core is using, if manually set.
   pub timezone: String,
-  /// Default public key allowing this Core to authenticate to Periphery agents.
+  /// Public key for Core / Periphery authentication.
   pub public_key: String,
+  /// Default pagination limit for the UI to use.
+  pub default_pagination_limit: U64,
 }
 
 //
@@ -191,38 +193,40 @@ pub type ListGitProvidersFromConfigResponse = Vec<GitProvider>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/ListDockerRegistriesFromConfig",
-  description = "List the docker registry providers available in Core / Periphery config files.",
-  request_body(content = ListDockerRegistriesFromConfig),
+  path = "/ListImageRegistriesFromConfig",
+  description = "List the image registry providers available in Core / Periphery config files.",
+  request_body(content = ListImageRegistriesFromConfig),
   responses(
-    (status = 200, description = "The available docker registries", body = ListDockerRegistriesFromConfigResponse),
+    (status = 200, description = "The available image registries", body = ListImageRegistriesFromConfigResponse),
     (status = 400, description = "Target must be `Server` or `Builder`", body = mogh_error::Serror),
     (status = 500, description = "Failed", body = mogh_error::Serror),
   ),
 )]
-pub fn list_docker_registries_from_config() {}
+pub fn list_image_registries_from_config() {}
 
-/// List the docker registry providers available in Core / Periphery config files.
-/// Response: [ListDockerRegistriesFromConfigResponse].
+/// List the image registry providers available in Core / Periphery config files.
+/// Response: [ListImageRegistriesFromConfigResponse].
 ///
 /// Includes:
 ///   - registries in core config
 ///   - registries configured on builds, deployments
 ///   - registries on the optional Server or Builder
+///
+/// Pre v2.3.0, called `ListDockerRegistriesFromConfig`
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(ListDockerRegistriesFromConfigResponse)]
+#[response(ListImageRegistriesFromConfigResponse)]
 #[error(mogh_error::Error)]
-pub struct ListDockerRegistriesFromConfig {
+pub struct ListImageRegistriesFromConfig {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.
   pub target: Option<ResourceTarget>,
 }
 
 #[typeshare]
-pub type ListDockerRegistriesFromConfigResponse = Vec<DockerRegistry>;
+pub type ListImageRegistriesFromConfigResponse = Vec<ImageRegistry>;
 
 //
 

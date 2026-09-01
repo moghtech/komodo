@@ -118,6 +118,7 @@ impl UserTarget {
   Default,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum PermissionLevel {
   /// No permissions.
   #[default]
@@ -156,6 +157,7 @@ impl Default for &PermissionLevel {
   Ord,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum SpecificPermission {
   /// On **Server**
   ///   - Access the terminal apis
@@ -193,6 +195,7 @@ impl SpecificPermission {
 #[typeshare]
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PermissionLevelAndSpecifics {
   pub level: PermissionLevel,
   #[cfg_attr(feature = "utoipa", schema(value_type = Vec<SpecificPermission>))]

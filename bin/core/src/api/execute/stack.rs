@@ -75,6 +75,7 @@ impl Resolve<ExecuteArgs> for BatchDeployStack {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -82,8 +83,12 @@ impl Resolve<ExecuteArgs> for BatchDeployStack {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchDeployStack>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchDeployStack>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }
@@ -188,7 +193,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
 
     // Will check to ensure stack not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.deploying = true)?;
 
     let mut update = update.clone();
@@ -377,6 +382,10 @@ impl Resolve<ExecuteArgs> for DeployStack {
     }
 
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -401,6 +410,7 @@ impl Resolve<ExecuteArgs> for BatchDeployStackIfChanged {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -410,6 +420,7 @@ impl Resolve<ExecuteArgs> for BatchDeployStackIfChanged {
     Ok(
       super::batch_execute::<BatchDeployStackIfChanged>(
         &self.pattern,
+        self.tags,
         user,
       )
       .await?,
@@ -829,6 +840,7 @@ impl Resolve<ExecuteArgs> for BatchPullStack {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
@@ -836,8 +848,12 @@ impl Resolve<ExecuteArgs> for BatchPullStack {
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchPullStack>(&self.pattern, user)
-        .await?,
+      super::batch_execute::<BatchPullStack>(
+        &self.pattern,
+        self.tags,
+        user,
+      )
+      .await?,
     )
   }
 }
@@ -990,7 +1006,7 @@ impl Resolve<ExecuteArgs> for PullStack {
 
     // Will check to ensure stack not already busy before updating, and return Err if so.
     // The returned guard will set the action state back to default when dropped.
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.pulling = true)?;
 
     let mut update = update.clone();
@@ -1007,6 +1023,10 @@ impl Resolve<ExecuteArgs> for PullStack {
 
     update.logs.extend(res.logs);
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)
@@ -1200,15 +1220,20 @@ impl Resolve<ExecuteArgs> for BatchDestroyStack {
       task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
+      tags = self.tags.join(","),
     )
   )]
   async fn resolve(
     self,
     ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchDestroyStack>(&self.pattern, user)
-      .await
-      .map_err(Into::into)
+    super::batch_execute::<BatchDestroyStack>(
+      &self.pattern,
+      self.tags,
+      user,
+    )
+    .await
+    .map_err(Into::into)
   }
 }
 
@@ -1261,7 +1286,7 @@ impl Resolve<ExecuteArgs> for DestroyStack {
 
         // Will check to ensure stack not already busy before updating, and return Err if so.
         // The returned guard will set the action state back to default when dropped.
-        let _action_guard =
+        let action_guard =
           action_state.update(|state| state.destroying = true)?;
 
         let mut update = update.clone();
@@ -1291,6 +1316,10 @@ impl Resolve<ExecuteArgs> for DestroyStack {
         refresh_swarm_cache(&swarm, true).await;
 
         update.finalize();
+
+        // Drop action guard before updating
+        // clients to requery action state
+        drop(action_guard);
         update_update(update.clone()).await?;
 
         Ok(update)
@@ -1361,7 +1390,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
     let action_state =
       action_states().stack.get_or_insert_default(&stack.id).await;
 
-    let _action_guard =
+    let action_guard =
       action_state.update(|state| state.deploying = true)?;
 
     let mut update = update.clone();
@@ -1416,6 +1445,10 @@ impl Resolve<ExecuteArgs> for RunStackService {
 
     update.logs.push(log);
     update.finalize();
+
+    // Drop action guard before updating
+    // clients to requery action state
+    drop(action_guard);
     update_update(update.clone()).await?;
 
     Ok(update)

@@ -4,8 +4,8 @@ import { swarmStateIntention } from "@/lib/color";
 import { useRead, useSetTitle } from "@/lib/hooks";
 import ResourceSubPage from "@/resources/sub-page";
 import { useSwarm } from "@/resources/swarm";
-import { ICONS } from "@/theme/icons";
-import PageGuard from "@/ui/page-guard";
+import { ICONS } from "@/lib/icons";
+import { PageGuard } from "mogh_ui";
 import { useParams } from "react-router-dom";
 import SwarmServiceTabs from "./tabs";
 

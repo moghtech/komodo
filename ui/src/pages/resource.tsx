@@ -1,25 +1,25 @@
 import ExportToml from "@/components/export-toml";
 import ResourceUpdates from "@/components/updates/resource";
 import {
+  useListItemQuery,
   usePermissions,
   usePushRecentlyViewed,
-  useRead,
   useResourceParamType,
   useSetTitle,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   ResourceComponents,
   SETTINGS_RESOURCES,
   UsableResource,
 } from "@/resources";
 import { AddResourceTags, ResourceTags } from "@/resources/tags";
-import DividedChildren from "@/ui/divided-children";
-import Section from "@/ui/section";
+import { DividedChildren } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Link, useParams } from "react-router-dom";
-import EntityPage from "@/ui/entity-page";
+import { EntityPage } from "mogh_ui";
 import { usableResourcePath } from "@/lib/utils";
 import ResourceDescription from "@/resources/description";
 import ResourceNotFound from "@/resources/not-found";
@@ -36,7 +36,9 @@ export default function Resource() {
 
 function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
   const RC = ResourceComponents[type];
-  const resources = useRead(`List${type}s`, {}).data;
+  // Same query as `useListItem` under the hood, so they share the cache entry.
+  // Used to distinguish "still loading" from "resource doesn't exist".
+  const resources = useListItemQuery(type, id).data;
   const resource = RC.useListItem(id);
 
   const { canCreate, canExecute } = usePermissions({ type, id });

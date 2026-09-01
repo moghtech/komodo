@@ -2,21 +2,9 @@ import { UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
-import { notifications } from "@mantine/notifications";
+import { RowSelectionState } from "@tanstack/react-table";
 
-export function sanitizeQuery() {
-  sanitizeQueryInner(new URLSearchParams(location.search));
-}
-
-export function sanitizeQueryInner(search: URLSearchParams) {
-  search.delete("redeem_ready");
-  search.delete("totp");
-  search.delete("passkey");
-  const query = search.toString();
-  location.replace(
-    `${location.origin}${location.pathname}${query.length ? "?" + query : ""}`,
-  );
-}
+export const EXECUTION_ACTION_STATE_REQUERY_MS = 500;
 
 export function objectKeys<T extends object>(o: T): (keyof T)[] {
   return Object.keys(o) as (keyof T)[];
@@ -137,6 +125,16 @@ export function hasMinimumPermissions(
   return true;
 }
 
+/**
+ * Returns true if the search term is shorthand for the given resource type keyword,
+ * eg. term 'cont' matches keyword 'containers'. This lets searches like 'cont my-name'
+ * scope to containers matching 'my-name'. Requires at least 3 characters so short
+ * terms like 'on' are still used to search by name.
+ */
+export function termMatchesTypeKeyword(keyword: string, term: string) {
+  return term.length >= 3 && keyword.startsWith(term);
+}
+
 export function usableResourcePath(resource: UsableResource) {
   if (resource === "ResourceSync") return "resource-syncs";
   return `${resource.toLowerCase()}s`;
@@ -184,15 +182,8 @@ export function logToHtml(log: string) {
   return convert_ansi.toHtml(sanitized);
 }
 
-export function getUpdateQuery(
-  target: Types.ResourceTarget,
-  deployments: Types.DeploymentListItem[] | undefined,
-) {
-  const build_id =
-    target.type === "Deployment"
-      ? deployments?.find((d) => d.id === target.id)?.info.build_id
-      : undefined;
-  if (build_id) {
+export function getUpdateQuery(target: Types.ResourceTarget, buildId?: string) {
+  if (buildId) {
     return {
       $or: [
         {
@@ -201,7 +192,7 @@ export function getUpdateQuery(
         },
         {
           "target.type": "Build",
-          "target.id": build_id,
+          "target.id": buildId,
           operation: {
             $in: [Types.Operation.RunBuild, Types.Operation.CancelBuild],
           },
@@ -214,42 +205,6 @@ export function getUpdateQuery(
       "target.id": target.id,
     };
   }
-}
-
-export function filterBySplit<T>(
-  items: T[] | undefined,
-  search: string,
-  extract: (item: T) => string,
-) {
-  const split = search.toLowerCase().split(" ");
-  return (
-    (split.length
-      ? items?.filter((item) => {
-          const target = extract(item).toLowerCase();
-          return split.every((term) => target.includes(term));
-        })
-      : items) ?? []
-  );
-}
-
-export function filterMultitermBySplit<T>(
-  items: T[] | undefined,
-  search: string,
-  extract: (item: T) => (string | undefined)[],
-) {
-  const split = search.toLowerCase().split(" ");
-  return (
-    (split.length
-      ? items?.filter((item) => {
-          const target = extract(item)
-            .filter((str) => str)
-            .map((str) => str!.toLowerCase());
-          return split.every(
-            (term) => target.findIndex((t) => t.includes(term)) !== -1,
-          );
-        })
-      : items) ?? []
-  );
 }
 
 /** This does NOT include pending deploys, which are only for Execute direction. */
@@ -316,20 +271,6 @@ export function terminalLink({
   }
 }
 
-export function sendCopyNotification(label = "content") {
-  if (location.origin.startsWith("https")) {
-    notifications.show({
-      message: `Copied ${label} to clipboard.`,
-      color: "green",
-    });
-  } else {
-    notifications.show({
-      message: "Cannot copy to clipboard without HTTPS.",
-      color: "red",
-    });
-  }
-}
-
 export function listsEqual(a: string[], b: string[]) {
   for (const aa of a) {
     if (!b.includes(aa)) {
@@ -344,48 +285,38 @@ export function listsEqual(a: string[], b: string[]) {
   return true;
 }
 
-/**
- * Does deep compare of 2 items, returning `true` if equal.
- *
- * - Functions: Always `true`
- * - Primitives: Returns direct `a === b`
- * - Arrays: Returns same items and ordering (recursive)
- * - Objects: Returns same keys / values (recursive)
- *
- * @param a Item a
- * @param b Item b
- * @returns a === b
- */
-export function deepCompare(a: any, b: any) {
-  // Short path for falsy. Important to catch typeof null === "object" edge case.
-  if (!a || !b) {
-    return a === b;
+export function setSelectedStateHandler(
+  state: React.SetStateAction<RowSelectionState>,
+  selectionState: RowSelectionState,
+  setSelectedList: (list: string[]) => void,
+) {
+  switch (typeof state) {
+    case "function":
+      setSelectedList(
+        Object.entries(state(selectionState))
+          .filter((item) => item[1])
+          .map((item) => item[0]),
+      );
+      break;
+    case "object":
+      setSelectedList(
+        Object.entries(state)
+          .filter((item) => item[1])
+          .map((item) => item[0]),
+      );
+      break;
   }
+}
 
-  const ta = typeof a;
-  const tb = typeof b;
-
-  if (ta !== tb) return false;
-
-  if (ta === "function") return true;
-
-  if (ta === "object") {
-    const ea = Object.entries(a);
-    const kb = Object.keys(b);
-
-    // Length not equal -> false
-    if (ea.length !== kb.length) return false;
-
-    for (const [key, va] of ea) {
-      const vb = b[key];
-
-      // Early return when any not equal
-      if (!deepCompare(va, vb)) return false;
-    }
-
-    // If it gets through all, it's equal
-    return true;
-  }
-
-  return a === b;
+export function parseVersion(version: string): Types.Version {
+  const [major, minor, patch] = version
+    // In case of 'v2.0.0' fmt
+    .replaceAll("v", "")
+    .split(".")
+    .map(Number);
+  return {
+    major,
+    minor,
+    patch,
+  };
 }

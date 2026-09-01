@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { Select, SelectProps } from "@mantine/core";
 
 export interface AccountSelectorProps extends Omit<SelectProps, "onSelect"> {
@@ -28,10 +28,10 @@ export default function AccountSelector({
 }: AccountSelectorProps) {
   const [dbRequest, configRequest]:
     | ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-    | ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"] =
+    | ["ListImageRegistryAccounts", "ListImageRegistriesFromConfig"] =
     accountType === "git"
       ? ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-      : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
+      : ["ListImageRegistryAccounts", "ListImageRegistriesFromConfig"];
   const dbAccounts = useRead(dbRequest, {}).data?.filter(
     (account) => account.domain === provider,
   );

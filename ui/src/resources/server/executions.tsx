@@ -1,8 +1,14 @@
-import { useExecute, usePermissions, useRead } from "@/lib/hooks";
+import {
+  useExecute,
+  useInvalidate,
+  usePermissions,
+  useRead,
+} from "@/lib/hooks";
 import { useServer } from ".";
-import ConfirmButton from "@/ui/confirm-button";
-import { ICONS } from "@/theme/icons";
+import { ConfirmButton } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
+import { EXECUTION_ACTION_STATE_REQUERY_MS } from "@/lib/utils";
 
 export const Prune = ({
   serverId,
@@ -12,11 +18,18 @@ export const Prune = ({
   type: "Containers" | "Networks" | "Images" | "Volumes" | "Buildx" | "System";
 }) => {
   const server = useServer(serverId);
-  const { mutateAsync: prune, isPending } = useExecute(`Prune${type}`);
+  const invalidate = useInvalidate();
+  const { mutateAsync: prune, isPending } = useExecute(`Prune${type}`, {
+    onSuccess: () =>
+      setTimeout(
+        () => invalidate(["GetServerActionState"]),
+        EXECUTION_ACTION_STATE_REQUERY_MS,
+      ),
+  });
   const action_state = useRead(
     "GetServerActionState",
     { server: serverId },
-    { refetchInterval: 5000 },
+    { refetchInterval: 5_000 },
   ).data;
   const { canExecute } = usePermissions({ type: "Server", id: serverId });
 

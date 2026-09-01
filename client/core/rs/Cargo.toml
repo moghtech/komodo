@@ -3,7 +3,6 @@ name = "komodo_client"
 description = "Client for the Komodo build and deployment system"
 version.workspace = true
 edition.workspace = true
-authors.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
@@ -14,10 +13,12 @@ repository.workspace = true
 blocking = ["reqwest/blocking"]
 mongo = ["dep:mongo_indexed"]
 utoipa = ["dep:utoipa", "mogh_auth_client/utoipa", "mogh_error/utoipa"]
+schemars = ["dep:schemars"]
 logger = ["dep:mogh_logger"]
+svi = ["dep:svi"]
 cli = ["logger", "dep:mogh_pki",]
-core = ["mongo", "utoipa", "logger", "dep:mogh_server"]
-periphery = ["cli", "dep:ipnetwork", "dep:mogh_server"]
+core = ["mongo", "utoipa", "logger", "svi", "dep:mogh_server"]
+periphery = ["cli", "dep:ipnetwork", "svi", "dep:mogh_server"]
 
 [dependencies]
 # mogh
@@ -26,6 +27,7 @@ mongo_indexed = { workspace = true, optional = true }
 mogh_logger = { workspace = true, optional = true }
 mogh_server = { workspace = true, optional = true }
 mogh_error = { workspace = true, features = ["axum"] }
+svi = { workspace = true, optional = true }
 derive_default_builder.workspace = true
 async_timing_util.workspace = true
 mogh_auth_client.workspace = true
@@ -33,6 +35,7 @@ partial_derive2.workspace = true
 mogh_resolver.workspace = true
 # external
 ipnetwork = { workspace = true, optional = true }
+schemars = { workspace = true, optional = true }
 utoipa = { workspace = true, optional = true }
 tokio-tungstenite.workspace = true
 derive_builder.workspace = true
@@ -51,6 +54,7 @@ bytes.workspace = true
 serde.workspace = true
 tokio.workspace = true
 strum.workspace = true
+regex.workspace = true
 bson.workspace = true
 clap.workspace = true
 envy.workspace = true

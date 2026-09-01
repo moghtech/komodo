@@ -1,19 +1,21 @@
-import { useExecute, useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { useExecute, useListItem, useRead } from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import NewResource from "@/resources/new";
 import AlerterTable from "./table";
 import ResourceHeader from "../header";
 import AlerterConfig from "./config";
-import { hexColorByIntention } from "@/lib/color";
-import BatchExecutions from "@/components/batch-executions";
-import ConfirmButton from "@/ui/confirm-button";
+import { hexColorByIntention } from "mogh_ui";
+import BatchExecutions from "@/resources/batch-executions";
+import { ConfirmButton } from "mogh_ui";
 
-export function useAlerter(id: string | undefined, useName?: boolean) {
-  return useRead("ListAlerters", {}).data?.find((r) =>
-    useName ? r.name === id : r.id === id,
-  );
+export function useAlerter(
+  id: string | undefined,
+  useName?: boolean,
+  refetchInterval?: number | false,
+) {
+  return useListItem("Alerter", id, useName, refetchInterval);
 }
 
 export function useFullAlerter(id: string) {
@@ -24,9 +26,11 @@ export function useFullAlerter(id: string) {
 export const AlerterComponents: RequiredResourceComponents<
   Types.AlerterConfig,
   undefined,
-  Types.AlerterListItemInfo
+  Types.AlerterListItemInfo,
+  Types.AlerterQuerySpecifics
 > = {
-  useList: () => useRead("ListAlerters", {}).data,
+  useList: (query, limit, page) =>
+    useRead("ListAlerters", { query, limit, page }).data,
   useListItem: useAlerter,
   useFull: useFullAlerter,
 
@@ -55,8 +59,7 @@ export const AlerterComponents: RequiredResourceComponents<
   Table: AlerterTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const enabled = useRead("ListAlerters", {}).data?.find((r) => r.id === id)
-      ?.info.enabled;
+    const enabled = useAlerter(id)?.info.enabled;
     const color =
       enabled === undefined || noColor
         ? undefined

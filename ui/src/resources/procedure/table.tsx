@@ -1,30 +1,50 @@
-import { useSelectedResources } from "@/lib/hooks";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { useResourceSelectionState } from "@/lib/hooks";
+import { DataTable, SortableHeader } from "mogh_ui";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import { ProcedureComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 
+const SORT_KEYS = ["Name", "State", "NextRun"];
+
 export default function ProcedureTable({
   resources,
+  onServerSort,
   ...boxProps
 }: {
   resources: Types.ProcedureListItem[];
+  /** When provided, sorting is handled server side,
+   * and sort updates are passed to this callback. */
+  onServerSort?: (sort: {
+    sort_by?: string;
+    sort_desc?: boolean;
+  }) => void;
 } & BoxProps) {
-  const [_, setSelectedResources] = useSelectedResources("Procedure");
+  const selectionState = useResourceSelectionState("Procedure");
 
   return (
     <DataTable
       {...boxProps}
+      manualSorting={!!onServerSort}
+      onSortingStateChange={
+        onServerSort &&
+        ((sorting) => {
+          const sort = sorting.find((s) => SORT_KEYS.includes(s.id));
+          onServerSort(
+            sort ? { sort_by: sort.id, sort_desc: sort.desc } : {},
+          );
+        })
+      }
       tableKey="procedures"
       data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
-        onSelect: setSelectedResources,
+        state: selectionState,
       }}
       columns={[
         {
+          id: "Name",
           accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
@@ -34,6 +54,7 @@ export default function ProcedureTable({
           ),
         },
         {
+          id: "State",
           accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
@@ -41,11 +62,12 @@ export default function ProcedureTable({
           cell: ({ row }) => <ProcedureComponents.State id={row.original.id} />,
         },
         {
+          id: "NextRun",
           accessorKey: "info.next_scheduled_run",
           header: ({ column }) => (
             <SortableHeader column={column} title="Next Run" />
           ),
-          sortingFn: (a, b) => {
+          sortFn: (a, b) => {
             const sa = a.original.info.next_scheduled_run;
             const sb = b.original.info.next_scheduled_run;
 

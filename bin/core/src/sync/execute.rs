@@ -74,7 +74,7 @@ pub async fn get_updates_for_execution<
         let config: Resource::Config = resource.config.into();
         resource.config = config.into();
 
-        Resource::validate_partial_config(&mut resource.config);
+        // Resource::validate_partial_config(&mut resource.config);
 
         let mut diff = Resource::get_diff(
           original.config.clone(),

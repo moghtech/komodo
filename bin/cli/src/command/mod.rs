@@ -100,7 +100,7 @@ fn print_items<T: PrintTable + Serialize>(
   match format {
     CliFormat::Table => {
       let mut table = Table::new();
-      let preset = {
+      let style = {
         use comfy_table::presets::*;
         match cli_config().table_borders {
           None | Some(CliTableBorders::Horizontal) => {
@@ -112,7 +112,7 @@ fn print_items<T: PrintTable + Serialize>(
           Some(CliTableBorders::All) => UTF8_FULL,
         }
       };
-      table.load_preset(preset).set_header(
+      table.load_style(style).set_header(
         T::header(links)
           .iter()
           .map(|h| Cell::new(h).add_attribute(Attribute::Bold)),

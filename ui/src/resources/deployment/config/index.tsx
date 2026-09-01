@@ -1,6 +1,5 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import Config from "@/ui/config";
-import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
+import { Config, ConfigItem, ConfigList, ConfigSwitch } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
@@ -9,13 +8,13 @@ import ResourceSelector from "@/resources/selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import { extractRegistryDomain } from "@/lib/utils";
 import DeploymentImageConfig from "./image";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_ui";
 import DeploymentNetworkSelector from "./network";
 import SecretsSearch from "@/components/config/secrets-search";
 import DeploymentRestartSelector from "./restart";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
-import InputList from "@/ui/input-list";
+import { InputList } from "mogh_ui";
 import { TerminationSignal, TerminationTimeout } from "./termination";
 import { ReactNode } from "react";
 import { useFullDeployment } from "..";
@@ -29,7 +28,7 @@ export default function DeploymentConfig({
 }) {
   const { canWrite } = usePermissions({ type: "Deployment", id });
   const config = useFullDeployment(id)?.config;
-  const builds = useRead("ListBuilds", {}).data;
+  const builds = useRead("ListBuilds", { limit: 0 }).data;
   const globalDisabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const swarmsExist = useRead("ListSwarms", {}).data?.length ? true : false;
@@ -100,7 +99,7 @@ export default function DeploymentConfig({
           {
             label: "Server",
             labelHidden: true,
-            hidden: !!currSwarmId,
+            hidden: swarmsExist && !!currSwarmId,
             fields: {
               server_id: (server_id, set) => {
                 return (
@@ -299,6 +298,18 @@ export default function DeploymentConfig({
           },
         ],
         advanced: [
+          {
+            label: "Custom Name",
+            labelHidden: true,
+            fields: {
+              custom_name: {
+                placeholder: `Custom ${currServerId ? "service" : "container"} name`,
+                description: currSwarmId
+                  ? "Optionally set a custom service name, if different from the Deployment name."
+                  : "Optionally set a custom container name, if different from the Deployment name.",
+              },
+            },
+          },
           {
             label: "Command",
             labelHidden: true,

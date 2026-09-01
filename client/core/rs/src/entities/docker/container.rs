@@ -8,8 +8,8 @@ use typeshare::typeshare;
 use crate::entities::{I64, Usize};
 
 use super::{
-  ContainerConfig, GraphDriverData, Mount, MountTypeEnum,
-  PortBinding, ResourcesUlimits,
+  ContainerConfig, GraphDriverData, Mount, PortBinding,
+  ResourcesUlimits,
 };
 
 /// Container summary returned by container list apis.
@@ -22,6 +22,9 @@ pub struct ContainerListItem {
   /// The Server which hosts the container.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub server_id: Option<String>,
+  /// The name of the Server which hosts the container.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub server_name: Option<String>,
   /// The first name in Names, not including the initial '/'
   pub name: String,
   /// The ID of this container
@@ -273,6 +276,29 @@ pub struct ContainerState {
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ContainerSortBy {
+  /// Sort by container name. Default.
+  #[default]
+  Name,
+  /// Sort by host Server name.
+  Server,
+  /// Sort by container state.
+  State,
+  /// Sort by image.
+  Image,
+  /// Sort by first network.
+  Networks,
+  /// Sort by first port.
+  Ports,
+  /// Sort by first volume.
+  Volumes,
+}
+
+#[typeshare]
+#[derive(
   Debug,
   Clone,
   Copy,
@@ -291,10 +317,11 @@ pub struct ContainerState {
 pub enum ContainerStateStatusEnum {
   Running,
   Created,
-  Paused,
   Restarting,
-  Exited,
+  Stopping,
   Removing,
+  Paused,
+  Exited,
   Dead,
   #[default]
   #[serde(rename = "")]
@@ -858,8 +885,8 @@ pub enum HostConfigCgroupnsModeEnum {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MountPoint {
   /// The mount type:  - `bind` a mount of a file or directory from the host into the container. - `volume` a docker volume with the given `Name`. - `tmpfs` a `tmpfs`. - `npipe` a named pipe from the host into the container. - `cluster` a Swarm cluster volume
-  #[serde(default, rename = "Type")]
-  pub typ: MountTypeEnum,
+  #[serde(rename = "Type")]
+  pub typ: Option<String>,
 
   /// Name is the name reference to the underlying data defined by `Source` e.g., the volume name.
   #[serde(rename = "Name")]

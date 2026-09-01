@@ -1,9 +1,9 @@
-import { DataTable } from "@/ui/data-table";
-import Section from "@/ui/section";
+import { DataTable } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
 import { useIsServerAvailable } from "../hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export default function ServerSystemInfo({
   id,
@@ -55,9 +55,15 @@ export default function ServerSystemInfo({
             accessorKey: "cpu_brand",
           },
           {
+            header: "Arch",
+            accessorKey: "cpu_arch",
+          },
+          {
             header: "Core Count",
-            accessorFn: ({ core_count }) =>
-              `${core_count} Core${(core_count || 0) > 1 ? "s" : ""}`,
+            accessorFn: ({ core_count, logical_core_count }) =>
+              logical_core_count
+                ? `${logical_core_count} Logical / ${core_count} Physical Core${(core_count || 0) > 1 ? "s" : ""}`
+                : `${core_count} Physical Core${(core_count || 0) > 1 ? "s" : ""}`,
           },
           {
             header: "Total Memory",

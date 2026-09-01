@@ -4,24 +4,22 @@ import { useServer } from "../server";
 import { useDeployment } from ".";
 import { Types } from "komodo_client";
 import { ReactNode, useMemo } from "react";
-import {
-  MobileFriendlyTabsSelector,
-  TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
-import { ICONS } from "@/theme/icons";
+import { MobileFriendlyTabsSelector, TabNoContent } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 import { Tabs } from "@mantine/core";
-import { colorByIntention, deploymentStateIntention } from "@/lib/color";
+import { deploymentStateIntention } from "@/lib/color";
 import DeploymentConfig from "./config";
 import LogSection from "@/components/log-section";
 import TerminalSection from "@/components/terminal/section";
-import { MonacoEditor } from "@/components/monaco";
-import Section from "@/ui/section";
+import { MonacoEditor } from "mogh_ui";
+import { Section } from "mogh_ui";
+import DeploymentTasksSection from "./tasks";
 
 type DeploymentTabsView = "Config" | "Tasks" | "Log" | "Inspect" | "Terminals";
 
 export default function DeploymentTabs({ id }: { id: string }) {
   const [_view, setView] = useLocalStorage<DeploymentTabsView>({
-    key: "deployment-tabs-v1",
+    key: `deployment-${id}-tab-v2`,
     defaultValue: "Config",
   });
   const info = useDeployment(id)?.info;
@@ -44,11 +42,12 @@ export default function DeploymentTabs({ id }: { id: string }) {
   const terminalDisabled =
     !specificTerminal ||
     containerTerminalsDisabled ||
-    state !== Types.DeploymentState.Running;
+    state !== Types.DeploymentState.Running ||
+    !!info?.swarm_id;
 
   const view =
     (logsDisabled && _view === "Log") ||
-    (downOrUnknown && _view === "Tasks") ||
+    ((downOrUnknown || !info?.swarm_id) && _view === "Tasks") ||
     (inspectDisabled && _view === "Inspect") ||
     (terminalDisabled && _view === "Terminals")
       ? "Config"
@@ -80,7 +79,6 @@ export default function DeploymentTabs({ id }: { id: string }) {
         value: "Terminals",
         icon: ICONS.Terminal,
         disabled: terminalDisabled,
-        hidden: !!info?.swarm_id,
       },
     ],
     [logsDisabled, inspectDisabled, terminalDisabled, info?.swarm_id],
@@ -110,6 +108,7 @@ export default function DeploymentTabs({ id }: { id: string }) {
       View = <DeploymentConfig id={id} titleOther={Selector} />;
       break;
     case "Tasks":
+      View = <DeploymentTasksSection deploymentId={id} titleOther={Selector} />;
       break;
     case "Log":
       View = (
@@ -129,9 +128,7 @@ export default function DeploymentTabs({ id }: { id: string }) {
 
   return (
     <Tabs
-      color={colorByIntention(
-        deploymentStateIntention(state, info?.update_available),
-      )}
+      color={deploymentStateIntention(state, info?.update_available)}
       value={view}
     >
       {View}
@@ -146,9 +143,15 @@ function InspectDeploymentContainer({
   id: string;
   titleOther: ReactNode;
 }) {
-  const inspect = useRead("InspectDeploymentContainer", {
-    deployment: id,
-  }).data;
+  const deployment = useDeployment(id);
+  const useSwarm = !!deployment?.info.swarm_id;
+  const inspect = useRead(
+    useSwarm ? "InspectDeploymentSwarmService" : "InspectDeploymentContainer",
+    {
+      deployment: id,
+    },
+    { enabled: !!deployment },
+  ).data;
   return (
     <Section titleOther={titleOther}>
       <MonacoEditor

@@ -1,11 +1,11 @@
 import { useRead, useWrite } from "@/lib/hooks";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import { ActionIcon, Box, Button, Group, Stack, Text } from "@mantine/core";
 import TargetTerminal from "./target";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import NewTerminal from "./new";
 import { notifications } from "@mantine/notifications";
 
@@ -24,9 +24,11 @@ export default function TerminalSection({
     "ListTerminals",
     {
       target,
+      // Always show all terminals on the resource.
+      limit: 0,
     },
     {
-      refetchInterval: 5000,
+      refetchInterval: 5_000,
     },
   );
 

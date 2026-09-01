@@ -1,18 +1,19 @@
-import { useInvalidate, useUserTargetPermissions, useWrite } from "@/lib/hooks";
+import { useInvalidate, useWrite } from "@/lib/hooks";
 import { levelSortingFn } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import SearchInput from "@/ui/search-input";
-import Section, { SectionProps } from "@/ui/section";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
+import { Section, SectionProps } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ResourceTypeSelector from "../resource-type-selector";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 import PermissionLevelSelector from "./level-selector";
 import SpecificPermissionSelector from "./specific-selector";
+import { useUserTargetPermissions } from "./hooks";
 
 export interface SpecificPermissionsTableProps extends SectionProps {
   userTarget: Types.UserTarget;
@@ -24,7 +25,7 @@ export default function SpecificPermissionsSection({
 }: SpecificPermissionsTableProps) {
   const [showAll, setShowAll] = useState(false);
   const [resourceType, setResourceType] = useState<UsableResource | null>(null);
-  const permissions = useUserTargetPermissions(userTarget);
+
   const inv = useInvalidate();
   const { mutate: update } = useWrite("UpdatePermissionOnTarget", {
     onSuccess: () => {
@@ -32,49 +33,26 @@ export default function SpecificPermissionsSection({
       notifications.show({ message: "Updated permission", color: "green" });
     },
   });
-  const [search, setSearch] = useState("");
-  const searchSplit = search.toLowerCase().split(" ");
-  const tableData =
-    permissions?.filter(
-      (permission) =>
-        (resourceType === null
-          ? true
-          : permission.resource_target.type === resourceType) &&
-        (showAll ? true : permission.level !== Types.PermissionLevel.None) &&
-        searchSplit.every(
-          (search) =>
-            permission.name.toLowerCase().includes(search) ||
-            permission.resource_target.type.toLowerCase().includes(search),
-        ),
-    ) ?? [];
-  return (
-    <Section
-      title="Per Resource Permissions"
-      titleFz="h3"
-     
-      actions={
-        <Group>
-          <SearchInput value={search} onSearch={setSearch} />
-          <ResourceTypeSelector
-            value={resourceType}
-            onChange={setResourceType}
-          />
-          <LabelledSwitch
-            checked={showAll}
-            onCheckedChange={setShowAll}
-            label="Show All"
-          />
-        </Group>
-      }
-      {...sectionProps}
-    >
+
+  const { permissions, search, setSearch } =
+    useUserTargetPermissions(userTarget);
+
+  const Table = useMemo(() => {
+    const tableData =
+      permissions?.filter(
+        (permission) =>
+          (resourceType === null
+            ? true
+            : permission.resource_target.type === resourceType) &&
+          (showAll ? true : permission.level !== Types.PermissionLevel.None),
+      ) ?? [];
+    return (
       <DataTable
         tableKey="specific-permissions-v1"
         data={tableData}
         columns={[
           {
             accessorKey: "resource_target.type",
-            size: 150,
             header: ({ column }) => (
               <SortableHeader column={column} title="Resource" />
             ),
@@ -93,7 +71,6 @@ export default function SpecificPermissionsSection({
           },
           {
             accessorKey: "resource_target",
-            size: 250,
             header: ({ column }) => (
               <SortableHeader column={column} title="Target" />
             ),
@@ -112,8 +89,7 @@ export default function SpecificPermissionsSection({
           },
           {
             accessorKey: "level",
-            size: 150,
-            sortingFn: (a, b) =>
+            sortFn: (a, b) =>
               levelSortingFn(a.original.level, b.original.level),
             header: ({ column }) => (
               <SortableHeader column={column} title="Level" />
@@ -136,7 +112,6 @@ export default function SpecificPermissionsSection({
           },
           {
             header: "Specific",
-            size: 300,
             cell: ({ row: { original: permission } }) => {
               return (
                 <SpecificPermissionSelector
@@ -158,6 +133,30 @@ export default function SpecificPermissionsSection({
           },
         ]}
       />
+    );
+  }, [showAll, resourceType, permissions]);
+
+  return (
+    <Section
+      title="Per Resource Permissions"
+      titleFz="h3"
+      actions={
+        <Group>
+          <SearchInput value={search} onSearch={setSearch} />
+          <ResourceTypeSelector
+            value={resourceType}
+            onChange={setResourceType}
+          />
+          <LabelledSwitch
+            checked={showAll}
+            onCheckedChange={setShowAll}
+            label="Show All"
+          />
+        </Group>
+      }
+      {...sectionProps}
+    >
+      {Table}
     </Section>
   );
 }

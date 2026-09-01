@@ -82,6 +82,10 @@ pub type _PartialSwarmConfig = PartialSwarmConfig;
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct SwarmConfig {
@@ -90,6 +94,10 @@ pub struct SwarmConfig {
   /// tries the next Server.
   #[serde(default, alias = "servers")]
   #[partial_attr(serde(alias = "servers"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "servers"))
+  )]
   #[builder(default)]
   pub server_ids: Vec<String>,
 
@@ -136,6 +144,19 @@ pub struct SwarmActionState {}
 
 #[typeshare]
 pub type SwarmQuery = ResourceQuery<SwarmQuerySpecifics>;
+
+#[typeshare]
+#[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum SwarmSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by state.
+  State,
+}
 
 #[typeshare]
 #[derive(

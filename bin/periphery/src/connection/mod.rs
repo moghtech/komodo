@@ -172,7 +172,7 @@ fn handle_request(
 
     let ping_in_progress = async {
       loop {
-        tokio::time::sleep(Duration::from_secs(5)).await;
+        tokio::time::sleep(Duration::from_secs(4)).await;
         if let Err(e) = sender.send_in_progress(channel).await {
           error!("Failed to ping in progress over channel | {e:?}");
         }

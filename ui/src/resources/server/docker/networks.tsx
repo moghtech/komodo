@@ -1,13 +1,14 @@
 import { ReactNode } from "react";
 import { useServerDockerSearch } from ".";
-import { useRead } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import Section from "@/ui/section";
+import { useDockerSelectionState, useRead } from "@/lib/hooks";
+import DockerBatchExecutions from "@/components/docker/batch-executions";
+import { filterBySplit } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Prune } from "../executions";
 import { Badge, Group } from "@mantine/core";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import DockerResourceLink from "@/components/docker/link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function ServerNetworks({
   id,
@@ -17,9 +18,10 @@ export default function ServerNetworks({
   titleOther: ReactNode;
 }) {
   const [search, setSearch] = useServerDockerSearch();
+  const selectionState = useDockerSelectionState("Network");
   const networks =
-    useRead("ListDockerNetworks", { server: id }, { refetchInterval: 10_000 })
-      .data ?? [];
+    useRead("ListNetworks", { server: id }, { refetchInterval: 10_000 }).data ??
+    [];
 
   const allInUse = networks.every((network) =>
     // this ignores networks that come in with no name, but they should all come in with name
@@ -37,19 +39,28 @@ export default function ServerNetworks({
   );
 
   return (
-    <Section
-      titleOther={titleOther}
-      actions={
+    <Section titleOther={titleOther}>
+      <Group justify="space-between">
         <Group>
+          <DockerBatchExecutions type="Network" />
           {!allInUse && <Prune serverId={id} type="Networks" />}
-          <SearchInput value={search} onSearch={setSearch} />
         </Group>
-      }
-    >
+
+        <SearchInput value={search} onSearch={setSearch} />
+      </Group>
+
       <DataTable
         mih="60vh"
         tableKey="server-networks"
         data={filtered}
+        selectOptions={{
+          selectKey: ({ name }) => `${id} ${name}`,
+          state: selectionState,
+          // System networks (and unnamed ones) cannot be deleted.
+          disableRow: (row) =>
+            !!row.original.name &&
+            !["none", "host", "bridge"].includes(row.original.name),
+        }}
         columns={[
           {
             accessorKey: "name",
@@ -74,7 +85,6 @@ export default function ServerNetworks({
                 />
               </div>
             ),
-            size: 300,
           },
           {
             accessorKey: "driver",

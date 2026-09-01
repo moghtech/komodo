@@ -36,6 +36,9 @@ pub struct ResourceSyncListItemInfo {
   pub resource_path: Vec<String>,
   /// Linked repo, if one is attached.
   pub linked_repo: String,
+  /// The name of the linked repo, if one is attached.
+  #[serde(default)]
+  pub linked_repo_name: String,
   /// The git provider domain.
   pub git_provider: String,
   /// The Github repo used as the source of the sync resources
@@ -186,6 +189,10 @@ pub type _PartialResourceSyncConfig = PartialResourceSyncConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ResourceSyncConfig {
@@ -428,18 +435,47 @@ pub type ResourceSyncQuery =
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ResourceSyncSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by source repo.
+  Source,
+  /// Sort by branch.
+  Branch,
+  /// Sort by state.
+  State,
+}
+
+#[typeshare]
+#[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceSyncQuerySpecifics {
   /// Filter syncs by their repo.
+  #[serde(default)]
   pub repos: Vec<String>,
+
+  /// Query only for Builds with these linked repos.
+  /// Only accepts Repo id (not name).
+  #[serde(default)]
+  pub linked_repos: Vec<String>,
 }
 
 impl super::resource::AddFilters for ResourceSyncQuerySpecifics {
   fn add_filters(&self, filters: &mut Document) {
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });
+    }
+    if !self.linked_repos.is_empty() {
+      filters.insert(
+        "config.linked_repo",
+        doc! { "$in": &self.linked_repos },
+      );
     }
   }
 }

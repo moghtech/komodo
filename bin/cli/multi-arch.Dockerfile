@@ -9,7 +9,7 @@ ARG AARCH64_BINARIES=${BINARIES_IMAGE}-aarch64
 FROM ${X86_64_BINARIES} AS x86_64
 FROM ${AARCH64_BINARIES} AS aarch64
 
-FROM debian:bullseye-slim
+FROM debian:trixie-slim
 
 WORKDIR /app
 

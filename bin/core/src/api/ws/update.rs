@@ -3,6 +3,7 @@ use axum::{
   extract::{WebSocketUpgrade, ws::Message},
   response::IntoResponse,
 };
+use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use komodo_client::entities::{
   ResourceTarget, permission::PermissionLevel, user::User,
@@ -38,10 +39,19 @@ pub async fn handler(
     let cancel_clone = cancel.clone();
 
     tokio::spawn(async move {
+      let mut keep_alive =
+        tokio::time::interval(super::WS_KEEP_ALIVE_INTERVAL);
       loop {
-        // poll for updates off the receiver / await cancel.
+        // poll for updates off the receiver / await cancel / send keep-alive ping.
         let update = select! {
           _ = cancel_clone.cancelled() => break,
+          _ = keep_alive.tick() => {
+            if ws_sender.send(Message::Ping(Bytes::new())).await.is_err() {
+              cancel_clone.cancel();
+              break;
+            }
+            continue;
+          }
           update = receiver.recv() => {update.expect("failed to recv update msg")}
         };
 

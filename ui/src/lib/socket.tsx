@@ -6,7 +6,7 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import { notifications } from "@mantine/notifications";
 import { Badge, Group, Text } from "@mantine/core";
 import ResourceName from "@/resources/name";
-import { fmtOperation } from "./formatting";
+import { fmtUpperCamelcase } from "mogh_ui";
 
 const wsAtom = atom<{
   ws: WebSocket | undefined;
@@ -123,7 +123,7 @@ function onUpdate(
     notifications.show({
       title: (
         <Group gap="sm">
-          <Text>{fmtOperation(update.operation)}</Text>
+          <Text>{fmtUpperCamelcase(update.operation)}</Text>
           <Badge color={color}>{state}</Badge>
         </Group>
       ),
@@ -200,14 +200,15 @@ function onUpdate(
     // Invalidate docker infos
     if (["Server", "Deployment", "Stack"].includes(update.target.type)) {
       invalidate(
-        ["ListDockerContainers"],
-        ["InspectDockerContainer"],
-        ["ListDockerNetworks"],
-        ["InspectDockerNetwork"],
-        ["ListDockerImages"],
-        ["InspectDockerImage"],
-        ["ListDockerVolumes"],
-        ["InspectDockerVolume"],
+        ["ListContainers"],
+        ["ListAllContainers"],
+        ["InspectContainer"],
+        ["ListNetworks"],
+        ["InspectNetwork"],
+        ["ListImages"],
+        ["InspectImage"],
+        ["ListVolumes"],
+        ["InspectVolume"],
         ["GetResourceMatchingContainer"],
       );
     }
@@ -251,9 +252,9 @@ function onUpdate(
         ["GetStacksSummary"],
         ["ListCommonStackExtraArgs"],
         ["ListComposeProjects"],
-        ["ListDockerContainers"],
-        ["ListDockerNetworks"],
-        ["ListDockerImages"],
+        ["ListContainers"],
+        ["ListNetworks"],
+        ["ListImages"],
         ["GetStackLog", { stack: update.target.id }],
         ["SearchStackLog", { stack: update.target.id }],
         ["GetStack"],
@@ -265,10 +266,11 @@ function onUpdate(
     if (update.target.type === "Deployment") {
       invalidate(
         ["ListDeployments"],
+        ["ListFullDeployments"],
         ["GetDeploymentsSummary"],
-        ["ListDockerContainers"],
-        ["ListDockerNetworks"],
-        ["ListDockerImages"],
+        ["ListContainers"],
+        ["ListNetworks"],
+        ["ListImages"],
         ["GetDeployment"],
         ["GetDeploymentLog", { deployment: update.target.id }],
         ["SearchDeploymentLog", { deployment: update.target.id }],

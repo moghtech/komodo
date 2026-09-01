@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useRead, useUser, useWrite } from "@/lib/hooks";
-import ConfirmModal from "@/ui/confirm-modal";
-import { ICONS } from "@/theme/icons";
+import { ConfirmModal } from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 
 export default function DeleteUserGroup({ groupId }: { groupId: string }) {
   const nav = useNavigate();

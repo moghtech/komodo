@@ -5,32 +5,30 @@ import {
   useUser,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
-import Section from "@/ui/section";
+import { ICONS } from "@/lib/icons";
+import { Section } from "mogh_ui";
 import { Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import NewProviderAccount from "./new";
-import { DataTable, SortableHeader } from "@/ui/data-table";
+import { DataTable, SortableHeader } from "mogh_ui";
 import DeleteProviderAccount from "./delete";
 import ProvidersFromConfig from "./from-config";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { Types } from "komodo_client";
-import SharedTextUpdate, {
-  useSharedTextUpdateData,
-} from "@/ui/shared-text-update";
-import SearchInput from "@/ui/search-input";
+import { SharedTextUpdate, useSharedTextUpdateData } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsProviders() {
   return (
     <Stack gap="xl">
       <Providers type="GitProvider" />
-      <Providers type="DockerRegistry" />
+      <Providers type="ImageRegistry" />
     </Stack>
   );
 }
 
-function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
+function Providers({ type }: { type: "GitProvider" | "ImageRegistry" }) {
   const user = useUser().data;
   const disabled = !user?.admin;
   useSetTitle("Providers");
@@ -64,9 +62,9 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
   return (
     <>
       <Section
-        title={type === "DockerRegistry" ? "Registry Accounts" : "Git Accounts"}
+        title={type === "ImageRegistry" ? "Registry Accounts" : "Git Accounts"}
         icon={
-          type === "DockerRegistry" ? (
+          type === "ImageRegistry" ? (
             <ICONS.Image size="1.3rem" />
           ) : (
             <ICONS.Repo size="1.3rem" />
@@ -85,7 +83,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
           columns={[
             {
               accessorKey: "domain",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Domain" />
               ),
@@ -143,7 +140,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             },
             {
               accessorKey: "username",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Username" />
               ),
@@ -182,7 +178,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             },
             {
               accessorKey: "token",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Token" />
               ),
@@ -222,7 +217,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             },
             {
               header: "Delete",
-              maxSize: 200,
               cell: ({ row }) => (
                 <DeleteProviderAccount
                   type={type}

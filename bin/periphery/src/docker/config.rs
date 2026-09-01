@@ -1,8 +1,9 @@
-use std::fmt::Write;
+use std::{fmt::Write, time::Duration};
 
 use anyhow::{Context, anyhow};
 use command::{
-  run_komodo_shell_command, run_komodo_standard_command,
+  CommandOptions, run_komodo_shell_command,
+  run_komodo_standard_command,
 };
 use data_encoding::BASE64URL;
 use futures_util::{TryStreamExt as _, stream::FuturesUnordered};
@@ -15,6 +16,7 @@ use komodo_client::entities::{
   random_string,
 };
 use periphery_client::api::swarm::CreateSwarmConfig;
+use shell_escape::unix::escape;
 
 use super::*;
 
@@ -23,8 +25,8 @@ pub async fn list_swarm_configs(
 ) -> anyhow::Result<Vec<SwarmConfigListItem>> {
   let res = run_komodo_standard_command(
     "List Swarm Configs",
-    None,
     "docker config ls --format json",
+    CommandOptions::default().timeout(Duration::from_secs(1)),
   )
   .await;
 
@@ -68,8 +70,10 @@ pub async fn inspect_swarm_config(
 ) -> anyhow::Result<SwarmConfigDetails> {
   let res = run_komodo_standard_command(
     "Inspect Swarm Config",
-    None,
-    format!(r#"docker config inspect "{config}""#),
+    // `--` so a name beginning with `-` is not parsed as a flag.
+    // The quotes alone give no protection, as they are stripped when lexed.
+    format!(r#"docker config inspect -- "{config}""#),
+    CommandOptions::default().timeout(Duration::from_secs(3)),
   )
   .await;
 
@@ -115,26 +119,32 @@ pub async fn create_swarm_config(
     template_driver,
   }: &CreateSwarmConfig,
 ) -> anyhow::Result<Log> {
-  let mut command = String::from("docker config create");
+  let mut flags = String::new();
 
   for label in labels {
-    write!(&mut command, " --label {label}")?;
+    write!(&mut flags, " --label {}", escape(label.into()))?;
   }
 
   if let Some(driver) = template_driver {
-    write!(&mut command, " --template-driver {driver}")?;
+    write!(
+      &mut flags,
+      " --template-driver {}",
+      escape(driver.into())
+    )?;
   }
 
-  write!(
-    &mut command,
-    r#" {name} - <<'EOF'
-{}
-EOF"#,
-    data.trim()
-  )?;
+  let command = format!(
+    "printf '%s\\n' {} | docker config create{flags} {} -",
+    escape(data.trim().into()),
+    escape(name.into())
+  );
 
-  let log =
-    run_komodo_shell_command("Create Config", None, command).await;
+  let log = run_komodo_shell_command(
+    "Create Config",
+    command,
+    CommandOptions::default(),
+  )
+  .await;
 
   Ok(log)
 }
@@ -143,12 +153,18 @@ pub async fn remove_swarm_configs(
   configs: impl Iterator<Item = &str>,
 ) -> Log {
   let mut command = String::from("docker config rm");
+  // `--` so a name beginning with `-` is not parsed as a flag.
+  command += " --";
   for config in configs {
     command += " ";
     command += config;
   }
-  run_komodo_standard_command("Remove Swarm Configs", None, command)
-    .await
+  run_komodo_standard_command(
+    "Remove Swarm Configs",
+    command,
+    CommandOptions::default(),
+  )
+  .await
 }
 
 pub async fn recreate_swarm_config(
@@ -319,12 +335,13 @@ async fn switch_service_config(
     write!(&mut command, ",mode={mode}")?;
   }
 
-  write!(&mut command, " {service}")?;
+  // `--` so a name beginning with `-` is not parsed as a flag.
+  write!(&mut command, " -- {service}")?;
 
   let log = run_komodo_standard_command(
     "Switch Service Config",
-    None,
     command,
+    CommandOptions::default(),
   )
   .await;
 

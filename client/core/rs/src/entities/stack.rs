@@ -24,7 +24,12 @@ use crate::{
   },
   entities::{
     EnvironmentVar, ImageDigest, build::ImageRegistryConfig,
-    docker::service::SwarmServiceListItem, environment_vars_from_str,
+    docker::{
+      container::ContainerStateStatusEnum,
+      service::SwarmServiceListItem,
+    },
+    environment_vars_from_str,
+    swarm::SwarmState,
   },
 };
 
@@ -148,14 +153,23 @@ pub type StackListItem = ResourceListItem<StackListItemInfo>;
 pub struct StackListItemInfo {
   /// The swarm that stack is deployed on, when in Swarm mode.
   pub swarm_id: String,
+  /// The name of the swarm that stack is deployed on, when in Swarm mode.
+  #[serde(default)]
+  pub swarm_name: String,
   /// The server that stack is deployed on, when in Server mode.
   pub server_id: String,
+  /// The name of the server that stack is deployed on, when in Server mode.
+  #[serde(default)]
+  pub server_name: String,
   /// Whether stack is using files on host mode
   pub files_on_host: bool,
   /// Whether stack has file contents defined.
   pub file_contents: bool,
   /// Linked repo, if one is attached.
   pub linked_repo: String,
+  /// The name of the linked repo, if one is attached.
+  #[serde(default)]
+  pub linked_repo_name: String,
   /// The git provider domain
   pub git_provider: String,
   /// The configured repo
@@ -172,6 +186,8 @@ pub struct StackListItemInfo {
   /// If deployed, will be `deployed_services`.
   /// Otherwise, its `latest_services`
   pub services: Vec<StackServiceWithUpdate>,
+  /// Whether stack has auto_update_all_services enabled.
+  pub auto_update_all_services: bool,
   /// Whether the compose project is missing on the host.
   /// Ie, it does not show up in `docker compose ls`.
   /// If true, and the stack is not Down, this is an unhealthy state.
@@ -185,13 +201,21 @@ pub struct StackListItemInfo {
   pub latest_hash: Option<String>,
 }
 
+impl StackListItemInfo {
+  pub fn update_available(&self) -> bool {
+    self.services.iter().any(|s| s.update_available)
+  }
+}
+
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackServiceWithUpdate {
   pub service: String,
-  /// The service's image
+  /// The service's (current) image
   pub image: String,
+  /// The latest image (if different than current)
+  pub latest_image: Option<String>,
   /// Whether there is a newer image available for this service
   pub update_available: bool,
 }
@@ -295,6 +319,10 @@ pub type _PartialStackConfig = PartialStackConfig;
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+  feature = "schemars",
+  partial_derive(schemars::JsonSchema)
+)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct StackConfig {
@@ -304,6 +332,10 @@ pub struct StackConfig {
   /// swarm_id overrides server_id and the Stack will be in Swarm mode.
   #[serde(default, alias = "swarm")]
   #[partial_attr(serde(alias = "swarm"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "swarm"))
+  )]
   #[builder(default)]
   pub swarm_id: String,
 
@@ -313,6 +345,10 @@ pub struct StackConfig {
   /// swarm_id overrides server_id and the Stack will be in Swarm mode.
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
+  #[cfg_attr(
+    feature = "schemars",
+    partial_attr(schemars(rename = "server"))
+  )]
   #[builder(default)]
   pub server_id: String,
 
@@ -372,6 +408,17 @@ pub struct StackConfig {
   #[serde(default)]
   #[builder(default)]
   pub auto_update_all_services: bool,
+
+  /// Ignore certain services during Global Auto Update polling.
+  /// Services listed here are skipped only in the global auto-update flow.
+  /// Manual checks still include all services.
+  #[serde(default, deserialize_with = "string_list_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default)]
+  pub auto_update_skip_services: Vec<String>,
 
   /// Whether to run `docker compose down` before `compose up`.
   #[serde(default)]
@@ -700,6 +747,7 @@ impl Default for StackConfig {
       poll_for_updates: Default::default(),
       auto_update: Default::default(),
       auto_update_all_services: Default::default(),
+      auto_update_skip_services: Default::default(),
       ignore_services: Default::default(),
       pre_deploy: Default::default(),
       post_deploy: Default::default(),
@@ -791,10 +839,16 @@ pub struct StackServiceNames {
   pub image_digest: Option<ImageDigest>,
 }
 
+/// A stack service, whether server or swarm based.
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackService {
+  /// The stack which the service is a part of.
+  pub stack_id: String,
+  /// The name of the stack which the service is a part of.
+  #[serde(default)]
+  pub stack_name: String,
   /// The service name
   pub service: String,
   /// The service image
@@ -803,8 +857,88 @@ pub struct StackService {
   pub container: Option<ContainerListItem>,
   /// The service (Swarm mode)
   pub swarm_service: Option<SwarmServiceListItem>,
+  /// The service state
+  pub state: StackServiceState,
   /// The service image digests
   pub image_digests: Option<Vec<ImageDigest>>,
+}
+
+/// Combined state options for
+/// both Server and Swarm based Stacks.
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Default,
+  Serialize,
+  Deserialize,
+  Display,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum StackServiceState {
+  /// (Swarm) All tasks OK
+  Healthy,
+  /// (Swarm) Some tasks don't match desired state
+  Unhealthy,
+  /// (Swarm) All tasks down.
+  Down,
+  /// (Container) Container is running
+  Running,
+  /// (Container) Container is created
+  Created,
+  /// (Container) Container is paused
+  Paused,
+  /// (Container) Container is restarting
+  Restarting,
+  /// (Container) Container is exited
+  Exited,
+  /// (Container) Container is stopping
+  Stopping,
+  /// (Container) Container is removing
+  Removing,
+  /// (Container) Container is dead
+  Dead,
+  /// Unknown case
+  #[default]
+  Unknown,
+}
+
+impl From<SwarmState> for StackServiceState {
+  fn from(value: SwarmState) -> Self {
+    match value {
+      SwarmState::Healthy => StackServiceState::Healthy,
+      SwarmState::Unhealthy => StackServiceState::Unhealthy,
+      SwarmState::Down => StackServiceState::Down,
+      SwarmState::Unknown => StackServiceState::Unknown,
+    }
+  }
+}
+
+impl From<ContainerStateStatusEnum> for StackServiceState {
+  fn from(value: ContainerStateStatusEnum) -> Self {
+    match value {
+      ContainerStateStatusEnum::Running => StackServiceState::Running,
+      ContainerStateStatusEnum::Created => StackServiceState::Created,
+      ContainerStateStatusEnum::Paused => StackServiceState::Paused,
+      ContainerStateStatusEnum::Restarting => {
+        StackServiceState::Restarting
+      }
+      ContainerStateStatusEnum::Exited => StackServiceState::Exited,
+      ContainerStateStatusEnum::Stopping => {
+        StackServiceState::Stopping
+      }
+      ContainerStateStatusEnum::Removing => {
+        StackServiceState::Removing
+      }
+      ContainerStateStatusEnum::Dead => StackServiceState::Dead,
+      ContainerStateStatusEnum::Empty => StackServiceState::Unknown,
+    }
+  }
 }
 
 #[typeshare]
@@ -826,6 +960,23 @@ pub type StackQuery = ResourceQuery<StackQuerySpecifics>;
 
 #[typeshare]
 #[derive(
+  Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum StackSortBy {
+  /// Sort by name. Default.
+  #[default]
+  Name,
+  /// Sort by source repo.
+  Source,
+  /// Sort by host Server / Swarm name.
+  Host,
+  /// Sort by state.
+  State,
+}
+
+#[typeshare]
+#[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -835,6 +986,11 @@ pub struct StackQuerySpecifics {
   /// Only accepts Server id (not name).
   #[serde(default)]
   pub server_ids: Vec<String>,
+  /// Query only for Stacks on these Swarms.
+  /// If empty, does not filter by Swarm.
+  /// Only accepts Swarm id (not name).
+  #[serde(default)]
+  pub swarm_ids: Vec<String>,
   /// Query only for Stacks with these linked repos.
   /// Only accepts Repo id (not name).
   #[serde(default)]
@@ -845,6 +1001,10 @@ pub struct StackQuerySpecifics {
   /// Query only for Stack with available image updates.
   #[serde(default)]
   pub update_available: bool,
+  /// Query only for Stacks matching these states.
+  /// If empty, does not filter by state.
+  #[serde(default)]
+  pub states: Vec<StackState>,
 }
 
 impl super::resource::AddFilters for StackQuerySpecifics {
@@ -852,6 +1012,10 @@ impl super::resource::AddFilters for StackQuerySpecifics {
     if !self.server_ids.is_empty() {
       filters
         .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
+    if !self.swarm_ids.is_empty() {
+      filters
+        .insert("config.swarm_id", doc! { "$in": &self.swarm_ids });
     }
     if !self.linked_repos.is_empty() {
       filters.insert(
@@ -927,6 +1091,7 @@ pub struct StackRemoteFileContents {
   Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum StackFileRequires {
   /// Diff requires service redeploy.
   #[serde(alias = "redeploy")]
@@ -945,6 +1110,7 @@ pub enum StackFileRequires {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AdditionalEnvFile {
   /// File path relative to run directory
   pub path: String,
@@ -1024,6 +1190,7 @@ impl<'de> Deserialize<'de> for AdditionalEnvFile {
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StackFileDependency {
   /// Specify the file
   pub path: String,

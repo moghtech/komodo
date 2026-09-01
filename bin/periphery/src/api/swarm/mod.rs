@@ -1,5 +1,5 @@
 use anyhow::Context as _;
-use command::run_komodo_standard_command;
+use command::{CommandOptions, run_komodo_standard_command};
 use komodo_client::entities::{
   docker::{SwarmLists, node::SwarmNode, task::SwarmTask},
   update::Log,
@@ -112,12 +112,17 @@ impl Resolve<crate::api::Args> for UpdateSwarmNode {
       }
     }
 
-    command += " ";
+    // `--` so a node beginning with `-` is not parsed as a flag.
+    command += " -- ";
     command += &self.node;
 
     Ok(
-      run_komodo_standard_command("Update Swarm Node", None, command)
-        .await,
+      run_komodo_standard_command(
+        "Update Swarm Node",
+        command,
+        CommandOptions::default(),
+      )
+      .await,
     )
   }
 }
@@ -141,6 +146,8 @@ impl Resolve<crate::api::Args> for RemoveSwarmNodes {
     if self.force {
       command += " --force"
     }
+    // `--` so a node beginning with `-` is not parsed as a flag.
+    command += " --";
     for node in self.nodes {
       command += " ";
       command += &node;
@@ -148,8 +155,8 @@ impl Resolve<crate::api::Args> for RemoveSwarmNodes {
     Ok(
       run_komodo_standard_command(
         "Remove Swarm Nodes",
-        None,
         command,
+        CommandOptions::default(),
       )
       .await,
     )

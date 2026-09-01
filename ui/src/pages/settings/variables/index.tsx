@@ -6,25 +6,16 @@ import {
   useUser,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
-import CopyButton from "@/ui/copy-button";
-import { DataTable, SortableHeader } from "@/ui/data-table";
-import {
-  Badge,
-  Button,
-  Group,
-  Stack,
-  Switch,
-  Text,
-} from "@mantine/core";
+import { filterBySplit } from "mogh_ui";
+import { CopyButton } from "mogh_ui";
+import { DataTable, SortableHeader } from "mogh_ui";
+import { Badge, Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import DeleteVariable from "./delete";
-import SharedTextUpdate, {
-  useSharedTextUpdateData,
-} from "@/ui/shared-text-update";
-import CopyText from "@/ui/copy-text";
-import SearchInput from "@/ui/search-input";
+import { SharedTextUpdate, useSharedTextUpdateData } from "mogh_ui";
+import { CopyText } from "mogh_ui";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsVariables() {
   const user = useUser().data;
@@ -76,7 +67,6 @@ export default function SettingsVariables() {
           columns={[
             {
               accessorKey: "name",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Name" />
               ),
@@ -88,7 +78,6 @@ export default function SettingsVariables() {
             },
             {
               accessorKey: "value",
-              size: 300,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Value" />
               ),
@@ -126,7 +115,6 @@ export default function SettingsVariables() {
             },
             {
               accessorKey: "description",
-              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Description" />
               ),
@@ -162,7 +150,6 @@ export default function SettingsVariables() {
             },
             {
               header: "Secret",
-              size: 100,
               cell: ({ row }) => (
                 <Switch
                   checked={row.original.is_secret}
@@ -178,7 +165,6 @@ export default function SettingsVariables() {
             },
             {
               header: "Delete",
-              size: 200,
               cell: ({ row }) => (
                 <DeleteVariable name={row.original.name} disabled={disabled} />
               ),

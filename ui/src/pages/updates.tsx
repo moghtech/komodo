@@ -1,19 +1,18 @@
 import ResourceTypeSelector from "@/components/resource-type-selector";
 import { useUpdateDetails } from "@/components/updates/details";
 import UserAvatar from "@/components/user-avatar";
-import {
-  fmtDateWithMinutes,
-  fmtOperation,
-  fmtUpperCamelcase,
-} from "@/lib/formatting";
 import { useRead, useSetTitle } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
-import { ICONS } from "@/theme/icons";
-import { DataTable } from "@/ui/data-table";
-import Page from "@/ui/page";
-import StatusBadge from "@/ui/status-badge";
+import { ICONS } from "@/lib/icons";
+import {
+  StatusBadge,
+  fmtDateWithMinutes,
+  DataTable,
+  Page,
+  fmtUpperCamelcase,
+} from "mogh_ui";
 import {
   ActionIcon,
   Group,
@@ -23,6 +22,7 @@ import {
   Text,
 } from "@mantine/core";
 import { Types } from "komodo_client";
+import { keepPreviousData } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -38,14 +38,20 @@ export default function Updates() {
     operation: params.get("operation") as Types.Operation | null,
   };
 
-  const { data: updates } = useRead("ListUpdates", {
-    query: {
-      "target.type": type ?? undefined,
-      "target.id": id ?? undefined,
-      operation: operation ?? undefined,
+  const { data: updates } = useRead(
+    "ListUpdates",
+    {
+      query: {
+        "target.type": type ?? undefined,
+        "target.id": id ?? undefined,
+        operation: operation ?? undefined,
+      },
+      page,
     },
-    page,
-  });
+    // Keep the previous rows visible while fetching after a
+    // query key change (page / filters) to prevent table flashing.
+    { placeholderData: keepPreviousData },
+  );
 
   return (
     <Page
@@ -176,7 +182,7 @@ export default function Updates() {
                       : undefined;
                 return (
                   <Group gap="xs" wrap="nowrap">
-                    <Text>{fmtOperation(row.original.operation)}</Text>
+                    <Text>{fmtUpperCamelcase(row.original.operation)}</Text>
                     {more && <Text c="dimmed">{more}</Text>}
                   </Group>
                 );

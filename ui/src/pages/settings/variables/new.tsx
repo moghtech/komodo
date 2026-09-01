@@ -1,5 +1,5 @@
 import { useInvalidate, useUser, useWrite } from "@/lib/hooks";
-import CreateModal from "@/ui/create-modal";
+import { CreateModal } from "mogh_ui";
 import { TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";

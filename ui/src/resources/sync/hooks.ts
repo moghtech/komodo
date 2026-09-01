@@ -1,16 +1,14 @@
-import { atomWithStorage } from "@/lib/hooks";
 import { resourceSyncNoChanges } from "@/lib/utils";
-import { useAtom } from "jotai";
+import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 
 type ResourceSyncTabsView = "Config" | "Info" | "Execute" | "Commit";
-const syncTabsViewAtom = atomWithStorage<ResourceSyncTabsView>(
-  "sync-tabs-v5",
-  "Config",
-);
 
 export function useResourceSyncTabsView(sync: Types.ResourceSync | undefined) {
-  const [_view, setView] = useAtom<ResourceSyncTabsView>(syncTabsViewAtom);
+  const [_view, setView] = useLocalStorage<ResourceSyncTabsView>({
+    key: `sync-${sync?._id?.$oid}-tab-v1`,
+    defaultValue: "Config",
+  });
 
   const hideInfo = sync?.config?.files_on_host
     ? false

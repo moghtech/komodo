@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { Button, Group, Select, SelectProps, TextInput } from "@mantine/core";
 import { useState } from "react";
 
@@ -25,10 +25,10 @@ export default function ProviderSelector({
 }: ProviderSelectorProps) {
   const [dbRequest, configRequest]:
     | ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-    | ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"] =
+    | ["ListImageRegistryAccounts", "ListImageRegistriesFromConfig"] =
     accountType === "git"
       ? ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-      : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
+      : ["ListImageRegistryAccounts", "ListImageRegistriesFromConfig"];
   const dbProviders = useRead(dbRequest, {}).data;
   const configProviders = useRead(configRequest, {}).data;
   const [customMode, setCustomMode] = useState(false);

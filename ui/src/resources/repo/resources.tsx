@@ -1,42 +1,41 @@
-import { ICONS } from "@/theme/icons";
-import { Types } from "komodo_client";
-import Section, { SectionProps } from "@/ui/section";
-import StackTable from "@/resources/stack/table";
-import BuildTable from "../build/table";
-import ResourceSyncTable from "../sync/table";
+import { ICONS } from "@/lib/icons";
+import { Section, SectionProps } from "mogh_ui";
+import ResourceTable from "../table";
 
 export interface RepoLinkedResourcesSectionProps extends Omit<
   SectionProps,
   "children"
 > {
-  stacks: Types.StackListItem[];
-  builds: Types.BuildListItem[];
-  syncs: Types.ResourceSyncListItem[];
+  repoId: string;
 }
 
 export default function RepoLinkedResourcesSection({
-  stacks,
-  builds,
-  syncs,
+  repoId,
   ...sectionProps
 }: RepoLinkedResourcesSectionProps) {
   return (
-    <Section gap={48} {...sectionProps}>
-      {stacks.length ? (
-        <Section title="Stacks" icon={<ICONS.Stack size="1.3rem" />}>
-          <StackTable resources={stacks} />
-        </Section>
-      ) : null}
-      {builds.length ? (
-        <Section title="Builds" icon={<ICONS.Build size="1.3rem" />}>
-          <BuildTable resources={builds} />
-        </Section>
-      ) : null}
-      {syncs.length ? (
-        <Section title="Syncs" icon={<ICONS.ResourceSync size="1.3rem" />}>
-          <ResourceSyncTable resources={syncs} />
-        </Section>
-      ) : null}
+    <Section gap="lg" {...sectionProps}>
+      <Section title="Stacks" icon={<ICONS.Stack size="1.3rem" />}>
+        <ResourceTable
+          type="Stack"
+          newProps={{ repoId }}
+          specific={{ linked_repos: [repoId] }}
+        />
+      </Section>
+      <Section title="Builds" icon={<ICONS.Build size="1.3rem" />}>
+        <ResourceTable
+          type="Build"
+          newProps={{ repoId }}
+          specific={{ linked_repos: [repoId] }}
+        />
+      </Section>
+      <Section title="Syncs" icon={<ICONS.ResourceSync size="1.3rem" />}>
+        <ResourceTable
+          type="ResourceSync"
+          newProps={{ repoId }}
+          specific={{ linked_repos: [repoId] }}
+        />
+      </Section>
     </Section>
   );
 }
