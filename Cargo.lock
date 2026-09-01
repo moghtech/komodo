@@ -325,9 +325,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-ec2"
-version = "1.249.0"
+version = "1.252.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e025023ab098acf02c019ce3d6e4126c56af9df5dab0850f4ef7027c3369caa6"
+checksum = "cded2b72d851a584213f6e1097326b0c244f3aa34b92c604150fed719c59ae11"
 dependencies = [
  "arc-swap",
  "aws-credential-types",
@@ -962,7 +962,7 @@ dependencies = [
  "getrandom 0.2.17",
  "getrandom 0.3.4",
  "hex",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "js-sys",
  "once_cell",
  "rand 0.9.4",
@@ -1104,9 +1104,9 @@ dependencies = [
 
 [[package]]
 name = "cicada_client"
-version = "0.10.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2f27f99462ae9bf2d48cd86d7e0aef60cce615f303db8d56defa86f65045a6a"
+checksum = "db54592d9a863f25f1a5f2bb24875d6a4e39cda0cc085993d9e3c884634f7e47"
 dependencies = [
  "async_timing_util",
  "chrono",
@@ -1125,9 +1125,9 @@ dependencies = [
 
 [[package]]
 name = "cicada_loader"
-version = "0.10.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d488230ce780927c03539acbaabc959ab4320f0979d3f6e8253c5897ba1d9ad"
+checksum = "8568e32f7ca3084a9ef75d96ea57d0d00bd3d4214010f283e34bcc8a3e168f40"
 dependencies = [
  "anyhow",
  "cicada_client",
@@ -1397,9 +1397,9 @@ checksum = "790eea4361631c5e7d22598ecd5723ff611904e3344ce8720784c93e3d83d40b"
 
 [[package]]
 name = "croner"
-version = "3.0.1"
+version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4aa42bcd3d846ebf66e15bd528d1087f75d1c6c1c66ebff626178a106353c576"
+checksum = "a59ed87528b2ee2b6d2b14d6767f6dbe41867dfc581433fc23a7c0fae847467a"
 dependencies = [
  "chrono",
  "derive_builder",
@@ -2254,6 +2254,7 @@ dependencies = [
  "komodo_client",
  "mogh_cache",
  "tokio",
+ "urlencoding",
 ]
 
 [[package]]
@@ -2279,7 +2280,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http 0.2.12",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "slab",
  "tokio",
  "tokio-util",
@@ -2298,7 +2299,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "http 1.5.0",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "slab",
  "tokio",
  "tokio-util",
@@ -2865,9 +2866,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.14.0"
+version = "2.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
+checksum = "07aa2048142242915a31d35844fb311e0e53fcca590c3a0a40dcf1b841fa09eb"
 dependencies = [
  "equivalent",
  "hashbrown 0.17.0",
@@ -2898,6 +2899,7 @@ name = "interpolate"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "formatting",
  "komodo_client",
  "svi",
 ]
@@ -3095,7 +3097,7 @@ dependencies = [
  "derive_default_builder",
  "envy",
  "futures-util",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "ipnetwork",
  "mogh_auth_client",
  "mogh_error",
@@ -3154,7 +3156,7 @@ dependencies = [
  "git",
  "hex",
  "hmac 0.13.0",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "interpolate",
  "komodo_client",
  "mogh_auth_client",
@@ -3494,13 +3496,13 @@ dependencies = [
 
 [[package]]
 name = "mogh_config"
-version = "1.4.0"
+version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78c0071532b8fecdf3914da0ca64dd53064b7a8a668b9fd8857e61d10adcdb82"
+checksum = "757a0c92caf3010b750bfff052b99cc59e00cb81385bbc38c7f6cf87d4201ab1"
 dependencies = [
  "cicada_loader",
  "colored",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "regex",
  "serde",
  "serde_json",
@@ -5115,7 +5117,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "687274d293b6cdc6e73e0fee520bf2049650090d7164f87672d212a3c530cf4a"
 dependencies = [
  "dyn-clone",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "ref-cast",
  "schemars_derive",
  "serde",
@@ -5270,7 +5272,7 @@ version = "1.0.151"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"
 dependencies = [
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "itoa",
  "memchr",
  "serde",
@@ -5352,7 +5354,7 @@ dependencies = [
  "chrono",
  "hex",
  "indexmap 1.9.3",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "schemars 0.9.0",
  "schemars 1.2.2",
  "serde_core",
@@ -5379,7 +5381,7 @@ version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b4db627b98b36d4203a7b458cf3573730f2bb591b28871d916dfa9efabfd41f"
 dependencies = [
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "itoa",
  "ryu",
  "serde",
@@ -6046,7 +6048,7 @@ version = "1.1.4+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3aace63f4bbcdfc2c965b059de67119c89c4017a70d633be6c104910f67056f5"
 dependencies = [
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "serde_core",
  "serde_spanned",
  "toml_datetime",
@@ -6157,7 +6159,7 @@ checksum = "ebe5ef63511595f1344e2d5cfa636d973292adc0eec1f0ad45fae9f0851ab1d4"
 dependencies = [
  "futures-core",
  "futures-util",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "pin-project-lite",
  "slab",
  "sync_wrapper",
@@ -6592,7 +6594,7 @@ version = "5.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8bde15df68e80b16c7d16b9616e80770ad158988daa56a27dccd1e55558b0160"
 dependencies = [
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "serde",
  "serde_json",
  "utoipa-gen",
@@ -6773,7 +6775,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb0e353e6a2fbdc176932bbaab493762eb1255a7900fe0fea1a2f96c296cc909"
 dependencies = [
  "anyhow",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "wasm-encoder",
  "wasmparser",
 ]
@@ -6799,7 +6801,7 @@ checksum = "47b807c72e1bac69382b3a6fb3dbe8ea4c0ed87ff5629b8685ae6b9a611028fe"
 dependencies = [
  "bitflags 2.11.1",
  "hashbrown 0.15.5",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "semver",
 ]
 
@@ -7281,7 +7283,7 @@ checksum = "b7c566e0f4b284dd6561c786d9cb0142da491f46a9fbed79ea69cdad5db17f21"
 dependencies = [
  "anyhow",
  "heck",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "prettyplease",
  "syn 2.0.117",
  "wasm-metadata",
@@ -7312,7 +7314,7 @@ checksum = "9d66ea20e9553b30172b5e831994e35fbde2d165325bec84fc43dbf6f4eb9cb2"
 dependencies = [
  "anyhow",
  "bitflags 2.11.1",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "log",
  "serde",
  "serde_derive",
@@ -7331,7 +7333,7 @@ checksum = "ecc8ac4bc1dc3381b7f59c34f00b67e18f910c2c0f50015669dde7def656a736"
 dependencies = [
  "anyhow",
  "id-arena",
- "indexmap 2.14.0",
+ "indexmap 2.14.1",
  "log",
  "semver",
  "serde",

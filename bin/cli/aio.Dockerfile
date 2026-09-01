@@ -1,4 +1,4 @@
-FROM rust:1.97.1-trixie AS builder
+FROM rust:1.98.0-trixie AS builder
 RUN cargo install cargo-strip cargo-edit
 
 WORKDIR /builder
