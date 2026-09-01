@@ -1,8 +1,8 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
 # Build Core
-FROM rust:1.97.1-trixie AS core-builder
-RUN cargo install cargo-strip
+FROM rust:1.98.0-trixie AS core-builder
+RUN cargo install cargo-strip cargo-edit
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -12,6 +12,11 @@ COPY ./client/periphery ./client/periphery
 COPY ./bin/core ./bin/core
 COPY ./bin/cli ./bin/cli
 COPY ./xtask ./xtask
+
+# Set Version
+ARG VERSION="0.0.0"
+ARG IMAGE_TAG=""
+RUN cargo set-version -p komodo_core ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
 
 # Compile app
 RUN cargo build -p komodo_core --release && \

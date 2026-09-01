@@ -3,7 +3,7 @@
 
 ## Uses chef for dependency caching to help speed up back-to-back builds.
 
-FROM lukemathwalker/cargo-chef:latest-rust-1.97.1-bookworm AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.98.0-bookworm AS chef
 WORKDIR /builder
 
 # Plan just the RECIPE to see if things have changed
@@ -12,12 +12,20 @@ COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
-RUN cargo install cargo-strip
-COPY --from=planner /builder/recipe.json recipe.json
+RUN cargo install cargo-strip cargo-edit
+
 # Build JUST dependencies - cached layer
+COPY --from=planner /builder/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
-# NOW copy again (this time into builder) and build app
+
+# NOW copy again (this time into builder), set version, and build app
 COPY . .
+
+# Set Version
+ARG VERSION="0.0.0"
+ARG IMAGE_TAG=""
+RUN cargo set-version -p komodo_core ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
+
 RUN \
   cargo build --release --bin core && \
   cargo build --release --bin periphery && \

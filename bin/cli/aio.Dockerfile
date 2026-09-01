@@ -1,5 +1,5 @@
-FROM rust:1.97.1-trixie AS builder
-RUN cargo install cargo-strip
+FROM rust:1.98.0-trixie AS builder
+RUN cargo install cargo-strip cargo-edit
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -7,6 +7,11 @@ COPY ./lib ./lib
 COPY ./client/core/rs ./client/core/rs
 COPY ./client/periphery ./client/periphery
 COPY ./bin/cli ./bin/cli
+
+# Set Version
+ARG VERSION="0.0.0"
+ARG IMAGE_TAG=""
+RUN cargo set-version -p komodo_cli ${VERSION}${IMAGE_TAG:+-${IMAGE_TAG}}
 
 # Compile bin
 RUN cargo build -p komodo_cli --release && cargo strip

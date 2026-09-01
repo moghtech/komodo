@@ -26,7 +26,7 @@ pub async fn list_swarm_configs(
   let res = run_komodo_standard_command(
     "List Swarm Configs",
     "docker config ls --format json",
-    CommandOptions::default().timeout(Duration::from_secs(1)),
+    CommandOptions::default().timeout(Duration::from_secs(10)),
   )
   .await;
 
@@ -73,7 +73,7 @@ pub async fn inspect_swarm_config(
     // `--` so a name beginning with `-` is not parsed as a flag.
     // The quotes alone give no protection, as they are stripped when lexed.
     format!(r#"docker config inspect -- "{config}""#),
-    CommandOptions::default().timeout(Duration::from_secs(3)),
+    CommandOptions::default().timeout(Duration::from_secs(10)),
   )
   .await;
 
