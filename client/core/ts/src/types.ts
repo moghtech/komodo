@@ -1194,6 +1194,11 @@ export interface User {
 	 * May not contain 'Service' type config.
 	 */
 	linked_logins?: LinkedLoginsMap;
+	/**
+	 * User group names last synced from OIDC claims.
+	 * Used to reconcile OIDC-managed memberships without touching manual groups.
+	 */
+	oidc_synced_groups?: string[];
 	/** TOTP 2fa credentials */
 	totp?: UserTotpConfig;
 	/** WebAuthn Passkey 2fa credentials */
