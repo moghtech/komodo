@@ -13,6 +13,7 @@ use komodo_client::{
   api::{read::ExportAllResourcesToToml, write::*},
   entities::{
     self, Operation, RepoExecutionArgs, ResourceTarget,
+    ResourceTargetVariant,
     action::Action,
     alert::{Alert, AlertData, SeverityLevel},
     alerter::Alerter,
@@ -35,6 +36,8 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use tracing::Instrument;
+
+use komodo_client::api::read::ExportResourcesToToml;
 
 use crate::{
   alert::send_alerts,
@@ -450,17 +453,23 @@ impl Resolve<WriteArgs> for CommitSync {
     fields(
       operator = args.user.id,
       sync = self.sync,
+      resource_type = format!("{:?}", self.resource_type),
+      resources = format!("{:?}", self.resources),
     )
   )]
   async fn resolve(
     self,
     args: &WriteArgs,
   ) -> mogh_error::Result<Update> {
-    let WriteArgs { user } = args;
+    let CommitSync {
+      sync,
+      resource_type,
+      resources,
+    } = self;
 
     let sync = get_check_permissions::<entities::sync::ResourceSync>(
-      &self.sync,
-      user,
+      &sync,
+      &args.user,
       PermissionLevel::Write.into(),
     )
     .await?;
@@ -517,26 +526,47 @@ impl Resolve<WriteArgs> for CommitSync {
     };
 
     // Get the latest existing resources to preserve any meta values
-    let RemoteResources { resources, .. } =
+    let RemoteResources {
+      resources: existing_resources,
+      ..
+    } =
       crate::sync::remote::get_remote_resources(&sync, repo.as_ref())
         .await
         .context("failed to get remote resources")?;
 
-    let res = ExportAllResourcesToToml {
-      include_resources: sync.config.include_resources,
-      tags: sync.config.match_tags.clone(),
-      include_variables: sync.config.include_variables,
-      include_user_groups: sync.config.include_user_groups,
-      existing: resources
-        .inspect_err(|e| warn!("Existing resource TOML is unavailable, resource meta will not be preserved | ERROR: {e:#}"))
-        .ok(),
-    }
-    .resolve(&ReadArgs {
-      user: sync_user().to_owned(),
-    })
-    .await?;
+    let res = if resource_type.is_some() || resources.is_some() {
+      let targets =
+        build_resource_targets(resource_type, resources.as_deref());
+      ExportResourcesToToml {
+        targets,
+        user_groups: vec![],
+        include_variables: false,
+        existing: existing_resources
+          .inspect_err(|e| warn!("Existing resource TOML is unavailable, resource meta will not be preserved | ERROR: {e:#}"))
+          .ok(),
+      }
+      .resolve(&ReadArgs {
+        user: sync_user().to_owned(),
+      })
+      .await?
+    } else {
+      ExportAllResourcesToToml {
+        include_resources: sync.config.include_resources,
+        tags: sync.config.match_tags.clone(),
+        include_variables: sync.config.include_variables,
+        include_user_groups: sync.config.include_user_groups,
+        existing: existing_resources
+          .inspect_err(|e| warn!("Existing resource TOML is unavailable, resource meta will not be preserved | ERROR: {e:#}"))
+          .ok(),
+      }
+      .resolve(&ReadArgs {
+        user: sync_user().to_owned(),
+      })
+      .await?
+    };
 
-    let mut update = make_update(&sync, Operation::CommitSync, user);
+    let mut update =
+      make_update(&sync, Operation::CommitSync, &args.user);
     update.id = add_update(update.clone()).await?;
 
     update.logs.push(Log::simple("Resources", res.toml.clone()));
@@ -567,20 +597,33 @@ impl Resolve<WriteArgs> for CommitSync {
         add_update(update.clone()).await?;
         return Ok(update);
       } else {
-        update.push_simple_log(
-          "Write contents",
-          format!("File contents written to {file_path:?}"),
-        );
+        let log_msg = match (resource_type, resources.as_deref()) {
+          (Some(rtype), Some(names)) if names.len() == 1 => {
+            format!("{} \"{}\" to file", rtype, names[0])
+          }
+          (Some(rtype), Some(names)) => {
+            format!("{} [{}] to file", rtype, names.join(", "))
+          }
+          _ => format!("All resources to file"),
+        };
+        update.push_simple_log("Commit", log_msg);
       }
     } else if let Some(repo) = &repo {
       let Some(resource_path) = resource_path else {
         // Resource path checked above for repo mode.
         unreachable!()
       };
-      let args: RepoExecutionArgs = repo.into();
-      if let Err(e) =
-        commit_git_sync(args, &resource_path, &res.toml, &mut update)
-          .await
+      let repo_args: RepoExecutionArgs = repo.into();
+      if let Err(e) = commit_git_sync(
+        repo_args,
+        &resource_path,
+        &res.toml,
+        &mut update,
+        resource_type.as_ref().map(|t| t.as_ref()),
+        resources.as_deref(),
+        &args.user.username,
+      )
+      .await
       {
         update.push_error_log(
           "Write resource file",
@@ -595,10 +638,17 @@ impl Resolve<WriteArgs> for CommitSync {
         // Resource path checked above for repo mode.
         unreachable!()
       };
-      let args: RepoExecutionArgs = (&sync).into();
-      if let Err(e) =
-        commit_git_sync(args, &resource_path, &res.toml, &mut update)
-          .await
+      let sync_args: RepoExecutionArgs = (&sync).into();
+      if let Err(e) = commit_git_sync(
+        sync_args,
+        &resource_path,
+        &res.toml,
+        &mut update,
+        resource_type.as_ref().map(|t| t.as_ref()),
+        resources.as_deref(),
+        &args.user.username,
+      )
+      .await
       {
         update.push_error_log(
           "Write resource file",
@@ -627,6 +677,17 @@ impl Resolve<WriteArgs> for CommitSync {
       update.finalize();
       add_update(update.clone()).await?;
       return Ok(update);
+    } else {
+      let log_msg = match (resource_type, resources.as_deref()) {
+        (Some(rtype), Some(names)) if names.len() == 1 => {
+          format!("{} \"{}\" to database", rtype, names[0])
+        }
+        (Some(rtype), Some(names)) => {
+          format!("{} [{}] to database", rtype, names.join(", "))
+        }
+        _ => "All resources to database".to_string(),
+      };
+      update.push_simple_log("Commit", log_msg);
     }
 
     if let Err(e) = (RefreshResourceSyncPending { sync: sync.name })
@@ -652,6 +713,9 @@ async fn commit_git_sync(
   resource_path: &Path,
   toml: &str,
   update: &mut Update,
+  resource_type: Option<&str>,
+  resource_names: Option<&[String]>,
+  username: &str,
 ) -> anyhow::Result<()> {
   let root = args.unique_path(&core_config().repo_directory)?;
   args.destination = Some(root.display().to_string());
@@ -677,8 +741,20 @@ async fn commit_git_sync(
     return Ok(());
   }
 
+  let commit_msg = match (resource_type, resource_names) {
+    (Some(rtype), Some(names)) if names.len() == 1 => {
+      format!("{}: {} \"{}\"", username, rtype, names[0])
+    }
+    (Some(rtype), Some(names)) if names.len() > 1 => {
+      format!("{}: {} [{}]", username, rtype, names.join(", "))
+    }
+    _ => {
+      format!("{}: Commit Resource File", username)
+    }
+  };
+
   let res = git::write_commit_file(
-    "Commit Sync",
+    &commit_msg,
     &root,
     resource_path,
     toml,
@@ -688,6 +764,46 @@ async fn commit_git_sync(
   update.logs.extend(res.logs);
 
   Ok(())
+}
+
+fn build_resource_targets(
+  resource_type: Option<ResourceTargetVariant>,
+  resources: Option<&[String]>,
+) -> Vec<ResourceTarget> {
+  let mut targets = Vec::new();
+  let resources = resources.unwrap_or(&[]);
+
+  macro_rules! push_targets {
+    ($(($Variant:ident, $field:ident)),* $(,)?) => {
+      $(
+        if resource_type == Some(ResourceTargetVariant::$Variant) {
+          for name_or_id in resources {
+            targets.push(ResourceTarget::$Variant(name_or_id.clone()));
+          }
+        }
+      )*
+    };
+  }
+
+  push_targets!(
+    (Server, servers),
+    (Swarm, swarms),
+    (Stack, stacks),
+    (Deployment, deployments),
+    (Build, builds),
+    (Repo, repos),
+    (Procedure, procedures),
+    (Action, actions),
+    (Builder, builders),
+    (Alerter, alerters),
+    (ResourceSync, resource_syncs),
+  );
+
+  if resource_type.is_none() && resources.is_empty() {
+    return vec![];
+  }
+
+  targets
 }
 
 impl Resolve<WriteArgs> for RefreshResourceSyncPending {

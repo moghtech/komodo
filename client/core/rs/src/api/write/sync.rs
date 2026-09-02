@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
+  ResourceTargetVariant,
   sync::{_PartialResourceSyncConfig, ResourceSync},
   update::Update,
 };
@@ -250,6 +251,14 @@ pub struct CommitSync {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub sync: String,
+  /// Only commit a specific resource type.
+  /// Combine with `resources` to specify specific resources.
+  #[serde(default)]
+  pub resource_type: Option<ResourceTargetVariant>,
+  /// Only commit specific resources by id or name.
+  /// Combine with `resource_type` to specify resources.
+  #[serde(default)]
+  pub resources: Option<Vec<String>>,
 }
 
 //
