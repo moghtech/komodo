@@ -49,6 +49,9 @@ pub async fn get_repo_compose_contents(
   let run_directory = repo_path.join(&stack.config.run_directory);
   // This will remove any intermediate '/./' which can be a problem for some OS.
   let run_directory = run_directory.components().collect::<PathBuf>();
+  if !run_directory.exists() {
+    anyhow::bail!("Failed to access stack run directory {stack_path:?}", stack_path = &stack.config.run_directory);
+  }
 
   let mut successful = Vec::new();
   let mut errored = Vec::new();
