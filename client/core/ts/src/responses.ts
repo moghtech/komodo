@@ -310,6 +310,7 @@ export type WriteResponses = {
   UpdateServiceUserDescription: Types.UpdateServiceUserDescriptionResponse;
   CreateApiKeyForServiceUser: Types.CreateApiKeyForServiceUserResponse;
   DeleteApiKeyForServiceUser: Types.DeleteApiKeyForServiceUserResponse;
+  RotateApiKey: Types.RotateApiKeyResponse;
 
   // ==== USER GROUP ====
   CreateUserGroup: Types.UserGroup;
