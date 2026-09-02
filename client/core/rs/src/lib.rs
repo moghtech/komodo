@@ -211,6 +211,10 @@ impl KomodoClient {
       if update.status == entities::update::UpdateStatus::Complete {
         return Ok(update);
       }
+      // Match the async variant's interval. Without this the loop hammers
+      // GetUpdate as fast as the network allows for the whole duration of the
+      // execution, which for a Stack deploy is minutes of hot looping.
+      std::thread::sleep(Duration::from_millis(500));
     }
   }
 }
