@@ -1,6 +1,9 @@
 //! Module to handle common parts of deploying Compose and Swarm Stacks.
 
-use std::path::{Path, PathBuf};
+use std::{
+  collections::HashSet,
+  path::{Path, PathBuf},
+};
 
 use anyhow::{Context as _, anyhow};
 use formatting::format_serror;
@@ -29,35 +32,51 @@ pub mod write;
 )]
 pub async fn maybe_login_registry(
   stack: &Stack,
-  registry_token: Option<String>,
+  registry_tokens: &[(String, String, String)],
   logs: &mut Vec<Log>,
 ) -> bool {
-  if !stack.config.registry_provider.is_empty()
-    && !stack.config.registry_account.is_empty()
-  {
-    if let Err(e) = docker_login(
-      &stack.config.registry_provider,
-      &stack.config.registry_account,
-      registry_token.as_deref(),
+  let registries = stack
+    .config
+    .image_registry
+    .iter()
+    .map(|r| (r.domain.as_str(), r.account.as_str()))
+    .chain(
+      [(
+        stack.config.registry_provider.as_str(),
+        stack.config.registry_account.as_str(),
+      )]
+      .into_iter(),
     )
-    .await
-    .with_context(|| {
-      format!(
-        "Domain: '{}' | Account: '{}'",
-        stack.config.registry_provider, stack.config.registry_account
-      )
+    .filter(|(domain, account)| {
+      !domain.is_empty() && !account.is_empty()
     })
-    .context("Failed to login to image registry")
+    .collect::<HashSet<_>>();
+
+  let mut logged_in = false;
+  for (domain, account) in registries {
+    let registry_token = registry_tokens
+      .iter()
+      .find(|(token_domain, token_account, _)| {
+        token_domain == domain && token_account == account
+      })
+      .map(|(_, _, token)| token.as_str());
+
+    match docker_login(domain, account, registry_token)
+      .await
+      .with_context(|| {
+        format!("Domain: '{domain}' | Account: '{account}'")
+      })
+      .context("Failed to login to image registry")
     {
-      logs.push(Log::error(
+      Ok(did_login) => logged_in = logged_in || did_login,
+      Err(e) => logs.push(Log::error(
         "Login to Registry",
         format_serror(&e.into()),
-      ));
+      )),
     }
-    true
-  } else {
-    false
   }
+
+  logged_in
 }
 
 /// Only for git repo based Stacks.
