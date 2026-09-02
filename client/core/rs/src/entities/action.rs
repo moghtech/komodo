@@ -162,6 +162,13 @@ pub struct ActionConfig {
   #[builder(default)]
   pub reload_deno_deps: bool,
 
+  /// Maximum seconds the Action may run before its process group is
+  /// killed and the run failed. 0 or below means no timeout.
+  #[serde(default = "default_execution_timeout")]
+  #[builder(default = "default_execution_timeout()")]
+  #[partial_default(default_execution_timeout())]
+  pub execution_timeout: i32,
+
   /// Typescript file contents using pre-initialized `komodo` client.
   /// Supports variable / secret interpolation.
   #[serde(default, deserialize_with = "file_contents_deserializer")]
@@ -204,6 +211,10 @@ fn default_run_at_startup() -> bool {
   false
 }
 
+fn default_execution_timeout() -> i32 {
+  0
+}
+
 fn default_webhook_enabled() -> bool {
   true
 }
@@ -227,6 +238,7 @@ impl Default for ActionConfig {
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),
       reload_deno_deps: Default::default(),
+      execution_timeout: default_execution_timeout(),
       arguments_format: Default::default(),
       file_contents: Default::default(),
       arguments: Default::default(),
