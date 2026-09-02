@@ -50,7 +50,7 @@ impl Resolve<crate::api::Args> for CloneRepo {
   ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let CloneRepo {
       args,
-      git_token,
+      git_credential,
       environment,
       env_file_path,
       on_clone,
@@ -59,7 +59,8 @@ impl Resolve<crate::api::Args> for CloneRepo {
       replacers,
     } = self;
 
-    let token = crate::helpers::git_token(git_token, &args)?;
+    let token =
+      crate::helpers::git_credential(git_credential, &args)?;
     let root_repo_dir = default_folder(args.default_folder)?;
 
     let res = git::clone(args, &root_repo_dir, token).await?;
@@ -96,7 +97,7 @@ impl Resolve<crate::api::Args> for PullRepo {
   ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let PullRepo {
       args,
-      git_token,
+      git_credential,
       environment,
       env_file_path,
       on_pull,
@@ -104,7 +105,8 @@ impl Resolve<crate::api::Args> for PullRepo {
       replacers,
     } = self;
 
-    let token = crate::helpers::git_token(git_token, &args)?;
+    let token =
+      crate::helpers::git_credential(git_credential, &args)?;
     let parent_dir = default_folder(args.default_folder)?;
 
     let res = git::pull(args, &parent_dir, token).await?;
@@ -141,7 +143,7 @@ impl Resolve<crate::api::Args> for PullOrCloneRepo {
   ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let PullOrCloneRepo {
       args,
-      git_token,
+      git_credential,
       environment,
       env_file_path,
       on_clone,
@@ -150,7 +152,8 @@ impl Resolve<crate::api::Args> for PullOrCloneRepo {
       replacers,
     } = self;
 
-    let token = crate::helpers::git_token(git_token, &args)?;
+    let token =
+      crate::helpers::git_credential(git_credential, &args)?;
     let parent_dir = default_folder(args.default_folder)?;
 
     let (res, cloned) =

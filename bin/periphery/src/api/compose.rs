@@ -232,12 +232,16 @@ impl Resolve<crate::api::Args> for WriteCommitComposeContents {
       username,
       file_path,
       contents,
-      git_token,
+      git_credential,
     } = self;
 
-    let root =
-      pull_or_clone_stack(&stack, repo.as_ref(), git_token, args)
-        .await?;
+    let root = pull_or_clone_stack(
+      &stack,
+      repo.as_ref(),
+      git_credential,
+      args,
+    )
+    .await?;
 
     let file_path = stack
       .config
@@ -284,7 +288,7 @@ impl Resolve<crate::api::Args> for ComposePull {
       mut stack,
       repo,
       services,
-      git_token,
+      git_credential,
       registry_token,
       mut replacers,
     } = self;
@@ -303,7 +307,7 @@ impl Resolve<crate::api::Args> for ComposePull {
     let (run_directory, env_file_path) = match write_stack(
       &stack,
       repo.as_ref(),
-      git_token,
+      git_credential,
       replacers.clone(),
       &mut res,
       args,
@@ -445,7 +449,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
       mut stack,
       repo,
       services,
-      git_token,
+      git_credential,
       registry_token,
       mut replacers,
     } = self;
@@ -464,7 +468,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
     let (run_directory, env_file_path) = match write_stack(
       &stack,
       repo.as_ref(),
-      git_token,
+      git_credential,
       replacers.clone(),
       &mut res,
       args,
@@ -832,7 +836,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
     let ComposeRun {
       mut stack,
       repo,
-      git_token,
+      git_credential,
       registry_token,
       mut replacers,
       service,
@@ -859,7 +863,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
     let (run_directory, env_file_path) = match write_stack(
       &stack,
       repo.as_ref(),
-      git_token,
+      git_credential,
       replacers.clone(),
       &mut res,
       args,

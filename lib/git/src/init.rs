@@ -3,7 +3,7 @@ use std::path::Path;
 use command::{CommandOptions, run_komodo_standard_command};
 use formatting::format_serror;
 use komodo_client::entities::{
-  RepoExecutionArgs, all_logs_success, update::Log,
+  GitCredential, RepoExecutionArgs, all_logs_success, update::Log,
 };
 
 use crate::check_installed;
@@ -11,7 +11,7 @@ use crate::check_installed;
 pub async fn init_folder_as_repo(
   folder_path: &Path,
   args: &RepoExecutionArgs,
-  access_token: Option<&str>,
+  credential: Option<&GitCredential>,
   logs: &mut Vec<Log>,
 ) {
   if let Err(e) = check_installed().await {
@@ -31,7 +31,7 @@ pub async fn init_folder_as_repo(
     return;
   }
 
-  let repo_url = match args.remote_url(access_token) {
+  let repo_url = match args.remote_url(credential) {
     Ok(url) => url,
     Err(e) => {
       logs
@@ -48,7 +48,7 @@ pub async fn init_folder_as_repo(
   )
   .await;
   // Sanitize the output
-  if let Some(token) = &access_token {
+  if let Some(token) = credential.and_then(|c| c.token.as_deref()) {
     set_remote.command = set_remote.command.replace(token, "<TOKEN>");
     set_remote.stdout = set_remote.stdout.replace(token, "<TOKEN>");
     set_remote.stderr = set_remote.stderr.replace(token, "<TOKEN>");

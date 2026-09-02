@@ -189,9 +189,14 @@ pub struct ProviderAccount {
   /// The account username. Required.
   #[serde(alias = "account")]
   pub username: String,
-  /// The account access token. Required.
+  /// The account access token. Required for http(s) clones.
   #[serde(default, skip_serializing)]
   pub token: String,
+  /// An ssh private key, used for repos cloned over ssh.
+  ///
+  /// Leave empty to use the ssh config of the host running the clone.
+  #[serde(default, skip_serializing)]
+  pub ssh_key: String,
 }
 
 pub fn empty_or_redacted(src: &str) -> String {

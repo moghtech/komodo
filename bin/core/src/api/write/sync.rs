@@ -42,7 +42,7 @@ use crate::{
   config::core_config,
   helpers::{
     all_resources::AllResourcesById,
-    git_token,
+    git_credential,
     query::get_id_to_tags,
     update::{add_update, make_update, update_update},
   },
@@ -315,8 +315,8 @@ async fn write_sync_file_contents_git(
   let root = repo_args.unique_path(&core_config().repo_directory)?;
   repo_args.destination = Some(root.display().to_string());
 
-  let git_token = if let Some(account) = &repo_args.account {
-    git_token(&repo_args.provider, account, |https| repo_args.https = https)
+  let git_credential = if let Some(account) = &repo_args.account {
+    git_credential(&repo_args.provider, account, |https| repo_args.https = https)
     .await
     .with_context(
       || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", repo_args.provider),
@@ -353,7 +353,7 @@ async fn write_sync_file_contents_git(
     git::init_folder_as_repo(
       &root,
       &repo_args,
-      git_token.as_deref(),
+      git_credential.as_ref(),
       &mut update.logs,
     )
     .await;
@@ -371,7 +371,7 @@ async fn write_sync_file_contents_git(
   match git::pull_or_clone(
     repo_args,
     &core_config().repo_directory,
-    git_token,
+    git_credential,
   )
   .await
   .context("Failed to pull latest changes before commit")
@@ -657,7 +657,7 @@ async fn commit_git_sync(
   args.destination = Some(root.display().to_string());
 
   let access_token = if let Some(account) = &args.account {
-    git_token(&args.provider, account, |https| args.https = https)
+    git_credential(&args.provider, account, |https| args.https = https)
       .await
       .with_context(
         || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", args.provider),

@@ -9,7 +9,7 @@ use komodo_client::entities::{
   update::Log,
 };
 
-use crate::{config::core_config, helpers::git_token};
+use crate::{config::core_config, helpers::git_credential};
 
 #[derive(Default)]
 pub struct RemoteComposeContents {
@@ -93,7 +93,7 @@ pub async fn ensure_remote_repo(
   let config = core_config();
 
   let access_token = if let Some(username) = &clone_args.account {
-    git_token(&clone_args.provider, username, |https| {
+    git_credential(&clone_args.provider, username, |https| {
         clone_args.https = https
       })
       .await

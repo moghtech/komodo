@@ -1,5 +1,6 @@
 use komodo_client::entities::{
-  FileContents, RepoExecutionResponse, SearchCombinator,
+  FileContents, GitCredential, RepoExecutionResponse,
+  SearchCombinator,
   repo::Repo,
   stack::{Stack, StackFileDependency, StackRemoteFileContents},
   update::Log,
@@ -121,7 +122,7 @@ pub struct WriteCommitComposeContents {
   /// The contents to write.
   pub contents: String,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
-  pub git_token: Option<String>,
+  pub git_credential: Option<GitCredential>,
 }
 
 //
@@ -141,7 +142,7 @@ pub struct ComposePull {
   /// The linked repo, if it exists.
   pub repo: Option<Repo>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
-  pub git_token: Option<String>,
+  pub git_credential: Option<GitCredential>,
   /// If provided, use it to login in. Otherwise check periphery local registry providers.
   pub registry_token: Option<String>,
   /// Propogate any secret replacers from core interpolation.
@@ -176,7 +177,7 @@ pub struct ComposeUp {
   /// The linked repo, if it exists.
   pub repo: Option<Repo>,
   /// If provided, use it to login in. Otherwise check periphery local registries.
-  pub git_token: Option<String>,
+  pub git_credential: Option<GitCredential>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
   pub registry_token: Option<String>,
   /// Propogate any secret replacers from core interpolation.
@@ -218,7 +219,7 @@ pub struct ComposeRun {
   /// The linked repo, if it exists.
   pub repo: Option<Repo>,
   /// If provided, use it to login in. Otherwise check periphery local registries.
-  pub git_token: Option<String>,
+  pub git_credential: Option<GitCredential>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
   pub registry_token: Option<String>,
   /// Propogate any secret replacers from core interpolation.

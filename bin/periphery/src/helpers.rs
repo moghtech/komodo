@@ -12,9 +12,9 @@ use environment::write_env_file;
 use interpolate::Interpolator;
 use komodo_client::{
   entities::{
-    EnvironmentVar, RepoExecutionArgs, RepoExecutionResponse,
-    SearchCombinator, SystemCommand, all_logs_success,
-    deployment::Conversion,
+    EnvironmentVar, GitCredential, RepoExecutionArgs,
+    RepoExecutionResponse, SearchCombinator, SystemCommand,
+    all_logs_success, deployment::Conversion,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -242,32 +242,34 @@ pub async fn handle_post_repo_execution(
 //  Token
 // =======
 
-pub fn git_token_simple(
+pub fn git_credential_simple(
   domain: &str,
   account_username: &str,
-) -> anyhow::Result<&'static str> {
+) -> anyhow::Result<GitCredential> {
   periphery_config()
     .git_providers
     .iter()
     .find(|provider| provider.domain == domain)
     .and_then(|provider| {
-      provider.accounts.iter().find(|account| account.username == account_username).map(|account| account.token.as_str())
+      provider.accounts.iter().find(|account| account.username == account_username).map(|account| GitCredential {
+        token: (!account.token.is_empty()).then(|| account.token.clone()),
+        ssh_key: (!account.ssh_key.is_empty()).then(|| account.ssh_key.clone()),
+      })
     })
-    .with_context(|| format!("Did not find token in config for git account {account_username} | domain {domain}"))
+    .with_context(|| format!("Did not find credential in config for git account {account_username} | domain {domain}"))
 }
 
-pub fn git_token(
-  core_token: Option<String>,
+pub fn git_credential(
+  core_credential: Option<GitCredential>,
   args: &RepoExecutionArgs,
-) -> anyhow::Result<Option<String>> {
-  if core_token.is_some() {
-    return Ok(core_token);
+) -> anyhow::Result<Option<GitCredential>> {
+  if core_credential.is_some() {
+    return Ok(core_credential);
   }
   let Some(account) = &args.account else {
     return Ok(None);
   };
-  let token = git_token_simple(&args.provider, account)?;
-  Ok(Some(token.to_string()))
+  Ok(Some(git_credential_simple(&args.provider, account)?))
 }
 
 pub fn registry_token(

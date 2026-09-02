@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use komodo_client::entities::{
-  RepoExecutionArgs, RepoExecutionResponse,
+  GitCredential, RepoExecutionArgs, RepoExecutionResponse,
 };
 
 /// This is a mix of clone / pull.
@@ -13,7 +13,7 @@ use komodo_client::entities::{
 pub async fn pull_or_clone<T>(
   clone_args: T,
   root_repo_dir: &Path,
-  access_token: Option<String>,
+  credential: Option<GitCredential>,
 ) -> anyhow::Result<(RepoExecutionResponse, bool)>
 where
   T: Into<RepoExecutionArgs> + std::fmt::Debug,
@@ -22,11 +22,11 @@ where
   let folder_path = args.path(root_repo_dir);
 
   if folder_path.exists() {
-    crate::pull(args, root_repo_dir, access_token)
+    crate::pull(args, root_repo_dir, credential)
       .await
       .map(|r| (r, false))
   } else {
-    crate::clone(args, root_repo_dir, access_token)
+    crate::clone(args, root_repo_dir, credential)
       .await
       .map(|r| (r, true))
   }

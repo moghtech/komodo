@@ -13,6 +13,7 @@ mod init;
 mod installed;
 mod pull;
 mod pull_or_clone;
+mod ssh;
 
 pub use crate::{
   clone::clone,
@@ -21,6 +22,7 @@ pub use crate::{
   installed::check_installed,
   pull::pull,
   pull_or_clone::pull_or_clone,
+  ssh::SshKeyFile,
 };
 
 pub async fn get_commit_hash_info(

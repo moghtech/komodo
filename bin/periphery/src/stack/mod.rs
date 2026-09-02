@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context as _, anyhow};
 use formatting::format_serror;
 use komodo_client::entities::{
-  FileContents, RepoExecutionArgs,
+  FileContents, GitCredential, RepoExecutionArgs,
   repo::Repo,
   stack::{Stack, StackRemoteFileContents},
   to_path_compatible_name,
@@ -75,7 +75,7 @@ pub async fn maybe_login_registry(
 pub async fn pull_or_clone_stack(
   stack: &Stack,
   repo: Option<&Repo>,
-  git_token: Option<String>,
+  git_credential: Option<GitCredential>,
   req_args: &Args,
 ) -> anyhow::Result<PathBuf> {
   if stack.config.files_on_host {
@@ -108,11 +108,12 @@ pub async fn pull_or_clone_stack(
   };
   args.destination = Some(root.display().to_string());
 
-  let git_token = crate::helpers::git_token(git_token, &args)?;
+  let git_credential =
+    crate::helpers::git_credential(git_credential, &args)?;
 
   PullOrCloneRepo {
     args,
-    git_token,
+    git_credential,
     // All the extra pull functions
     // (env, on clone, on pull)
     // are disabled with this method.

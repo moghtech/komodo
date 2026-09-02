@@ -127,7 +127,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
     let DeploySwarmStack {
       mut stack,
       repo,
-      git_token,
+      git_credential,
       registry_token,
       mut replacers,
     } = self;
@@ -147,7 +147,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
     let (run_directory, env_file_path) = match write_stack(
       &stack,
       repo.as_ref(),
-      git_token,
+      git_credential,
       replacers.clone(),
       &mut res,
       args,

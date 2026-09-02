@@ -215,6 +215,50 @@ function Providers({ type }: { type: "GitProvider" | "ImageRegistry" }) {
                 );
               },
             },
+            ...(type === "GitProvider"
+              ? [
+                  {
+                    accessorKey: "ssh_key",
+                    size: 200,
+                    header: ({ column }: any) => (
+                      <SortableHeader column={column} title="SSH Key" />
+                    ),
+                    cell: ({ row }: any) => {
+                      return (
+                        <Group gap="sm" wrap="nowrap">
+                          <Button
+                            className="overflow-ellipsis"
+                            onClick={(e: any) => {
+                              e.stopPropagation();
+                              setUpdateMenuData({
+                                title: "Set SSH Key",
+                                value: row.original.ssh_key ?? "",
+                                placeholder:
+                                  "Paste private key, or leave empty to use the host ssh config",
+                                onUpdate: (ssh_key: string) => {
+                                  if (row.original.ssh_key === ssh_key) {
+                                    return;
+                                  }
+                                  updateAccount({
+                                    id: row.original._id?.$oid!,
+                                    account: { ssh_key },
+                                  });
+                                },
+                              });
+                            }}
+                            w={{ base: 200, lg: 300 }}
+                            justify="start"
+                          >
+                            {"*".repeat(row.original.ssh_key?.length || 0) || (
+                              <Text c="dimmed">Set ssh key</Text>
+                            )}
+                          </Button>
+                        </Group>
+                      );
+                    },
+                  },
+                ]
+              : []),
             {
               header: "Delete",
               cell: ({ row }) => (

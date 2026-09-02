@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use komodo_client::entities::{
-  EnvironmentVar, LatestCommit, RepoExecutionArgs,
+  EnvironmentVar, GitCredential, LatestCommit, RepoExecutionArgs,
   RepoExecutionResponse, SystemCommand, update::Log,
 };
 use mogh_resolver::Resolve;
@@ -23,8 +23,8 @@ pub struct GetLatestCommit {
 #[error(anyhow::Error)]
 pub struct CloneRepo {
   pub args: RepoExecutionArgs,
-  /// Override git token with one sent from core.
-  pub git_token: Option<String>,
+  /// Override the git credential with one sent from core.
+  pub git_credential: Option<GitCredential>,
   #[serde(default)]
   pub environment: Vec<EnvironmentVar>,
   /// Relative to repo root
@@ -50,8 +50,8 @@ fn default_env_file_path() -> String {
 #[error(anyhow::Error)]
 pub struct PullRepo {
   pub args: RepoExecutionArgs,
-  /// Override git token with one sent from core.
-  pub git_token: Option<String>,
+  /// Override the git credential with one sent from core.
+  pub git_credential: Option<GitCredential>,
   #[serde(default)]
   pub environment: Vec<EnvironmentVar>,
   #[serde(default = "default_env_file_path")]
@@ -72,8 +72,8 @@ pub struct PullRepo {
 #[error(anyhow::Error)]
 pub struct PullOrCloneRepo {
   pub args: RepoExecutionArgs,
-  /// Override git token with one sent from core.
-  pub git_token: Option<String>,
+  /// Override the git credential with one sent from core.
+  pub git_credential: Option<GitCredential>,
   #[serde(default)]
   pub environment: Vec<EnvironmentVar>,
   #[serde(default = "default_env_file_path")]

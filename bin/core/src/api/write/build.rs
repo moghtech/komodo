@@ -26,7 +26,7 @@ use crate::helpers::builder::connect_builder_periphery;
 use crate::{
   config::core_config,
   helpers::{
-    git_token,
+    git_credential,
     update::{add_update, make_update},
   },
   periphery::PeripheryClient,
@@ -263,7 +263,7 @@ async fn write_dockerfile_contents_git(
   }
 
   let access_token = if let Some(account) = &repo_args.account {
-    git_token(&repo_args.provider, account, |https| repo_args.https = https)
+    git_credential(&repo_args.provider, account, |https| repo_args.https = https)
     .await
     .with_context(
       || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", repo_args.provider),
@@ -278,7 +278,7 @@ async fn write_dockerfile_contents_git(
     git::init_folder_as_repo(
       &root,
       &repo_args,
-      access_token.as_deref(),
+      access_token.as_ref(),
       &mut update.logs,
     )
     .await;
@@ -511,7 +511,7 @@ async fn get_git_remote(
   clone_args.destination = Some(repo_path.display().to_string());
 
   let access_token = if let Some(username) = &clone_args.account {
-    git_token(&clone_args.provider, username, |https| {
+    git_credential(&clone_args.provider, username, |https| {
           clone_args.https = https
         })
         .await
