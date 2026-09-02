@@ -1,0 +1,5 @@
+procs:
+  ui: "run dev-ui"
+  core: "run dev-core"
+  periphery: "run dev-periphery"
+  db: "docker run --rm -p 27017:27017 -v komodo-ferretdb:/state -e FERRETDB_HANDLER=sqlite ghcr.io/ferretdb/ferretdb:1"

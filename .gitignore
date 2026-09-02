@@ -7,3 +7,4 @@ deno.lock
 .DS_Store
 .idea
 .dev
+mprocs.log
