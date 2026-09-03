@@ -990,6 +990,9 @@ pub async fn check_stack_for_update_inner(
         stack: stack.id.clone(),
         services: deploy_services,
         stop_time: None,
+        // Image digest changes alter the service definition, so docker
+        // already recreates the affected services on its own.
+        force_recreate: false,
       }),
       auto_redeploy_user().to_owned(),
     )

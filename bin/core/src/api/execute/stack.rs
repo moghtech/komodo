@@ -60,6 +60,7 @@ impl super::BatchExecute for BatchDeployStack {
       stack,
       services: Vec::new(),
       stop_time: None,
+      force_recreate: false,
     })
   }
 }
@@ -220,6 +221,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
             git_token,
             registry_token,
             replacers: secret_replacers.into_iter().collect(),
+            force_recreate: self.force_recreate,
           })
           .await?
       }
@@ -423,12 +425,15 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
           .map(|s| s.service_name.clone())
           .collect::<Vec<_>>();
         resolve_deploy_if_changed_action(
+          &stack,
           deployed_contents,
           latest_contents,
           &services,
         )
       }
-      (None, _) => DeployIfChangedAction::FullDeploy,
+      (None, _) => DeployIfChangedAction::FullDeploy {
+        force_recreate: false,
+      },
       _ => DeployIfChangedAction::Services {
         deploy: Vec::new(),
         restart: Vec::new(),
@@ -439,7 +444,7 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
 
     match action {
       // Existing path pre 1.19.1
-      DeployIfChangedAction::FullDeploy => {
+      DeployIfChangedAction::FullDeploy { force_recreate } => {
         // Don't actually send it here, let the handler send it after it can set action state.
         // This is usually done in crate::helpers::update::init_execution_update.
         update.id = add_update_without_send(&update).await?;
@@ -448,6 +453,7 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
           stack: stack.name,
           services: Vec::new(),
           stop_time: self.stop_time,
+          force_recreate: force_recreate,
         }
         .resolve(&ExecuteArgs {
           user: user.clone(),
@@ -570,6 +576,18 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
     services = format!("{services:?}")
   )
 )]
+/// Only ever called from `DeployStackIfChanged` with a service list derived
+/// from changed `config_files` entries — compose and env files are registered
+/// with an empty `services` array (see `StackFileDependency::full_redeploy`),
+/// so they can never reach here. That makes `force_recreate` unconditionally
+/// correct: a config file's content change does not alter the compose service
+/// definition, so `up -d` alone would leave the container running the old file.
+///
+/// Uses `--force-recreate` rather than a `compose down` first. `down` is
+/// service-scoped in name only — it also removes every service that depends on
+/// the target, and the following `up -d <target>` restores only the target and
+/// its dependencies, leaving those dependents removed. Measured 2026-08-04:
+/// `down -- db` took `api` and `web` with it and neither came back.
 async fn deploy_services(
   stack: String,
   services: Vec<String>,
@@ -582,6 +600,7 @@ async fn deploy_services(
     stack,
     services,
     stop_time: None,
+    force_recreate: true,
   });
   let update = init_execution_update(&req, user).await?;
   let ExecuteRequest::DeployStack(req) = req else {
@@ -688,7 +707,21 @@ async fn update_deployed_contents_with_latest(
 enum DeployIfChangedAction {
   /// Changes to any compose or env files
   /// always lead to this.
-  FullDeploy,
+  FullDeploy {
+    /// Whether to pass `--force-recreate`.
+    ///
+    /// True only when a `config_files` entry with an empty `services` array
+    /// is what triggered the deploy. Such a change is invisible to docker's
+    /// own diff — the compose service definitions are unchanged, only the
+    /// content behind a bind mount moved — so a plain `up -d` would report
+    /// every container up-to-date and recreate nothing.
+    ///
+    /// Deliberately NOT set when a compose or env file triggered the deploy:
+    /// those change the service definitions, so docker already recreates
+    /// exactly the affected services, and forcing would needlessly bounce
+    /// every other container in the project.
+    force_recreate: bool,
+  },
   /// If the above is not met, then changes to
   /// any changed additional file with `requires = "Restart"`
   /// and empty services array will lead to this.
@@ -705,31 +738,48 @@ enum DeployIfChangedAction {
 }
 
 fn resolve_deploy_if_changed_action(
+  stack: &Stack,
   deployed_contents: &[FileContents],
   latest_contents: &[StackRemoteFileContents],
   all_services: &[String],
 ) -> DeployIfChangedAction {
+  let mut full_deploy = false;
+  let mut full_deploy_force_recreate = false;
   let mut full_restart = false;
   let mut deploy = HashSet::<String>::new();
   let mut restart = HashSet::<String>::new();
 
   for latest in latest_contents {
-    let Some(deployed) =
-      deployed_contents.iter().find(|c| c.path == latest.path)
-    else {
-      // If file doesn't exist in deployed contents, do full
-      // deploy to align this.
-      return DeployIfChangedAction::FullDeploy;
-    };
-    // Ignore unchanged files
-    if latest.contents == deployed.contents {
+    // A file absent from deployed contents was only just declared, so there
+    // is nothing to compare it against — treat it as changed.
+    //
+    // Deliberately NOT an early return to FullDeploy. Falling through to the
+    // match below means a newly declared file is scoped by its own `services`
+    // and `requires`, exactly like any other changed file, so adding one
+    // `config_files` entry no longer bounces every service in the stack.
+    //
+    // The cases that genuinely need a full pass still get one without any
+    // special handling: compose and env files are registered with an empty
+    // `services` array, so they land in the `(Redeploy, true)` arm below.
+    let changed =
+      match deployed_contents.iter().find(|c| c.path == latest.path) {
+        Some(deployed) => latest.contents != deployed.contents,
+        None => true,
+      };
+    if !changed {
       continue;
     }
     match (latest.requires, latest.services.is_empty()) {
       (StackFileRequires::Redeploy, true) => {
         // File has requires = "Redeploy" at global level.
-        // Can do early return here.
-        return DeployIfChangedAction::FullDeploy;
+        // No early return: a config file later in the list may still
+        // require the destroy step, and returning here would miss it.
+        full_deploy = true;
+        // Compose / env files reach this arm too, but only a config file's
+        // content change is invisible to docker's own diff.
+        if stack.is_config_file(&latest.path) {
+          full_deploy_force_recreate = true;
+        }
       }
       (StackFileRequires::Redeploy, false) => {
         // Requires redeploy on specific services
@@ -747,6 +797,12 @@ fn resolve_deploy_if_changed_action(
         continue;
       }
     }
+  }
+
+  if full_deploy {
+    return DeployIfChangedAction::FullDeploy {
+      force_recreate: full_deploy_force_recreate,
+    };
   }
 
   match (full_restart, deploy.is_empty()) {
