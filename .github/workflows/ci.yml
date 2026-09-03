@@ -10,6 +10,26 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  periphery-docker-clients:
+    name: Periphery Docker Clients
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check compatible Docker client versions
+        run: |
+          docker build --tag periphery-docker-clients-test --file - . <<'EOF'
+          FROM debian:trixie-slim
+          COPY bin/periphery/debian-deps.sh /tmp/debian-deps.sh
+          RUN sh /tmp/debian-deps.sh
+          EOF
+
+          docker run --rm periphery-docker-clients-test sh -eu -c '
+            docker --version | grep -Eq "^Docker version 28\."
+            docker compose version | grep -Eq "^Docker Compose version v?5\.0\."
+          '
+
   build:
     name: Build & Test
     runs-on: ubuntu-latest

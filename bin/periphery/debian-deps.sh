@@ -17,7 +17,10 @@ echo \
 apt-get update
 
 # apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-apt-get install -y docker-ce-cli docker-buildx-plugin docker-compose-plugin
+apt-get install -y --allow-downgrades \
+  docker-ce-cli='5:28.*' \
+  docker-buildx-plugin \
+  docker-compose-plugin='5.0.*'
 
 rm -rf /var/lib/apt/lists/*
 
@@ -25,4 +28,3 @@ rm -rf /var/lib/apt/lists/*
 curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir /usr/local/bin
 echo 'export STARSHIP_CONFIG=/starship.toml' >> /root/.bashrc
 echo 'eval "$(starship init bash)"' >> /root/.bashrc
-
