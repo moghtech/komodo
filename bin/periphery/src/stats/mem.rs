@@ -44,16 +44,25 @@ fn read_sysinfo(system: &sysinfo::System) -> MemBreakdown {
 /// `MemAvailable` does not count the ZFS ARC as reclaimable, so a large
 /// ARC would inflate "used" and cause false high-memory alerts. ARC is
 /// reclaimable, so we subtract it from used and report it separately.
+///
+/// Inside an LXC container, lxcfs serves a cgroup-scoped `/proc/meminfo`
+/// while `/proc/spl/kstat/zfs/arcstats` still shows the host's ARC,
+/// which is not part of the container's memory. The ARC is ignored
+/// there, otherwise `used` saturates to zero on any container smaller
+/// than the host's ARC.
 #[cfg(target_os = "linux")]
 fn read_linux() -> Option<MemBreakdown> {
   let meminfo =
     parse_meminfo(&std::fs::read_to_string("/proc/meminfo").ok()?)?;
   // Absent when ZFS isn't loaded => arc stays zero.
-  let zfs_arc =
+  let zfs_arc = if meminfo_is_lxcfs() {
+    0
+  } else {
     std::fs::read_to_string("/proc/spl/kstat/zfs/arcstats")
       .ok()
       .map(|c| parse_zfs_arc_size(&c))
-      .unwrap_or(0);
+      .unwrap_or(0)
+  };
 
   // Cached + SReclaimable + Buffers - Shmem
   let buff_cache = meminfo
@@ -135,6 +144,30 @@ fn parse_meminfo(contents: &str) -> Option<MemInfo> {
   Some(info)
 }
 
+/// Whether `/proc/meminfo` is served by lxcfs, i.e. a FUSE filesystem
+/// mounted over the procfs file. That is how LXC containers get
+/// cgroup-scoped memory values.
+#[cfg(target_os = "linux")]
+fn meminfo_is_lxcfs() -> bool {
+  std::fs::read_to_string("/proc/self/mountinfo")
+    .map(|c| mountinfo_has_fuse_meminfo(&c))
+    .unwrap_or(false)
+}
+
+/// Check `/proc/self/mountinfo` contents for a FUSE filesystem mounted
+/// on `/proc/meminfo`. Each line looks like:
+/// `ID PARENT MAJ:MIN ROOT MOUNTPOINT OPTS [OPTIONAL..] - FSTYPE SRC OPTS`
+#[cfg(target_os = "linux")]
+fn mountinfo_has_fuse_meminfo(contents: &str) -> bool {
+  contents.lines().any(|line| {
+    let mut fields = line.split_whitespace();
+    let mount_point = fields.nth(4);
+    let fs_type = fields.skip_while(|f| *f != "-").nth(1);
+    mount_point == Some("/proc/meminfo")
+      && fs_type.is_some_and(|t| t.starts_with("fuse"))
+  })
+}
+
 /// Parse the ZFS ARC `size` (bytes) from `/proc/spl/kstat/zfs/arcstats`
 /// contents. The line looks like: `size  4  4294967296` (name, type, data).
 /// Returns `0` if not found.
@@ -147,4 +180,35 @@ fn parse_zfs_arc_size(contents: &str) -> u64 {
     }
   }
   0
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn detects_lxcfs_meminfo() {
+    let mountinfo = "\
+1149 1135 0:98 / /proc rw,nosuid,nodev,noexec,relatime shared:585 - proc proc rw
+1206 1149 0:61 /proc/meminfo /proc/meminfo rw,nosuid,nodev,relatime shared:593 master:81 - fuse.lxcfs lxcfs rw,user_id=0,group_id=0,allow_other
+";
+    assert!(mountinfo_has_fuse_meminfo(mountinfo));
+  }
+
+  #[test]
+  fn ignores_plain_procfs() {
+    let mountinfo =
+      "29 33 0:26 / /proc rw,relatime shared:12 - proc proc rw\n";
+    assert!(!mountinfo_has_fuse_meminfo(mountinfo));
+  }
+
+  #[test]
+  fn parses_arc_size() {
+    let arcstats = "\
+name                            type data
+size                            4    1667716264
+";
+    assert_eq!(parse_zfs_arc_size(arcstats), 1667716264);
+    assert_eq!(parse_zfs_arc_size(""), 0);
+  }
 }
