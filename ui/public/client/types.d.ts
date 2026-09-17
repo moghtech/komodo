@@ -7355,6 +7355,22 @@ export interface DeployStack {
      * Only used if the stack needs to be taken down first.
      */
     stop_time?: number;
+    /**
+     * Pass `--force-recreate`, recreating the target services even if their
+     * compose definition is unchanged.
+     *
+     * Needed when the only thing that changed is the *content* of a file
+     * bind mounted into a service: the compose service definition is
+     * unchanged, so `docker compose up -d` considers the container
+     * up-to-date and will not recreate it. [DeployStackIfChanged] sets this
+     * when it acts on a `config_files` diff.
+     *
+     * Ignored if `extra_args` already pins recreate behaviour, since
+     * `--force-recreate` and `--no-recreate` are mutually exclusive.
+     *
+     * Note. For Swarm mode Stacks, this field is not supported and will be ignored.
+     */
+    force_recreate?: boolean;
 }
 /**
  * Checks deployed contents vs latest contents,

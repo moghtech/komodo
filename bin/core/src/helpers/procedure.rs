@@ -608,6 +608,7 @@ impl ExtendBatch for BatchDeployStack {
       stack,
       services: Vec::new(),
       stop_time: None,
+      force_recreate: false,
     })
   }
 }

@@ -113,6 +113,7 @@ pub async fn deploy_from_cache(
                 stack: name.to_string(),
                 services: Vec::new(),
                 stop_time: None,
+                force_recreate: false,
               });
 
               let update = init_execution_update(&req, user).await?;

@@ -448,6 +448,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
       git_token,
       registry_token,
       mut replacers,
+      force_recreate,
     } = self;
 
     let mut res = DeployStackResponse::default();
@@ -723,8 +724,25 @@ impl Resolve<crate::api::Args> for ComposeUp {
 
     // Run compose up
     let extra_args = format_extra_args(&stack.config.extra_args);
+    // Requested by the caller for this deploy only. [DeployStackIfChanged] sets
+    // it when it acts on a `config_files` diff: only the content behind a bind
+    // mount moved, so the service definition is unchanged and a plain `up -d`
+    // reports the container up-to-date and recreates nothing.
+    //
+    // Skipped when the user has already pinned recreate behaviour themselves —
+    // `--force-recreate` and `--no-recreate` are mutually exclusive and compose
+    // hard-errors on the pair, which would fail the deploy outright.
+    let force_recreate = if force_recreate
+      && !stack.config.extra_args.iter().any(|arg| {
+        let arg = arg.trim();
+        arg == "--force-recreate" || arg == "--no-recreate"
+      }) {
+      " --force-recreate"
+    } else {
+      ""
+    };
     let command = format!(
-      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{service_args}",
+      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{force_recreate}{service_args}",
     );
     let (command, _) = match maybe_wrap_command(
       command,

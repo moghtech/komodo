@@ -312,6 +312,7 @@ impl StackExecution for DeployStack {
         stack: stack.id,
         services: Vec::new(),
         stop_time: None,
+        force_recreate: false,
       });
       let update = init_execution_update(&req, &user).await?;
       let ExecuteRequest::DeployStack(req) = req else {
