@@ -17,6 +17,7 @@ const ALERT_TYPES: Types.AlertData["type"][] = [
   "StackStateChange",
   "StackImageUpdateAvailable",
   "StackAutoUpdated",
+  "StackDeployFailed",
   // Deployment
   "ContainerStateChange",
   "DeploymentImageUpdateAvailable",

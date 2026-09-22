@@ -37,6 +37,7 @@ LOG_LEVEL = info
 | `auto_update` | Automatically redeploy when newer image digests are available. | `false` |
 | `poll_for_updates` | Check for newer images and show an update indicator. | `false` |
 | `send_alerts` | Send alerts on stack state changes. | `true` |
+| `failure_alert` | Send an alert when the stack fails to deploy. | `true` |
 | `links` | Quick links displayed in the resource header. | `[]` |
 
 ## Defining Compose Files

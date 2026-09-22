@@ -490,6 +490,26 @@ fn standard_alert_content(alert: &Alert) -> String {
         "⬆ Stack {name} was updated automatically ⏫{target}\n{images_label}: {images_str}\n{link}",
       )
     }
+    AlertData::StackDeployFailed {
+      id,
+      name,
+      swarm_id: _swarm_id,
+      swarm_name,
+      server_id: _server_id,
+      server_name,
+    } => {
+      let link = resource_link(ResourceTargetVariant::Stack, id);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        String::new()
+      };
+      format!(
+        "{level} | Stack {name} failed to deploy{target}\n{link}",
+      )
+    }
     AlertData::AwsBuilderTerminationFailed {
       instance_id,
       message,

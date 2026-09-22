@@ -563,6 +563,12 @@ pub struct StackConfig {
   #[partial_default(default_send_alerts())]
   pub send_alerts: bool,
 
+  /// Whether to send StackDeployFailed alerts for this stack.
+  #[serde(default = "default_failure_alert")]
+  #[builder(default = "default_failure_alert()")]
+  #[partial_default(default_failure_alert())]
+  pub failure_alert: bool,
+
   /// Used with `registry_account` to login to a registry before docker compose up.
   #[serde(default)]
   #[builder(default)]
@@ -715,6 +721,10 @@ fn default_send_alerts() -> bool {
   true
 }
 
+fn default_failure_alert() -> bool {
+  true
+}
+
 fn default_wrapper_include() -> Vec<String> {
   vec![]
 }
@@ -763,6 +773,7 @@ impl Default for StackConfig {
       webhook_secret: Default::default(),
       webhook_force_deploy: Default::default(),
       send_alerts: default_send_alerts(),
+      failure_alert: default_failure_alert(),
       links: Default::default(),
     }
   }

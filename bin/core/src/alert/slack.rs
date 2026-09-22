@@ -449,6 +449,31 @@ pub async fn send_alert(
       ];
       (text, blocks.into())
     }
+    AlertData::StackDeployFailed {
+      id,
+      name,
+      swarm_id: _swarm_id,
+      swarm_name,
+      server_id: _server_id,
+      server_name,
+    } => {
+      let text = format!("{level} | Stack *{name}* failed to deploy");
+      let target = if let Some(swarm) = swarm_name {
+        format!("swarm: *{swarm}*\n")
+      } else if let Some(server) = server_name {
+        format!("server: *{server}*\n")
+      } else {
+        String::new()
+      };
+      let blocks = vec![
+        Block::header(text.clone()),
+        Block::section(format!(
+          "{target}{}",
+          resource_link(ResourceTargetVariant::Stack, id)
+        )),
+      ];
+      (text, blocks.into())
+    }
     AlertData::AwsBuilderTerminationFailed {
       instance_id,
       message,

@@ -286,6 +286,22 @@ pub enum AlertData {
     images: Vec<String>,
   },
 
+  /// A Stack failed to deploy
+  StackDeployFailed {
+    /// The id of the stack
+    id: String,
+    /// The name of the stack
+    name: String,
+    /// The server id of server that the stack is on
+    server_id: Option<String>,
+    /// The server name
+    server_name: Option<String>,
+    /// The swarm id of swarm that the stack is on
+    swarm_id: Option<String>,
+    /// The swarm name
+    swarm_name: Option<String>,
+  },
+
   /// An AWS builder failed to terminate.
   AwsBuilderTerminationFailed {
     /// The id of the aws instance which failed to terminate

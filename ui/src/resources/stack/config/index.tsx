@@ -441,6 +441,15 @@ export default function StackConfig({
       },
     },
     {
+      label: "Alert",
+      labelHidden: true,
+      fields: {
+        failure_alert: {
+          description: "Send an alert any time the Stack fails to deploy",
+        },
+      },
+    },
+    {
       label: "Links",
       labelHidden: true,
       fields: {

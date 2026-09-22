@@ -1808,6 +1808,21 @@ export type AlertData =
 	/** One or more images that were updated */
 	images: string[];
 }}
+	/** A Stack failed to deploy */
+	| { type: "StackDeployFailed", data: {
+	/** The id of the stack */
+	id: string;
+	/** The name of the stack */
+	name: string;
+	/** The server id of server that the stack is on */
+	server_id?: string;
+	/** The server name */
+	server_name?: string;
+	/** The swarm id of swarm that the stack is on */
+	swarm_id?: string;
+	/** The swarm name */
+	swarm_name?: string;
+}}
 	/** An AWS builder failed to terminate. */
 	| { type: "AwsBuilderTerminationFailed", data: {
 	/** The id of the aws instance which failed to terminate */
@@ -2639,6 +2654,8 @@ export interface StackConfig {
 	config_files?: StackFileDependency[];
 	/** Whether to send StackStateChange alerts for this stack. */
 	send_alerts: boolean;
+	/** Whether to send StackDeployFailed alerts for this stack. */
+	failure_alert: boolean;
 	/** Used with `registry_account` to login to a registry before docker compose up. */
 	registry_provider?: string;
 	/** Used with `registry_provider` to login to a registry before docker compose up. */

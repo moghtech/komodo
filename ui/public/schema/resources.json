@@ -783,6 +783,13 @@
             "null"
           ]
         },
+        "failure_alert": {
+          "description": "Whether to send StackDeployFailed alerts for this stack.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "registry_provider": {
           "description": "Used with `registry_account` to login to a registry before docker compose up.",
           "type": [
@@ -5410,6 +5417,11 @@
           "description": "A Stack was auto updated",
           "type": "string",
           "const": "StackAutoUpdated"
+        },
+        {
+          "description": "A Stack failed to deploy",
+          "type": "string",
+          "const": "StackDeployFailed"
         },
         {
           "description": "An AWS builder failed to terminate.",

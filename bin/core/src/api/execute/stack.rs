@@ -10,6 +10,8 @@ use komodo_client::{
   api::{execute::*, write::RefreshStackCache},
   entities::{
     FileContents, SwarmOrServer,
+    alert::{Alert, AlertData, SeverityLevel},
+    komodo_timestamp, optional_string,
     permission::PermissionLevel,
     repo::Repo,
     server::Server,
@@ -29,10 +31,14 @@ use reqwest::StatusCode;
 use uuid::Uuid;
 
 use crate::{
+  alert::send_alerts,
   api::write::WriteArgs,
   helpers::{
     periphery_client,
-    query::{VariablesAndSecrets, get_variables_and_secrets},
+    query::{
+      VariablesAndSecrets, get_swarm_or_server,
+      get_variables_and_secrets,
+    },
     stack_git_token,
     swarm::swarm_request,
     update::{
@@ -111,14 +117,34 @@ impl Resolve<ExecuteArgs> for DeployStack {
       task_id,
     }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
-    let (mut stack, swarm_or_server) = setup_stack_execution(
+    let mut stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
       PermissionLevel::Execute.into(),
     )
     .await?;
 
-    swarm_or_server.verify_has_target()?;
+    let mut update = update.clone();
+
+    // An unreachable or unset target fires the failure alert.
+    let swarm_or_server = match get_swarm_or_server(
+      &stack.config.swarm_id,
+      &stack.config.server_id,
+    )
+    .await
+    {
+      Ok(swarm_or_server) => swarm_or_server,
+      Err(e) => {
+        update.push_error_log("Get Server", format_serror(&e.into()));
+        return handle_early_return(update, &stack).await;
+      }
+    };
+
+    if let Err(e) = swarm_or_server.verify_has_target() {
+      update
+        .push_error_log("Get Server", format_serror(&e.error.into()));
+      return handle_early_return(update, &stack).await;
+    }
 
     let mut repo = if !stack.config.files_on_host
       && !stack.config.linked_repo.is_empty()
@@ -138,8 +164,6 @@ impl Resolve<ExecuteArgs> for DeployStack {
     // The returned guard will set the action state back to default when dropped.
     let action_guard =
       action_state.update(|state| state.deploying = true)?;
-
-    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -226,6 +250,15 @@ impl Resolve<ExecuteArgs> for DeployStack {
     };
 
     update.logs.extend(logs);
+
+    let stack_id = stack.id.clone();
+    let stack_name = stack.name.clone();
+    let failure_alert = stack.config.failure_alert;
+    let swarm_id = swarm_or_server.swarm_id().map(str::to_string);
+    let swarm_name = swarm_or_server.swarm_name().map(str::to_string);
+    let server_id = swarm_or_server.server_id().map(str::to_string);
+    let server_name =
+      swarm_or_server.server_name().map(str::to_string);
 
     let update_info = async {
       let latest_services = if services.is_empty() {
@@ -336,8 +369,67 @@ impl Resolve<ExecuteArgs> for DeployStack {
     drop(action_guard);
     update_update(update.clone()).await?;
 
+    if !update.success && failure_alert {
+      let target = update.target.clone();
+      tokio::spawn(async move {
+        let alert = Alert {
+          id: Default::default(),
+          target,
+          ts: komodo_timestamp(),
+          resolved_ts: Some(komodo_timestamp()),
+          resolved: true,
+          level: SeverityLevel::Warning,
+          data: AlertData::StackDeployFailed {
+            id: stack_id,
+            name: stack_name,
+            swarm_id,
+            swarm_name,
+            server_id,
+            server_name,
+          },
+        };
+        send_alerts(&[alert]).await
+      });
+    }
+
     Ok(update)
   }
+}
+
+// Handle failures that happen before a deploy could be attempted
+#[instrument("HandleDeployStackEarlyReturn", skip_all)]
+async fn handle_early_return(
+  mut update: Update,
+  stack: &Stack,
+) -> mogh_error::Result<Update> {
+  update.finalize();
+  update_update(update.clone()).await?;
+
+  if !update.success && stack.config.failure_alert {
+    let target = update.target.clone();
+    let data = AlertData::StackDeployFailed {
+      id: stack.id.clone(),
+      name: stack.name.clone(),
+      swarm_id: optional_string(&stack.config.swarm_id),
+      swarm_name: None,
+      server_id: optional_string(&stack.config.server_id),
+      server_name: None,
+    };
+    tokio::spawn(async move {
+      let alert = Alert {
+        id: Default::default(),
+        target,
+        ts: komodo_timestamp(),
+        resolved_ts: Some(komodo_timestamp()),
+        resolved: true,
+        level: SeverityLevel::Warning,
+        data,
+      };
+      send_alerts(&[alert]).await
+    });
+  }
+
+  Ok(update)
 }
 
 impl super::BatchExecute for BatchDeployStackIfChanged {
