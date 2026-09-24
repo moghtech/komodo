@@ -28,7 +28,9 @@ use tracing::Instrument;
 
 use crate::{
   config::periphery_config,
-  docker::compose::{docker_compose, parse_compose_services},
+  docker::compose::{
+    docker_compose, parse_compose_services, redact_compose_config,
+  },
   helpers::{format_extra_args, format_log_grep},
   stack::{
     maybe_login_registry, pull_or_clone_stack, validate_files,
@@ -593,15 +595,23 @@ impl Resolve<crate::api::Args> for ComposeUp {
         .await
       };
 
+      // The resolved config includes every value from `env_file`, which
+      // the secret replacers cannot see, so only the redacted form may
+      // be logged or stored.
+      let redacted_config =
+        redact_compose_config(&config_log.stdout, &replacers);
+
       if !config_log.success {
         config_log.sanitize(&replacers);
+        if !config_log.stdout.is_empty() {
+          config_log.stdout = redacted_config;
+        }
         res.logs.push(config_log);
         return Ok(res);
       }
 
-      // attach sanitized merged config in any case.
-      res.merged_config =
-        svi::replace_in_string(&config_log.stdout, &replacers).into();
+      // attach redacted merged config in any case.
+      res.merged_config = Some(redacted_config.clone());
 
       if let Err(e) = parse_compose_services(
         &config_log.stdout,
@@ -609,6 +619,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
         &mut res.services,
       ) {
         config_log.sanitize(&replacers);
+        config_log.stdout = redacted_config;
         res.logs.push(config_log);
         res.logs.push(Log::error(
           "Parse Compose Services",
@@ -620,9 +631,8 @@ impl Resolve<crate::api::Args> for ComposeUp {
         // of what the issue might be.
         return Ok(res);
       }
-
-      config_log.sanitize(&replacers);
-      res.logs.push(config_log);
+      // On success the config is carried only by `merged_config`,
+      // as before 2.3.0, and is not persisted as an Update log.
     }
 
     if stack.config.run_build {

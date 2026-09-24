@@ -28,6 +28,7 @@ use tracing::Instrument as _;
 
 use crate::{
   config::periphery_config,
+  docker::compose::redact_compose_config,
   helpers::push_extra_args,
   stack::{maybe_login_registry, validate_files, write::write_stack},
   state::docker_client,
@@ -272,8 +273,10 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       let compose =
         serde_yaml_ng::from_str::<ComposeFile>(&config_log.stdout)
           .context("Failed to parse compose contents")?;
-      // Store sanitized stack config output
-      res.merged_config = Some(config_log.stdout);
+      // Store redacted stack config output. Values from env files are
+      // not covered by the secret replacers.
+      res.merged_config =
+        Some(redact_compose_config(&config_log.stdout, &replacers));
       for (service_name, ComposeService { image, .. }) in
         compose.services
       {
