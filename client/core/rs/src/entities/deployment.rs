@@ -206,7 +206,9 @@ pub struct DeploymentConfig {
   #[partial_default(default_send_alerts())]
   pub send_alerts: bool,
 
-  /// Configure quick links that are displayed in the resource header
+  /// Configure quick links that are displayed in the resource header.
+  ///
+  /// Each entry is a URL, or `Label | URL` to show a custom label.
   #[serde(default)]
   #[builder(default)]
   pub links: Vec<String>,

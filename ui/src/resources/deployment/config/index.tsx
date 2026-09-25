@@ -1,5 +1,5 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { Config, ConfigItem, ConfigList, ConfigSwitch } from "mogh_ui";
+import { Config, ConfigItem, ConfigSwitch } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
@@ -14,6 +14,7 @@ import SecretsSearch from "@/components/config/secrets-search";
 import DeploymentRestartSelector from "./restart";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
+import ConfigLinks from "@/components/config/links";
 import { InputList } from "mogh_ui";
 import { TerminationSignal, TerminationTimeout } from "./termination";
 import { ReactNode } from "react";
@@ -214,14 +215,10 @@ export default function DeploymentConfig({
                   </ConfigItem>
                 )),
               links: (values, set) => (
-                <ConfigList
-                  label="Links"
-                  description="Add quick links in the resource header"
-                  field="links"
+                <ConfigLinks
                   values={values ?? []}
                   set={set}
                   disabled={disabled}
-                  placeholder="Input link"
                 />
               ),
             },

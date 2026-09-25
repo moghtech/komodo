@@ -225,7 +225,9 @@ pub struct RepoConfig {
   #[builder(default)]
   pub on_pull: SystemCommand,
 
-  /// Configure quick links that are displayed in the resource header
+  /// Configure quick links that are displayed in the resource header.
+  ///
+  /// Each entry is a URL, or `Label | URL` to show a custom label.
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
     default,

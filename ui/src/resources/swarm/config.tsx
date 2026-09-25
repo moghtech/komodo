@@ -3,11 +3,12 @@ import { ReactNode } from "react";
 import { useFullSwarm } from ".";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { Config, ConfigItem, ConfigList } from "mogh_ui";
+import { Config, ConfigItem } from "mogh_ui";
 import { ActionIcon, Button, Group } from "@mantine/core";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/lib/icons";
 import ConfigMaintenanceWindows from "@/components/maintenance-windows";
+import ConfigLinks from "@/components/config/links";
 
 export default function SwarmConfig({
   id,
@@ -152,15 +153,10 @@ export default function SwarmConfig({
             labelHidden: true,
             fields: {
               links: (values, set) => (
-                <ConfigList
-                  label="Links"
-                  addLabel="Add Link"
-                  description="Add quick links in the resource header"
-                  field="links"
+                <ConfigLinks
                   values={values ?? []}
                   set={set}
                   disabled={disabled}
-                  placeholder="Input link"
                 />
               ),
             },

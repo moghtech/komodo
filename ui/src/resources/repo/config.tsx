@@ -5,7 +5,7 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { Config, ConfigItem, ConfigList } from "mogh_ui";
+import { Config, ConfigItem } from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
@@ -18,6 +18,7 @@ import { MonacoEditor } from "mogh_ui";
 import SystemCommand from "@/components/config/system-command";
 import { ReactNode } from "react";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
+import ConfigLinks from "@/components/config/links";
 import WebhookBuilder from "@/components/webhook/builder";
 import { useFullRepo } from ".";
 
@@ -305,15 +306,10 @@ export default function RepoConfig({
             labelHidden: true,
             fields: {
               links: (values, set) => (
-                <ConfigList
-                  label="Links"
-                  addLabel="Add Link"
-                  description="Add quick links in the resource header"
-                  field="links"
+                <ConfigLinks
                   values={values ?? []}
                   set={set}
                   disabled={disabled}
-                  placeholder="Input link"
                 />
               ),
             },

@@ -665,7 +665,11 @@ export interface BuildConfig {
     include_version_tags: boolean;
     /** Push commit hash `:a6v8h83` / `:a6v8h83-image_tag` tags. */
     include_commit_tag: boolean;
-    /** Configure quick links that are displayed in the resource header */
+    /**
+     * Configure quick links that are displayed in the resource header.
+     *
+     * Each entry is a URL, or `Label | URL` to show a custom label.
+     */
     links?: string[];
     /** Choose a Komodo Repo (Resource) to source the build files. */
     linked_repo?: string;
@@ -1525,7 +1529,11 @@ export interface DeploymentConfig {
     auto_update?: boolean;
     /** Whether to send ContainerStateChange alerts for this deployment. */
     send_alerts: boolean;
-    /** Configure quick links that are displayed in the resource header */
+    /**
+     * Configure quick links that are displayed in the resource header.
+     *
+     * Each entry is a URL, or `Label | URL` to show a custom label.
+     */
     links?: string[];
     /**
      * The network attached to the container.
@@ -2262,7 +2270,11 @@ export interface RepoConfig {
      * The path is relative to the root of the repo.
      */
     on_pull?: SystemCommand;
-    /** Configure quick links that are displayed in the resource header */
+    /**
+     * Configure quick links that are displayed in the resource header.
+     *
+     * Each entry is a URL, or `Label | URL` to show a custom label.
+     */
     links?: string[];
     /**
      * The environment variables passed to the compose file.
@@ -2541,7 +2553,11 @@ export interface ServerConfig {
      * default: true
      */
     auto_prune: boolean;
-    /** Configure quick links that are displayed in the resource header */
+    /**
+     * Configure quick links that are displayed in the resource header.
+     *
+     * Each entry is a URL, or `Label | URL` to show a custom label.
+     */
     links?: string[];
     /**
      * Whether to monitor any server stats beyond passing health check.
@@ -2648,7 +2664,11 @@ export interface StackConfig {
      * swarm_id overrides server_id and the Stack will be in Swarm mode.
      */
     server_id?: string;
-    /** Configure quick links that are displayed in the resource header */
+    /**
+     * Configure quick links that are displayed in the resource header.
+     *
+     * Each entry is a URL, or `Label | URL` to show a custom label.
+     */
     links?: string[];
     /**
      * Optionally specify a custom project name for the stack.
@@ -2972,7 +2992,11 @@ export interface SwarmConfig {
      * tries the next Server.
      */
     server_ids?: string[];
-    /** Configure quick links that are displayed in the resource header */
+    /**
+     * Configure quick links that are displayed in the resource header.
+     *
+     * Each entry is a URL, or `Label | URL` to show a custom label.
+     */
     links?: string[];
     /** Whether to send alerts about the swarm health. */
     send_unhealthy_alerts: boolean;

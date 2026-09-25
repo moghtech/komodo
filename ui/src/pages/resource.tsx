@@ -1,6 +1,10 @@
 import ExportToml from "@/components/export-toml";
 import ResourceUpdates from "@/components/updates/resource";
 import {
+  parseResourceLink,
+  sanitizeLinkUrl,
+} from "@/components/config/links";
+import {
   useListItemQuery,
   usePermissions,
   usePushRecentlyViewed,
@@ -140,33 +144,41 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
         )}
         {links && links.length > 0 && (
           <Group px="md">
-            {links.map((link) => (
-              <Group
-                key={link}
-                renderRoot={(props) => (
-                  <Link target="_blank" to={link} {...props} />
-                )}
-                gap="xs"
-              >
-                <ICONS.Link size="1rem" />
-                <Text
-                  className="hover-underline"
-                  hiddenFrom="lg"
-                  maw={150}
-                  truncate
+            {links.map((link) => {
+              const parsed = parseResourceLink(link);
+              const url = sanitizeLinkUrl(parsed.url);
+              const label = parsed.label?.trim();
+              if (!url) return null;
+              const display = label || url;
+              return (
+                <Group
+                  key={link}
+                  renderRoot={(props) => (
+                    <Link target="_blank" to={url} {...props} />
+                  )}
+                  gap="xs"
+                  title={url}
                 >
-                  {link}
-                </Text>
-                <Text
-                  className="hover-underline"
-                  visibleFrom="lg"
-                  maw={250}
-                  truncate
-                >
-                  {link}
-                </Text>
-              </Group>
-            ))}
+                  <ICONS.Link size="1rem" />
+                  <Text
+                    className="hover-underline"
+                    hiddenFrom="lg"
+                    maw={150}
+                    truncate
+                  >
+                    {display}
+                  </Text>
+                  <Text
+                    className="hover-underline"
+                    visibleFrom="lg"
+                    maw={250}
+                    truncate
+                  >
+                    {display}
+                  </Text>
+                </Group>
+              );
+            })}
           </Group>
         )}
         <Group px="md" gap="sm">

@@ -36,6 +36,7 @@ import StackConfigFiles from "./config-files";
 import SystemCommand from "@/components/config/system-command";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
+import ConfigLinks from "@/components/config/links";
 import { InputList } from "mogh_ui";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
@@ -445,15 +446,10 @@ export default function StackConfig({
       labelHidden: true,
       fields: {
         links: (values, set) => (
-          <ConfigList
-            label="Links"
-            addLabel="Add Link"
-            description="Add quick links in the resource header"
-            field="links"
+          <ConfigLinks
             values={values ?? []}
             set={set}
             disabled={disabled}
-            placeholder="Input link"
           />
         ),
       },
