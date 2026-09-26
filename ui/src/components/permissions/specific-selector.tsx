@@ -23,6 +23,7 @@ const ALL_PERMISSIONS_BY_TYPE: {
     Types.SpecificPermission.Inspect,
     Types.SpecificPermission.Logs,
     Types.SpecificPermission.Terminal,
+    Types.SpecificPermission.Restart,
   ],
   Deployment: [
     Types.SpecificPermission.Inspect,

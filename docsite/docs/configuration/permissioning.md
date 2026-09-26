@@ -44,6 +44,8 @@ Some features are additionally gated behind a specific permission for that featu
   - If given on a `Build`, allows users to attach it to `Deployments`.
   - If given on a `Repo`, allows users to attach it to `Stacks`, `Builds`, and `Resource Syncs`.
 - **`Processes`**: User can retrieve the full running process list on the `Server`.
+- **`Restart`**: User can restart a `Stack` with only `Read` level, without the `Execute` level that would also allow deploy, stop, and destroy.
+  - If given on a `Server`, allows restarting every `Stack` on that server the user can `Read`.
 
 ## Permissioning by Resource Type
 

@@ -7,7 +7,7 @@ use regex::Regex;
 
 use crate::{
   helpers::query::get_swarm_or_server,
-  permission::get_check_permissions,
+  permission::get_check_any_permissions,
 };
 
 pub mod execute;
@@ -19,8 +19,27 @@ pub async fn setup_stack_execution(
   user: &User,
   permissions: PermissionLevelAndSpecifics,
 ) -> anyhow::Result<(Stack, SwarmOrServer)> {
-  let stack =
-    get_check_permissions::<Stack>(stack, user, permissions).await?;
+  setup_stack_execution_any(
+    stack,
+    user,
+    std::slice::from_ref(&permissions),
+  )
+  .await
+}
+
+/// Like [setup_stack_execution], but passes when the user
+/// fulfills any one of `allowed_permissions`.
+pub async fn setup_stack_execution_any(
+  stack: &str,
+  user: &User,
+  allowed_permissions: &[PermissionLevelAndSpecifics],
+) -> anyhow::Result<(Stack, SwarmOrServer)> {
+  let stack = get_check_any_permissions::<Stack>(
+    stack,
+    user,
+    allowed_permissions,
+  )
+  .await?;
 
   let swarm_or_server = get_swarm_or_server(
     &stack.config.swarm_id,

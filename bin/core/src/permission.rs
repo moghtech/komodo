@@ -44,6 +44,21 @@ pub async fn get_check_permissions<T: KomodoResource>(
   user: &User,
   required_permissions: PermissionLevelAndSpecifics,
 ) -> anyhow::Result<Resource<T::Config, T::Info>> {
+  get_check_any_permissions::<T>(
+    id_or_name,
+    user,
+    std::slice::from_ref(&required_permissions),
+  )
+  .await
+}
+
+/// Like [get_check_permissions], but passes when the user
+/// fulfills any one of `allowed_permissions`.
+pub async fn get_check_any_permissions<T: KomodoResource>(
+  id_or_name: &str,
+  user: &User,
+  allowed_permissions: &[PermissionLevelAndSpecifics],
+) -> anyhow::Result<Resource<T::Config, T::Info>> {
   let resource = get::<T>(id_or_name).await?;
 
   // Allow all if admin
@@ -54,34 +69,69 @@ pub async fn get_check_permissions<T: KomodoResource>(
   let user_permissions =
     get_user_permission_on_resource::<T>(user, &resource.id).await?;
 
-  if (
-    // Allow if its just read or below, and transparent mode enabled
-    (required_permissions.level <= PermissionLevel::Read && core_config().transparent_mode)
-    // Allow if resource has base permission level greater than or equal to required permission level
-    || resource.base_permission.level >= required_permissions.level
-  ) && user_permissions
-    .fulfills_specific(&required_permissions.specific)
-  {
+  if permitted_any(
+    allowed_permissions,
+    &user_permissions,
+    &resource.base_permission,
+    core_config().transparent_mode,
+  ) {
     return Ok(resource);
   }
 
-  if user_permissions.fulfills(&required_permissions) {
-    Ok(resource)
-  } else {
-    Err(anyhow!(
-      "User does not have required permissions on this {}. Must have at least {} permissions{}",
-      T::resource_type(),
-      required_permissions.level,
-      if required_permissions.specific.is_empty() {
-        String::new()
-      } else {
-        format!(
-          ", as well as these specific permissions: [{}]",
-          required_permissions.specifics_for_log()
-        )
-      }
-    ))
-  }
+  Err(anyhow!(
+    "User does not have required permissions on this {}. Must have at least {}",
+    T::resource_type(),
+    allowed_permissions
+      .iter()
+      .map(|required_permissions| format!(
+        "{} permissions{}",
+        required_permissions.level,
+        if required_permissions.specific.is_empty() {
+          String::new()
+        } else {
+          format!(
+            ", as well as these specific permissions: [{}]",
+            required_permissions.specifics_for_log()
+          )
+        }
+      ))
+      .collect::<Vec<_>>()
+      .join(", or at least ")
+  ))
+}
+
+/// Whether `user_permissions` on a resource with `base_permission`
+/// fulfills any one of `allowed_permissions`.
+fn permitted_any(
+  allowed_permissions: &[PermissionLevelAndSpecifics],
+  user_permissions: &PermissionLevelAndSpecifics,
+  base_permission: &PermissionLevelAndSpecifics,
+  transparent_mode: bool,
+) -> bool {
+  allowed_permissions.iter().any(|required_permissions| {
+    permitted(
+      required_permissions,
+      user_permissions,
+      base_permission,
+      transparent_mode,
+    )
+  })
+}
+
+fn permitted(
+  required_permissions: &PermissionLevelAndSpecifics,
+  user_permissions: &PermissionLevelAndSpecifics,
+  base_permission: &PermissionLevelAndSpecifics,
+  transparent_mode: bool,
+) -> bool {
+  (
+    // Allow if its just read or below, and transparent mode enabled
+    (required_permissions.level <= PermissionLevel::Read && transparent_mode)
+    // Allow if resource has base permission level greater than or equal to required permission level
+    || base_permission.level >= required_permissions.level
+  ) && user_permissions
+    .fulfills_specific(&required_permissions.specific)
+    || user_permissions.fulfills(required_permissions)
 }
 
 pub fn get_user_permission_on_resource<'a, T: KomodoResource>(
@@ -749,4 +799,101 @@ pub async fn check_user_target_access(
     }
   }
   Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use komodo_client::api::execute::{
+    PauseStack, RestartStack, StartStack, StopStack, UnpauseStack,
+  };
+
+  use crate::stack::execute::ExecuteCompose;
+
+  use super::*;
+
+  fn perms(
+    level: PermissionLevel,
+    specific: &[SpecificPermission],
+  ) -> PermissionLevelAndSpecifics {
+    level.specifics(specific.iter().copied().collect())
+  }
+
+  fn allows(
+    allowed: &[PermissionLevelAndSpecifics],
+    user: &PermissionLevelAndSpecifics,
+  ) -> bool {
+    permitted_any(allowed, user, &PermissionLevel::None.into(), false)
+  }
+
+  /// Every stack operation that must stay out of reach of a
+  /// restart-only user. Deploy and Destroy check Execute directly,
+  /// UpdateStack checks Write.
+  fn guarded() -> Vec<(&'static str, Vec<PermissionLevelAndSpecifics>)>
+  {
+    vec![
+      ("DeployStack", vec![PermissionLevel::Execute.into()]),
+      ("DestroyStack", vec![PermissionLevel::Execute.into()]),
+      ("UpdateStack", vec![PermissionLevel::Write.into()]),
+      ("StopStack", StopStack::allowed_permissions()),
+      ("StartStack", StartStack::allowed_permissions()),
+      ("PauseStack", PauseStack::allowed_permissions()),
+      ("UnpauseStack", UnpauseStack::allowed_permissions()),
+    ]
+  }
+
+  #[test]
+  fn restart_permission_allows_only_restart() {
+    use SpecificPermission::*;
+    let restarter = perms(PermissionLevel::Read, &[Logs, Restart]);
+    assert!(allows(&RestartStack::allowed_permissions(), &restarter));
+    for (operation, allowed) in guarded() {
+      assert!(
+        !allows(&allowed, &restarter),
+        "Read + Restart must not allow {operation}"
+      );
+    }
+  }
+
+  #[test]
+  fn restart_permission_needs_read() {
+    let user =
+      perms(PermissionLevel::None, &[SpecificPermission::Restart]);
+    assert!(!allows(&RestartStack::allowed_permissions(), &user));
+  }
+
+  #[test]
+  fn restart_without_permission_is_unchanged() {
+    use SpecificPermission::*;
+    let reader =
+      perms(PermissionLevel::Read, &[Logs, Inspect, Terminal]);
+    assert!(!allows(&RestartStack::allowed_permissions(), &reader));
+    for level in [PermissionLevel::Execute, PermissionLevel::Write] {
+      assert!(allows(
+        &RestartStack::allowed_permissions(),
+        &level.into()
+      ));
+    }
+  }
+
+  #[test]
+  fn restart_permission_with_base_or_transparent_read() {
+    let user =
+      perms(PermissionLevel::None, &[SpecificPermission::Restart]);
+    let allowed = RestartStack::allowed_permissions();
+    let base_read = PermissionLevel::Read.into();
+    assert!(permitted_any(&allowed, &user, &base_read, false));
+    assert!(permitted_any(
+      &allowed,
+      &user,
+      &PermissionLevel::None.into(),
+      true
+    ));
+    // Base or transparent Read never stands in for Execute.
+    assert!(!permitted_any(
+      &[PermissionLevel::Execute.into()],
+      &user,
+      &base_read,
+      true
+    ));
+  }
 }

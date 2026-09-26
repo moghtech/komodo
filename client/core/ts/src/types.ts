@@ -12162,6 +12162,14 @@ export enum SpecificPermission {
 	 * - Read all the processes on the host
 	 */
 	Processes = "Processes",
+	/**
+	 * On **Stack**
+	 * - Restart the Stack (`RestartStack`) with only Read level.
+	 * Other executions still require Execute.
+	 * On **Server**
+	 * - Restart all Stacks on the Server
+	 */
+	Restart = "Restart",
 }
 
 export enum StackWebhookAction {

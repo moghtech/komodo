@@ -3,7 +3,7 @@ use komodo_client::{
   api::execute::*,
   entities::{
     SwarmOrServer,
-    permission::PermissionLevel,
+    permission::{PermissionLevel, PermissionLevelAndSpecifics},
     server::Server,
     stack::{Stack, StackActionState},
     update::{Log, Update},
@@ -19,10 +19,15 @@ use crate::{
   state::action_states,
 };
 
-use super::setup_stack_execution;
+use super::setup_stack_execution_any;
 
 pub trait ExecuteCompose {
   type Extras;
+
+  /// The user must fulfill one of these on the Stack.
+  fn allowed_permissions() -> Vec<PermissionLevelAndSpecifics> {
+    vec![PermissionLevel::Execute.into()]
+  }
 
   async fn execute(
     periphery: PeripheryClient,
@@ -40,12 +45,9 @@ pub async fn execute_compose<T: ExecuteCompose>(
   update: Update,
   extras: T::Extras,
 ) -> anyhow::Result<Update> {
-  let (stack, swarm_or_server) = setup_stack_execution(
-    stack,
-    user,
-    PermissionLevel::Execute.into(),
-  )
-  .await?;
+  let (stack, swarm_or_server) =
+    setup_stack_execution_any(stack, user, &T::allowed_permissions())
+      .await?;
 
   let SwarmOrServer::Server(server) = swarm_or_server else {
     return Err(anyhow!(
@@ -142,6 +144,14 @@ impl ExecuteCompose for StartStack {
 
 impl ExecuteCompose for RestartStack {
   type Extras = ();
+
+  /// The Restart specific permission allows restart without Execute.
+  fn allowed_permissions() -> Vec<PermissionLevelAndSpecifics> {
+    vec![
+      PermissionLevel::Execute.into(),
+      PermissionLevel::Read.restart(),
+    ]
+  }
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,

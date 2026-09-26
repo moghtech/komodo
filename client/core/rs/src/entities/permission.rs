@@ -184,6 +184,12 @@ pub enum SpecificPermission {
   /// On **Server**
   ///   - Read all the processes on the host
   Processes,
+  /// On **Stack**
+  ///   - Restart the Stack (`RestartStack`) with only Read level.
+  ///     Other executions still require Execute.
+  /// On **Server**
+  ///   - Restart all Stacks on the Server
+  Restart,
 }
 
 impl SpecificPermission {
@@ -272,6 +278,11 @@ impl PermissionLevel {
   /// Operation requires Processes permission
   pub fn processes(self) -> PermissionLevelAndSpecifics {
     self.specific(SpecificPermission::Processes)
+  }
+
+  /// Operation requires Restart permission
+  pub fn restart(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Restart)
   }
 }
 
@@ -402,6 +413,11 @@ impl PermissionLevelAndSpecifics {
   pub fn processes(self) -> PermissionLevelAndSpecifics {
     self.specific(SpecificPermission::Processes)
   }
+
+  /// Operation requires Restart permission
+  pub fn restart(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Restart)
+  }
 }
 
 pub trait HasLevelAndSpecific {
@@ -424,5 +440,40 @@ impl HasLevelAndSpecific for PermissionLevelAndSpecifics {
   }
   fn specific(&self) -> &IndexSet<SpecificPermission> {
     &self.specific
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn restart_specific_permission_round_trips() {
+    let permission: PermissionLevelAndSpecifics =
+      PermissionLevel::Read.restart();
+    let json = serde_json::to_string(&permission.specific).unwrap();
+    assert_eq!(json, r#"["Restart"]"#);
+    let specific: IndexSet<SpecificPermission> =
+      serde_json::from_str(&json).unwrap();
+    assert_eq!(specific, permission.specific);
+  }
+
+  #[test]
+  fn existing_specific_permissions_are_unchanged() {
+    let names: Vec<&str> = SpecificPermission::VARIANTS
+      .iter()
+      .map(|specific| specific.into())
+      .collect();
+    assert_eq!(
+      names,
+      [
+        "Terminal",
+        "Attach",
+        "Inspect",
+        "Logs",
+        "Processes",
+        "Restart"
+      ]
+    );
   }
 }
