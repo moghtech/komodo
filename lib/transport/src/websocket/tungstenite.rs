@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::{Context, anyhow};
-use axum::http::{self, HeaderValue};
+use axum::http::{self, HeaderMap, HeaderValue};
 use bytes::Bytes;
 use encoding::CastBytes as _;
 use futures_util::{
@@ -170,30 +170,38 @@ impl WebsocketReceiver for TungsteniteWebsocketReceiver {
 }
 
 impl TungsteniteWebsocket {
+  /// `extra_headers` are added to the websocket upgrade request,
+  /// eg. to authenticate with a reverse proxy in front of the server.
   pub async fn connect_maybe_tls_insecure(
     url: &str,
     insecure: bool,
+    extra_headers: HeaderMap,
   ) -> mogh_error::Result<(Self, HeaderValue)> {
     if insecure {
-      Self::connect_tls_insecure(url).await
+      Self::connect_tls_insecure(url, extra_headers).await
     } else {
-      Self::connect(url).await
+      Self::connect(url, extra_headers).await
     }
   }
 
   pub async fn connect(
     url: &str,
+    extra_headers: HeaderMap,
   ) -> mogh_error::Result<(Self, HeaderValue)> {
-    let res =
-      tokio_tungstenite::connect_async(make_request(url)?).await;
+    let res = tokio_tungstenite::connect_async(make_request(
+      url,
+      extra_headers,
+    )?)
+    .await;
     Self::handle_connection_result(url, res)
   }
 
   pub async fn connect_tls_insecure(
     url: &str,
+    extra_headers: HeaderMap,
   ) -> mogh_error::Result<(Self, HeaderValue)> {
     let res = tokio_tungstenite::connect_async_tls_with_config(
-      make_request(url)?,
+      make_request(url, extra_headers)?,
       None,
       false,
       Some(Connector::Rustls(Arc::new(
@@ -241,16 +249,22 @@ impl TungsteniteWebsocket {
   }
 }
 
-fn make_request(url: &str) -> mogh_error::Result<http::Request<()>> {
+fn make_request(
+  url: &str,
+  extra_headers: HeaderMap,
+) -> mogh_error::Result<http::Request<()>> {
   let mut request =
     url.into_client_request().context("Invalid websocket URL")?;
-  request.headers_mut().insert(
+  let headers = request.headers_mut();
+  headers.insert(
     "user-agent",
     HeaderValue::from_static(concat!(
       "komodo/",
       env!("CARGO_PKG_VERSION")
     )),
   );
+  // Replaces any existing values for the same names.
+  headers.extend(extra_headers);
   Ok(request)
 }
 

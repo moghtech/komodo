@@ -151,6 +151,16 @@ exclude_disk_mounts = []
 ## Env: PERIPHERY_ONBOARDING_KEY
 # onboarding_key = "MC4CAQAwBQYDK2VuBCIEIHPHNA/0M9ejFviE2y4dpyczAvnAwPWDQtGGGhEJ2G6K"
 
+## Optional. A file of extra headers to send with the websocket request to Core,
+## one `Name: value` per line, eg. to pass Cloudflare Access with a service token:
+##   CF-Access-Client-Id: <client id>
+##   CF-Access-Client-Secret: <client secret>
+## Re-read on every connection attempt. Must be owned by the Periphery user
+## and not accessible by group or others (chmod 600), or Periphery will not start.
+## Env: PERIPHERY_CORE_HEADERS_FILE
+## Default: None
+# core_headers_file = "/etc/komodo/core-headers"
+
 ################
 # INBOUND MODE #
 ################

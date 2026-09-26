@@ -55,6 +55,7 @@ impl PeripheryConnectionArgs<'_> {
           ws = TungsteniteWebsocket::connect_maybe_tls_insecure(
             &endpoint,
             insecure && endpoint.starts_with("wss"),
+            Default::default(),
           ) => ws,
           _ = connection.cancel.cancelled() => {
             break

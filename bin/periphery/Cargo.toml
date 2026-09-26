@@ -51,6 +51,7 @@ tracing.workspace = true
 bollard.workspace = true
 sysinfo.workspace = true
 dotenvy.workspace = true
+libc.workspace = true
 anyhow.workspace = true
 rustls.workspace = true
 bytes.workspace = true

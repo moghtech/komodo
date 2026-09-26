@@ -94,6 +94,11 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       core_tls_insecure_skip_verify: env
         .periphery_core_tls_insecure_skip_verify
         .unwrap_or(config.core_tls_insecure_skip_verify),
+      // An empty value (eg. `PERIPHERY_CORE_HEADERS_FILE=`) means unset.
+      core_headers_file: env
+        .periphery_core_headers_file
+        .or(config.core_headers_file)
+        .filter(|path| !path.as_os_str().is_empty()),
       connect_as: env
         .periphery_connect_as
         .unwrap_or(config.connect_as),

@@ -158,6 +158,8 @@ pub struct Env {
   pub periphery_core_addresses: Option<Vec<String>>,
   /// Override `core_tls_insecure_skip_verify`
   pub periphery_core_tls_insecure_skip_verify: Option<bool>,
+  /// Override `core_headers_file`
+  pub periphery_core_headers_file: Option<PathBuf>,
   /// Override `connect_as`
   pub periphery_connect_as: Option<String>,
   /// Override `server_enabled`
@@ -281,6 +283,21 @@ pub struct PeripheryConfig {
   /// without validating the Core certs
   #[serde(default)]
   pub core_tls_insecure_skip_verify: bool,
+
+  /// Path to a file of extra HTTP headers to send with the
+  /// outbound websocket request to Core, one `Name: value` per line.
+  /// Blank lines and lines starting with `#` are ignored.
+  ///
+  /// Use this to pass an authenticating reverse proxy in front of Core,
+  /// for example Cloudflare Access service token headers.
+  ///
+  /// The file is re-read on every connection attempt. It must be owned
+  /// by the user Periphery runs as and not be accessible by group or
+  /// others (eg. `chmod 600`), otherwise Periphery refuses to start.
+  /// Header values are never logged.
+  /// Default: None
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub core_headers_file: Option<PathBuf>,
 
   /// Server name / id to connect as
   #[serde(default)]
@@ -473,6 +490,7 @@ impl Default for PeripheryConfig {
       passkeys: None,
       core_addresses: Default::default(),
       core_tls_insecure_skip_verify: Default::default(),
+      core_headers_file: None,
       connect_as: Default::default(),
       server_enabled: Default::default(),
       port: default_periphery_port(),
@@ -524,6 +542,7 @@ impl PeripheryConfig {
       core_addresses: self.core_addresses.clone(),
       core_tls_insecure_skip_verify: self
         .core_tls_insecure_skip_verify,
+      core_headers_file: self.core_headers_file.clone(),
       connect_as: self.connect_as.clone(),
       server_enabled: self.server_enabled,
       port: self.port,

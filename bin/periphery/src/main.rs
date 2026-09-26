@@ -42,6 +42,17 @@ async fn app() -> anyhow::Result<()> {
     // Init core public keys. Will crash if invalid core public keys here.
     core_public_keys();
 
+    // Refuse to start with an unreadable, invalid,
+    // or insufficiently protected core headers file.
+    if let Some(path) = &config.core_headers_file {
+      let headers = connection::headers::core_headers()?;
+      info!(
+        "Sending {} extra header(s) to Core from {}",
+        headers.len(),
+        path.display()
+      );
+    }
+
     rustls::crypto::aws_lc_rs::default_provider()
       .install_default()
       .expect("Failed to install default crypto provider");
@@ -78,8 +89,8 @@ async fn app() -> anyhow::Result<()> {
       }
     }
 
-    handles
-  }.instrument(startup_span).await;
+    anyhow::Ok(handles)
+  }.instrument(startup_span).await?;
 
   // Watch the threads
   while let Some(res) = handles.next().await {

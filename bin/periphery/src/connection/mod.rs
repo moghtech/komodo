@@ -27,6 +27,7 @@ use crate::{
 };
 
 pub mod client;
+pub mod headers;
 pub mod server;
 
 impl PublicKeyValidator for &CorePublicKeys {

@@ -20,7 +20,7 @@ use transport::{
 
 use crate::{
   config::periphery_config,
-  connection::core_public_keys,
+  connection::{core_public_keys, headers::core_headers},
   state::{core_connections, periphery_keys},
 };
 
@@ -220,7 +220,9 @@ async fn connect_websocket(
   url: &str,
 ) -> anyhow::Result<(TungsteniteWebsocket, HeaderValue)> {
   let config = periphery_config();
-  TungsteniteWebsocket::connect_maybe_tls_insecure(url, config.core_tls_insecure_skip_verify)
+  // Re-read on every attempt so rotated headers apply on reconnect.
+  let headers = core_headers()?;
+  TungsteniteWebsocket::connect_maybe_tls_insecure(url, config.core_tls_insecure_skip_verify, headers)
     .await
     .map_err(|e| match e.status {
       StatusCode::NOT_FOUND => anyhow!("404 Not Found: Server '{}' does not exist.", config.connect_as),
