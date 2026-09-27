@@ -3,11 +3,13 @@ use std::time::Duration;
 use anyhow::Context;
 use bollard::query_parameters::ListImagesOptions;
 use command::{CommandOptions, run_komodo_standard_command};
+use hex::ToHex;
 use komodo_client::entities::docker::{
   GraphDriverData, HealthConfig, container::ContainerListItem,
   image::*,
 };
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 
 use super::DockerClient;
 
@@ -192,9 +194,8 @@ fn convert_oci_platform(
 pub async fn get_image_digest_from_registry(
   image: &str,
 ) -> anyhow::Result<String> {
-  let command = String::from(
-    r#"docker buildx imagetools inspect --format "{{json .Manifest}}" "#,
-  ) + image;
+  let command =
+    String::from("docker buildx imagetools inspect --raw ") + image;
   let log = run_komodo_standard_command(
     "",
     command,
@@ -205,10 +206,14 @@ pub async fn get_image_digest_from_registry(
     return Err(anyhow::Error::msg(log.combined()));
   }
   #[derive(Deserialize)]
-  struct ImageManifest {
-    digest: String,
+  struct RawManifest {
+    #[serde(rename = "schemaVersion")]
+    _schema_version: u8,
   }
-  let ImageManifest { digest } = serde_json::from_str(&log.stdout)
-    .context("Failed to parse image manifest from 'docker buildx imagetools inspect' output")?;
-  Ok(digest)
+  serde_json::from_str::<RawManifest>(&log.stdout).context(
+  "'docker buildx imagetools inspect --raw' did not return a manifest",
+  )?;
+  let digest =
+    Sha256::digest(log.stdout.as_bytes()).encode_hex::<String>();
+  Ok(format!("sha256:{digest}"))
 }

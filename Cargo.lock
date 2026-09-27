@@ -2254,7 +2254,6 @@ dependencies = [
  "komodo_client",
  "mogh_cache",
  "tokio",
- "urlencoding",
 ]
 
 [[package]]
@@ -2899,7 +2898,6 @@ name = "interpolate"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "formatting",
  "komodo_client",
  "svi",
 ]
@@ -3220,6 +3218,7 @@ dependencies = [
  "formatting",
  "futures-util",
  "git",
+ "hex",
  "hickory-resolver",
  "interpolate",
  "komodo_client",
@@ -3237,6 +3236,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml_ng",
+ "sha2 0.11.0",
  "shell-escape",
  "shlex 2.0.1",
  "strum 0.28.0",
