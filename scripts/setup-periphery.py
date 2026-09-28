@@ -131,7 +131,8 @@ def download_binary(args, bin_dir):
 		)
 
 	# add executable permissions
-	os.popen(f'chmod +x {bin_path}')
+	if os.system(f'chmod +x {bin_path}') != 0:
+		raise RuntimeError(f"Failed to add executable permissions on {bin_path}")
 
 def map_config_line(args, home_dir, line):
 	## Handle root directory
