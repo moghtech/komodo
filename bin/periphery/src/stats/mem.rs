@@ -44,16 +44,23 @@ fn read_sysinfo(system: &sysinfo::System) -> MemBreakdown {
 /// `MemAvailable` does not count the ZFS ARC as reclaimable, so a large
 /// ARC would inflate "used" and cause false high-memory alerts. ARC is
 /// reclaimable, so we subtract it from used and report it separately.
+///
+/// Inside an LXC container `arcstats` still reports the host's ARC, but
+/// the lxcfs-virtualized meminfo never includes it, so subtracting it
+/// would zero out "used".
 #[cfg(target_os = "linux")]
 fn read_linux() -> Option<MemBreakdown> {
   let meminfo =
     parse_meminfo(&std::fs::read_to_string("/proc/meminfo").ok()?)?;
   // Absent when ZFS isn't loaded => arc stays zero.
-  let zfs_arc =
+  let zfs_arc = if meminfo_is_lxcfs() {
+    0
+  } else {
     std::fs::read_to_string("/proc/spl/kstat/zfs/arcstats")
       .ok()
       .map(|c| parse_zfs_arc_size(&c))
-      .unwrap_or(0);
+      .unwrap_or(0)
+  };
 
   // Cached + SReclaimable + Buffers - Shmem
   let buff_cache = meminfo
@@ -70,6 +77,30 @@ fn read_linux() -> Option<MemBreakdown> {
     buff_cache,
     zfs_arc,
     used: raw_used.saturating_sub(zfs_arc),
+  })
+}
+
+/// True when `/proc/meminfo` is virtualized by lxcfs (LXC / Incus
+/// containers).
+#[cfg(target_os = "linux")]
+fn meminfo_is_lxcfs() -> bool {
+  std::fs::read_to_string("/proc/self/mountinfo")
+    .map(|c| mountinfo_has_lxcfs_meminfo(&c))
+    .unwrap_or(false)
+}
+
+#[cfg(target_os = "linux")]
+fn mountinfo_has_lxcfs_meminfo(contents: &str) -> bool {
+  contents.lines().any(|line| {
+    let mut fields = line.split_whitespace();
+    // Field 5 is the mount point; fs type follows the " - "
+    // separator.
+    let mount_point = fields.nth(4);
+    let fs_type = line
+      .split_once(" - ")
+      .and_then(|(_, rest)| rest.split_whitespace().next());
+    mount_point == Some("/proc/meminfo")
+      && fs_type.is_some_and(|t| t.ends_with("lxcfs"))
   })
 }
 
@@ -147,4 +178,18 @@ fn parse_zfs_arc_size(contents: &str) -> u64 {
     }
   }
   0
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn detects_lxcfs_meminfo() {
+    let container = "2321 2301 0:28 / /sys/fs/cgroup rw - cgroup2 none rw\n\
+      2325 2300 0:113 /proc/meminfo /proc/meminfo rw,nosuid shared:1966 master:591 - fuse.lxcfs lxcfs rw";
+    assert!(mountinfo_has_lxcfs_meminfo(container));
+    let host = "22 1 0:21 / /proc rw - proc proc rw";
+    assert!(!mountinfo_has_lxcfs_meminfo(host));
+  }
 }
