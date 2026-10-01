@@ -293,6 +293,9 @@ fn cron_parser() -> &'static CronParser {
     CronParser::builder()
       .seconds(croner::parser::Seconds::Required)
       .dom_and_dow(true)
+      // english-to-cron emits steps as `0/N`, which croner 4 rejects
+      // unless sloppy ranges are enabled.
+      .sloppy_ranges(true)
       .build()
   })
 }
@@ -384,5 +387,52 @@ impl HasSchedule for &Action {
   }
   fn timezone(&self) -> &str {
     &self.config.schedule_timezone
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use chrono::{TimeZone, Timelike, Utc};
+
+  use super::cron_parser;
+
+  fn english_cron(schedule: &str) -> String {
+    english_to_cron::str_cron_syntax(schedule)
+      .unwrap()
+      .split(' ')
+      .take(6)
+      .collect::<Vec<_>>()
+      .join(" ")
+  }
+
+  #[test]
+  fn english_step_schedules_parse() {
+    for schedule in
+      ["every 15 seconds", "every 5 minutes", "every 8 hours"]
+    {
+      let cron = english_cron(schedule);
+      assert!(
+        cron_parser().parse(&cron).is_ok(),
+        "{schedule} produced {cron}"
+      );
+    }
+  }
+
+  #[test]
+  fn every_8_hours_runs_at_0_8_16() {
+    let cron =
+      cron_parser().parse(&english_cron("every 8 hours")).unwrap();
+    let mut time = Utc.with_ymd_and_hms(2026, 1, 1, 1, 0, 0).unwrap();
+    let mut hours = Vec::new();
+    for _ in 0..3 {
+      time = cron.find_next_occurrence(&time, false).unwrap();
+      hours.push(time.hour());
+    }
+    assert_eq!(hours, [8, 16, 0]);
+  }
+
+  #[test]
+  fn cron_step_shortcut_parses() {
+    assert!(cron_parser().parse("0 0 0/6 * * *").is_ok());
   }
 }
