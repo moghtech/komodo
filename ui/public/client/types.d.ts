@@ -2892,6 +2892,13 @@ export interface StackServiceNames {
      * This includes both the image name / tag, and the specific digest hash.
      */
     image_digest?: ImageDigest;
+    /**
+     * Set when the compose service has `deploy.replicas > 1`,
+     * in which case Komodo lists each replica separately
+     * (`service_name` = `{service}-{i}`, `container_name` = exact replica container).
+     * This is the actual compose service name to pass to `docker compose`.
+     */
+    compose_service?: string;
 }
 /**
  * Same as [FileContents] with some extra

@@ -167,8 +167,8 @@ pub fn get_stack_state_from_containers(
     })
     .collect::<Vec<_>>();
   let containers = containers.iter().filter(|container| {
-    services.iter().any(|StackServiceNames { service_name, container_name, .. }| {
-      match compose_container_match_regex(container_name)
+    services.iter().any(|StackServiceNames { service_name, container_name, compose_service, .. }| {
+      match compose_container_match_regex(container_name, compose_service.is_some())
         .with_context(|| format!("failed to construct container name matching regex for service {service_name}")) 
       {
         Ok(regex) => regex,

@@ -283,6 +283,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
           service_name,
           image,
           image_digest: None,
+          compose_service: None,
         });
       }
     }

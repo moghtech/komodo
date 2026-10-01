@@ -825,6 +825,12 @@ pub struct StackServiceNames {
   /// Store the associated image digest.
   /// This includes both the image name / tag, and the specific digest hash.
   pub image_digest: Option<ImageDigest>,
+  /// Set when the compose service has `deploy.replicas > 1`,
+  /// in which case Komodo lists each replica separately
+  /// (`service_name` = `{service}-{i}`, `container_name` = exact replica container).
+  /// This is the actual compose service name to pass to `docker compose`.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub compose_service: Option<String>,
 }
 
 /// A stack service, whether server or swarm based.

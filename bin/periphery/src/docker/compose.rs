@@ -100,6 +100,7 @@ pub fn parse_compose_services(
             service_name: format!("{service_name}-{i}"),
             image: image.clone(),
             image_digest: None,
+            compose_service: Some(service_name.clone()),
           });
         }
       }
@@ -111,10 +112,51 @@ pub fn parse_compose_services(
           service_name,
           image,
           image_digest: None,
+          compose_service: None,
         });
       }
     }
   }
 
   Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn replicas_record_compose_service() {
+    let config = r#"
+services:
+  web:
+    image: nginx
+    deploy:
+      replicas: 2
+  db:
+    image: postgres
+"#;
+    let mut services = Vec::new();
+    parse_compose_services(config, "proj", &mut services).unwrap();
+    services.sort_by(|a, b| a.service_name.cmp(&b.service_name));
+
+    let names = services
+      .iter()
+      .map(|s| {
+        (
+          s.service_name.as_str(),
+          s.container_name.as_str(),
+          s.compose_service.as_deref(),
+        )
+      })
+      .collect::<Vec<_>>();
+    assert_eq!(
+      names,
+      [
+        ("db", "proj-db", None),
+        ("web-1", "proj-web-1", Some("web")),
+        ("web-2", "proj-web-2", Some("web")),
+      ]
+    );
+  }
 }

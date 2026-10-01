@@ -19,7 +19,9 @@ use mogh_error::AddStatusCodeError as _;
 use mogh_resolver::Resolve;
 use periphery_client::api::{
   compose::{GetComposeLog, GetComposeLogSearch},
-  container::InspectContainer,
+  container::{
+    GetContainerLog, GetContainerLogSearch, InspectContainer,
+  },
 };
 use reqwest::StatusCode;
 
@@ -31,7 +33,10 @@ use crate::{
   },
   permission::get_check_permissions,
   resource,
-  stack::setup_stack_execution,
+  stack::{
+    services::{single_replica_container, to_compose_services},
+    setup_stack_execution,
+  },
   state::{action_states, stack_status_cache},
 };
 
@@ -312,16 +317,33 @@ impl Resolve<ReadArgs> for GetStackLog {
         .await
         .context("Failed to get stack service log from swarm")?
       }
-      SwarmOrServer::Server(server) => periphery_client(&server)
-        .await?
-        .request(GetComposeLog {
-          project: stack.project_name(false),
-          services,
-          tail,
-          timestamps,
-        })
-        .await
-        .context("Failed to get stack log from periphery")?,
+      SwarmOrServer::Server(server) => {
+        let periphery = periphery_client(&server).await?;
+        // A single replica of a compose service with `deploy.replicas > 1`
+        // is not a compose service, so get its container log directly.
+        if let Some(name) =
+          single_replica_container(&stack, &services)
+        {
+          periphery
+            .request(GetContainerLog {
+              name,
+              tail,
+              timestamps,
+            })
+            .await
+            .context("Failed to get stack log from periphery")?
+        } else {
+          periphery
+            .request(GetComposeLog {
+              project: stack.project_name(false),
+              services: to_compose_services(&stack, services),
+              tail,
+              timestamps,
+            })
+            .await
+            .context("Failed to get stack log from periphery")?
+        }
+      }
     };
 
     Ok(log)
@@ -359,7 +381,11 @@ impl Resolve<ReadArgs> for SearchStackLog {
         swarm_request(
           &swarm.config.server_ids,
           periphery_client::api::swarm::GetSwarmServiceLogSearch {
-            service,
+            // The actual service name on swarm will be stackname_servicename
+            service: format!(
+              "{}_{service}",
+              stack.project_name(false)
+            ),
             terms,
             combinator,
             invert,
@@ -372,18 +398,37 @@ impl Resolve<ReadArgs> for SearchStackLog {
         .await
         .context("Failed to get stack service log from swarm")?
       }
-      SwarmOrServer::Server(server) => periphery_client(&server)
-        .await?
-        .request(GetComposeLogSearch {
-          project: stack.project_name(false),
-          services,
-          terms,
-          combinator,
-          invert,
-          timestamps,
-        })
-        .await
-        .context("Failed to search stack log from periphery")?,
+      SwarmOrServer::Server(server) => {
+        let periphery = periphery_client(&server).await?;
+        // A single replica of a compose service with `deploy.replicas > 1`
+        // is not a compose service, so search its container log directly.
+        if let Some(name) =
+          single_replica_container(&stack, &services)
+        {
+          periphery
+            .request(GetContainerLogSearch {
+              name,
+              terms,
+              combinator,
+              invert,
+              timestamps,
+            })
+            .await
+            .context("Failed to search stack log from periphery")?
+        } else {
+          periphery
+            .request(GetComposeLogSearch {
+              project: stack.project_name(false),
+              services: to_compose_services(&stack, services),
+              terms,
+              combinator,
+              invert,
+              timestamps,
+            })
+            .await
+            .context("Failed to search stack log from periphery")?
+        }
+      }
     };
 
     Ok(log)

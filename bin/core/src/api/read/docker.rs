@@ -287,13 +287,14 @@ impl Resolve<ReadArgs> for GetResourceMatchingContainer {
       for StackServiceNames {
         service_name,
         container_name,
+        compose_service,
         ..
       } in stack
         .info
         .deployed_services
         .unwrap_or(stack.info.latest_services)
       {
-        let is_match = match compose_container_match_regex(&container_name)
+        let is_match = match compose_container_match_regex(&container_name, compose_service.is_some())
           .with_context(|| format!("failed to construct container name matching regex for service {service_name}")) 
         {
           Ok(regex) => regex,

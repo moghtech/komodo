@@ -152,10 +152,10 @@ pub async fn update_server_stack_cache(
   let stack_status_cache = stack_status_cache();
   for stack in stacks {
     let services = extract_services_from_stack(&stack);
-    let mut services_with_containers = services.iter().map(|StackServiceNames { service_name, container_name, image, .. }| {
+    let mut services_with_containers = services.iter().map(|StackServiceNames { service_name, container_name, image, compose_service, .. }| {
       // Get the container associated with service.
       let container = containers.iter().find(|container| {
-        match compose_container_match_regex(container_name)
+        match compose_container_match_regex(container_name, compose_service.is_some())
           .with_context(|| format!("failed to construct container name matching regex for service {service_name}")) 
         {
           Ok(regex) => regex,
