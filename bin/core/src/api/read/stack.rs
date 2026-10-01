@@ -381,7 +381,11 @@ impl Resolve<ReadArgs> for SearchStackLog {
         swarm_request(
           &swarm.config.server_ids,
           periphery_client::api::swarm::GetSwarmServiceLogSearch {
-            service,
+            // The actual service name on swarm will be stackname_servicename
+            service: format!(
+              "{}_{service}",
+              stack.project_name(false)
+            ),
             terms,
             combinator,
             invert,
