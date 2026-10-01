@@ -140,11 +140,11 @@ pub async fn create_swarm_secret(
 
   let name = escape(name.into());
   let command = format!(
-    "printf '%s\\n' {} | docker secret create{flags} {name} -",
+    "printf '%s' {} | docker secret create{flags} {name} -",
     escape(data.trim().into())
   );
   let sanitized_command = format!(
-    "printf '%s\\n' <secret-data> | docker secret create{flags} {name} -"
+    "printf '%s' <secret-data> | docker secret create{flags} {name} -"
   );
 
   let mut log = run_komodo_shell_command(
