@@ -424,6 +424,15 @@ monitoring_interval = "15-sec"
 ## Default: 1-hr
 resource_poll_interval = "1-hr"
 
+## How long the latest image digest fetched from a registry is reused
+## by automated update checks (Global Auto Update, batch checks).
+## Keep it below the Global Auto Update interval so new images are picked up on the next run.
+## Manual single resource update checks always query the registry.
+## Env: KOMODO_IMAGE_DIGEST_CACHE_TTL
+## Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
+## Default: 10-min
+image_digest_cache_ttl = "10-min"
+
 ############
 # Security #
 ############

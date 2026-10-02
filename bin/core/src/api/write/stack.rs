@@ -709,6 +709,8 @@ impl Resolve<WriteArgs> for CheckStackForUpdate {
       self.skip_auto_update,
       self.wait_for_auto_update,
       self.skip_cache_refresh,
+      // Single stack checks should always see the latest digest.
+      false,
     )
     .await
     .map_err(Into::into)
@@ -745,6 +747,8 @@ pub async fn check_stack_for_update_inner(
   // Otherwise spawns task to run in background
   wait_for_auto_update: bool,
   skip_cache_refresh: bool,
+  // Reuse recently fetched image digests, see `image_digest_cache_ttl`.
+  use_digest_cache: bool,
 ) -> anyhow::Result<CheckStackForUpdateResponse> {
   if !skip_cache_refresh {
     (RefreshStackCache {
@@ -791,7 +795,10 @@ pub async fn check_stack_for_update_inner(
       service.image_digest = None;
       continue;
     }
-    match cache.get(swarm_or_server, image, None, None).await {
+    match cache
+      .get(swarm_or_server, image, None, None, use_digest_cache)
+      .await
+    {
       Ok(digest) => service.image_digest = Some(digest),
       Err(e) => {
         warn!(
@@ -1119,6 +1126,7 @@ impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
           self.skip_auto_update,
           self.wait_for_auto_update,
           self.skip_cache_refresh,
+          true,
         )
         .await
       })

@@ -304,6 +304,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
         self.skip_auto_update,
         true,
         false,
+        true,
       )
       .await
       {
@@ -384,6 +385,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
         deployment,
         &swarm_or_server,
         self.skip_auto_update,
+        true,
         true,
       )
       .await

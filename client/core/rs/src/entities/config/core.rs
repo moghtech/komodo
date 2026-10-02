@@ -105,6 +105,8 @@ pub struct Env {
   pub komodo_resource_poll_interval: Option<Timelength>,
   /// Override `monitoring_interval`
   pub komodo_monitoring_interval: Option<Timelength>,
+  /// Override `image_digest_cache_ttl`
+  pub komodo_image_digest_cache_ttl: Option<Timelength>,
   /// Override `keep_stats_for_days`
   pub komodo_keep_stats_for_days: Option<u64>,
   /// Override `keep_alerts_for_days`
@@ -716,6 +718,14 @@ pub struct CoreConfig {
   #[serde(default = "default_monitoring_interval")]
   pub monitoring_interval: Timelength,
 
+  /// How long the latest image digest fetched from a registry is reused
+  /// by automated update checks (Global Auto Update, batch checks)
+  /// before querying the registry again. Manual single resource
+  /// update checks always query the registry.
+  /// Default: `10-min`
+  #[serde(default = "default_image_digest_cache_ttl")]
+  pub image_digest_cache_ttl: Timelength,
+
   // ===================
   // = Cloud Providers =
   // ===================
@@ -920,6 +930,10 @@ fn default_monitoring_interval() -> Timelength {
   Timelength::FifteenSeconds
 }
 
+fn default_image_digest_cache_ttl() -> Timelength {
+  Timelength::TenMinutes
+}
+
 fn default_ssl_key_file() -> String {
   "/config/ssl/key.pem".to_string()
 }
@@ -994,6 +1008,7 @@ impl Default for CoreConfig {
       keep_alerts_for_days: default_prune_days(),
       resource_poll_interval: default_poll_interval(),
       monitoring_interval: default_monitoring_interval(),
+      image_digest_cache_ttl: default_image_digest_cache_ttl(),
       aws: Default::default(),
       git_providers: Default::default(),
       image_registries: Default::default(),
@@ -1036,6 +1051,7 @@ impl CoreConfig {
       internet_interface: config.internet_interface,
       resource_poll_interval: config.resource_poll_interval,
       monitoring_interval: config.monitoring_interval,
+      image_digest_cache_ttl: config.image_digest_cache_ttl,
       keep_stats_for_days: config.keep_stats_for_days,
       keep_alerts_for_days: config.keep_alerts_for_days,
       logging: config.logging,

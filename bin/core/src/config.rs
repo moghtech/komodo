@@ -336,6 +336,9 @@ pub fn core_config() -> &'static CoreConfig {
       monitoring_interval: env
         .komodo_monitoring_interval
         .unwrap_or(config.monitoring_interval),
+      image_digest_cache_ttl: env
+        .komodo_image_digest_cache_ttl
+        .unwrap_or(config.image_digest_cache_ttl),
       keep_stats_for_days: env
         .komodo_keep_stats_for_days
         .unwrap_or(config.keep_stats_for_days),
