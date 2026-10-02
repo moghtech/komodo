@@ -1,20 +1,36 @@
 use std::{sync::Arc, time::Duration};
 
+use async_timing_util::get_timelength_in_ms;
 use komodo_client::entities::{
   ImageDigest, SwarmOrServer, komodo_timestamp,
 };
 use mogh_cache::CloneCache;
 use periphery_client::api::docker::GetLatestImageDigest;
 
-use crate::helpers::swarm_or_server_request;
+use crate::{config::core_config, helpers::swarm_or_server_request};
 
 /// Maps images -> (digest, valid until milliseconds)
-pub struct ImageDigestCache(CloneCache<String, (ImageDigest, i64)>);
+pub struct ImageDigestCache {
+  cache: CloneCache<String, (ImageDigest, i64)>,
+  ttl_ms: i64,
+}
 
 impl ImageDigestCache {
   /// Also spawns a task to periodically clean up expired image digests.
   pub fn new() -> Arc<ImageDigestCache> {
-    let cache = Arc::new(ImageDigestCache(Default::default()));
+    let ttl = core_config()
+      .image_digest_cache_ttl
+      .try_into()
+      .unwrap_or_else(|_| {
+        error!(
+          "Invalid 'image_digest_cache_ttl', using default 10-min"
+        );
+        async_timing_util::Timelength::TenMinutes
+      });
+    let cache = Arc::new(ImageDigestCache {
+      cache: Default::default(),
+      ttl_ms: get_timelength_in_ms(ttl) as i64,
+    });
     let clone = cache.clone();
     tokio::spawn(async move {
       let mut interval =
@@ -24,7 +40,7 @@ impl ImageDigestCache {
         interval.tick().await;
         let ts = komodo_timestamp();
         clone
-          .0
+          .cache
           .retain(|_, (_, valid_until)| *valid_until > ts)
           .await;
       }
@@ -32,15 +48,19 @@ impl ImageDigestCache {
     cache
   }
 
+  /// Pass `use_cache: false` to always query the registry,
+  /// the fresh digest is still stored for subsequent cached reads.
   pub async fn get(
     &self,
     swarm_or_server: &SwarmOrServer,
     image: &String,
     account: Option<String>,
     token: Option<String>,
+    use_cache: bool,
   ) -> anyhow::Result<ImageDigest> {
-    if let Some((digest, valid_until)) = self.0.get(image).await
-      // Ensure the query time was within last 10 mins to use cache.
+    if use_cache
+      && let Some((digest, valid_until)) = self.cache.get(image).await
+      // Ensure the query time was within the configured ttl to use cache.
       && valid_until > komodo_timestamp()
     {
       return Ok(digest);
@@ -60,10 +80,10 @@ impl ImageDigestCache {
     let digest = ImageDigest::new(image, &digest);
 
     self
-      .0
+      .cache
       .insert(
         image,
-        (digest.clone(), komodo_timestamp() + 10 * 60 * 1_000),
+        (digest.clone(), komodo_timestamp() + self.ttl_ms),
       )
       .await;
 

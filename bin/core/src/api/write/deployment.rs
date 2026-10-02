@@ -428,6 +428,8 @@ impl Resolve<WriteArgs> for CheckDeploymentForUpdate {
       &swarm_or_server,
       self.skip_auto_update,
       self.wait_for_auto_update,
+      // Single deployment checks should always see the latest digest.
+      false,
     )
     .await
     .map_err(Into::into)
@@ -465,6 +467,8 @@ pub async fn check_deployment_for_update_inner(
   skip_auto_update: bool,
   // Otherwise spawns task to run in background
   wait_for_auto_update: bool,
+  // Reuse recently fetched image digests, see `image_digest_cache_ttl`.
+  use_digest_cache: bool,
 ) -> anyhow::Result<CheckDeploymentForUpdateResponse> {
   let alert_cache = deployment_alert_sent_cache();
 
@@ -499,7 +503,7 @@ pub async fn check_deployment_for_update_inner(
   };
 
   let latest_digest = image_digest_cache()
-    .get(swarm_or_server, image, account, token)
+    .get(swarm_or_server, image, account, token, use_digest_cache)
     .await?;
 
   resource::update_info::<Deployment>(
@@ -706,6 +710,7 @@ impl Resolve<WriteArgs> for BatchCheckDeploymentForUpdate {
           &swarm_or_server,
           self.skip_auto_update,
           self.wait_for_auto_update,
+          true,
         )
         .await
       })
