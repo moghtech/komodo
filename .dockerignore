@@ -1,0 +1,12 @@
+# Keep docker build contexts source-only. Every Dockerfile in this repo
+# installs its own dependencies inside the builder stage (yarn), so host
+# node_modules trees are pure context weight — and worse, they can carry
+# symlinks that ESCAPE the context: a host `yarn link` produces
+# ui/node_modules/komodo_client -> ~/.config/yarn/link/komodo_client, which
+# (a) points outside the context and (b) cycles back into it via the link
+# target. Podman's context sender fails the whole build on such a symlink
+# ("invalid symlink"), where docker would silently skip it. Observed
+# 2026-10-02 building compose/oidc-dev/core-ui.Dockerfile (context = repo
+# root); context went from ~119 MB streamed to source-only.
+.git
+**/node_modules

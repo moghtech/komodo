@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import { lazy, useEffect } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -7,8 +7,10 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
+import { notifications } from "@mantine/notifications";
 import { LoadingScreen, useAuthState } from "mogh_ui";
 import { useUser } from "@/lib/hooks";
+import { useRedeemState } from "@/lib/redeem-gate";
 import { MoghAuth } from "komodo_client";
 import App from "@/app";
 
@@ -42,11 +44,53 @@ const SwarmTask = lazy(() => import("@/pages/swarm/task"));
 const SwarmConfig = lazy(() => import("@/pages/swarm/config"));
 const SwarmSecret = lazy(() => import("@/pages/swarm/secret"));
 
-export const Router = () => {
-  // Handle exchange token loop to avoid showing login flash
-  const { jwt_redeem_ready, passkey_pending, totp } = useAuthState();
+// One-shot latch for the settled-failed notification, PER DOCUMENT (module
+// scope, not a ref: StrictMode's dev double-mount re-runs the effect with a
+// fresh component but the same settlement). Two paths re-enter it:
+//  - the dev double-mount itself (mount -> effect -> cleanup -> effect), and
+//  - a late onMutate after the watchdog already settled (the pre-arm is
+//    idempotent, but the real mutation can still flip pending -> settled-failed
+//    a second time) — the URL strip is idempotent, the toast is not.
+// A NEW document (real retry) legitimately re-arms: only one notice per
+// failure, not one per app lifetime.
+let failureNoticeShown = false;
 
-  if (jwt_redeem_ready) {
+export const Router = () => {
+  // mogh_ui's useAuthState fires the redeem mutation synchronously in its body
+  // during THIS render — the config onMutate in redeem-gate.ts flips the gate
+  // to "pending" before the snapshot read below, so render #1 is already the
+  // LoadingScreen. mogh_ui's jwt_redeem_ready URL bit is deliberately unused
+  // as the gate: after location.replace is initiated, location.search is
+  // stale until the new document commits.
+  // redeem-gate.ts owns the why.
+  const { passkey_pending, totp } = useAuthState();
+  const redeemState = useRedeemState();
+
+  useEffect(() => {
+    if (redeemState !== "settled-failed") return;
+    // NOTE: failure paths never mutate the token store (the earlier
+    // remove_all hygiene was removed entirely: a failed redeem must not
+    // wipe a pre-existing valid session). This effect is UI convergence
+    // only: URL strip + notification. redeem-gate.ts owns the full rationale.
+    const url = new URL(window.location.href);
+    for (const p of ["redeem_ready", "totp", "passkey"])
+      url.searchParams.delete(p);
+    window.history.replaceState(null, "", url.pathname + url.search);
+    if (!failureNoticeShown) {
+      failureNoticeShown = true;
+      notifications.show({
+        title: "Login didn't complete",
+        // Wording stays true on BOTH end states: with no surviving session
+        // this lands on /login; with a valid pre-existing session the app
+        // renders right here (failure paths are store-neutral) — never
+        // claim a destination.
+        message: "The login attempt didn't complete — please try again.",
+        color: "red",
+      });
+    }
+  }, [redeemState]);
+
+  if (redeemState === "pending") {
     return <LoadingScreen />;
   }
 

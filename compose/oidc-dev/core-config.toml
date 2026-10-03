@@ -1,0 +1,24 @@
+# Harness core config. Never use these secrets outside compose/oidc-dev.
+# This file is the SINGLE source of truth for the OIDC toggles: komodo env
+# vars override file config (bin/core/src/config.rs:211-213), so they must
+# not also be set as KOMODO_* env in the compose file. oidc_auto_redirect
+# stays pinned false so the harness cannot produce the M3/M6 auto-redirect
+# loops.
+#
+# The :8443 on every browser-facing origin is a harness-host REALITY (not in
+# the original draft): rootless podman cannot publish ports < 1024 and the
+# host's system Caddy already owns 80. See README "Deviations" for the full
+# port story.
+host = "https://komodo.oidctest.localhost:8443"
+local_auth = true
+oidc_enabled = true
+# Issuer must be byte-identical to MOCK_ISSUER in oidc-dev.compose.yaml: komodo
+# (openidconnect) validates the discovery document's `issuer` field against
+# this exact URL, and core reaches the portal through Caddy via the compose
+# network alias portal.oidctest.localhost (this hostname does not resolve
+# inside the compose network otherwise).
+oidc_provider = "https://portal.oidctest.localhost:8443"
+oidc_client_id = "komodo-harness"
+oidc_client_secret = "komodo-harness-secret"
+oidc_auto_redirect = false
+jwt_secret = "oidc-dev-jwt-secret-not-for-production"

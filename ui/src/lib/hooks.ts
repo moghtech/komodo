@@ -6,6 +6,7 @@ import {
   type WriteResponses,
 } from "komodo_client";
 import {
+  QueryBooleanOption,
   UseMutationOptions,
   UseQueryOptions,
   keepPreviousData,
@@ -47,15 +48,49 @@ export function komodo_client() {
 
 // ============== RESOLVER ==============
 
-export function useUser() {
+// The exact `enabled` shape RQ infers for the GetUser query (TQueryKey is
+// invariant through options.queryFn — the default `QueryKey` widening fails
+// assignability), so tsc validates the composed callback's parameter type.
+type UserConfig = {
+  enabled?: QueryBooleanOption<Types.User, Error, Types.User, string[]>;
+};
+
+// The jwt gate, composed with a caller's `enabled` — ONE helper for useUser
+// and useRead (two diverging ternaries of the same rule is how they drift).
+// Generic in the react-query query type so each call site keeps inferring the
+// function-valued form's parameter from its own options (see the UserConfig
+// note above: that exact type is what tsc validates against). A caller's
+// `false` must win (never force-read without a jwt) and `hasJwt` is always
+// ANDed — never replaceable by the caller.
+function composeEnabled<Q>(
+  hasJwt: boolean,
+  callerEnabled: boolean | ((query: Q) => boolean) | undefined,
+): boolean | ((query: Q) => boolean) {
+  return typeof callerEnabled === "function"
+    ? // Falsy-coerce the function form's result, matching react-query's own
+      // resolveEnabled: a hand-written predicate like `opt?.flag && ...`
+      // returns undefined for "no", and `!== false` enabled it where RQ
+      // alone would disable (latent — TS pins the return to boolean today;
+      // no current caller passes a function).
+      // The non-function branch keeps `!== false` because RQ treats an
+      // ABSENT enabled as default-enabled.
+      (q) => hasJwt && !!callerEnabled(q)
+    : hasJwt && callerEnabled !== false;
+}
+
+export function useUser(config?: UserConfig) {
   const userReset = useUserReset();
   const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
+  const callerEnabled = config?.enabled;
 
   const query = useQuery({
     queryKey: ["GetUser"],
     queryFn: () => komodo_client().getUser(),
     refetchInterval: 30_000,
-    enabled: hasJwt,
+    ...config,
+    // Composed AFTER the spread (composition rule): a caller's `enabled`
+    // must never REPLACE the jwt gate.
+    enabled: composeEnabled(hasJwt, callerEnabled),
   });
 
   useEffect(() => {
@@ -96,11 +131,17 @@ export function useRead<
   >,
 >(type: T, params: P, config?: C) {
   const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
+  const callerEnabled = config?.enabled;
   return useQuery({
     queryKey: [type, params],
     queryFn: () => komodo_client().read<T, R>(type, params),
-    enabled: hasJwt && config?.enabled !== false,
     ...config,
+    // Composed AFTER the spread (composition rule): an explicit caller `enabled`
+    // (including explicitly `undefined` — object spread copies the key over,
+    // and RQ resolves `undefined` as enabled) used to replace the jwt gate
+    // wholesale; the function-valued form is composed, not dropped by the
+    // old `!== false` check.
+    enabled: composeEnabled(hasJwt, callerEnabled),
   });
 }
 

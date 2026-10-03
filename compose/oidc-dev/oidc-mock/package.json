@@ -1,0 +1,7 @@
+{
+  "name": "komodo-oidc-mock",
+  "private": true,
+  "type": "module",
+  "dependencies": { "oidc-provider": "9.12.2" },
+  "scripts": { "start": "node index.mjs" }
+}

@@ -1,6 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { createRedeemGateHooks, initRedeemGate } from "@/lib/redeem-gate";
 import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
 import { setAuthUrl, ThemeProvider } from "mogh_ui";
@@ -25,10 +30,14 @@ export const KOMODO_BASE_URL =
 export const UPDATE_WS_URL =
   KOMODO_BASE_URL.replace("http", "ws") + "/ws/update";
 const client = new QueryClient({
-  defaultOptions: { queries: { retry: false } },
+  defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  mutationCache: new MutationCache(createRedeemGateHooks()),
 });
 
 setAuthUrl(KOMODO_BASE_URL + "/auth");
+// Module-scope init, once — StrictMode-immune by construction (no effects);
+// redeem-gate.ts owns the why (cache listeners fire in the dispatch task).
+initRedeemGate(client);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

@@ -1,0 +1,85 @@
+# Caddy front for the OIDC redeem-race harness (moghtech/komodo#1665).
+#
+# HOST-PORT REALITY (deviation from the original draft, see compose/oidc-dev/README.md):
+# the original sketch published 80:80 + 443:443, but on the harness host (a) port 80 is
+# already owned by the system Caddy and (b) rootless podman cannot publish
+# ports < 1024 at all ("rootlessport cannot expose privileged port", sysctl
+# ip_unprivileged_port_start=1024). The compose file therefore publishes ONLY
+# 127.0.0.1:8443 -> 443, and every browser-facing origin carries :8443. This
+# file itself stays on container port 443 — Caddy matches vhosts by SNI/Host
+# name, so the host-port suffix never appears here.
+#
+# There is intentionally NO :80 listener: local certs mean no ACME HTTP
+# challenge, and the published port map has no 80 anyway.
+{
+	local_certs
+	auto_https disable_redirects
+	log {
+		output file /data/caddy-internal.log
+	}
+}
+
+# Each vhost listens on BOTH container ports: :443 is what the host 8443
+# publish maps to (browser side), :8443 is what CORE dials inside the compose
+# network — the issuer URL carries the browser-facing :8443, and core's
+# discovery/token/userinfo fetches must reach Caddy on that exact port (the
+# network alias only fixes the NAME, not the port; without the :8443 listener
+# core gets "connection refused" — observed 2026-10-02).
+# X-Forwarded-* set here are what make oidc-provider's dev-interaction and
+# discovery URLs come back with the browser-facing https origin (the mock
+# sets Koa `proxy = true`; without them they would derive as http://...).
+portal.oidctest.localhost:443, portal.oidctest.localhost:8443 {
+	tls internal
+	log {
+		output file /data/portal-access.log
+	}
+	reverse_proxy oidc-mock:3344
+}
+
+# Komodo behind forward_auth — mirrors the issue reporter's shape: the WHOLE
+# vhost is gated (login page, callback, API, static assets). Gating fewer
+# paths would remove the M3 bounce the harness exists to reproduce.
+#
+# The :8443 listener exists for SYMMETRY only: nothing inside the compose
+# network dials komodo.oidctest.localhost:8443 today (core dials only the
+# portal, via its issuer URL; the delay sidecar dials core:9120 directly).
+# Kept so both harness hostnames resolve and dial identically for any future
+# in-network client (e.g. a Playwright driver container), matching the portal
+# vhost's dual-port necessity.
+komodo.oidctest.localhost:443, komodo.oidctest.localhost:8443 {
+	tls internal
+	# JSON access log incl. request headers — assertion source for wire
+	# behavior (verify.mjs + BASELINE.md read this log). roll_disabled because the log is a
+	# single bind-mounted FILE: Caddy's size rotation renames the file, which
+	# cannot work on a per-file bind mount.
+	log {
+		output file /data/access.log {
+			roll_disabled
+		}
+		format json
+	}
+	# Everything inside one explicit `route` block: Caddy would sort
+	# `forward_auth` before the proxying anyway (middleware group precedes
+	# handle/route — verified empirically: adapting the same site WITHOUT the
+	# route block still compiles the gate first), so this is not a bypass
+	# fix — it pins the evaluation order to the WRITTEN order, immune to
+	# directive-order-table drift across Caddy versions.
+	route {
+		forward_auth oidc-mock:3344 {
+			uri /verify
+		}
+		# LATENCY KNOB: /auth/login/* goes through the delay sidecar;
+		# everything else (UI assets, websockets, API) straight to core. The
+		# delay sidecar is a plain HTTP pipe and cannot upgrade websockets —
+		# which is exactly why only /auth/login/* is routed through it.
+		# DELAY_AUTH_MS must stay under the fix's 12 s watchdog; the dedicated
+		# past-watchdog harness row uses 15000.
+		@auth path /auth/login/*
+		handle @auth {
+			reverse_proxy delay:9999
+		}
+		handle {
+			reverse_proxy core:9120
+		}
+	}
+}

@@ -2,6 +2,7 @@ import { atom, useAtom } from "jotai";
 import { ReactNode, useCallback, useEffect, useRef } from "react";
 import { Types } from "komodo_client";
 import { useInvalidate, komodo_client, useRead, useUser } from "@/lib/hooks";
+import { useRedeemGateOpen } from "@/lib/redeem-gate";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { notifications } from "@mantine/notifications";
 import { Badge, Group, Text } from "@mantine/core";
@@ -55,13 +56,18 @@ export function useWebsocketMessages(
 }
 
 export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
-  const user = useUser().data;
+  // Gate closes only while a redeem is pending (≤12s watchdog-bounded); idle
+  // means open, so normal loads behave exactly as before the gate existed.
+  // Deferring these reads also defers the websocket connect: the effect below
+  // keys on `user && disable_reconnect !== undefined`.
+  const gateOpen = useRedeemGateOpen();
+  const user = useUser({ enabled: gateOpen }).data;
   const invalidate = useInvalidate();
   const [ws, setWs] = useAtom(wsAtom);
   const countRef = useRef<number>(ws.count);
   const reconnect = useWebsocketReconnect();
-  const disable_reconnect = useRead("GetCoreInfo", {}).data
-    ?.disable_websocket_reconnect;
+  const disable_reconnect = useRead("GetCoreInfo", {}, { enabled: gateOpen })
+    .data?.disable_websocket_reconnect;
 
   useEffect(() => {
     countRef.current = ws.count;

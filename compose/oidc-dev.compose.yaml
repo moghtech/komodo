@@ -1,0 +1,168 @@
+# OIDC redeem-race harness (moghtech/komodo#1665). See compose/oidc-dev/README.md.
+# Up:  docker compose -f compose/oidc-dev.compose.yaml --env-file compose/oidc-dev/.env up -d --build
+name: komodo-oidc-dev
+
+services:
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    # A bare `rs.initiate()` self-registers under the container's HOSTNAME,
+    # which defaults to the ephemeral container id — recreate the container and
+    # the persisted RS config names a member that no longer exists
+    # ("InvalidReplicaSetConfig: not a member of it"). Pinning the hostname to
+    # the service DNS name keeps the RS member address stable across
+    # recreations AND matches KOMODO_DATABASE_URI's `mongo` host.
+    hostname: mongo
+    # mongod 8 uses the rseq syscall; podman <= 3.4 ships a pre-rseq seccomp
+    # profile that SIGSEGVs it in a tcmallocBg crash loop (signal 11, "CHECK in
+    # SlowFence: fd >= 0"). Unconfined seccomp is a LOCAL DEV harness tradeoff
+    # only — never copy this into a production compose.
+    security_opt:
+      - seccomp=unconfined
+    volumes:
+      - oidc-dev-mongo:/data/db
+    command: [--replSet, rs0, --bind_ip_all]
+    healthcheck:
+      # CMD-SHELL, not the CMD array form: the array's eval expression gets
+      # re-split into separate argv items on the podman-compat path ("--eval
+      # try" + junk args -> the check can never pass, so rs.initiate() never
+      # runs). A single CMD-SHELL string goes through /bin/sh -c intact.
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'try { rs.status().ok } catch (e) { rs.initiate() }'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  core:
+    # Branch-built UI served by core exactly like production:
+    # stage 1 = ui/Dockerfile's builder stage on this branch; stage 2 = the
+    # digest-pinned core image with the dist copied to /app/ui.
+    # Digest pinned in compose/oidc-dev/.env (KOMODO_CORE_IMAGE) — see README step 1.
+    build:
+      context: ..
+      dockerfile: compose/oidc-dev/core-ui.Dockerfile
+      args:
+        CORE_IMAGE: ${KOMODO_CORE_IMAGE}
+    image: komodo-oidc-dev-core
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      # Core's env var is KOMODO_DATABASE_URI (config: database.uri) — there is
+      # no KOMODO_DATABASE_URL; an unknown env is silently ignored and core
+      # falls back to database.address = localhost:27017 and dies on startup.
+      KOMODO_DATABASE_URI: mongodb://mongo:27017/komodo?replicaSet=rs0
+      # :8443 because the harness host cannot publish 443 (rootless podman) —
+      # this must match core-config.toml's `host` and the Caddy publish port.
+      KOMODO_HOST: https://komodo.oidctest.localhost:8443
+      KOMODO_LOCAL_AUTH: "true"
+      # Trust anchor for core -> portal discovery/token/userinfo fetches
+      # (Caddy's internal CA). See the volume note below.
+      SSL_CERT_FILE: /config/caddy-root-ca.crt
+      # Precedence rule (bin/core/src/config.rs:211-213): komodo env vars
+      # OVERRIDE file config — `env.komodo_oidc_enabled.unwrap_or(config.oidc_enabled)`,
+      # same for oidc_auto_redirect and jwt_secret. An env pin here would
+      # silently defeat the OIDC enable flip in core-config.toml, so the OIDC toggles
+      # (oidc_enabled, oidc_auto_redirect) and jwt_secret live ONLY in
+      # compose/oidc-dev/core-config.toml — it is the single source of truth
+      # for those values.
+    ports:
+      # Loopback-only (posture parity with the Caddy/mock bindings — README
+      # Deviations 1): core's API port is a harness-internal surface, never a
+      # LAN listener. Host-side health check (`curl localhost:9120`) unaffected.
+      - "127.0.0.1:9120:9120"
+    volumes:
+      - oidc-dev-config:/config
+      - ./oidc-dev/core-config.toml:/config/config.toml:ro
+      - oidc-dev-repo-cache:/config/repo-cache
+      # Core dials the portal (issuer URL) through Caddy's internal CA; its
+      # rustls root store starts empty of it ("invalid peer certificate:
+      # UnknownIssuer" — observed 2026-10-02). The root must be EXPORTED after
+      # Caddy's first boot and refreshed if the oidc-dev-caddy-data volume is
+      # recreated (see README). SSL_CERT_FILE is honored by rustls-native-certs
+      # (openssl-probe) and openssl/native-tls alike.
+      - ./oidc-dev/caddy-root-ca.crt:/config/caddy-root-ca.crt:ro
+
+  # The OIDC provider for the harness. Default in-memory adapter (sessions do
+  # not survive restarts — fine for a test harness). No mongo dependency: it
+  # keeps no durable state. Port 3344 is published on LOOPBACK ONLY for
+  # host-side debugging — the mock auto-consents anyone, so it must never be
+  # reachable from the LAN. The Caddy front talks to it over the compose
+  # network as http://oidc-mock:3344.
+  oidc-mock:
+    build:
+      context: ./oidc-dev
+      dockerfile: oidc-mock/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Issuer = the BROWSER-facing portal origin (:8443 — rootless podman
+      # cannot publish 443; see README "Deviations"). Must be byte-identical
+      # to core-config.toml's oidc_provider: komodo validates the discovery
+      # document's `issuer` field against it exactly.
+      MOCK_ISSUER: https://portal.oidctest.localhost:8443
+      # The komodo RP origin as the browser sees it — used for the client's
+      # registered redirect_uris.
+      KOMODO_ORIGIN: https://komodo.oidctest.localhost:8443
+    ports:
+      - "127.0.0.1:3344:3344"
+
+  # LATENCY KNOB: Caddy routes /auth/login/* here; the sidecar adds
+  # DELAY_AUTH_MS (real awaited setTimeout — ClientRequest.setTimeout delays
+  # nothing) then pipes to core. Keep it under the fix's 12 s watchdog; the
+  # dedicated past-watchdog harness row uses 15000. No build: delay.mjs only
+  # imports node:http, so a bare node image + bind mount is the whole service.
+  delay:
+    image: node:22.12-alpine
+    restart: unless-stopped
+    command: ["node", "/app/delay.mjs"]
+    volumes:
+      - ./oidc-dev/delay.mjs:/app/delay.mjs:ro
+    environment:
+      DELAY_AUTH_MS: ${DELAY_AUTH_MS:-0}
+    depends_on:
+      - core
+
+  # TLS front + forward_auth gate + JSON access log. See compose/oidc-dev/Caddyfile.
+  #
+  # PORT REALITY (deviation from the original draft): 80/443 cannot be published —
+  # the host's system Caddy owns 80 and rootless podman refuses ports < 1024.
+  # Everything publishes on 127.0.0.1:8443 (loopback ONLY: the portal vhost
+  # exposes the auto-consenting mock, so this binding is a security boundary,
+  # same as the mock's 127.0.0.1:3344). No [::1] twin: rootlessport cannot bind
+  # IPv6 loopback ("cannot assign requested address") and the host resolver
+  # answers *.localhost with 127.0.0.1 only anyway.
+  #
+  # network aliases make the browser-facing hostnames resolvable from INSIDE
+  # the compose network: core fetches OIDC discovery at its configured issuer
+  # (https://portal.oidctest.localhost:8443), which would NXDOMAIN otherwise.
+  #
+  # access.log MUST exist as a FILE before the first `up` (touch
+  # compose/oidc-dev/access.log): a missing bind-mount file source gets
+  # pre-created as a DIRECTORY, which breaks Caddy's file logger.
+  caddy:
+    image: caddy:2.11
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8443:443"
+    volumes:
+      - ./oidc-dev/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Roll is disabled in the Caddyfile — rotation renames the file, which
+      # cannot work on a per-file bind mount.
+      - ./oidc-dev/access.log:/data/access.log
+      # TLS cert/CA cache (Caddy's internal CA lives here; see README for
+      # exporting its root into core's trust).
+      - oidc-dev-caddy-data:/data
+    networks:
+      default:
+        aliases:
+          - portal.oidctest.localhost
+          - komodo.oidctest.localhost
+    depends_on:
+      - core
+      - oidc-mock
+
+volumes:
+  oidc-dev-mongo:
+  oidc-dev-config:
+  oidc-dev-repo-cache:
+  oidc-dev-caddy-data:

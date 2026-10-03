@@ -1,0 +1,12 @@
+{
+  "name": "oidc-dev",
+  "version": "1.0.0",
+  "description": "Repro harness for the OIDC-login JWT-redeem race: mongo + komodo-core serving the **branch-built UI** from `/app/ui` exactly like production, the OIDC mock (`oidc-mock`) with its forward-auth `/verify` endpoint, the Caddy front (`komodo.oidctest.localhost` + `portal.oidctest.localhost`, forward_auth gate, JSON access log) and the `delay` sidecar (latency knob for `/auth/login/*`).",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}
