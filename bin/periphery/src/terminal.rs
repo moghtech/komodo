@@ -86,6 +86,9 @@ pub async fn create_terminal(
   trace!(
     "CreateTerminal: {name} | command: {command} | recreate: {recreate:?}"
   );
+  // Drop terminals which have exited (eg. container restarted),
+  // so they are recreated below rather than reused.
+  clean_up_terminals().await;
   let terminals = terminals();
   use TerminalRecreateMode::*;
   if matches!(recreate, Never | DifferentCommand)
@@ -203,6 +206,7 @@ pub async fn get_terminal(
     .find(|terminal| {
       terminal.target.matches_on_server(target)
         && terminal.name.as_str() == name
+        && !terminal.cancel.is_cancelled()
     })
     .await
     .with_context(|| format!("No terminal for {target:?} at {name}"))
@@ -462,5 +466,53 @@ impl History {
 
   pub fn size_kb(&self) -> f64 {
     self.buf.read().unwrap().len() as f64 / 1024.0
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  /// A terminal whose child process has exited must not be handed
+  /// back by `create_terminal`, otherwise every subsequent execution
+  /// fails with "channel closed" until Periphery is restarted.
+  #[tokio::test]
+  async fn create_terminal_replaces_exited_terminal() {
+    let target = TerminalTarget::Server { server: None };
+    let name = String::from("test-exited-terminal");
+    let command = Some(String::from("sh -c 'sleep 0.2'"));
+
+    let first = create_terminal(
+      name.clone(),
+      target.clone(),
+      command.clone(),
+      TerminalRecreateMode::DifferentCommand,
+    )
+    .await
+    .unwrap();
+
+    // Child wait task polls every 500ms
+    tokio::time::sleep(Duration::from_millis(1500)).await;
+    assert!(first.cancel.is_cancelled());
+
+    let second = create_terminal(
+      name.clone(),
+      target.clone(),
+      command,
+      TerminalRecreateMode::DifferentCommand,
+    )
+    .await
+    .unwrap();
+
+    let reused = Arc::ptr_eq(&first, &second);
+    let second_cancelled = second.cancel.is_cancelled();
+
+    // Clean up before asserting: a terminal left in the global list
+    // keeps its stdin task blocked, which hangs runtime shutdown.
+    delete_terminal(&target, &name).await;
+    drop((first, second));
+
+    assert!(!reused, "exited terminal was reused");
+    assert!(!second_cancelled);
   }
 }
