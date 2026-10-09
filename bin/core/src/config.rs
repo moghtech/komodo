@@ -150,7 +150,7 @@ pub fn core_config() -> &'static CoreConfig {
     };
 
     // recreating CoreConfig here makes sure apply all env overrides applied.
-    CoreConfig {
+    let mut config = CoreConfig {
       // Secret things overridden with file
       private_key: maybe_read_item_from_file(
         env.komodo_private_key_file,
@@ -448,6 +448,71 @@ pub fn core_config() -> &'static CoreConfig {
       secrets: config.secrets,
       git_providers: config.git_providers,
       docker_registries: config.docker_registries,
-    }
+    };
+
+    // File / env / config precedence is already applied above.
+    config.jwt_secret = validate_jwt_secret(config.jwt_secret)
+      .unwrap_or_else(|e| panic!("{e:#}"));
+
+    config
   })
+}
+
+/// Public placeholder previously shipped in `compose/compose.env`.
+const PUBLIC_DEFAULT_JWT_SECRET: &str = "a_random_jwt_secret";
+
+/// Reject the public default JWT secret after precedence is resolved.
+///
+/// An empty secret is returned unchanged so auth can generate a random
+/// one. Any other secret is returned unchanged. The error never includes
+/// the configured value.
+fn validate_jwt_secret(secret: String) -> anyhow::Result<String> {
+  if secret == PUBLIC_DEFAULT_JWT_SECRET {
+    anyhow::bail!(
+      "KOMODO_JWT_SECRET is the public default placeholder. \
+       Clear KOMODO_JWT_SECRET, jwt_secret, or KOMODO_JWT_SECRET_FILE \
+       to generate a random secret automatically, or set a unique \
+       secret with KOMODO_JWT_SECRET or KOMODO_JWT_SECRET_FILE."
+    );
+  }
+  Ok(secret)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::{PUBLIC_DEFAULT_JWT_SECRET, validate_jwt_secret};
+
+  #[test]
+  fn rejects_shipped_placeholder() {
+    let err =
+      validate_jwt_secret(PUBLIC_DEFAULT_JWT_SECRET.to_string())
+        .expect_err("public default must be rejected");
+    let message = format!("{err:#}");
+    assert!(message.contains("KOMODO_JWT_SECRET"), "{message}");
+    assert!(
+      message.contains("Clear")
+        && message.contains("generate a random secret")
+        && message.contains("unique secret"),
+      "{message}"
+    );
+    assert!(
+      !message.contains(PUBLIC_DEFAULT_JWT_SECRET),
+      "error must not include the configured secret: {message}"
+    );
+  }
+
+  #[test]
+  fn accepts_empty_secret_for_automatic_generation() {
+    let secret = validate_jwt_secret(String::new())
+      .expect("empty secret is left for automatic generation");
+    assert!(secret.is_empty());
+  }
+
+  #[test]
+  fn accepts_custom_secret_unchanged() {
+    let custom = "operator-unique-jwt-secret".to_string();
+    let secret = validate_jwt_secret(custom.clone())
+      .expect("custom secret is accepted");
+    assert_eq!(secret, custom);
+  }
 }
