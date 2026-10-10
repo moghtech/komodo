@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::OnceLock};
+use std::collections::HashMap;
 
 use anyhow::Context;
 use bson::{Document, doc};
@@ -63,11 +63,20 @@ impl Stack {
     }
   }
 
-  pub fn compose_file_paths(&self) -> &[String] {
-    if self.config.file_paths.is_empty() {
-      default_stack_file_paths()
+  /// The compose file paths to use. Blank entries are ignored,
+  /// and falls back to `compose.yaml` if none remain.
+  pub fn compose_file_paths(&self) -> Vec<String> {
+    let paths = self
+      .config
+      .file_paths
+      .iter()
+      .filter(|path| !path.trim().is_empty())
+      .cloned()
+      .collect::<Vec<_>>();
+    if paths.is_empty() {
+      vec![String::from(DEFAULT_STACK_FILE_PATH)]
     } else {
-      &self.config.file_paths
+      paths
     }
   }
 
@@ -77,7 +86,7 @@ impl Stack {
     if self.is_config_file(path) {
       return false;
     }
-    for compose_path in self.compose_file_paths() {
+    for compose_path in &self.compose_file_paths() {
       if path.ends_with(compose_path) {
         return true;
       }
@@ -136,10 +145,47 @@ impl Stack {
   }
 }
 
-fn default_stack_file_paths() -> &'static [String] {
-  static DEFAULT_FILE_PATHS: OnceLock<Vec<String>> = OnceLock::new();
-  DEFAULT_FILE_PATHS
-    .get_or_init(|| vec![String::from("compose.yaml")])
+const DEFAULT_STACK_FILE_PATH: &str = "compose.yaml";
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn stack_with_file_paths(file_paths: &[&str]) -> Stack {
+    let mut stack = Stack::default();
+    stack.config.file_paths =
+      file_paths.iter().map(|p| p.to_string()).collect();
+    stack
+  }
+
+  #[test]
+  fn compose_file_paths_defaults_when_empty() {
+    assert_eq!(
+      stack_with_file_paths(&[]).compose_file_paths(),
+      ["compose.yaml"]
+    );
+  }
+
+  #[test]
+  fn compose_file_paths_defaults_when_blank() {
+    assert_eq!(
+      stack_with_file_paths(&[""]).compose_file_paths(),
+      ["compose.yaml"]
+    );
+    assert_eq!(
+      stack_with_file_paths(&["  "]).compose_file_paths(),
+      ["compose.yaml"]
+    );
+  }
+
+  #[test]
+  fn compose_file_paths_skips_blank_entries() {
+    assert_eq!(
+      stack_with_file_paths(&["a.yaml", "", "b.yaml"])
+        .compose_file_paths(),
+      ["a.yaml", "b.yaml"]
+    );
+  }
 }
 
 #[typeshare]
