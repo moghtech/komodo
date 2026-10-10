@@ -50,8 +50,8 @@ use crate::{
   resource,
   state::db_client,
   sync::{
-    deploy::SyncDeployParams, remote::RemoteResources,
-    view::push_updates_for_view,
+    deploy::SyncDeployParams, file::parse_resource_path,
+    remote::RemoteResources, view::push_updates_for_view,
   },
 };
 
@@ -490,31 +490,19 @@ impl Resolve<WriteArgs> for CommitSync {
     }
 
     // Get this here so it can fail before update created.
-    let resource_path = if sync.config.files_on_host
-      || !sync.config.repo.is_empty()
-      || repo.is_some()
-    {
-      let resource_path = sync
-        .config
-        .resource_path
-        .first()
-        .context("Sync does not have resource path configured.")?
-        .parse::<PathBuf>()
-        .context("Invalid resource path")?;
-
-      if resource_path
-        .extension()
-        .context("Resource path missing '.toml' extension")?
-        != "toml"
+    let resource_path =
+      if sync.config.files_on_host
+        || !sync.config.repo.is_empty()
+        || repo.is_some()
       {
-        return Err(
-          anyhow!("Resource path missing '.toml' extension").into(),
-        );
-      }
-      Some(resource_path)
-    } else {
-      None
-    };
+        Some(commit_resource_path(
+          sync.config.resource_path.first().context(
+            "Sync does not have resource path configured.",
+          )?,
+        )?)
+      } else {
+        None
+      };
 
     // Get the latest existing resources to preserve any meta values
     let RemoteResources { resources, .. } =
@@ -644,6 +632,22 @@ impl Resolve<WriteArgs> for CommitSync {
 
     Ok(update)
   }
+}
+
+/// The file CommitSync writes. Parsed the same way as when reading
+/// the sync, so both target the same file.
+fn commit_resource_path(
+  resource_path: &str,
+) -> anyhow::Result<PathBuf> {
+  let resource_path = parse_resource_path(resource_path)?;
+  if resource_path
+    .extension()
+    .context("Resource path missing '.toml' extension")?
+    != "toml"
+  {
+    return Err(anyhow!("Resource path missing '.toml' extension"));
+  }
+  Ok(resource_path)
 }
 
 #[instrument("CommitSyncGit", skip_all)]
@@ -964,5 +968,36 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
     });
 
     Ok(crate::resource::get::<ResourceSync>(&sync.id).await?)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  /// CommitSync must write the file the sync reads, including when
+  /// the configured path has a leading `/`.
+  #[test]
+  fn commit_target_matches_read_target() {
+    let root = Path::new("/repos/sync");
+    for input in [
+      "resources.toml",
+      "/resources.toml",
+      "//resources.toml",
+      "/./resources.toml",
+      "/stacks/all.toml",
+    ] {
+      let read = root
+        .join(parse_resource_path(input).unwrap())
+        .components()
+        .collect::<PathBuf>();
+      let commit = root
+        .join(commit_resource_path(input).unwrap())
+        .components()
+        .collect::<PathBuf>();
+      assert_eq!(commit, read, "input: {input:?}");
+      assert!(commit.starts_with(root), "input: {input:?}");
+    }
+    assert!(commit_resource_path("/").is_err());
   }
 }

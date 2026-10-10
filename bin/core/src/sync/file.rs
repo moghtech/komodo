@@ -22,9 +22,7 @@ pub fn read_resources(
   let mut resources = ResourcesToml::default();
 
   for resource_path in resource_path {
-    let resource_path = resource_path
-      .parse::<PathBuf>()
-      .context("Invalid resource path")?;
+    let resource_path = parse_resource_path(resource_path)?;
     let full_path = root_path
       .join(&resource_path)
       .components()
@@ -107,6 +105,23 @@ pub fn read_resources(
   }
 
   Ok(resources)
+}
+
+/// Parses a configured resource path, which is relative to the sync root.
+/// A leading `/` is dropped, so `/` means the sync root. Otherwise
+/// `Path::join` would discard the root and read from the filesystem root.
+pub(crate) fn parse_resource_path(
+  resource_path: &str,
+) -> anyhow::Result<PathBuf> {
+  let resource_path = resource_path
+    .parse::<PathBuf>()
+    .context("Invalid resource path")?;
+  Ok(
+    resource_path
+      .strip_prefix("/")
+      .unwrap_or(&resource_path)
+      .to_path_buf(),
+  )
 }
 
 /// Use when incoming resource path is a file.
@@ -278,4 +293,33 @@ fn filter_by_tag<T: Default>(
       match_tags.iter().all(|tag| resource.tags.contains(tag))
     })
     .collect()
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  /// `Path::join` with an absolute path discards the root path, which
+  /// made a resource path of `/` read (and recurse) from the filesystem root.
+  #[test]
+  fn absolute_resource_path_stays_in_root() {
+    let root = Path::new("/repos/sync");
+    for (input, expected) in [
+      ("/", "/repos/sync"),
+      ("//", "/repos/sync"),
+      ("/stacks", "/repos/sync/stacks"),
+      ("/stacks/all.toml", "/repos/sync/stacks/all.toml"),
+      ("//stacks", "/repos/sync/stacks"),
+      ("/./stacks", "/repos/sync/stacks"),
+      ("stacks", "/repos/sync/stacks"),
+      (".", "/repos/sync"),
+      ("", "/repos/sync"),
+    ] {
+      let full_path = root
+        .join(parse_resource_path(input).unwrap())
+        .components()
+        .collect::<PathBuf>();
+      assert_eq!(full_path, Path::new(expected), "input: {input:?}");
+    }
+  }
 }
