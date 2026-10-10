@@ -884,11 +884,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
 
     let docker_compose = docker_compose();
 
-    let file_args = if stack.config.file_paths.is_empty() {
-      String::from("compose.yaml")
-    } else {
-      stack.config.file_paths.join(" -f ")
-    };
+    let file_args = stack.compose_file_paths().join(" -f ");
 
     let env_file_args = env_file_args(
       env_file_path,

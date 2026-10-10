@@ -349,15 +349,8 @@ async fn write_stack_ui_defined(
   }
 
   let file_path = run_directory
-    .join(
-      stack
-        .config
-        .file_paths
-        // only need the first one, or default
-        .first()
-        .map(String::as_str)
-        .unwrap_or("compose.yaml"),
-    )
+    // only need the first one, or default
+    .join(&stack.compose_file_paths()[0])
     .components()
     .collect::<PathBuf>();
 
