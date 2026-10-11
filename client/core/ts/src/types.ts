@@ -2404,6 +2404,11 @@ export interface ServerConfig {
 	cpu_warning: number;
 	/** The percentage threshhold which triggers CRITICAL state for CPU. */
 	cpu_critical: number;
+	/**
+	 * CPU of processes matching these patterns (name or exe path) is excluded from CPU alerts.
+	 * Supports wildcard (eg 'ffmpeg*') or regex (eg '\^ffmpeg$\').
+	 */
+	ignore_cpu_processes?: string[];
 	/** The percentage threshhold which triggers WARNING state for MEM. */
 	mem_warning: number;
 	/** The percentage threshhold which triggers CRITICAL state for MEM. */

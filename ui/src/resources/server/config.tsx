@@ -19,7 +19,10 @@ export default function ServerConfig({
 }) {
   const globalDisabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
-  const { canWrite } = usePermissions({ type: "Server", id });
+  const { canWrite, specificProcesses } = usePermissions({
+    type: "Server",
+    id,
+  });
   const isAvailable = useIsServerAvailable(id);
 
   const server = useFullServer(id);
@@ -222,6 +225,18 @@ export default function ServerConfig({
                 description:
                   "Send a 'Critical' alert if the CPU usage in % is above these thresholds",
               },
+              ignore_cpu_processes: (values, set) => (
+                <ConfigList
+                  label="Ignore CPU Processes"
+                  addLabel="Add Process"
+                  description={`CPU used by matching processes is excluded from CPU alert checks. Matches process name or exe path. Supports wildcard (ffmpeg*) or regex (\\^ffmpeg$\\).${specificProcesses ? "" : " Requires 'Processes' permission to edit."}`}
+                  field="ignore_cpu_processes"
+                  values={values ?? []}
+                  set={set}
+                  disabled={disabled || !specificProcesses}
+                  placeholder="ffmpeg"
+                />
+              ),
             },
           },
           {

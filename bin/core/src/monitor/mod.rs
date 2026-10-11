@@ -10,19 +10,20 @@ use komodo_client::entities::{
   repo::Repo,
   server::{Server, ServerState},
   stack::Stack,
-  stats::SystemStats,
+  stats::{SystemProcess, SystemStats},
   swarm::Swarm,
 };
 use mogh_cache::CloneCache;
 use mogh_error::Serror;
 use periphery_client::api::{
   self, git::GetLatestCommit, poll::PollStatusResponse,
+  stats::GetSystemProcesses,
 };
 use tokio::sync::Mutex;
 
 use crate::{
   config::monitoring_interval,
-  helpers::periphery_client,
+  helpers::{matcher::Matcher, periphery_client},
   monitor::{alert::check_alerts, record::record_server_stats},
   state::{
     CachedRepoStatus, db_client, deployment_status_cache,
@@ -31,8 +32,8 @@ use crate::{
 };
 
 use self::helpers::{
-  insert_deployments_status_unknown, insert_repos_status_unknown,
-  insert_server_status,
+  ALERT_PERCENTAGE_THRESHOLD, insert_deployments_status_unknown,
+  insert_repos_status_unknown, insert_server_status,
 };
 
 mod alert;
@@ -136,6 +137,7 @@ pub fn refresh_server_cache(
         None,
         None,
         None,
+        0.0,
         None,
         None,
       )
@@ -154,6 +156,7 @@ pub fn refresh_server_cache(
           None,
           None,
           None,
+          0.0,
           None,
           Serror::from(&e),
         )
@@ -183,6 +186,7 @@ pub fn refresh_server_cache(
           None,
           None,
           None,
+          0.0,
           None,
           Serror::from(&e),
         )
@@ -220,12 +224,34 @@ pub fn refresh_server_cache(
       ),
     );
 
+    let ignored_cpu_perc = match &system_stats {
+      Some(stats) if should_check_ignored_cpu(server, stats) => {
+        match periphery.request(GetSystemProcesses {}).await {
+          Ok(processes) => ignored_cpu_perc(
+            &processes,
+            &server.config.ignore_cpu_processes,
+            system_info.logical_core_count,
+          )
+          .min(stats.cpu_perc),
+          Err(e) => {
+            warn!(
+              "Failed to get processes for ignored cpu | server: {} | {e:#}",
+              server.name
+            );
+            0.0
+          }
+        }
+      }
+      _ => 0.0,
+    };
+
     insert_server_status(
       server,
       ServerState::Ok,
       Some(periphery_info),
       Some(system_info),
       system_stats.map(|stats| filter_volumes(server, stats)),
+      ignored_cpu_perc,
       docker,
       None,
     )
@@ -340,4 +366,153 @@ fn filter_volumes(
         .any(|mount| disk.mount.starts_with(mount))
   });
   stats
+}
+
+/// Below this, subtracting ignored processes can't change alert state.
+fn should_check_ignored_cpu(
+  server: &Server,
+  stats: &SystemStats,
+) -> bool {
+  server.config.send_cpu_alerts
+    && !server.config.ignore_cpu_processes.is_empty()
+    && stats.cpu_perc
+      >= server.config.cpu_warning - ALERT_PERCENTAGE_THRESHOLD
+}
+
+/// Process cpu is per core (100% = 1 core), host cpu is 0-100%.
+fn ignored_cpu_perc(
+  processes: &[SystemProcess],
+  patterns: &[String],
+  logical_core_count: Option<u32>,
+) -> f32 {
+  let matchers = patterns
+    .iter()
+    .filter(|p| !p.is_empty())
+    .filter_map(|p| {
+      Matcher::new(p)
+        .inspect_err(|e| {
+          warn!("Invalid ignore_cpu_processes | {e:#}")
+        })
+        .ok()
+    })
+    .collect::<Vec<_>>();
+  let total = processes
+    .iter()
+    .filter(|p| {
+      matchers
+        .iter()
+        .any(|m| m.is_match(&p.name) || m.is_match(&p.exe))
+    })
+    .map(|p| p.cpu_perc)
+    .sum::<f32>();
+  total / logical_core_count.unwrap_or(1).max(1) as f32
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn process(name: &str, exe: &str, cpu_perc: f32) -> SystemProcess {
+    SystemProcess {
+      pid: 0,
+      name: name.to_string(),
+      exe: exe.to_string(),
+      cmd: Vec::new(),
+      start_time: 0.0,
+      cpu_perc,
+      mem_mb: 0.0,
+      disk_read_kb: 0.0,
+      disk_write_kb: 0.0,
+    }
+  }
+
+  fn patterns(p: &[&str]) -> Vec<String> {
+    p.iter().map(|s| s.to_string()).collect()
+  }
+
+  fn processes() -> Vec<SystemProcess> {
+    vec![
+      process("ffmpeg", "/usr/bin/ffmpeg", 300.0),
+      process("ffprobe", "/usr/bin/ffprobe", 100.0),
+      process("dockerd", "/usr/bin/dockerd", 50.0),
+      process(
+        "very-long-proc",
+        "/opt/app/very-long-process-name",
+        20.0,
+      ),
+    ]
+  }
+
+  #[test]
+  fn no_patterns_ignores_nothing() {
+    assert_eq!(ignored_cpu_perc(&processes(), &[], Some(4)), 0.0);
+    assert_eq!(
+      ignored_cpu_perc(&processes(), &patterns(&[""]), Some(4)),
+      0.0
+    );
+  }
+
+  #[test]
+  fn exact_name_scaled_by_cores() {
+    assert_eq!(
+      ignored_cpu_perc(&processes(), &patterns(&["ffmpeg"]), Some(4)),
+      75.0
+    );
+  }
+
+  #[test]
+  fn wildcard_and_regex() {
+    assert_eq!(
+      ignored_cpu_perc(&processes(), &patterns(&["ff*"]), Some(4)),
+      100.0
+    );
+    assert_eq!(
+      ignored_cpu_perc(
+        &processes(),
+        &patterns(&["\\^ffprobe$\\"]),
+        Some(4)
+      ),
+      25.0
+    );
+  }
+
+  #[test]
+  fn matches_exe_path() {
+    assert_eq!(
+      ignored_cpu_perc(
+        &processes(),
+        &patterns(&["*very-long-process-name"]),
+        Some(1)
+      ),
+      20.0
+    );
+  }
+
+  #[test]
+  fn invalid_pattern_skipped() {
+    assert_eq!(
+      ignored_cpu_perc(
+        &processes(),
+        &patterns(&["\\(\\", "dockerd"]),
+        Some(2)
+      ),
+      25.0
+    );
+  }
+
+  #[test]
+  fn missing_core_count_no_panic() {
+    assert_eq!(
+      ignored_cpu_perc(&processes(), &patterns(&["dockerd"]), None),
+      50.0
+    );
+    assert_eq!(
+      ignored_cpu_perc(
+        &processes(),
+        &patterns(&["dockerd"]),
+        Some(0)
+      ),
+      50.0
+    );
+  }
 }

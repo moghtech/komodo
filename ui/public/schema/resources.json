@@ -458,6 +458,16 @@
           ],
           "format": "float"
         },
+        "ignore_cpu_processes": {
+          "description": "CPU of processes matching these patterns (name or exe path) is excluded from CPU alerts.\nSupports wildcard (eg 'ffmpeg*') or regex (eg '\\^ffmpeg$\\').",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
         "mem_warning": {
           "description": "The percentage threshhold which triggers WARNING state for MEM.",
           "type": [

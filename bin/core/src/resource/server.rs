@@ -9,7 +9,7 @@ use indexmap::IndexSet;
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant, komodo_timestamp,
   optional_string,
-  permission::SpecificPermission,
+  permission::{PermissionLevel, SpecificPermission},
   resource::Resource,
   server::{
     PartialServerConfig, Server, ServerConfig, ServerConfigDiff,
@@ -23,8 +23,9 @@ use periphery_client::api;
 
 use crate::{
   config::core_config,
-  helpers::periphery_client,
+  helpers::{matcher::Matcher, periphery_client},
   monitor::refresh_server_cache,
+  permission::get_check_permissions,
   state::{
     action_states, db_client, periphery_connections,
     server_status_cache,
@@ -156,10 +157,10 @@ impl super::KomodoResource for Server {
   }
 
   async fn validate_create_config(
-    _config: &mut Self::PartialConfig,
+    config: &mut Self::PartialConfig,
     _user: &User,
   ) -> anyhow::Result<()> {
-    Ok(())
+    validate_ignore_cpu_processes(config)
   }
 
   async fn post_create(
@@ -177,10 +178,27 @@ impl super::KomodoResource for Server {
   }
 
   async fn validate_update_config(
-    _id: &str,
-    _config: &mut Self::PartialConfig,
-    _user: &User,
+    id: &str,
+    config: &mut Self::PartialConfig,
+    user: &User,
   ) -> anyhow::Result<()> {
+    validate_ignore_cpu_processes(config)?;
+    let Some(patterns) = &config.ignore_cpu_processes else {
+      return Ok(());
+    };
+    if *patterns
+      != super::get::<Server>(id).await?.config.ignore_cpu_processes
+    {
+      get_check_permissions::<Server>(
+        id,
+        user,
+        PermissionLevel::Read.processes(),
+      )
+      .await
+      .context(
+        "Editing 'ignore_cpu_processes' requires 'Processes' permission",
+      )?;
+    }
     Ok(())
   }
 
@@ -314,5 +332,17 @@ pub async fn rotate_server_keys(
     .context("Failed to rotate Periphery private key")?
     .public_key;
   update_server_public_key(&server.id, &public_key).await?;
+  Ok(())
+}
+
+fn validate_ignore_cpu_processes(
+  config: &PartialServerConfig,
+) -> anyhow::Result<()> {
+  for pattern in config.ignore_cpu_processes.iter().flatten() {
+    if !pattern.is_empty() {
+      Matcher::new(pattern)
+        .context("Invalid pattern in 'ignore_cpu_processes'")?;
+    }
+  }
   Ok(())
 }
