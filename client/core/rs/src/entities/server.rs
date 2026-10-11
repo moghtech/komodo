@@ -239,6 +239,16 @@ pub struct ServerConfig {
   #[partial_default(default_cpu_critical())]
   pub cpu_critical: f32,
 
+  /// CPU of processes matching these patterns (name or exe path) is excluded from CPU alerts.
+  /// Supports wildcard (eg 'ffmpeg*') or regex (eg '\^ffmpeg$\').
+  #[serde(default, deserialize_with = "string_list_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default)]
+  pub ignore_cpu_processes: Vec<String>,
+
   /// The percentage threshhold which triggers WARNING state for MEM.
   #[serde(default = "default_mem_warning")]
   #[builder(default = "default_mem_warning()")]
@@ -345,6 +355,7 @@ impl Default for ServerConfig {
       passkey: Default::default(),
       cpu_warning: default_cpu_warning(),
       cpu_critical: default_cpu_critical(),
+      ignore_cpu_processes: Default::default(),
       mem_warning: default_mem_warning(),
       mem_critical: default_mem_critical(),
       disk_warning: default_disk_warning(),

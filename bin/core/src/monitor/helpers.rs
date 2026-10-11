@@ -18,17 +18,20 @@ use crate::state::{
   repo_status_cache, server_status_cache, stack_status_cache,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub async fn insert_server_status(
   server: &Server,
   state: ServerState,
   periphery_info: Option<PeripheryInformation>,
   system_info: Option<SystemInformation>,
   system_stats: Option<SystemStats>,
+  ignored_cpu_perc: f32,
   docker: Option<DockerLists>,
   err: impl Into<Option<Serror>>,
 ) {
-  let health =
-    system_stats.as_ref().map(|s| get_server_health(server, s));
+  let health = system_stats
+    .as_ref()
+    .map(|s| get_server_health(server, s, ignored_cpu_perc));
   server_status_cache()
     .insert(
       server.id.clone(),
@@ -38,6 +41,7 @@ pub async fn insert_server_status(
         periphery_info,
         system_info,
         system_stats,
+        ignored_cpu_perc,
         health,
         docker,
         err: err.into(),
@@ -111,7 +115,7 @@ pub async fn insert_repos_status_unknown(repos: Vec<Repo>) {
   }
 }
 
-const ALERT_PERCENTAGE_THRESHOLD: f32 = 5.0;
+pub const ALERT_PERCENTAGE_THRESHOLD: f32 = 5.0;
 
 fn get_server_health(
   server: &Server,
@@ -122,6 +126,7 @@ fn get_server_health(
     disks,
     ..
   }: &SystemStats,
+  ignored_cpu_perc: f32,
 ) -> ServerHealth {
   let ServerConfig {
     cpu_warning,
@@ -134,11 +139,12 @@ fn get_server_health(
   } = &server.config;
   let mut health = ServerHealth::default();
 
-  if cpu_perc >= cpu_critical {
+  let cpu_perc = cpu_perc - ignored_cpu_perc;
+  if cpu_perc >= *cpu_critical {
     health.cpu.level = SeverityLevel::Critical;
-  } else if cpu_perc >= cpu_warning {
+  } else if cpu_perc >= *cpu_warning {
     health.cpu.level = SeverityLevel::Warning
-  } else if *cpu_perc < cpu_warning - ALERT_PERCENTAGE_THRESHOLD {
+  } else if cpu_perc < cpu_warning - ALERT_PERCENTAGE_THRESHOLD {
     health.cpu.should_close_alert = true
   }
 

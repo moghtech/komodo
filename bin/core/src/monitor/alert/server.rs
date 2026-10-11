@@ -260,6 +260,11 @@ pub async fn alert_servers(
       .as_ref()
       .and_then(|alerts| alerts.get(&AlertDataVariant::ServerCpu))
       .cloned();
+    let cpu_perc = server_status
+      .system_stats
+      .as_ref()
+      .map(|s| (s.cpu_perc - server_status.ignored_cpu_perc) as f64)
+      .unwrap_or(0.0);
     match (
       health.cpu.level,
       cpu_alert,
@@ -296,11 +301,7 @@ pub async fn alert_servers(
               id: server_status.id.clone(),
               name: server.name.clone(),
               region: optional_string(&server.config.region),
-              percentage: server_status
-                .system_stats
-                .as_ref()
-                .map(|s| s.cpu_perc as f64)
-                .unwrap_or(0.0),
+              percentage: cpu_perc,
             },
           };
           alerts_to_open.push((alert, server.config.send_cpu_alerts));
@@ -319,11 +320,7 @@ pub async fn alert_servers(
             id: server_status.id.clone(),
             name: server.name.clone(),
             region: optional_string(&server.config.region),
-            percentage: server_status
-              .system_stats
-              .as_ref()
-              .map(|s| s.cpu_perc as f64)
-              .unwrap_or(0.0),
+            percentage: cpu_perc,
           };
           alerts_to_update
             .push((alert, server.config.send_cpu_alerts));
@@ -342,11 +339,7 @@ pub async fn alert_servers(
           id: server_status.id.clone(),
           name: server.name.clone(),
           region: optional_string(&server.config.region),
-          percentage: server_status
-            .system_stats
-            .as_ref()
-            .map(|s| s.cpu_perc as f64)
-            .unwrap_or(0.0),
+          percentage: cpu_perc,
         };
         alerts_to_close.push((alert, server.config.send_cpu_alerts))
       }

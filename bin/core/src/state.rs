@@ -108,6 +108,8 @@ pub struct CachedServerStatus {
   pub periphery_info: Option<PeripheryInformation>,
   pub system_info: Option<SystemInformation>,
   pub system_stats: Option<SystemStats>,
+  /// Host CPU % used by processes in `ignore_cpu_processes`.
+  pub ignored_cpu_perc: f32,
   pub docker: Option<DockerLists>,
   /// Store the error in reaching periphery
   pub err: Option<mogh_error::Serror>,
