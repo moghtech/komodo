@@ -57,6 +57,21 @@ use crate::{
 
 use super::WriteArgs;
 
+fn resource_sync_pending_updates_alert(
+  id: String,
+  name: String,
+) -> Alert {
+  Alert {
+    id: Default::default(),
+    ts: komodo_timestamp(),
+    resolved: false,
+    level: SeverityLevel::Warning,
+    target: ResourceTarget::ResourceSync(id.clone()),
+    data: AlertData::ResourceSyncPendingUpdates { id, name },
+    resolved_ts: None,
+  }
+}
+
 impl Resolve<WriteArgs> for CreateResourceSync {
   #[instrument(
     "CreateResourceSync",
@@ -921,15 +936,7 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
       match (existing, has_updates) {
         // OPEN A NEW ALERT
         (None, true) => {
-          let alert = Alert {
-            id: Default::default(),
-            ts: komodo_timestamp(),
-            resolved: false,
-            level: SeverityLevel::Ok,
-            target: ResourceTarget::ResourceSync(id.clone()),
-            data: AlertData::ResourceSyncPendingUpdates { id, name },
-            resolved_ts: None,
-          };
+          let alert = resource_sync_pending_updates_alert(id, name);
           db.alerts
             .insert_one(&alert)
             .await
@@ -964,5 +971,20 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
     });
 
     Ok(crate::resource::get::<ResourceSync>(&sync.id).await?)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn pending_resource_sync_updates_are_warning_alerts() {
+    let alert = resource_sync_pending_updates_alert(
+      "sync-id".to_string(),
+      "sync-name".to_string(),
+    );
+
+    assert_eq!(alert.level, SeverityLevel::Warning);
   }
 }
