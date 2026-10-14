@@ -453,6 +453,9 @@ pub fn core_config() -> &'static CoreConfig {
     // File / env / config precedence is already applied above.
     config.jwt_secret = validate_jwt_secret(config.jwt_secret)
       .unwrap_or_else(|e| panic!("{e:#}"));
+    config.webhook_secret =
+      validate_webhook_secret(config.webhook_secret)
+        .unwrap_or_else(|e| panic!("{e:#}"));
 
     config
   })
@@ -478,9 +481,32 @@ fn validate_jwt_secret(secret: String) -> anyhow::Result<String> {
   Ok(secret)
 }
 
+/// Public placeholder shipped in `compose/compose.env`.
+const PUBLIC_DEFAULT_WEBHOOK_SECRET: &str = "a_random_secret";
+
+/// Reject the public default webhook secret after precedence is resolved.
+///
+/// An empty secret is returned unchanged. Empty is not fail-closed
+/// (GitHub HMAC and GitLab token compare both accept it), and this
+/// check does not generate a replacement. Any other secret is returned
+/// unchanged. The error never includes the configured value.
+fn validate_webhook_secret(secret: String) -> anyhow::Result<String> {
+  if secret == PUBLIC_DEFAULT_WEBHOOK_SECRET {
+    anyhow::bail!(
+      "KOMODO_WEBHOOK_SECRET is the public default placeholder. \
+       Set a unique value with KOMODO_WEBHOOK_SECRET, \
+       webhook_secret, or KOMODO_WEBHOOK_SECRET_FILE."
+    );
+  }
+  Ok(secret)
+}
+
 #[cfg(test)]
 mod tests {
-  use super::{PUBLIC_DEFAULT_JWT_SECRET, validate_jwt_secret};
+  use super::{
+    PUBLIC_DEFAULT_JWT_SECRET, PUBLIC_DEFAULT_WEBHOOK_SECRET,
+    validate_jwt_secret, validate_webhook_secret,
+  };
 
   #[test]
   fn rejects_shipped_placeholder() {
@@ -512,6 +538,41 @@ mod tests {
   fn accepts_custom_secret_unchanged() {
     let custom = "operator-unique-jwt-secret".to_string();
     let secret = validate_jwt_secret(custom.clone())
+      .expect("custom secret is accepted");
+    assert_eq!(secret, custom);
+  }
+
+  #[test]
+  fn rejects_shipped_webhook_placeholder() {
+    let err = validate_webhook_secret(
+      PUBLIC_DEFAULT_WEBHOOK_SECRET.to_string(),
+    )
+    .expect_err("public default must be rejected");
+    let message = format!("{err:#}");
+    assert!(message.contains("KOMODO_WEBHOOK_SECRET"), "{message}");
+    assert!(message.contains("webhook_secret"), "{message}");
+    assert!(
+      message.contains("KOMODO_WEBHOOK_SECRET_FILE"),
+      "{message}"
+    );
+    assert!(message.contains("unique"), "{message}");
+    assert!(
+      !message.contains(PUBLIC_DEFAULT_WEBHOOK_SECRET),
+      "error must not include the configured secret: {message}"
+    );
+  }
+
+  #[test]
+  fn accepts_empty_webhook_secret_unchanged() {
+    let secret = validate_webhook_secret(String::new())
+      .expect("empty webhook secret is left unchanged");
+    assert!(secret.is_empty());
+  }
+
+  #[test]
+  fn accepts_custom_webhook_secret_unchanged() {
+    let custom = "operator-unique-webhook-secret".to_string();
+    let secret = validate_webhook_secret(custom.clone())
       .expect("custom secret is accepted");
     assert_eq!(secret, custom);
   }
