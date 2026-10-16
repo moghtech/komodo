@@ -76,6 +76,29 @@ where
       }
     }
 
+    // A forced checkout (or a subsequent reset --hard) can discard changes
+    // anywhere in this checkout, including files belonging to other stacks
+    // when multiple stacks share a linked repository.
+    // Fail safely instead of silently overwriting tracked or untracked files.
+    let status = run_komodo_standard_command(
+      "Check local changes",
+      "git status --porcelain --untracked-files=all",
+      CommandOptions::default().path(res.path.as_ref()),
+    )
+    .await;
+    let has_local_changes = !status.stdout.trim().is_empty();
+    let status_failed = !status.success;
+    res.logs.push(status);
+    if status_failed || has_local_changes {
+      if has_local_changes {
+        res.logs.push(Log::simple(
+          "Git update blocked",
+          "Uncommitted local changes detected. Commit or stash them before deploying; the checkout was not modified.".to_string(),
+        ));
+      }
+      return Ok(res);
+    }
+
     // Set remote url
     let mut set_remote = run_komodo_standard_command(
       "Set Git Remote",
