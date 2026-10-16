@@ -10,7 +10,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
-import { Group, Stack, Text } from "@mantine/core";
+import { Group, Stack, Text, Select } from "@mantine/core";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import SecretsSearch from "@/components/config/secrets-search";
@@ -168,6 +168,25 @@ export default function RepoConfig({
                 placeholder: "Enter branch",
                 description: "Select a custom branch, or default to 'main'.",
               },
+              git_update_strategy: (value, set) => (
+                <ConfigItem
+                  label="Git Update Strategy"
+                  description="Default preserves existing forced checkout behavior. Abort rejects dirty worktrees. Stash saves and restores local changes, stopping on conflicts."
+                >
+                  <Select
+                    disabled={disabled}
+                    value={value ?? "default"}
+                    data={[
+                      { value: "default", label: "Default (force checkout)" },
+                      { value: "abort", label: "Abort on local changes" },
+                      { value: "stash", label: "Stash and restore local changes" },
+                    ]}
+                    onChange={(git_update_strategy) =>
+                      git_update_strategy && set({ git_update_strategy: git_update_strategy as Types.GitUpdateStrategy })
+                    }
+                  />
+                </ConfigItem>
+              ),
               commit: {
                 label: "Commit Hash",
                 placeholder: "Input commit hash",

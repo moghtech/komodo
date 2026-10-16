@@ -6,7 +6,7 @@ use std::{
 use command::{CommandOptions, run_komodo_standard_command};
 use formatting::format_serror;
 use komodo_client::entities::{
-  RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
+  GitUpdateStrategy, RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
   komodo_timestamp, update::Log,
 };
 use mogh_cache::TimeoutCache;
@@ -107,6 +107,150 @@ where
     if !fetch.success {
       res.logs.push(fetch);
       return Ok(res);
+    }
+
+    // Protect the shared working tree before destructive checkout/reset.
+    // Include untracked files, which may also belong to other stacks.
+    if args.git_update_strategy != GitUpdateStrategy::Default {
+      let status = run_komodo_standard_command(
+        "Check local changes",
+        "git status --porcelain --untracked-files=all",
+        CommandOptions::default().path(res.path.as_ref()),
+      )
+      .await;
+      let dirty = !status.stdout.trim().is_empty();
+      let failed = !status.success;
+      res.logs.push(status);
+      if failed {
+        return Ok(res);
+      }
+      if dirty {
+        match args.git_update_strategy {
+          GitUpdateStrategy::Abort => {
+            res.logs.push(Log::error(
+              "Git update blocked",
+              "Local changes detected. Commit or stash them before updating.",
+            ));
+            return Ok(res);
+          }
+          GitUpdateStrategy::Stash => {
+            // Unique marker lets us restore exactly our own stash, without
+            // popping or dropping any stash created by the user.
+            let marker = format!(
+              "komodo-update-{}-{}",
+              std::process::id(),
+              komodo_timestamp()
+            );
+            let stash = run_komodo_standard_command(
+              "Stash local changes",
+              format!("git stash push --include-untracked -m {marker}"),
+              CommandOptions::default().path(res.path.as_ref()),
+            )
+            .await;
+            let stash_ok = stash.success;
+            res.logs.push(stash);
+            if !stash_ok {
+              return Ok(res);
+            }
+            // Store the unique stash commit, not stash@{0}, which can move.
+            let stash_ref = run_komodo_standard_command(
+              "Identify Komodo stash",
+              "git rev-parse refs/stash",
+              CommandOptions::default().path(res.path.as_ref()),
+            )
+            .await;
+            if !stash_ref.success {
+              res.logs.push(stash_ref);
+              return Ok(res);
+            }
+            let stash_commit = stash_ref.stdout.trim().to_string();
+            res.logs.push(stash_ref);
+            // Always attempt restore, even if checkout, pull, or reset fails.
+            let checkout = run_komodo_standard_command(
+              "Checkout branch",
+              format!("git checkout -f {}", args.branch),
+              CommandOptions::default().path(res.path.as_ref()),
+            )
+            .await;
+            let mut update_success = checkout.success;
+            res.logs.push(checkout);
+            if update_success {
+              let pull = run_komodo_standard_command(
+                "Git pull",
+                format!("git pull --rebase --force origin {}", args.branch),
+                CommandOptions::default().path(res.path.as_ref()),
+              )
+              .await;
+              update_success = pull.success;
+              res.logs.push(pull);
+            }
+            if update_success {
+              if let Some(commit) = &args.commit {
+                let reset = run_komodo_standard_command(
+                  "Set commit",
+                  format!("git reset --hard {commit}"),
+                  CommandOptions::default().path(res.path.as_ref()),
+                )
+                .await;
+                update_success = reset.success;
+                res.logs.push(reset);
+              }
+            }
+            let restore = run_komodo_standard_command(
+              "Restore local changes",
+              format!("git stash apply --index {stash_commit}"),
+              CommandOptions::default().path(res.path.as_ref()),
+            )
+            .await;
+            let restored = restore.success;
+            res.logs.push(restore);
+            if restored {
+              // Drop only if this stash is still at the top; otherwise keep
+              // it for manual recovery instead of deleting someone else's.
+              let top = run_komodo_standard_command(
+                "Check Komodo stash",
+                "git rev-parse refs/stash",
+                CommandOptions::default().path(res.path.as_ref()),
+              )
+              .await;
+              let same = top.success && top.stdout.trim() == stash_commit;
+              res.logs.push(top);
+              if same {
+                let drop = run_komodo_standard_command(
+                  "Drop restored stash",
+                  "git stash drop stash@{0}",
+                  CommandOptions::default().path(res.path.as_ref()),
+                )
+                .await;
+                res.logs.push(drop);
+              } else {
+                res.logs.push(Log::simple(
+                  "Keep Komodo stash",
+                  format!("Local changes restored; stash {stash_commit} retained because stash order changed."),
+                ));
+              }
+            } else {
+              res.logs.push(Log::error(
+                "Git stash recovery required",
+                format!("Could not restore local changes automatically. Stash {stash_commit} was preserved. Resolve conflicts and recover it manually."),
+              ));
+            }
+            if !update_success || !restored || !all_logs_success(&res.logs) {
+              return Ok(res);
+            }
+            match get_commit_hash_log(&res.path).await {
+              Ok((log, hash, message)) => {
+                res.logs.push(log);
+                res.commit_hash = Some(hash);
+                res.commit_message = Some(message);
+              }
+              Err(e) => res.logs.push(Log::error("Latest Commit", format_serror(&e.into()))),
+            }
+            return Ok(res);
+          }
+          GitUpdateStrategy::Default => unreachable!(),
+        }
+      }
     }
 
     let checkout = run_komodo_standard_command(
