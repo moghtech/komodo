@@ -587,6 +587,17 @@ pub enum DefaultRepoFolder {
 }
 
 #[typeshare]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum GitUpdateStrategy {
+  #[default]
+  Default,
+  Abort,
+  Stash,
+}
+
+#[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RepoExecutionArgs {
@@ -610,6 +621,9 @@ pub struct RepoExecutionArgs {
   /// The default folder to use.
   /// Depends on the resource type.
   pub default_folder: DefaultRepoFolder,
+  /// Policy for local working tree changes before updating the checkout.
+  #[serde(default)]
+  pub git_update_strategy: GitUpdateStrategy,
 }
 
 impl RepoExecutionArgs {
@@ -685,6 +699,7 @@ impl From<&self::stack::Stack> for RepoExecutionArgs {
       commit: optional_string(&stack.config.commit),
       destination: optional_string(&stack.config.clone_path),
       default_folder: DefaultRepoFolder::Stacks,
+      git_update_strategy: GitUpdateStrategy::Default,
     }
   }
 }
@@ -703,6 +718,7 @@ impl From<&self::build::Build> for RepoExecutionArgs {
       commit: optional_string(&build.config.commit),
       destination: None,
       default_folder: DefaultRepoFolder::Builds,
+      git_update_strategy: GitUpdateStrategy::Default,
     }
   }
 }
@@ -721,6 +737,7 @@ impl From<&self::repo::Repo> for RepoExecutionArgs {
       commit: optional_string(&repo.config.commit),
       destination: optional_string(&repo.config.path),
       default_folder: DefaultRepoFolder::Repos,
+      git_update_strategy: repo.config.git_update_strategy,
     }
   }
 }
@@ -739,6 +756,7 @@ impl From<&self::sync::ResourceSync> for RepoExecutionArgs {
       commit: optional_string(&sync.config.commit),
       destination: None,
       default_folder: DefaultRepoFolder::NotApplicable,
+      git_update_strategy: GitUpdateStrategy::Default,
     }
   }
 }
