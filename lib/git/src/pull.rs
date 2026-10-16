@@ -166,7 +166,36 @@ where
             let stash_commit = stash_ref.stdout.trim().to_string();
             res.logs.push(stash_ref);
             // Always attempt restore, even if checkout, pull, or reset fails.
-            let update_success = run_git_update(&args, &res.path, &mut res.logs).await;
+            let checkout = run_komodo_standard_command(
+              "Checkout branch",
+              format!("git checkout -f {}", args.branch),
+              CommandOptions::default().path(res.path.as_ref()),
+            )
+            .await;
+            let mut update_success = checkout.success;
+            res.logs.push(checkout);
+            if update_success {
+              let pull = run_komodo_standard_command(
+                "Git pull",
+                format!("git pull --rebase --force origin {}", args.branch),
+                CommandOptions::default().path(res.path.as_ref()),
+              )
+              .await;
+              update_success = pull.success;
+              res.logs.push(pull);
+            }
+            if update_success {
+              if let Some(commit) = &args.commit {
+                let reset = run_komodo_standard_command(
+                  "Set commit",
+                  format!("git reset --hard {commit}"),
+                  CommandOptions::default().path(res.path.as_ref()),
+                )
+                .await;
+                update_success = reset.success;
+                res.logs.push(reset);
+              }
+            }
             let restore = run_komodo_standard_command(
               "Restore local changes",
               format!("git stash apply --index {stash_commit}"),
