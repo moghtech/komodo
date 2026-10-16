@@ -597,6 +597,23 @@ pub enum GitUpdateStrategy {
   Stash,
 }
 
+#[cfg(test)]
+mod git_update_strategy_tests {
+  use super::GitUpdateStrategy;
+
+  #[test]
+  fn defaults_to_existing_behavior() {
+    assert_eq!(GitUpdateStrategy::default(), GitUpdateStrategy::Default);
+    assert_eq!(serde_json::from_str::<GitUpdateStrategy>(r#"\"default\""#).unwrap(), GitUpdateStrategy::Default);
+  }
+
+  #[test]
+  fn accepts_abort_and_stash() {
+    assert_eq!(serde_json::from_str::<GitUpdateStrategy>(r#"\"abort\""#).unwrap(), GitUpdateStrategy::Abort);
+    assert_eq!(serde_json::from_str::<GitUpdateStrategy>(r#"\"stash\""#).unwrap(), GitUpdateStrategy::Stash);
+  }
+}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
