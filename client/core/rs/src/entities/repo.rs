@@ -16,7 +16,7 @@ use crate::{
 };
 
 use super::{
-  EnvironmentVar, SystemCommand, environment_vars_from_str,
+  EnvironmentVar, GitUpdateStrategy, SystemCommand, environment_vars_from_str,
   resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
@@ -192,6 +192,12 @@ pub struct RepoConfig {
   #[builder(default)]
   pub commit: String,
 
+  /// Behavior when local changes exist during a Git pull.
+  /// Default retains the original forced-checkout behavior.
+  #[serde(default)]
+  #[builder(default)]
+  pub git_update_strategy: GitUpdateStrategy,
+
   /// Explicitly specify the folder to clone the repo in.
   /// - If absolute (has leading '/')
   ///   - Used directly as the path
@@ -302,6 +308,7 @@ impl Default for RepoConfig {
       repo: Default::default(),
       branch: default_branch(),
       commit: Default::default(),
+      git_update_strategy: Default::default(),
       git_account: Default::default(),
       path: Default::default(),
       on_clone: Default::default(),
