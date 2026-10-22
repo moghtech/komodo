@@ -206,10 +206,48 @@ impl Resolve<ExecuteArgs> for RunSync {
       .map(|stack| (stack.name.clone(), stack.clone()))
       .collect::<HashMap<_, _>>();
 
+    // Filter the toml resources the same way as the existing ones.
+    // Otherwise a restricted run (eg. executing a single pending
+    // change) finds every other toml Deployment / Stack with
+    // `deploy = true` missing from the maps above, and deploys it
+    // as "deploy on creation".
+    let toml_deployments = resources
+      .deployments
+      .iter()
+      .filter(|deployment| {
+        Deployment::include_resource_partial(
+          &deployment.name,
+          &deployment.config,
+          match_resource_type,
+          match_resources.as_deref(),
+          &deployment.tags,
+          &id_to_tags,
+          &sync.config.match_tags,
+        )
+      })
+      .cloned()
+      .collect::<Vec<_>>();
+    let toml_stacks = resources
+      .stacks
+      .iter()
+      .filter(|stack| {
+        Stack::include_resource_partial(
+          &stack.name,
+          &stack.config,
+          match_resource_type,
+          match_resources.as_deref(),
+          &stack.tags,
+          &id_to_tags,
+          &sync.config.match_tags,
+        )
+      })
+      .cloned()
+      .collect::<Vec<_>>();
+
     let deploy_cache = build_deploy_cache(SyncDeployParams {
-      deployments: &resources.deployments,
+      deployments: &toml_deployments,
       deployment_map: &deployments_by_name,
-      stacks: &resources.stacks,
+      stacks: &toml_stacks,
       stack_map: &stacks_by_name,
     })
     .await?;
