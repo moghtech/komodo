@@ -26,7 +26,7 @@ pub struct ImageListItem {
   /// The unchanged `RepoTags`.
   #[serde(default)]
   pub tags: Vec<String>,
-  /// The unchanged `RepoDigests`.
+  /// `RepoDigests`, or the descriptor digest when they are empty.
   #[serde(default)]
   pub digests: Vec<String>,
   /// Date and time at which the image was created as a Unix timestamp (number of seconds sinds EPOCH).

@@ -21,7 +21,7 @@ impl DockerClient {
       .list_images(Option::<ListImagesOptions>::None)
       .await?
       .into_iter()
-      .map(|image| {
+      .map(|mut image| {
         let in_use = containers.iter().any(|container| {
           container
             .image_id
@@ -34,6 +34,11 @@ impl DockerClient {
           .first()
           .cloned()
           .unwrap_or_else(|| image.id.clone());
+        // The containerd store drops RepoDigests for untagged images.
+        use_descriptor_digest(
+          &mut image.repo_digests,
+          image.descriptor,
+        );
         ImageListItem {
           id: image.id,
           parent_id: image.parent_id,
@@ -160,6 +165,16 @@ impl DockerClient {
   }
 }
 
+fn use_descriptor_digest(
+  digests: &mut Vec<String>,
+  descriptor: Option<bollard::config::OciDescriptor>,
+) {
+  if digests.is_empty() {
+    digests
+      .extend(descriptor.and_then(|descriptor| descriptor.digest));
+  }
+}
+
 fn convert_oci_descriptor(
   descriptor: bollard::config::OciDescriptor,
 ) -> OciDescriptor {
@@ -211,4 +226,37 @@ pub async fn get_image_digest_from_registry(
   let ImageManifest { digest } = serde_json::from_str(&log.stdout)
     .context("Failed to parse image manifest from 'docker buildx imagetools inspect' output")?;
   Ok(digest)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn descriptor_digest_fallback() {
+    let image = bollard::config::ImageSummary {
+      descriptor: Some(bollard::config::OciDescriptor {
+        digest: Some(String::from("sha256:index")),
+        ..Default::default()
+      }),
+      ..Default::default()
+    };
+    let mut digests = image.repo_digests;
+    use_descriptor_digest(&mut digests, image.descriptor.clone());
+    assert_eq!(digests, ["sha256:index"]);
+
+    digests = vec![
+      String::from("image@sha256:existing"),
+      String::from("other@sha256:existing"),
+    ];
+    let expected = digests.clone();
+    use_descriptor_digest(&mut digests, image.descriptor);
+    assert_eq!(digests, expected);
+
+    digests.clear();
+    use_descriptor_digest(&mut digests, None);
+    assert!(digests.is_empty());
+    use_descriptor_digest(&mut digests, Some(Default::default()));
+    assert!(digests.is_empty());
+  }
 }
