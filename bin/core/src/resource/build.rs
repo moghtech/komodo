@@ -15,24 +15,31 @@ use komodo_client::{
       BuildListItemInfo, BuildQuerySpecifics, BuildState,
       PartialBuildConfig,
     },
-    builder::Builder,
+    builder::{Builder, BuilderConfig},
     environment_vars_from_str, optional_string,
     permission::PermissionLevel,
     repo::Repo,
     resource::Resource,
-    to_docker_compatible_name,
+    server::Server,
+    to_docker_compatible_name, to_path_compatible_name,
     update::Update,
     user::{User, build_user},
   },
 };
 use mogh_resolver::Resolve;
+use periphery_client::api::git::DeleteRepo;
 
 use crate::{
   api::write::WriteArgs,
+  cloud::BuildCleanupData,
   config::core_config,
   helpers::{
-    empty_or_only_spaces, query::get_latest_update, repo_link,
+    builder::{cleanup_builder_instance, connect_builder_periphery},
+    empty_or_only_spaces, periphery_client,
+    query::get_latest_update,
+    repo_link,
   },
+  periphery::PeripheryClient,
   permission::get_check_permissions,
   state::{
     action_states, all_resources_cache, build_state_cache, db_client,
@@ -214,9 +221,37 @@ impl super::KomodoResource for Build {
   }
 
   async fn pre_delete(
-    _resource: &Resource<Self::Config, Self::Info>,
-    _update: &mut Update,
+    build: &Resource<Self::Config, Self::Info>,
+    update: &mut Update,
   ) -> anyhow::Result<()> {
+    // Files on host is the user's folder; a linked repo uses the
+    // Repo's folder, which the Repo's delete removes.
+    if build.config.files_on_host
+      || !build.config.linked_repo.is_empty()
+      || build.config.builder_id.is_empty()
+    {
+      return Ok(());
+    }
+    let peripheries = builder_peripheries(build, update).await;
+    let name = to_path_compatible_name(&build.name);
+    for (periphery, cleanup_data) in peripheries {
+      match periphery
+        .request(DeleteRepo {
+          name: name.clone(),
+          is_build: true,
+        })
+        .await
+      {
+        Ok(log) => update.logs.push(log),
+        Err(e) => update.push_error_log(
+          "Delete Build Directory",
+          format_serror(
+            &e.context("Failed to delete build files").into(),
+          ),
+        ),
+      }
+      cleanup_builder_instance(periphery, cleanup_data, update).await;
+    }
     Ok(())
   }
 
@@ -383,4 +418,62 @@ async fn latest_2_build_updates(
   let second = builds.pop();
   let first = builds.pop();
   Ok([first, second])
+}
+
+/// Aws builders are terminated after each build, so only Server and
+/// Url builders can hold the build's directory.
+async fn builder_peripheries(
+  build: &Build,
+  update: &mut Update,
+) -> Vec<(PeripheryClient, BuildCleanupData)> {
+  let builder =
+    match super::get::<Builder>(&build.config.builder_id).await {
+      Ok(builder) => builder,
+      Err(e) => {
+        push_connect_error(update, e);
+        return Vec::new();
+      }
+    };
+  match &builder.config {
+    BuilderConfig::Aws(_) => Vec::new(),
+    BuilderConfig::Url(_) => match connect_builder_periphery(
+      build.name.clone(),
+      None,
+      builder,
+      None,
+    )
+    .await
+    {
+      Ok(periphery) => vec![periphery],
+      Err(e) => {
+        push_connect_error(update, e);
+        Vec::new()
+      }
+    },
+    BuilderConfig::Server(config) => {
+      let mut peripheries = Vec::new();
+      for server_id in &config.server_ids {
+        let periphery = async {
+          let server = super::get::<Server>(server_id).await?;
+          periphery_client(&server).await
+        }
+        .await;
+        match periphery {
+          Ok(periphery) => peripheries
+            .push((periphery, BuildCleanupData::Server(None))),
+          Err(e) => push_connect_error(update, e),
+        }
+      }
+      peripheries
+    }
+  }
+}
+
+fn push_connect_error(update: &mut Update, e: anyhow::Error) {
+  update.push_error_log(
+    "Delete Build Directory",
+    format_serror(
+      &e.context("Failed to connect to the builder").into(),
+    ),
+  );
 }
