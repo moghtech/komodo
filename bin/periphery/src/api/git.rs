@@ -1,4 +1,4 @@
-use anyhow::{Context, anyhow};
+use anyhow::anyhow;
 use formatting::format_serror;
 use komodo_client::entities::{
   DefaultRepoFolder, LatestCommit, update::Log,
@@ -228,15 +228,27 @@ impl Resolve<crate::api::Args> for DeleteRepo {
       periphery_config().repo_dir()
     };
     let full_path = root.join(&name);
-    let deleted =
-      fs::remove_dir_all(&full_path).await.with_context(|| {
-        format!("Failed to delete repo at {full_path:?}")
-      });
-    let log = match deleted {
+    let log = match fs::remove_dir_all(&full_path).await {
       Ok(_) => {
         Log::simple("Delete repo", format!("Deleted Repo {name}"))
       }
-      Err(e) => Log::error("Delete repo", format_serror(&e.into())),
+      // Never cloned or built, so there is nothing to delete.
+      Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+        Log::simple(
+          "Delete repo",
+          format!("No files to delete at {full_path:?}"),
+        )
+      }
+      Err(e) => Log::error(
+        "Delete repo",
+        format_serror(
+          &anyhow::Error::from(e)
+            .context(format!(
+              "Failed to delete repo at {full_path:?}"
+            ))
+            .into(),
+        ),
+      ),
     };
     Ok(log)
   }
