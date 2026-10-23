@@ -81,6 +81,8 @@ pub async fn connect_builder_periphery(
           Err(e) => err = Some(e),
         };
       }
+      // Stop the connection retrying in the background.
+      periphery.cleanup().await;
       Err(err.context("Missing error")?)
     }
     BuilderConfig::Server(config) => {
