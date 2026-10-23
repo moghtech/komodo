@@ -26,6 +26,11 @@ there are no warranties. Use at your own risk.
 - [periphery setup](https://github.com/moghtech/komodo/blob/main/scripts/readme.md)
 - [roadmap](https://github.com/moghtech/komodo/blob/main/roadmap.md)
 
+## One-Click Deploy
+
+<a href="https://repocloud.io/details/Komodo/"><img src="https://d16t0pc4846x52.cloudfront.net/deploylobe.svg" alt="Deploy on RepoCloud" height="42"></a>
+<a href="https://railway.com/deploy/komodo"><img src="https://railway.com/button.svg" alt="Deploy on Railway" height="42"></a>
+
 ## Screenshots
 
 ### Light Theme
