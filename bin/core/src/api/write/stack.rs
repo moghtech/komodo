@@ -1005,7 +1005,9 @@ pub async fn check_stack_for_update_inner(
     services_with_update = aged;
   }
 
-  if services_with_update.is_empty() {
+  if services_with_update.is_empty()
+    || (services_held_back && !stack.config.swarm_id.is_empty())
+  {
     return Ok(CheckStackForUpdateResponse {
       stack: stack.id,
       services,

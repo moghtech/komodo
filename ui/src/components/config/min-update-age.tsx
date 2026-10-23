@@ -3,6 +3,16 @@ import { Group, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 
+const MIN_UPDATE_AGE_ERROR =
+  "Minimum update age must be a whole number between 0 and 4294967295";
+
+function parseMinUpdateAge(input: string) {
+  const trimmed = input.trim();
+  if (!/^\d+$/.test(trimmed)) return undefined;
+  const hours = Number(trimmed);
+  return hours <= 0xffff_ffff ? hours : undefined;
+}
+
 export function MinUpdateAge({
   arg,
   set,
@@ -18,9 +28,8 @@ export function MinUpdateAge({
   useEffect(() => {
     setInput(arg.toString());
   }, [arg]);
-  const num = Number(input);
   const error =
-    num >= 0 ? undefined : "Minimum update age must be a positive number";
+    parseMinUpdateAge(input) === undefined ? MIN_UPDATE_AGE_ERROR : undefined;
   return (
     <ConfigItem
       label="Minimum Update Age"
@@ -36,12 +45,12 @@ export function MinUpdateAge({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onBlur={(e) => {
-            const num = Number(e.target.value);
-            if (num >= 0) {
-              set({ min_update_age_hours: num });
+            const hours = parseMinUpdateAge(e.target.value);
+            if (hours !== undefined) {
+              set({ min_update_age_hours: hours });
             } else {
               notifications.show({
-                message: "Minimum update age must be a positive number",
+                message: MIN_UPDATE_AGE_ERROR,
                 color: "red",
               });
             }

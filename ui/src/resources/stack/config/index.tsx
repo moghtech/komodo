@@ -446,7 +446,7 @@ export default function StackConfig({
             disabled={disabled || !auto_update}
             description={
               currSwarmId
-                ? "Swarm stacks always deploy together, so this can't hold back an individual service."
+                ? "Swarm stacks always deploy together, so Auto Update waits until every updated image is old enough."
                 : undefined
             }
           />
