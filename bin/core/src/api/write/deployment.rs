@@ -30,6 +30,7 @@ use crate::{
   alert::send_alerts,
   api::execute::{self, ExecuteRequest, ExecutionResult},
   helpers::{
+    image_age::image_meets_min_age,
     periphery_client,
     query::{
       get_all_tags, get_deployment_state, get_swarm_or_server,
@@ -499,7 +500,7 @@ pub async fn check_deployment_for_update_inner(
   };
 
   let latest_digest = image_digest_cache()
-    .get(swarm_or_server, image, account, token)
+    .get(swarm_or_server, image, account.clone(), token.clone())
     .await?;
 
   resource::update_info::<Deployment>(
@@ -535,7 +536,24 @@ pub async fn check_deployment_for_update_inner(
     });
   }
 
-  if !skip_auto_update && deployment.config.auto_update {
+  if !skip_auto_update
+    && deployment.config.auto_update
+    && image_meets_min_age(
+      swarm_or_server,
+      image,
+      account,
+      token,
+      deployment.config.min_update_age_hours,
+    )
+    .await
+    .unwrap_or_else(|e| {
+      warn!(
+        "Failed to check image age for Deployment {} | {e:#}",
+        deployment.name
+      );
+      true
+    })
+  {
     // Trigger deploy + alert
 
     // Conservatively remove from alert cache so 'skip_auto_update'

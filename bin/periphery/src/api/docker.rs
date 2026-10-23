@@ -17,7 +17,12 @@ use mogh_resolver::Resolve;
 use periphery_client::api::docker::*;
 
 use crate::{
-  docker::{docker_login, image::get_image_digest_from_registry},
+  docker::{
+    docker_login,
+    image::{
+      get_image_created_from_registry, get_image_digest_from_registry,
+    },
+  },
   state::docker_client,
 };
 
@@ -75,6 +80,29 @@ impl Resolve<crate::api::Args> for GetLatestImageDigest {
     .await?;
     let digest = get_image_digest_from_registry(&name).await?;
     Ok(GetLatestImageDigestResponse { digest })
+  }
+}
+
+//
+
+impl Resolve<crate::api::Args> for GetLatestImageCreated {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<GetLatestImageCreatedResponse> {
+    let GetLatestImageCreated {
+      name,
+      account,
+      token,
+    } = self;
+    docker_login(
+      &extract_registry_domain(&name)?,
+      account.as_deref().unwrap_or_default(),
+      token.as_deref(),
+    )
+    .await?;
+    let created = get_image_created_from_registry(&name).await?;
+    Ok(GetLatestImageCreatedResponse { created })
   }
 }
 

@@ -1374,6 +1374,14 @@ export interface DeploymentConfig {
 	 * enable both.
 	 */
 	auto_update?: boolean;
+	/**
+	 * The minimum age (in hours) an image must have before
+	 * `auto_update` will deploy it. `0` (default) disables the check.
+	 * 
+	 * Measured from the registry push time for Docker Hub images,
+	 * and from the image build time for every other registry.
+	 */
+	min_update_age_hours: number;
 	/** Whether to send ContainerStateChange alerts for this deployment. */
 	send_alerts: boolean;
 	/** Configure quick links that are displayed in the resource header */
@@ -2547,6 +2555,14 @@ export interface StackConfig {
 	 * Manual checks still include all services.
 	 */
 	auto_update_skip_services?: string[];
+	/**
+	 * The minimum age (in hours) an image must have before
+	 * `auto_update` will deploy it. `0` (default) disables the check.
+	 * 
+	 * Measured from the registry push time for Docker Hub images,
+	 * and from the image build time for every other registry.
+	 */
+	min_update_age_hours: number;
 	/** Whether to run `docker compose down` before `compose up`. */
 	destroy_before_deploy?: boolean;
 	/** Whether to skip secret interpolation into the stack environment variables. */

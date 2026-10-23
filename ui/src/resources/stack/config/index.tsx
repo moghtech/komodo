@@ -40,6 +40,7 @@ import { InputList } from "mogh_ui";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
+import { MinUpdateAge } from "@/components/config/min-update-age";
 import { DEFAULT_STACK_FILE_CONTENTS, useFullStack } from "..";
 import { ReactNode } from "react";
 import WebhookBuilder from "@/components/webhook/builder";
@@ -438,6 +439,18 @@ export default function StackConfig({
             />
           );
         },
+        min_update_age_hours: (hours, set) => (
+          <MinUpdateAge
+            arg={hours}
+            set={set}
+            disabled={disabled || !auto_update}
+            description={
+              currSwarmId
+                ? "Swarm stacks always deploy together, so Auto Update waits until every updated image is old enough."
+                : undefined
+            }
+          />
+        ),
       },
     },
     {

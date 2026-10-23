@@ -40,6 +40,7 @@ use crate::{
   api::execute::{self, ExecuteRequest, ExecutionResult},
   config::core_config,
   helpers::{
+    image_age::image_meets_min_age,
     query::{get_all_tags, get_swarm_or_server},
     stack_git_token, swarm_or_server_request,
     update::{add_update, make_update, poll_update_until_complete},
@@ -943,7 +944,7 @@ pub async fn check_stack_for_update_inner(
     services.push(service_with_update);
   }
 
-  let services_with_update = services
+  let mut services_with_update = services
     .iter()
     .filter(|service| service.update_available)
     .cloned()
@@ -959,13 +960,68 @@ pub async fn check_stack_for_update_inner(
     });
   }
 
+  let mut services_held_back = false;
+
+  if stack.config.min_update_age_hours > 0 {
+    let mut aged = Vec::with_capacity(services_with_update.len());
+    for service in services_with_update {
+      // Check the image about to be deployed. It only has a different
+      // name than the current one if the compose file bumped the tag.
+      let image = match &service.latest_image {
+        Some(image) => image,
+        None => stack
+          .info
+          .deployed_services
+          .as_ref()
+          .and_then(|services| {
+            services.iter().find_map(|deployed| {
+              (deployed.service_name == service.service)
+                .then_some(&deployed.image)
+            })
+          })
+          .unwrap_or(&service.image),
+      };
+      let old_enough = image_meets_min_age(
+        swarm_or_server,
+        image,
+        None,
+        None,
+        stack.config.min_update_age_hours,
+      )
+      .await
+      .unwrap_or_else(|e| {
+        warn!(
+          "Failed to check image age for Stack {} Service {} | {e:#}",
+          stack.name, service.service
+        );
+        true
+      });
+      if old_enough {
+        aged.push(service);
+      } else {
+        services_held_back = true;
+      }
+    }
+    services_with_update = aged;
+  }
+
+  if services_with_update.is_empty()
+    || (services_held_back && !stack.config.swarm_id.is_empty())
+  {
+    return Ok(CheckStackForUpdateResponse {
+      stack: stack.id,
+      services,
+    });
+  }
+
   // Conservatively remove from alert cache so 'skip_auto_update'
   // doesn't cause alerts not to be sent on subsequent calls.
   alert_cache
     .retain(|(stack_id, _)| stack_id != &stack.id)
     .await;
 
-  let deploy_services = if stack.config.auto_update_all_services
+  let deploy_services = if (stack.config.auto_update_all_services
+    && !services_held_back)
     // Swarm stacks don't support individual service deploy
     || !stack.config.swarm_id.is_empty()
   {

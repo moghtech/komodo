@@ -418,6 +418,16 @@ pub struct StackConfig {
   #[builder(default)]
   pub auto_update_skip_services: Vec<String>,
 
+  /// The minimum age (in hours) an image must have before
+  /// `auto_update` will deploy it. `0` (default) disables the check.
+  ///
+  /// Measured from the registry push time for Docker Hub images,
+  /// and from the image build time for every other registry.
+  #[serde(default = "default_min_update_age_hours")]
+  #[builder(default = "default_min_update_age_hours()")]
+  #[partial_default(default_min_update_age_hours())]
+  pub min_update_age_hours: u32,
+
   /// Whether to run `docker compose down` before `compose up`.
   #[serde(default)]
   #[builder(default)]
@@ -695,6 +705,10 @@ fn default_auto_pull() -> bool {
   true
 }
 
+fn default_min_update_age_hours() -> u32 {
+  0
+}
+
 fn default_git_provider() -> String {
   String::from("github.com")
 }
@@ -736,6 +750,7 @@ impl Default for StackConfig {
       auto_update: Default::default(),
       auto_update_all_services: Default::default(),
       auto_update_skip_services: Default::default(),
+      min_update_age_hours: default_min_update_age_hours(),
       ignore_services: Default::default(),
       pre_deploy: Default::default(),
       post_deploy: Default::default(),

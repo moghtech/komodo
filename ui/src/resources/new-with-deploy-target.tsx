@@ -34,6 +34,7 @@ export default function NewResourceWithDeployTarget({
           ? { type: "Build", params: { build_id: buildId } }
           : undefined,
         linked_repo: repoId,
+        min_update_age_hours: 72,
       })}
       extraInputs={
         !(_serverId ?? _swarmId) ? (

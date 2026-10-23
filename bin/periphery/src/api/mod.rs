@@ -121,6 +121,7 @@ pub enum PeripheryRequest {
   InspectImage(InspectImage),
   ImageHistory(ImageHistory),
   GetLatestImageDigest(GetLatestImageDigest),
+  GetLatestImageCreated(GetLatestImageCreated),
 
   // Image (Write)
   PullImage(PullImage),

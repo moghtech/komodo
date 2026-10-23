@@ -30,6 +30,7 @@ pub mod action_state;
 pub mod all_resources;
 pub mod builder;
 pub mod channel;
+pub mod image_age;
 pub mod image_digest;
 pub mod maintenance;
 pub mod matcher;

@@ -212,3 +212,65 @@ pub async fn get_image_digest_from_registry(
     .context("Failed to parse image manifest from 'docker buildx imagetools inspect' output")?;
   Ok(digest)
 }
+
+/// Returns the image creation time in rfc3339 format, if available.
+///
+/// Private images will require `docker login`
+/// for this to work.
+pub async fn get_image_created_from_registry(
+  image: &str,
+) -> anyhow::Result<Option<String>> {
+  let command = String::from(
+    r#"docker buildx imagetools inspect --format "{{json .Image}}" "#,
+  ) + image;
+  let log = run_komodo_standard_command(
+    "",
+    command,
+    CommandOptions::default().timeout(Duration::from_secs(10)),
+  )
+  .await;
+  if !log.success {
+    return Err(anyhow::Error::msg(log.combined()));
+  }
+  Ok(parse_image_created(&log.stdout))
+}
+
+fn parse_image_created(raw: &str) -> Option<String> {
+  #[derive(Deserialize)]
+  struct ImageConfig {
+    #[serde(default)]
+    created: Option<String>,
+  }
+
+  let value = serde_json::from_str::<serde_json::Value>(raw).ok()?;
+
+  let config = match &value {
+    serde_json::Value::Object(map) if map.contains_key("created") => {
+      value.clone()
+    }
+    serde_json::Value::Object(map) => {
+      let host_platform = format!("linux/{}", host_docker_arch());
+      map
+        .get(&host_platform)
+        .or_else(|| {
+          map.iter().find_map(|(platform, config)| {
+            platform.starts_with(&host_platform).then_some(config)
+          })
+        })
+        .or_else(|| map.values().next())?
+        .clone()
+    }
+    _ => return None,
+  };
+
+  serde_json::from_value::<ImageConfig>(config).ok()?.created
+}
+
+fn host_docker_arch() -> &'static str {
+  match std::env::consts::ARCH {
+    "x86_64" => "amd64",
+    "aarch64" => "arm64",
+    "x86" => "386",
+    other => other,
+  }
+}

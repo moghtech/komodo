@@ -52,6 +52,27 @@ pub struct GetLatestImageDigestResponse {
 
 //
 
+/// Returns the creation time of the latest image, eg: `2024-01-01T00:00:00Z`
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(GetLatestImageCreatedResponse)]
+#[error(anyhow::Error)]
+pub struct GetLatestImageCreated {
+  /// The name of the image.
+  pub name: String,
+  /// Optional account to use to pull the image
+  pub account: Option<String>,
+  /// Override registry token for account with one sent from core.
+  pub token: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetLatestImageCreatedResponse {
+  /// The latest image creation time, if it could be determined.
+  pub created: Option<String>,
+}
+
+//
+
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
 #[error(anyhow::Error)]

@@ -200,6 +200,16 @@ pub struct DeploymentConfig {
   #[builder(default)]
   pub auto_update: bool,
 
+  /// The minimum age (in hours) an image must have before
+  /// `auto_update` will deploy it. `0` (default) disables the check.
+  ///
+  /// Measured from the registry push time for Docker Hub images,
+  /// and from the image build time for every other registry.
+  #[serde(default = "default_min_update_age_hours")]
+  #[builder(default = "default_min_update_age_hours()")]
+  #[partial_default(default_min_update_age_hours())]
+  pub min_update_age_hours: u32,
+
   /// Whether to send ContainerStateChange alerts for this deployment.
   #[serde(default = "default_send_alerts")]
   #[builder(default = "default_send_alerts()")]
@@ -330,6 +340,10 @@ fn default_replicas() -> i32 {
   1
 }
 
+fn default_min_update_age_hours() -> u32 {
+  0
+}
+
 fn default_send_alerts() -> bool {
   true
 }
@@ -354,6 +368,7 @@ impl Default for DeploymentConfig {
       redeploy_on_build: Default::default(),
       poll_for_updates: Default::default(),
       auto_update: Default::default(),
+      min_update_age_hours: default_min_update_age_hours(),
       send_alerts: default_send_alerts(),
       links: Default::default(),
       network: default_network(),

@@ -14,6 +14,7 @@ import SecretsSearch from "@/components/config/secrets-search";
 import DeploymentRestartSelector from "./restart";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
+import { MinUpdateAge } from "@/components/config/min-update-age";
 import { InputList } from "mogh_ui";
 import { TerminationSignal, TerminationTimeout } from "./termination";
 import { ReactNode } from "react";
@@ -294,6 +295,13 @@ export default function DeploymentConfig({
               auto_update: {
                 description: "Trigger a redeploy if a newer image is found.",
               },
+              min_update_age_hours: (hours, set) => (
+                <MinUpdateAge
+                  arg={hours}
+                  set={set}
+                  disabled={disabled || !autoUpdate}
+                />
+              ),
             },
           },
         ],
