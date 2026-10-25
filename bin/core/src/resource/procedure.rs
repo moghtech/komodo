@@ -36,6 +36,7 @@ use crate::{
   helpers::query::{get_last_run_at, get_procedure_state},
   schedule::{
     cancel_schedule, get_schedule_item_info, update_schedule,
+    validate_update_schedule,
   },
   state::{action_states, db_client, procedure_state_cache},
 };
@@ -133,7 +134,17 @@ impl super::KomodoResource for Procedure {
     config: &mut Self::PartialConfig,
     user: &User,
   ) -> anyhow::Result<()> {
-    validate_config(config, user, Some(id)).await
+    validate_config(config, user, Some(id)).await?;
+    if config.schedule.is_some() || config.schedule_format.is_some() {
+      let current = super::get::<Procedure>(id).await?;
+      validate_update_schedule(
+        config.schedule.as_deref(),
+        config.schedule_format,
+        &current.config.schedule,
+        current.config.schedule_format,
+      )?;
+    }
+    Ok(())
   }
 
   async fn post_update(

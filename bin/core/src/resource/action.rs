@@ -21,6 +21,7 @@ use crate::{
   helpers::query::{get_action_state, get_last_run_at},
   schedule::{
     cancel_schedule, get_schedule_item_info, update_schedule,
+    validate_update_schedule,
   },
   state::{action_state_cache, action_states, db_client},
 };
@@ -117,10 +118,19 @@ impl super::KomodoResource for Action {
   }
 
   async fn validate_update_config(
-    _id: &str,
-    _config: &mut Self::PartialConfig,
+    id: &str,
+    config: &mut Self::PartialConfig,
     _user: &User,
   ) -> anyhow::Result<()> {
+    if config.schedule.is_some() || config.schedule_format.is_some() {
+      let current = super::get::<Action>(id).await?;
+      validate_update_schedule(
+        config.schedule.as_deref(),
+        config.schedule_format,
+        &current.config.schedule,
+        current.config.schedule_format,
+      )?;
+    }
     Ok(())
   }
 
