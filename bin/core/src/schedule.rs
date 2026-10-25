@@ -297,6 +297,28 @@ fn cron_parser() -> &'static CronParser {
   })
 }
 
+pub(crate) fn validate_cron_schedule(schedule: &str) -> anyhow::Result<()> {
+  cron_parser()
+    .parse(schedule)
+    .context("Invalid CRON schedule")?;
+  Ok(())
+}
+
+pub(crate) fn validate_update_schedule(
+  schedule: Option<&str>,
+  format: Option<ScheduleFormat>,
+  current_schedule: &str,
+  current_format: ScheduleFormat,
+) -> anyhow::Result<()> {
+  let schedule = schedule.unwrap_or(current_schedule);
+  if format.unwrap_or(current_format) == ScheduleFormat::Cron
+    && !schedule.is_empty()
+  {
+    validate_cron_schedule(schedule)?;
+  }
+  Ok(())
+}
+
 /// Finds the next run occurence in UTC ms.
 fn find_next_occurrence(
   schedule: impl HasSchedule,
