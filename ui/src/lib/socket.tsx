@@ -1,4 +1,5 @@
 import { atom, useAtom } from "jotai";
+import { useQueryClient } from "@tanstack/react-query";
 import { ReactNode, useCallback, useEffect, useRef } from "react";
 import { Types } from "komodo_client";
 import { useInvalidate, komodo_client, useRead, useUser } from "@/lib/hooks";
@@ -57,6 +58,7 @@ export function useWebsocketMessages(
 export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   const user = useUser().data;
   const invalidate = useInvalidate();
+  const queryClient = useQueryClient();
   const [ws, setWs] = useAtom(wsAtom);
   const countRef = useRef<number>(ws.count);
   const reconnect = useWebsocketReconnect();
@@ -81,6 +83,9 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
         on_login: () => {
           console.info(count, "| Logged into Update websocket");
           setWs((ws) => ({ ...ws, connected: true }));
+          // Updates sent while disconnected are never replayed,
+          // so refetch what they would have refreshed.
+          if (count > 0) void queryClient.invalidateQueries();
         },
         on_update: on_update_fn,
         on_close: () => {

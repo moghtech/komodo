@@ -83,3 +83,6 @@ hmac.workspace = true
 sha2.workspace = true
 hex.workspace = true
 url.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
