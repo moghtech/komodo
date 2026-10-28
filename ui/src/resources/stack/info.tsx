@@ -13,7 +13,12 @@ import { CopyButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { ConfirmUpdate } from "mogh_ui";
 import { ShowHideButton } from "mogh_ui";
-import { languageFromPath, MonacoEditor } from "mogh_ui";
+import { languageFromPath, MonacoDiffEditor, MonacoEditor } from "mogh_ui";
+import {
+  StackFileDiffBadge,
+  StackFileRequirement,
+  stackFileDiffs,
+} from "@/components/stack-file-diffs";
 
 export default function StackInfo({
   id,
@@ -50,6 +55,13 @@ export default function StackInfo({
 
   const latestContents = stack?.info?.remote_contents;
   const latestErrors = stack?.info?.remote_errors;
+  // Latest vs last deploy, per tracked file.
+  const [showDiff, setShowDiff] = useState<Record<string, boolean | undefined>>(
+    {},
+  );
+  const diffs = stackFileDiffs(stack?.info);
+  const diffByPath = Object.fromEntries(diffs.map((diff) => [diff.path, diff]));
+  const changedCount = diffs.filter((diff) => diff.status !== "same").length;
 
   // Contents will be default hidden if there is more than 2 file editor to show
   const defaultShowContents = !latestContents || latestContents.length < 3;
@@ -100,10 +112,29 @@ export default function StackInfo({
           </Stack>
         ))}
 
+      {/* Deployed vs latest summary */}
+      {changedCount > 0 && stack?.info?.deployed_contents && (
+        <Group className="bordered-light" bdrs="md" p="md" ff="monospace">
+          <Text c="yellow">
+            {changedCount} of {diffs.length} tracked file
+            {diffs.length === 1 ? "" : "s"} differ from the cop
+            {changedCount === 1 ? "y" : "ies"} recorded at the last deploy.
+          </Text>
+          <Text c="dimmed">
+            deployed {stack.info.deployed_hash ?? "unknown"}, latest{" "}
+            {stack.info.latest_hash ?? "unknown"}. A deploy applies these
+            changes.
+          </Text>
+        </Group>
+      )}
+
       {/* Update latest contents */}
       {latestContents &&
         latestContents.map((content) => {
           const showContents = show[content.path] ?? defaultShowContents;
+          const diff = diffByPath[content.path];
+          const diffMode =
+            diff?.status === "changed" && (showDiff[content.path] ?? true);
           const handleToggleShow = () => {
             setShow((show) => ({
               ...show,
@@ -140,10 +171,26 @@ export default function StackInfo({
                   <Text c="dimmed">File:</Text>
                   {content.path}
                   <CopyButton label="file path" content={content.path} />
+                  {diff && <StackFileDiffBadge status={diff.status} />}
+                  <StackFileRequirement file={content} />
                 </Group>
 
                 {/* SAVE */}
                 <Group>
+                  {diff?.status === "changed" && (
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDiff((showDiff) => ({
+                          ...showDiff,
+                          [content.path]: !(showDiff[content.path] ?? true),
+                        }));
+                      }}
+                    >
+                      {diffMode ? "Show editor" : "Diff vs deployed"}
+                    </Button>
+                  )}
                   {canEdit && (
                     <>
                       <Button
@@ -180,12 +227,23 @@ export default function StackInfo({
                       />
                     </>
                   )}
-                  <ShowHideButton show={showContents} setShow={handleToggleShow} />
+                  <ShowHideButton
+                    show={showContents}
+                    setShow={handleToggleShow}
+                  />
                 </Group>
               </Group>
 
               {/* CONTENTS */}
-              {showContents && (
+              {showContents && diffMode && (
+                <MonacoDiffEditor
+                  original={diff.deployed ?? ""}
+                  modified={edits[content.path] ?? content.contents}
+                  language={languageFromPath(content.path)}
+                  readOnly
+                />
+              )}
+              {showContents && !diffMode && (
                 <MonacoEditor
                   value={edits[content.path] ?? content.contents}
                   language={languageFromPath(content.path)}

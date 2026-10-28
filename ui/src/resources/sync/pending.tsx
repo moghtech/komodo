@@ -13,6 +13,7 @@ import { ConfirmButton } from "mogh_ui";
 import { SquarePlay } from "lucide-react";
 import { MonacoDiffEditor, MonacoEditor } from "mogh_ui";
 import { diffTypeIntention } from "@/lib/color";
+import { StackPendingFileDiffs } from "@/components/stack-file-diffs";
 
 export default function ResourceSyncPending({
   id,
@@ -124,6 +125,7 @@ export default function ResourceSyncPending({
                     ))}
                   </Group>
                 )}
+                {type === "Stack" && <StackPendingFileDiffs stack={id} />}
               </Group>
             ),
           )}
