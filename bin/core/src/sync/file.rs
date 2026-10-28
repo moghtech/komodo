@@ -143,8 +143,10 @@ fn read_resource_file(
     path: file_path.display().to_string(),
     contents: contents.clone(),
   });
-  let more = super::deserialize_resources_toml(&contents)
-    .context("failed to parse resource file contents")?;
+  let toml_dir = full_path.parent().unwrap_or(root_path);
+  let more =
+    deserialize_file_resources_toml(&contents, toml_dir, root_path)
+      .context("failed to parse resource file contents")?;
   log.push('\n');
   let path_for_view =
     if let Some(resource_path) = resource_path.as_ref() {
@@ -162,6 +164,22 @@ fn read_resource_file(
   extend_resources(resources, more, match_tags);
 
   Ok(())
+}
+
+/// Resolves action files relative to the TOML directory, confined to the sync root.
+pub(super) fn deserialize_file_resources_toml(
+  toml_str: &str,
+  toml_dir: &Path,
+  sync_root: &Path,
+) -> anyhow::Result<ResourcesToml> {
+  super::deserialize_resources_toml(toml_str, |name, file_path| {
+    super::read_file_in_root(toml_dir, sync_root, file_path)
+      .with_context(|| {
+        format!(
+          "Failed to read action file | action: {name} | file_path: {file_path}"
+        )
+      })
+  })
 }
 
 /// Reads down into directories.

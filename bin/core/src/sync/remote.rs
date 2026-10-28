@@ -141,7 +141,7 @@ async fn get_ui_defined(
 ) -> anyhow::Result<RemoteResources> {
   let mut resources = ResourcesToml::default();
   let resources =
-    super::deserialize_resources_toml(&sync.config.file_contents)
+    super::deserialize_ui_resources_toml(&sync.config.file_contents)
       .context("failed to parse resource file contents")
       .map(|more| {
         extend_resources(

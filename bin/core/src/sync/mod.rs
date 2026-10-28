@@ -1,6 +1,6 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, path::Path, str::FromStr};
 
-use anyhow::anyhow;
+use anyhow::{Context, anyhow};
 use database::mungos::mongodb::bson::oid::ObjectId;
 use komodo_client::entities::{
   ResourceTargetVariant,
@@ -150,14 +150,102 @@ pub fn include_resource_by_resource_type_and_name<
   }
 }
 
-fn deserialize_resources_toml(
+fn deserialize_ui_resources_toml(
   toml_str: &str,
 ) -> anyhow::Result<ResourcesToml> {
-  ::toml::from_str::<ResourcesToml>(&escape_between_triple_string(
-    toml_str,
-  ))
-  // the error without this comes through with multiple lines (\n) and looks bad
-  .map_err(|e| anyhow!("{e:#}"))
+  deserialize_resources_toml(toml_str, |name, _| {
+    Err(anyhow!(
+      "config.file_path is not supported for UI defined syncs | action: {name}"
+    ))
+  })
+}
+
+fn deserialize_resources_toml(
+  toml_str: &str,
+  read_action_file: impl FnMut(&str, &str) -> anyhow::Result<String>,
+) -> anyhow::Result<ResourcesToml> {
+  let escaped = escape_between_triple_string(toml_str);
+  let mut table = ::toml::from_str::<::toml::Table>(&escaped)
+    .map_err(|e| anyhow!("{e:#}"))?;
+  if resolve_action_file_paths(&mut table, read_action_file)? {
+    table
+      .try_into::<ResourcesToml>()
+      .map_err(|e| anyhow!("{e:#}"))
+  } else {
+    // Deserialize from source to preserve type-error line and column numbers.
+    ::toml::from_str::<ResourcesToml>(&escaped)
+      // the error without this comes through with multiple lines (\n) and looks bad
+      .map_err(|e| anyhow!("{e:#}"))
+  }
+}
+
+/// Returns whether any action file paths were replaced with file contents.
+fn resolve_action_file_paths(
+  table: &mut ::toml::Table,
+  mut read_action_file: impl FnMut(&str, &str) -> anyhow::Result<String>,
+) -> anyhow::Result<bool> {
+  let mut resolved = false;
+  for key in ["action", "actions"] {
+    let Some(::toml::Value::Array(actions)) = table.get_mut(key)
+    else {
+      continue;
+    };
+    for action in actions {
+      let Some(action) = action.as_table_mut() else {
+        continue;
+      };
+      let name = action
+        .get("name")
+        .and_then(|name| name.as_str())
+        .unwrap_or_default()
+        .to_string();
+      let Some(config) =
+        action.get_mut("config").and_then(|c| c.as_table_mut())
+      else {
+        continue;
+      };
+      let Some(file_path) = config.remove("file_path") else {
+        continue;
+      };
+      let file_path = file_path.as_str().with_context(|| {
+        format!("config.file_path must be a string | action: {name}")
+      })?;
+      if config.contains_key("file_contents") {
+        return Err(anyhow!(
+          "Cannot set both config.file_path and config.file_contents | action: {name}"
+        ));
+      }
+      let contents = read_action_file(&name, file_path)?;
+      resolved = true;
+      config.insert(
+        String::from("file_contents"),
+        ::toml::Value::String(contents),
+      );
+    }
+  }
+  Ok(resolved)
+}
+
+/// Returns the contents of the file at `file_path` relative to `dir`, ensuring the resolved file is inside `root`.
+fn read_file_in_root(
+  dir: &Path,
+  root: &Path,
+  file_path: &str,
+) -> anyhow::Result<String> {
+  let root = root
+    .canonicalize()
+    .with_context(|| format!("Failed to resolve root {root:?}"))?;
+  let path = dir.join(file_path);
+  let full_path = path
+    .canonicalize()
+    .with_context(|| format!("Failed to resolve path {path:?}"))?;
+  if !full_path.starts_with(&root) {
+    return Err(anyhow!(
+      "Path {full_path:?} is outside sync root {root:?}"
+    ));
+  }
+  std::fs::read_to_string(&full_path)
+    .with_context(|| format!("Failed to read {full_path:?}"))
 }
 
 fn escape_between_triple_string(toml_str: &str) -> String {
