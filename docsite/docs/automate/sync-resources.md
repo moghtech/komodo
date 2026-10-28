@@ -216,6 +216,29 @@ executions = [
 ]
 ```
 
+### Action
+
+The script can be given inline with `file_contents`, or read from a file with `file_path`. `file_path` is relative to the directory of the `.toml` file declaring the action, and must resolve inside the sync root (the repo or the files on host directory). It is not supported for UI defined syncs, and cannot be combined with `file_contents`.
+
+:::note
+Using "Commit" on a sync in Managed Mode writes the script inline as `file_contents`, replacing `file_path`.
+:::
+
+```toml
+[[action]]
+name = "hello"
+[action.config]
+# Relative to this .toml file
+file_path = "scripts/hello.ts"
+
+[[action]]
+name = "hello-inline"
+[action.config]
+file_contents = """
+console.log("hello");
+"""
+```
+
 ### Repo
 
 - [Repo config schema](https://docs.rs/komodo_client/latest/komodo_client/entities/repo/struct.RepoConfig.html)
