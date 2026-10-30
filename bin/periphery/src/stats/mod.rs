@@ -9,6 +9,7 @@ use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
 
 use crate::{config::periphery_config, state::stats_client};
 
+mod cpu;
 mod mem;
 
 /// This should be called before starting the server in main.rs.
@@ -41,6 +42,8 @@ pub struct StatsClient {
   system: sysinfo::System,
   disks: sysinfo::Disks,
   networks: sysinfo::Networks,
+  /// Set when running inside an LXC, see [cpu::CgroupCpu].
+  cgroup_cpu: Option<cpu::CgroupCpu>,
 }
 
 const BYTES_PER_GB: f64 = 1073741824.0;
@@ -61,6 +64,7 @@ impl Default for StatsClient {
       system,
       disks,
       networks,
+      cgroup_cpu: cpu::CgroupCpu::detect(),
       stats,
     }
   }
@@ -69,6 +73,9 @@ impl Default for StatsClient {
 impl StatsClient {
   fn refresh(&mut self) {
     self.system.refresh_cpu_all();
+    if let Some(cpu) = &mut self.cgroup_cpu {
+      cpu.refresh();
+    }
     self.system.refresh_memory();
     self.system.refresh_processes_specifics(
       ProcessesToUpdate::All,
@@ -93,7 +100,7 @@ impl StatsClient {
     let load_avg = System::load_average();
 
     SystemStats {
-      cpu_perc: self.system.global_cpu_usage(),
+      cpu_perc: self.get_cpu_perc(),
       load_average: SystemLoadAverage {
         one: load_avg.one,
         five: load_avg.five,
@@ -113,6 +120,14 @@ impl StatsClient {
       refresh_ts: self.stats.refresh_ts,
       refresh_list_ts: self.stats.refresh_list_ts,
     }
+  }
+
+  fn get_cpu_perc(&self) -> f32 {
+    self
+      .cgroup_cpu
+      .as_ref()
+      .and_then(|cpu| cpu.usage_perc())
+      .unwrap_or_else(|| self.system.global_cpu_usage())
   }
 
   fn get_disks(&self) -> Vec<SingleDiskUsage> {
