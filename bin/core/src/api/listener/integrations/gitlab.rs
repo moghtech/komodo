@@ -37,15 +37,15 @@ impl VerifySecret for Gitlab {
 #[derive(Deserialize)]
 struct GitlabWebhookBody {
   #[serde(rename = "ref")]
-  branch: String,
+  branch: Option<String>,
 }
 
 impl ExtractBranch for Gitlab {
-  fn extract_branch(body: &str) -> anyhow::Result<String> {
+  fn extract_branch(body: &str) -> anyhow::Result<Option<String>> {
     let branch = serde_json::from_str::<GitlabWebhookBody>(body)
       .context("Failed to parse gitlab request body")?
       .branch
-      .replace("refs/heads/", "");
+      .map(|branch| branch.replace("refs/heads/", ""));
     Ok(branch)
   }
 }
