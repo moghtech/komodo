@@ -13,7 +13,6 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use serde::Deserialize;
-use serde_json::json;
 use uuid::Uuid;
 
 use crate::{
@@ -609,25 +608,11 @@ pub async fn handle_action_webhook<B: super::ExtractBranch>(
   let lock = action_locks().get_or_insert_default(&action.id).await;
   let _lock = lock.lock().await;
 
-  let branch = B::extract_branch(&body)?;
-
-  if target_branch != ANY_BRANCH && branch != target_branch {
-    debug!(
-      "Ignoring webhook | push to branch '{branch}' does not match expected branch '{target_branch}'"
-    );
+  let Some(args) = action_webhook_args::<B>(&body, target_branch)?
+  else {
     return Ok(());
-  }
-
-  let user = git_webhook_user().to_owned();
-
-  let body = serde_json::Value::from_str(&body)
-    .context("Failed to deserialize webhook body")?;
-  let serde_json::Value::Object(args) = json!({
-    "WEBHOOK_BRANCH": branch,
-    "WEBHOOK_BODY": body,
-  }) else {
-    return Err(anyhow!("Something is wrong with serde_json..."));
   };
+  let user = git_webhook_user().to_owned();
 
   let req = ExecuteRequest::RunAction(RunAction {
     action: action.id,
@@ -646,4 +631,80 @@ pub async fn handle_action_webhook<B: super::ExtractBranch>(
     .await
     .map_err(|e| e.error)?;
   Ok(())
+}
+
+fn action_webhook_args<B: super::ExtractBranch>(
+  body: &str,
+  target_branch: &str,
+) -> anyhow::Result<Option<serde_json::Map<String, serde_json::Value>>>
+{
+  let branch = B::extract_branch(body)?;
+  if target_branch != ANY_BRANCH {
+    let branch = branch
+      .as_deref()
+      .context("Webhook payload has no ref for branch filtering")?;
+    if branch != target_branch {
+      debug!(
+        "Ignoring webhook | push to branch '{branch}' does not match expected branch '{target_branch}'"
+      );
+      return Ok(None);
+    }
+  }
+
+  let body = serde_json::Value::from_str(body)
+    .context("Failed to deserialize webhook body")?;
+  let mut args = serde_json::Map::new();
+  args.insert("WEBHOOK_BODY".into(), body);
+  if let Some(branch) = branch {
+    args.insert("WEBHOOK_BRANCH".into(), branch.into());
+  }
+  Ok(Some(args))
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::api::listener::integrations::{
+    github::Github, gitlab::Gitlab,
+  };
+
+  fn check_action_webhook_branches<B: super::super::ExtractBranch>() {
+    let body = r#"{"action":"opened","pull_request":{"head":{"ref":"feature"}}}"#;
+    let args =
+      action_webhook_args::<B>(body, ANY_BRANCH).unwrap().unwrap();
+    assert_eq!(
+      args["WEBHOOK_BODY"]["pull_request"]["head"]["ref"],
+      "feature"
+    );
+    assert!(!args.contains_key("WEBHOOK_BRANCH"));
+    assert!(action_webhook_args::<B>(body, "main").is_err());
+    assert!(B::branch_matches(body, "main").is_err());
+
+    let push = r#"{"ref":"refs/heads/main","after":"abc123"}"#;
+    for target in [ANY_BRANCH, "main"] {
+      let args =
+        action_webhook_args::<B>(push, target).unwrap().unwrap();
+      assert_eq!(args["WEBHOOK_BRANCH"], "main");
+      assert_eq!(args["WEBHOOK_BODY"]["after"], "abc123");
+    }
+    assert!(
+      action_webhook_args::<B>(push, "other").unwrap().is_none()
+    );
+    assert!(B::branch_matches(push, "main").unwrap());
+    assert!(!B::branch_matches(push, "other").unwrap());
+
+    for invalid in ["{", r#"{"ref":42}"#, r#"{"ref":[]}"#] {
+      assert!(action_webhook_args::<B>(invalid, ANY_BRANCH).is_err());
+    }
+  }
+
+  #[test]
+  fn github_action_webhook_branches() {
+    check_action_webhook_branches::<Github>();
+  }
+
+  #[test]
+  fn gitlab_action_webhook_branches() {
+    check_action_webhook_branches::<Gitlab>();
+  }
 }

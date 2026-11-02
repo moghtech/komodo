@@ -49,15 +49,15 @@ impl VerifySecret for Github {
 #[derive(Deserialize)]
 struct GithubWebhookBody {
   #[serde(rename = "ref")]
-  branch: String,
+  branch: Option<String>,
 }
 
 impl ExtractBranch for Github {
-  fn extract_branch(body: &str) -> anyhow::Result<String> {
+  fn extract_branch(body: &str) -> anyhow::Result<Option<String>> {
     let branch = serde_json::from_str::<GithubWebhookBody>(body)
       .context("Failed to parse github request body")?
       .branch
-      .replace("refs/heads/", "");
+      .map(|branch| branch.replace("refs/heads/", ""));
     Ok(branch)
   }
 }

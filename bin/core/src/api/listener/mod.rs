@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use anyhow::Context;
+
 use axum::{Router, http::HeaderMap};
 use komodo_client::entities::resource::Resource;
 use mogh_cache::CloneCache;
@@ -39,7 +41,7 @@ trait VerifySecret {
 
 /// Implemented on the integration struct, eg [integrations::github::Github]
 trait ExtractBranch {
-  fn extract_branch(body: &str) -> anyhow::Result<String>;
+  fn extract_branch(body: &str) -> anyhow::Result<Option<String>>;
   /// Whether the webhook body's branch matches `expected`.
   /// A mismatch is routine and only logged at debug; errors
   /// only when the branch cannot be extracted from the body.
@@ -47,7 +49,8 @@ trait ExtractBranch {
     body: &str,
     expected: &str,
   ) -> anyhow::Result<bool> {
-    let branch = Self::extract_branch(body)?;
+    let branch = Self::extract_branch(body)?
+      .context("Webhook payload has no ref for branch filtering")?;
     if branch == expected {
       Ok(true)
     } else {

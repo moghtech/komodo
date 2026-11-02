@@ -44,3 +44,7 @@ https://<HOST>/listener/<AUTH_TYPE>/<RESOURCE_TYPE>/<ID_OR_NAME>/<EXECUTION>
 ## Branch Filtering
 
 Your git provider sends webhooks on pushes to **any** branch. Komodo only triggers the action when the push matches the **branch configured on the resource**. For example, a Build pointed at the `release` branch will ignore pushes to `main`.
+
+For Procedures and Actions, enable **No branch check** (the `/__ANY__` URL suffix) to accept events without a top-level `ref`, such as pull request, commit status, or release events. Authentication is still required. Named-branch listeners require `ref` and only run when it matches the selected branch; nested pull request branch fields are not used for filtering.
+
+Webhook-triggered Actions receive the complete JSON payload in `ARGS.WEBHOOK_BODY`. When a top-level `ref` is present, `ARGS.WEBHOOK_BRANCH` contains it with `refs/heads/` removed. When no branch is available, `WEBHOOK_BRANCH` is omitted. Invalid JSON or a non-string, non-null `ref` is rejected even with **No branch check** enabled.
