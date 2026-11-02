@@ -44,6 +44,7 @@ export default function SettingsOnboardingKeys() {
         header: ({ column }) => <SortableHeader column={column} title="Name" />,
         cell: ({ row }) => (
           <TextInput
+            key={row.original.public_key}
             defaultValue={row.original.name}
             onBlur={(e) =>
               e.target.value != row.original.name &&
