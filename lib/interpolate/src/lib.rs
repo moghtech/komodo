@@ -11,6 +11,10 @@ pub struct Interpolator<'a> {
   secrets: &'a HashMap<String, String>,
   variable_replacers: HashSet<(String, String)>,
   pub secret_replacers: HashSet<(String, String)>,
+  /// Secrets that were referenced but carry an empty value: they interpolate
+  /// to nothing and are excluded from the replacers, so operators still see
+  /// why a value came out blank (#1429).
+  pub empty_secrets: HashSet<String>,
 }
 
 impl<'a> Interpolator<'a> {
@@ -23,6 +27,7 @@ impl<'a> Interpolator<'a> {
       secrets,
       variable_replacers: Default::default(),
       secret_replacers: Default::default(),
+      empty_secrets: Default::default(),
     }
   }
 
@@ -109,7 +114,15 @@ impl<'a> Interpolator<'a> {
           "failed to interpolate variables into target '{target}'",
         )
       })?;
-      self.variable_replacers.extend(more_replacers);
+      self.variable_replacers.extend(
+        // An empty value as a replace search inserts the name at every
+        // character boundary, so the sanitized logs balloon and corrupt
+        // instead of masking (komodo#1429). Empty values interpolate to
+        // nothing but never sanitize.
+        more_replacers
+          .into_iter()
+          .filter(|(value, _)| !value.is_empty()),
+      );
       res
     } else {
       target.to_string()
@@ -125,7 +138,16 @@ impl<'a> Interpolator<'a> {
     .with_context(|| {
       format!("failed to interpolate secrets into target '{target}'",)
     })?;
-    self.secret_replacers.extend(more_replacers);
+    for (value, variable) in more_replacers {
+      // Same empty-search corruption as the variables above; an empty
+      // secret interpolates to nothing, and the operator still learns
+      // which ones were empty from the interpolated-secrets log.
+      if value.is_empty() {
+        self.empty_secrets.insert(variable);
+      } else {
+        self.secret_replacers.insert((value, variable));
+      }
+    }
 
     // Set with result
     *target = res;
@@ -178,5 +200,93 @@ impl<'a> Interpolator<'a> {
           .join("\n"),)
       );
     }
+
+    if !self.empty_secrets.is_empty() {
+      logs.push(Log::simple(
+        "Interpolate Secrets",
+        format!(
+          "<span class=\"text-muted-foreground\">empty value, interpolated to nothing:</span> {}",
+          {
+            let mut names: Vec<String> =
+              self.empty_secrets.iter().cloned().collect();
+            names.sort();
+            names.join(", ")
+          }
+        ),
+      ));
+    }
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use super::*;
+
+  fn secrets(pairs: &[(&str, &str)]) -> HashMap<String, String> {
+    pairs
+      .iter()
+      .map(|(k, v)| (k.to_string(), v.to_string()))
+      .collect()
+  }
+
+  #[test]
+  fn an_empty_secret_interpolates_to_nothing_and_never_sanitizes() {
+    let map =
+      secrets(&[("EMPTY_SECRET", ""), ("REAL_SECRET", "hunter2")]);
+    let mut interpolator = Interpolator::new(None, &map);
+    let mut target =
+      "pass [[EMPTY_SECRET]] then [[REAL_SECRET]] end".to_string();
+    interpolator
+      .interpolate_string(&mut target)
+      .expect("interpolates");
+    assert_eq!(target, "pass  then hunter2 end");
+    // An empty search string in `replace` inserts at every character
+    // boundary, so the empty pair must stay out of the replacers.
+    assert_eq!(
+      interpolator.secret_replacers,
+      HashSet::from([(
+        "hunter2".to_string(),
+        "REAL_SECRET".to_string()
+      )])
+    );
+    assert_eq!(
+      interpolator.empty_secrets,
+      HashSet::from(["EMPTY_SECRET".to_string()])
+    );
+    // The whole point of #1429: sanitizing with these replacers cannot grow
+    // the log.
+    let replacers: Vec<(String, String)> =
+      interpolator.secret_replacers.iter().cloned().collect();
+    let sanitized =
+      svi::replace_in_string("a [[EMPTY_SECRET]] b", &replacers);
+    assert_eq!(sanitized, "a [[EMPTY_SECRET]] b");
+  }
+
+  #[test]
+  fn an_empty_variable_interpolates_and_is_not_sanitized() {
+    let map = secrets(&[("EMPTY_VAR", "")]);
+    let no_secrets = HashMap::new();
+    let mut interpolator = Interpolator::new(Some(&map), &no_secrets);
+    let mut target = "x=[[EMPTY_VAR]]y".to_string();
+    interpolator
+      .interpolate_string(&mut target)
+      .expect("interpolates");
+    assert_eq!(target, "x=y");
+    assert!(interpolator.variable_replacers.is_empty());
+  }
+
+  #[test]
+  fn a_real_secret_still_masks_in_sanitized_logs() {
+    let map = secrets(&[("REAL_SECRET", "hunter2")]);
+    let mut interpolator = Interpolator::new(None, &map);
+    let mut target = "token=[[REAL_SECRET]]".to_string();
+    interpolator
+      .interpolate_string(&mut target)
+      .expect("interpolates");
+    let replacers: Vec<(String, String)> =
+      interpolator.secret_replacers.iter().cloned().collect();
+    let sanitized =
+      svi::replace_in_string("echo token=hunter2", &replacers);
+    assert_eq!(sanitized, "echo token=<REAL_SECRET>");
   }
 }
