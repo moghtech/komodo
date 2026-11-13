@@ -2,10 +2,13 @@ use std::{
   collections::HashSet,
   path::{Path, PathBuf},
   sync::OnceLock,
+  time::Duration,
 };
 
 use anyhow::Context as _;
-use command::{CommandOptions, run_komodo_standard_command};
+use command::{
+  CommandOptions, LiveOutput, run_komodo_standard_command,
+};
 use database::{
   bson::doc,
   mungos::{by_id::update_one_by_id, mongodb::bson::to_document},
@@ -23,7 +26,7 @@ use komodo_client::{
     komodo_timestamp,
     permission::PermissionLevel,
     random_string,
-    update::{Update, UpdateStatus},
+    update::{Log, Update, UpdateStatus},
     user::action_user,
   },
   parsers::parse_key_value_list,
@@ -54,6 +57,10 @@ use crate::{
 };
 
 use super::ExecuteArgs;
+
+/// While an action runs, its output so far is sent to the update
+/// at most this often, and only when there is new output.
+const LIVE_LOG_INTERVAL: Duration = Duration::from_secs(1);
 
 impl super::BatchExecute for BatchRunAction {
   type Resource = Action;
@@ -212,16 +219,61 @@ impl Resolve<ExecuteArgs> for RunAction {
         .insert(update.id.clone(), cancel.clone())
         .await;
 
-      let mut res = run_komodo_standard_command(
+      let command = format!(
+        "deno run --allow-all{https_cert_flag}{reload} {}",
+        path.display()
+      );
+      let live_output = LiveOutput::default();
+      let run = run_komodo_standard_command(
         // Keep this stage name as is, the UI will find the latest update log by matching the stage name
         "Execute Action",
-        format!(
-          "deno run --allow-all{https_cert_flag}{reload} {}",
-          path.display()
-        ),
-        CommandOptions::default().cancel(cancel),
-      )
-      .await;
+        command.clone(),
+        CommandOptions::default()
+          .cancel(cancel)
+          .live_output(live_output.clone()),
+      );
+      tokio::pin!(run);
+
+      // Send the output so far while the action runs. Sanitized like the
+      // final log below, always on the full output, so a secret split
+      // across two reads is still replaced.
+      let start_ts = komodo_timestamp();
+      let mut interval = tokio::time::interval(LIVE_LOG_INTERVAL);
+      let mut sent = (0, 0);
+      let mut res = loop {
+        tokio::select! {
+          res = &mut run => break res,
+          _ = interval.tick() => {
+            let (stdout, stderr) = {
+              let live = live_output.lock().unwrap();
+              if (live.0.len(), live.1.len()) == sent {
+                continue;
+              }
+              sent = (live.0.len(), live.1.len());
+              (
+                String::from_utf8_lossy(&live.0).into_owned(),
+                String::from_utf8_lossy(&live.1).into_owned(),
+              )
+            };
+            let sanitize = |output: &str| {
+              svi::replace_in_string(output, &replacers)
+                .replace(&key, "<ACTION_API_KEY>")
+                .replace(&secret, "<ACTION_API_SECRET>")
+            };
+            let mut live_update = update.clone();
+            live_update.logs.push(Log {
+              stage: "Execute Action".to_string(),
+              command: command.clone(),
+              stdout: sanitize(&stdout),
+              stderr: sanitize(&stderr),
+              success: true,
+              start_ts,
+              end_ts: komodo_timestamp(),
+            });
+            let _ = update_update(live_update).await;
+          }
+        }
+      };
 
       res.stdout = svi::replace_in_string(&res.stdout, &replacers)
         .replace(&key, "<ACTION_API_KEY>");

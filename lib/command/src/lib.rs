@@ -1,10 +1,18 @@
-use std::{path::PathBuf, process::Stdio, sync::OnceLock};
+use std::{
+  io,
+  path::PathBuf,
+  process::{Output, Stdio},
+  sync::OnceLock,
+};
 
 use komodo_client::{
   entities::{komodo_timestamp, update::Log},
   parsers::parse_multiline_command,
 };
-use tokio::process::Command;
+use tokio::{
+  io::{AsyncRead, AsyncReadExt},
+  process::{Child, Command},
+};
 
 mod options;
 mod output;
@@ -196,6 +204,7 @@ async fn run_command(
     timeout,
     cancel,
     stdin,
+    live_output,
   } = options;
 
   // Attach the path to cmd as current dir
@@ -217,7 +226,11 @@ async fn run_command(
 
   // Fast path: nothing to write, and nothing to wait
   // on besides the command itself.
-  if timeout.is_none() && cancel.is_none() && stdin.is_none() {
+  if timeout.is_none()
+    && cancel.is_none()
+    && stdin.is_none()
+    && live_output.is_none()
+  {
     return CommandOutput::from(cmd.output().await);
   }
 
@@ -255,7 +268,9 @@ async fn run_command(
 
   // Nothing to signal on, so just wait for it to finish.
   if timeout.is_none() && cancel.is_none() {
-    return CommandOutput::from(child.wait_with_output().await);
+    return CommandOutput::from(
+      wait_for_output(child, live_output.as_ref()).await,
+    );
   }
 
   // Resolve to `()` only when the relevant control fires; otherwise stay
@@ -274,7 +289,7 @@ async fn run_command(
   };
 
   let killed_reason = tokio::select! {
-    output = child.wait_with_output() => {
+    output = wait_for_output(child, live_output.as_ref()) => {
       return CommandOutput::from(output);
     }
     _ = on_timeout => format!(
@@ -289,6 +304,49 @@ async fn run_command(
 
   kill_process_group(pid);
   CommandOutput::from_err_message(killed_reason)
+}
+
+/// Like `child.wait_with_output()`, but with `live` given, the output is
+/// appended to it as it arrives, and the result is read back from it.
+async fn wait_for_output(
+  mut child: Child,
+  live: Option<&LiveOutput>,
+) -> io::Result<Output> {
+  let Some(live) = live else {
+    return child.wait_with_output().await;
+  };
+  let stdout = child.stdout.take();
+  let stderr = child.stderr.take();
+  let (status, _, _) = tokio::try_join!(
+    child.wait(),
+    read_live(stdout, live, |output| &mut output.0),
+    read_live(stderr, live, |output| &mut output.1),
+  )?;
+  let (stdout, stderr) = live.lock().unwrap().clone();
+  Ok(Output {
+    status,
+    stdout,
+    stderr,
+  })
+}
+
+/// Reads the pipe to the end, appending each chunk to `field` of `live`.
+async fn read_live(
+  pipe: Option<impl AsyncRead + Unpin>,
+  live: &LiveOutput,
+  field: fn(&mut (Vec<u8>, Vec<u8>)) -> &mut Vec<u8>,
+) -> io::Result<()> {
+  let Some(mut pipe) = pipe else {
+    return Ok(());
+  };
+  let mut buf = [0u8; 8192];
+  loop {
+    let n = pipe.read(&mut buf).await?;
+    if n == 0 {
+      return Ok(());
+    }
+    field(&mut live.lock().unwrap()).extend_from_slice(&buf[..n]);
+  }
 }
 
 /// Sends `SIGKILL` to the entire process group led by `pid`.
@@ -466,5 +524,61 @@ mod tests {
       pids.is_empty(),
       "backgrounded grandchild survived cancellation: pids={pids:?}"
     );
+  }
+}
+
+#[cfg(test)]
+mod live_output_tests {
+  use std::time::Duration;
+
+  use super::*;
+
+  /// The buffer fills while the command runs, and the final output
+  /// matches what was read live.
+  #[tokio::test]
+  async fn live_output_fills_while_running() {
+    let live = LiveOutput::default();
+    let run = run_shell_command(
+      "echo one; echo oops >&2; sleep 1; echo two",
+      CommandOptions::default().live_output(live.clone()),
+    );
+    tokio::pin!(run);
+    let early = tokio::select! {
+      _ = &mut run => panic!("finished too early"),
+      _ = tokio::time::sleep(Duration::from_millis(500)) => {
+        live.lock().unwrap().clone()
+      }
+    };
+    assert_eq!(early.0, b"one\n");
+    assert_eq!(early.1, b"oops\n");
+    let output = run.await;
+    assert!(output.success());
+    assert_eq!(output.stdout, "one\ntwo\n");
+    assert_eq!(output.stderr, "oops\n");
+  }
+
+  /// With a cancel token (as for actions), the output still arrives
+  /// live, and cancelling still kills the command.
+  #[tokio::test]
+  async fn live_output_with_cancel() {
+    let live = LiveOutput::default();
+    let cancel = tokio_util::sync::CancellationToken::new();
+    let run = run_shell_command(
+      "echo one; sleep 30",
+      CommandOptions::default()
+        .cancel(cancel.clone())
+        .live_output(live.clone()),
+    );
+    tokio::pin!(run);
+    tokio::select! {
+      _ = &mut run => panic!("finished too early"),
+      _ = tokio::time::sleep(Duration::from_millis(500)) => {}
+    };
+    assert_eq!(live.lock().unwrap().0, b"one\n");
+    cancel.cancel();
+    let output = tokio::time::timeout(Duration::from_secs(5), run)
+      .await
+      .expect("cancel did not end the command");
+    assert!(!output.success());
   }
 }
