@@ -1,4 +1,8 @@
-use std::{path::Path, time::Duration};
+use std::{
+  path::Path,
+  sync::{Arc, Mutex},
+  time::Duration,
+};
 
 use tokio_util::sync::CancellationToken;
 
@@ -25,7 +29,13 @@ pub struct CommandOptions<'a> {
   /// secret into the command, it never appears in the process arguments,
   /// where any user on the host could read it out of `ps`.
   pub stdin: Option<&'a str>,
+  /// Append the command's stdout / stderr to this buffer while it runs,
+  /// so the caller can show the output before the command finishes.
+  pub live_output: Option<LiveOutput>,
 }
+
+/// Raw (stdout, stderr) of a running command, see [CommandOptions::live_output].
+pub type LiveOutput = Arc<Mutex<(Vec<u8>, Vec<u8>)>>;
 
 impl<'a> CommandOptions<'a> {
   pub fn path(mut self, path: impl Into<Option<&'a Path>>) -> Self {
@@ -53,6 +63,14 @@ impl CommandOptions<'_> {
     cancel: impl Into<Option<CancellationToken>>,
   ) -> Self {
     self.cancel = cancel.into();
+    self
+  }
+
+  pub fn live_output(
+    mut self,
+    live_output: impl Into<Option<LiveOutput>>,
+  ) -> Self {
+    self.live_output = live_output.into();
     self
   }
 }
