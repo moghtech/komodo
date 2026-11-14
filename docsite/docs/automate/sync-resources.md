@@ -277,3 +277,36 @@ permissions = [
   { target.type = "Deployment", target.id = "\\^immich\\", level = "Execute" },
 ]
 ```
+
+## External Secret References in Resource Sync
+
+`Stack`, `Deployment`, and `Build` declarations in `komodo.toml` can reference external secrets managed under **Settings → Providers → Secrets** without ever storing secret values in Git or exported TOML:
+
+- Inline `[[vault.<provider-slug>.<secret-key>]]` references in `stack.config.environment`, `deployment.config.environment`, and `build.config.secret_args` are preserved verbatim in `ResourceSync` diffs, managed-mode commits, and `ExportAllResourcesToToml`.
+- Structured `secret_sources` and `secret_bindings` store only provider slugs, scope selectors, and target mappings — never secret values or bootstrap credentials.
+
+```toml
+[[stack]]
+name = "payments-prod"
+deploy = true
+[stack.config]
+server = "server-prod"
+repo = "myorg/payments"
+environment = """
+DATABASE_URL = [[vault.infisical-prod.DATABASE_URL]]
+"""
+
+[[stack.config.secret_sources]]
+name = "infisical-prod"
+provider = "infisical-prod"
+selector = { type = "Infisical", params = { project_id = "proj_123", environment = "prod", secret_path = "/payments" } }
+
+[[stack.config.secret_bindings]]
+source = "infisical-prod"
+remote_key = "WEBHOOK_SIGNING_CERT"
+target = { type = "ComposeFileSecret", params = { secret_name = "webhook_cert", services = ["api"], mode = 256 } }
+```
+
+:::important
+When a `ResourceSync` automatically deploys resources (`deploy = true` via webhook or scheduled execution) that consume external secrets, an admin must grant an explicit `SystemActor` (`actor = "ResourceSync"`, optionally scoped to `actor_resource_id`) on the [Secret Provider](../configuration/secret-providers.md). Built-in system users do not bypass `SecretProviderGrant` checks.
+:::

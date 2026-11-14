@@ -300,6 +300,9 @@ impl Resolve<ReadArgs> for GetStackLog {
     .await?;
 
     swarm_or_server.verify_has_target()?;
+    let secret_keys = stack_secret_env_keys(&stack).await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
 
     let log = match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -332,13 +335,13 @@ impl Resolve<ReadArgs> for GetStackLog {
           services,
           tail,
           timestamps,
+          redact_env_keys,
         })
         .await
         .context("Failed to get stack log from periphery")?,
     };
 
     let mut log = log;
-    let secret_keys = stack_secret_env_keys(&stack).await;
     redact_log_env_assignments(&mut log, &secret_keys);
 
     Ok(log)
@@ -366,6 +369,9 @@ impl Resolve<ReadArgs> for SearchStackLog {
     .await?;
 
     swarm_or_server.verify_has_target()?;
+    let secret_keys = stack_secret_env_keys(&stack).await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
 
     let log = match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -398,13 +404,13 @@ impl Resolve<ReadArgs> for SearchStackLog {
           combinator,
           invert,
           timestamps,
+          redact_env_keys,
         })
         .await
         .context("Failed to search stack log from periphery")?,
     };
 
     let mut log = log;
-    let secret_keys = stack_secret_env_keys(&stack).await;
     redact_log_env_assignments(&mut log, &secret_keys);
 
     Ok(log)

@@ -346,15 +346,6 @@ impl Resolve<ReadArgs> for GetContainerLog {
       PermissionLevel::Read.logs(),
     )
     .await?;
-    let mut res = periphery_client(&server)
-      .await?
-      .request(periphery::container::GetContainerLog {
-        name: container.clone(),
-        tail: cmp::min(tail, MAX_LOG_LENGTH),
-        timestamps,
-      })
-      .await
-      .context("failed at call to periphery")?;
     let secret_keys =
       crate::secret_provider::redaction::server_container_secret_env_keys(
         &server.id,
@@ -362,6 +353,18 @@ impl Resolve<ReadArgs> for GetContainerLog {
         None,
       )
       .await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
+    let mut res = periphery_client(&server)
+      .await?
+      .request(periphery::container::GetContainerLog {
+        name: container.clone(),
+        tail: cmp::min(tail, MAX_LOG_LENGTH),
+        timestamps,
+        redact_env_keys,
+      })
+      .await
+      .context("failed at call to periphery")?;
     crate::secret_provider::redaction::redact_log_env_assignments(
       &mut res,
       &secret_keys,
@@ -389,6 +392,15 @@ impl Resolve<ReadArgs> for SearchContainerLog {
       PermissionLevel::Read.logs(),
     )
     .await?;
+    let secret_keys =
+      crate::secret_provider::redaction::server_container_secret_env_keys(
+        &server.id,
+        &container,
+        None,
+      )
+      .await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
     let mut res = periphery_client(&server)
       .await?
       .request(periphery::container::GetContainerLogSearch {
@@ -397,16 +409,10 @@ impl Resolve<ReadArgs> for SearchContainerLog {
         combinator,
         invert,
         timestamps,
+        redact_env_keys,
       })
       .await
       .context("failed at call to periphery")?;
-    let secret_keys =
-      crate::secret_provider::redaction::server_container_secret_env_keys(
-        &server.id,
-        &container,
-        None,
-      )
-      .await;
     crate::secret_provider::redaction::redact_log_env_assignments(
       &mut res,
       &secret_keys,

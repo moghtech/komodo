@@ -102,6 +102,9 @@ pub struct GetComposeLog {
   /// Enable `--timestamps`
   #[serde(default)]
   pub timestamps: bool,
+  /// Secret-bearing env var names whose runtime container values should be scrubbed before returning logs.
+  #[serde(default)]
+  pub redact_env_keys: Vec<String>,
 }
 
 fn default_tail() -> u64 {
@@ -133,6 +136,9 @@ pub struct GetComposeLogSearch {
   /// Enable `--timestamps`
   #[serde(default)]
   pub timestamps: bool,
+  /// Secret-bearing env var names whose runtime container values should be scrubbed before returning logs.
+  #[serde(default)]
+  pub redact_env_keys: Vec<String>,
 }
 
 //

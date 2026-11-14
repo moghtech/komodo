@@ -426,6 +426,7 @@ impl SecretProviderKeyring {
 
   /// Verify whether `entries` match a previously recorded `(fingerprint_hmac, fingerprint_key_id)`,
   /// supporting keys in the rotation keyring.
+  #[cfg(test)]
   pub fn matches_deployment_fingerprint(
     &self,
     resource_type: &str,
@@ -485,6 +486,7 @@ impl SecretProviderKeyring {
   }
 }
 
+#[cfg(test)]
 fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
   if a.len() != b.len() {
     return false;

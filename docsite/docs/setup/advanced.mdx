@@ -21,6 +21,12 @@ just mount any required root certificates inside `/usr/local/share/ca-certificat
       - /path/to/custom-certs:/usr/local/share/ca-certificates
 ```
 
+For [External Secret Providers](../configuration/secret-providers.md) and confidential Core ↔ Periphery TLS connections, you can also configure explicit PEM Root CAs directly without modifying container OS trust stores:
+
+- **Self-hosted Infisical TLS**: Set `ca_cert_pem` directly on the Infisical Secret Provider in **Settings → Providers → Secrets**.
+- **Inbound Periphery TLS (`Core → Periphery`)**: Set `ca_cert_pem` on the `Server` or `Builder` (`Url`) resource, and ensure `insecure_tls = false`.
+- **Outbound Core TLS (`Periphery → Core`)**: Set `core_ca_cert_pem` (`PERIPHERY_CORE_CA_CERT_PEM` or `PERIPHERY_CORE_CA_CERT_PEM_FILE`) on Periphery, and ensure `core_tls_insecure_skip_verify = false`.
+
 ## OIDC / OAuth2
 
 To enable OAuth2 login, you must create a client on the respective OAuth provider,
@@ -73,6 +79,10 @@ komodo.example.com {
 ```
 :::note
 Your reverse proxy should set `X-FORWARDED-HOST` header to your Komodo Core domain, which caddy does by default.
+:::
+
+:::warning External Secret Providers & Reverse Proxies
+If a reverse proxy terminates TLS in front of Komodo Core and forwards `/ws/periphery` over plaintext `http://komodo-core:9120`, the final hop into Core is unencrypted (`ssl_enabled = false` on Core). Workloads that do not use external secret providers continue to work normally, whereas workloads resolving [External Secret Providers](../configuration/secret-providers.md) require end-to-end verified TLS between Core and Periphery (`KOMODO_SSL_ENABLED=true` or inbound verified `https://` to Periphery).
 :::
 
 ## Mount a Config File

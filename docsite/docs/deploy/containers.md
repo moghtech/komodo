@@ -33,7 +33,9 @@ volumes = """
 | `restart`          | Restart policy (`no`, `on-failure`, `always`, `unless-stopped`).                                               | `unless-stopped` |
 | `ports`            | Port mappings when not using `host` network (e.g. `27018:27017`).                                              | `[]`             |
 | `volumes`          | Bind mounts in `host_path:container_path` format.                                                              | `""`             |
-| `environment`      | Environment variables in `KEY=value` format. Supports [variable interpolation](../configuration/variables.md). | `""`             |
+| `environment`      | Environment variables in `KEY=value` format. Supports [variable interpolation](../configuration/variables.md) and `[[vault.<provider-slug>.<secret-key>]]` [external secret references](../configuration/secret-providers.md). | `""`             |
+| `secret_sources`   | Scoped external secret provider selectors (`project_id`, `environment`, `secret_path`, `include_imports`, `expand_references`) overriding provider defaults. | `[]`             |
+| `secret_bindings`  | Structured external secret bindings injected directly into container environment variables.                    | `[]`             |
 | `labels`           | Docker labels in `key=value` format.                                                                           | `""`             |
 | `command`          | Override the default image command. Appended after the image in `docker run`.                                  | `""`             |
 | `extra_args`       | Additional flags passed directly to `docker run`.                                                              | `""`             |
@@ -62,6 +64,39 @@ Komodo tracks container state and provides actions to manage the lifecycle:
 
 :::note
 Stopping and starting a container does **not** apply config changes — you must redeploy for that.
+:::
+
+## External Secret Providers
+
+`Deployment` containers can consume external secrets managed under **Settings → Providers → Secrets** (see [Secret Providers](../configuration/secret-providers.md)):
+
+- **Inline `[[vault.<provider-slug>.<secret-key>]]` references** inside `environment` (recommended as full pre-encoded values such as `DATABASE_URL=[[vault.infisical-prod.DATABASE_URL]]`, while also supporting mixed literal strings such as `DATABASE_URL=postgres://[[DB_USER]]:[[vault.infisical-prod.DB_PASSWORD]]@db:5432/app`).
+- **Structured `secret_bindings`** mapping a remote secret key directly to a container environment variable with explicit `required`, `allow_empty`, and `conflict_policy` (`Fail` or `ReplaceExisting`) semantics.
+
+```toml
+[[deployment]]
+name = "api-service"
+[deployment.config]
+server = "server-prod"
+image.type = "Image"
+image.params.image = "ghcr.io/myorg/api:latest"
+environment = """
+DATABASE_URL = [[vault.infisical-prod.DATABASE_URL]]
+"""
+
+[[deployment.config.secret_bindings]]
+source = "infisical-prod"
+remote_key = "STRIPE_WEBHOOK_SECRET"
+variable = "STRIPE_WEBHOOK_SECRET"
+required = true
+allow_empty = false
+conflict_policy = "Fail"
+```
+
+Resolved values are substituted byte-for-byte in a single pass (never URL-encoded, trimmed, or re-interpolated), shell-escaped safely on the target Periphery host, and masked (`<REDACTED>`) in Komodo `Update` logs, `InspectDeploymentContainer`, and `GetDeploymentLog`.
+
+:::warning
+External secret references are only permitted in `environment` and `secret_bindings` on Linux Server-targeted Deployments over verified TLS (`insecure_tls = false`). Referencing `[[vault...]]` in `ports`, `volumes`, `labels`, `command`, `extra_args`, or Swarm-targeted Deployments fails closed before execution.
 :::
 
 ## Deploying to a Swarm

@@ -70,3 +70,7 @@ The **ListSchedules** API endpoint returns all configured schedules with their s
 ## Alerts
 
 When `schedule_alert` is enabled, Komodo sends an alert through your configured [Alerters](../resources) each time a scheduled Procedure or Action runs. If `failure_alert` is enabled, an additional alert is sent when the run fails.
+
+:::note External Secret Providers
+Scheduled Procedures and Actions execute under the `Schedule` / `Procedure` / `Action` system actor context. If a scheduled workflow deploys or builds resources consuming external [Secret Providers](../configuration/secret-providers.md), create a corresponding `SystemActor` grant under **Settings → Providers → Secrets**.
+:::

@@ -105,3 +105,7 @@ Both **Deployments** and **Stacks** can target a Swarm instead of a single Serve
 
 - On a **Deployment**, set `swarm` to deploy the container as a Swarm service. You can attach swarm configs and secrets to the service.
 - On a **Stack**, set `swarm` to deploy via `docker stack deploy` instead of `docker compose up`.
+
+:::note External Secret Providers
+External [Secret Providers](./configuration/secret-providers.md) (`[[vault.<provider-slug>.<secret-key>]]` and `secret_bindings`) currently support Server-targeted Docker Compose `Stack`s, Server-targeted `Deployment` containers, and BuildKit `Build`s on Linux. Swarm-targeted Stacks and Deployments use native Docker Swarm configs/secrets above and reject external secret provider references in v1.
+:::

@@ -215,6 +215,13 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
     .await?;
 
     swarm_or_server.verify_has_target()?;
+    let secret_keys =
+      crate::secret_provider::redaction::deployment_secret_env_keys(
+        &deployment,
+      )
+      .await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
 
     let log = match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -237,17 +244,13 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
           name: deployment.deployed_name().to_string(),
           tail: cmp::min(tail, MAX_LOG_LENGTH),
           timestamps,
+          redact_env_keys,
         })
         .await
         .context("failed at call to periphery")?,
     };
 
     let mut log = log;
-    let secret_keys =
-      crate::secret_provider::redaction::deployment_secret_env_keys(
-        &deployment,
-      )
-      .await;
     crate::secret_provider::redaction::redact_log_env_assignments(
       &mut log,
       &secret_keys,
@@ -278,6 +281,13 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
     .await?;
 
     swarm_or_server.verify_has_target()?;
+    let secret_keys =
+      crate::secret_provider::redaction::deployment_secret_env_keys(
+        &deployment,
+      )
+      .await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
 
     let log = match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -304,17 +314,13 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
           combinator,
           invert,
           timestamps,
+          redact_env_keys,
         })
         .await
         .context("Failed to search container log from server")?,
     };
 
     let mut log = log;
-    let secret_keys =
-      crate::secret_provider::redaction::deployment_secret_env_keys(
-        &deployment,
-      )
-      .await;
     crate::secret_provider::redaction::redact_log_env_assignments(
       &mut log,
       &secret_keys,

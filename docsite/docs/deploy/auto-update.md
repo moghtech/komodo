@@ -37,3 +37,7 @@ executions = [
 :::info
 `GlobalAutoUpdate` can be integrated into other Procedures to coordinate timing with processes like backups. There is nothing special about the default Procedure — it is created for convenience.
 :::
+
+:::important External Secret Providers
+If a `Stack` or `Deployment` consumes external secrets from **Settings → Providers → Secrets**, unattended redeployments (`GlobalAutoUpdate` Procedures or `redeploy_on_build`) require an explicit `SystemActor` grant (`Procedure` or `AutoRedeploy`) on the [Secret Provider](../configuration/secret-providers.md).
+:::

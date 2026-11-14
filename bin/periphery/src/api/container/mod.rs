@@ -56,6 +56,7 @@ impl Resolve<crate::api::Args> for GetContainerLog {
       name,
       tail,
       timestamps,
+      redact_env_keys,
     } = self;
     let timestamps = if timestamps {
       " --timestamps"
@@ -65,14 +66,19 @@ impl Resolve<crate::api::Args> for GetContainerLog {
     // `--` so a name beginning with `-` is not parsed as a flag.
     let command =
       format!("docker logs --tail {tail}{timestamps} -- {name}");
-    Ok(
-      run_komodo_standard_command(
-        "Get container log",
-        command,
-        CommandOptions::default().timeout(Duration::from_secs(10)),
-      )
-      .await,
+    let mut log = run_komodo_standard_command(
+      "Get container log",
+      command,
+      CommandOptions::default().timeout(Duration::from_secs(10)),
     )
+    .await;
+    crate::secret_lifecycle::redact_single_container_log(
+      &name,
+      &redact_env_keys,
+      &mut log,
+    )
+    .await;
+    Ok(log)
   }
 }
 
@@ -89,6 +95,7 @@ impl Resolve<crate::api::Args> for GetContainerLogSearch {
       combinator,
       invert,
       timestamps,
+      redact_env_keys,
     } = self;
     let grep = format_log_grep(&terms, combinator, invert);
     let timestamps = if timestamps {
@@ -96,18 +103,23 @@ impl Resolve<crate::api::Args> for GetContainerLogSearch {
     } else {
       Default::default()
     };
-    let name = escape(name.into());
+    let escaped_name = escape(name.as_str().into());
     let command = format!(
-      "docker logs {name} --tail 5000{timestamps} 2>&1 | {grep}"
+      "docker logs {escaped_name} --tail 5000{timestamps} 2>&1 | {grep}"
     );
-    Ok(
-      run_komodo_shell_command(
-        "Get container log grep",
-        command,
-        CommandOptions::default().timeout(Duration::from_secs(10)),
-      )
-      .await,
+    let mut log = run_komodo_shell_command(
+      "Get container log grep",
+      command,
+      CommandOptions::default().timeout(Duration::from_secs(10)),
     )
+    .await;
+    crate::secret_lifecycle::redact_single_container_log(
+      &name,
+      &redact_env_keys,
+      &mut log,
+    )
+    .await;
+    Ok(log)
   }
 }
 

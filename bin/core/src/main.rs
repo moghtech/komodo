@@ -93,13 +93,18 @@ async fn app() -> anyhow::Result<()> {
   mogh_server::serve_app(api::app(), config, handle).await
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-  let mut term_signal = tokio::signal::unix::signal(
-    tokio::signal::unix::SignalKind::terminate(),
-  )?;
-  tokio::select! {
-    res = tokio::spawn(app()) => res?,
-    _ = term_signal.recv() => Ok(()),
-  }
+fn main() -> anyhow::Result<()> {
+  tokio::runtime::Builder::new_multi_thread()
+    .enable_all()
+    .thread_stack_size(16 * 1024 * 1024)
+    .build()?
+    .block_on(async {
+      let mut term_signal = tokio::signal::unix::signal(
+        tokio::signal::unix::SignalKind::terminate(),
+      )?;
+      tokio::select! {
+        res = tokio::spawn(app()) => res?,
+        _ = term_signal.recv() => Ok(()),
+      }
+    })
 }

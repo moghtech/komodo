@@ -12,7 +12,7 @@ Komodo is a web application for managing servers, builds, deployments, and autom
 - **Manage Docker Swarms**. Connect swarm managers and deploy services and stacks across your cluster.
 - **Build images**. Define the dockerfile in UI or clone a git repo. Supports AWS EC2 spot instances for scalable build capacity.
 - **Run automation**. Orchestrate multi-step workflows with Procedures and Actions. Schedule automations to run regularly.
-- **Manage configuration**. shared variable and secret with interpolation across all resources.
+- **Manage configuration & external secrets**. Interpolate shared variables and secrets across resources, or connect external [Secret Providers](./configuration/secret-providers.md) (such as Infisical) for runtime secret resolution into Compose Stacks, Containers, and BuildKit Builds.
 - **Full audit trail**. every change is recorded, with who made it and when.
 
 There is no limit to the number of servers you can connect, and there never will be.

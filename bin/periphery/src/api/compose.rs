@@ -46,6 +46,7 @@ impl Resolve<crate::api::Args> for GetComposeLog {
       services,
       tail,
       timestamps,
+      redact_env_keys,
     } = self;
     let docker_compose = docker_compose();
     let timestamps = if timestamps {
@@ -57,14 +58,19 @@ impl Resolve<crate::api::Args> for GetComposeLog {
       "{docker_compose} -p {project} logs --tail {tail}{timestamps} -- {}",
       services.join(" ")
     );
-    Ok(
-      run_komodo_standard_command(
-        "Get Stack Log",
-        command,
-        CommandOptions::default().timeout(Duration::from_secs(10)),
-      )
-      .await,
+    let mut log = run_komodo_standard_command(
+      "Get Stack Log",
+      command,
+      CommandOptions::default().timeout(Duration::from_secs(10)),
     )
+    .await;
+    crate::secret_lifecycle::redact_compose_project_log(
+      &project,
+      &redact_env_keys,
+      &mut log,
+    )
+    .await;
+    Ok(log)
   }
 }
 
@@ -80,6 +86,7 @@ impl Resolve<crate::api::Args> for GetComposeLogSearch {
       combinator,
       invert,
       timestamps,
+      redact_env_keys,
     } = self;
     let docker_compose = docker_compose();
     let grep = format_log_grep(&terms, combinator, invert);
@@ -90,21 +97,26 @@ impl Resolve<crate::api::Args> for GetComposeLogSearch {
     };
     let command = format!(
       "{docker_compose} -p {} logs --tail 5000{timestamps} -- {} 2>&1 | {grep}",
-      escape(project.into()),
+      escape(project.as_str().into()),
       services
         .iter()
         .map(|service| escape(service.into()))
         .collect::<Vec<_>>()
         .join(" ")
     );
-    Ok(
-      run_komodo_shell_command(
-        "Search Stack Log",
-        command,
-        CommandOptions::default().timeout(Duration::from_secs(10)),
-      )
-      .await,
+    let mut log = run_komodo_shell_command(
+      "Search Stack Log",
+      command,
+      CommandOptions::default().timeout(Duration::from_secs(10)),
     )
+    .await;
+    crate::secret_lifecycle::redact_compose_project_log(
+      &project,
+      &redact_env_keys,
+      &mut log,
+    )
+    .await;
+    Ok(log)
   }
 }
 

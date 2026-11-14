@@ -842,6 +842,127 @@ pub fn redact_compose_merged_config_yaml(
     .unwrap_or_else(|_| raw_yaml.to_string())
 }
 
+fn collect_secret_values_from_env_slice(
+  env_entries: &[String],
+  key_set: &BTreeSet<&str>,
+  values: &mut BTreeSet<String>,
+) {
+  for entry in env_entries {
+    if let Some((k, v)) = entry.split_once('=')
+      && key_set.contains(k)
+      && v.len() >= 4
+    {
+      values.insert(v.to_string());
+    }
+  }
+}
+
+fn apply_value_redactions_to_log(
+  values: &BTreeSet<String>,
+  log: &mut komodo_client::entities::update::Log,
+) {
+  if values.is_empty() {
+    return;
+  }
+  let mut sorted: Vec<&str> =
+    values.iter().map(String::as_str).collect();
+  sorted.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
+  for needle in sorted {
+    if !log.stdout.is_empty() && log.stdout.contains(needle) {
+      log.stdout = log.stdout.replace(needle, REDACTED_MARKER);
+    }
+    if !log.stderr.is_empty() && log.stderr.contains(needle) {
+      log.stderr = log.stderr.replace(needle, REDACTED_MARKER);
+    }
+  }
+}
+
+/// Scrub runtime secret environment variable values from Docker Compose logs on Periphery
+/// before returning `Log` to Core (preserving Zero Plaintext Persistence in Core/MongoDB).
+pub async fn redact_compose_project_log(
+  project: &str,
+  redact_env_keys: &[String],
+  log: &mut komodo_client::entities::update::Log,
+) {
+  if redact_env_keys.is_empty()
+    || (log.stdout.is_empty() && log.stderr.is_empty())
+  {
+    return;
+  }
+  let key_set: BTreeSet<&str> =
+    redact_env_keys.iter().map(String::as_str).collect();
+  let Ok(docker) = Docker::connect_with_defaults() else {
+    return;
+  };
+  let Ok(containers) = docker
+    .list_containers(Some(ListContainersOptions {
+      all: true,
+      ..Default::default()
+    }))
+    .await
+  else {
+    return;
+  };
+
+  let mut secret_values = BTreeSet::new();
+  for c in containers {
+    let is_project = c
+      .labels
+      .as_ref()
+      .and_then(|l| l.get("com.docker.compose.project"))
+      .is_some_and(|p| p == project);
+    if !is_project {
+      continue;
+    }
+    let Some(cid) = c.id.as_deref() else {
+      continue;
+    };
+    if let Ok(inspected) = docker.inspect_container(cid, None).await
+      && let Some(cfg) = inspected.config
+      && let Some(env) = cfg.env
+    {
+      collect_secret_values_from_env_slice(
+        &env,
+        &key_set,
+        &mut secret_values,
+      );
+    }
+  }
+
+  apply_value_redactions_to_log(&secret_values, log);
+}
+
+/// Scrub runtime secret environment variable values from a single Docker container's logs on Periphery.
+pub async fn redact_single_container_log(
+  container_name: &str,
+  redact_env_keys: &[String],
+  log: &mut komodo_client::entities::update::Log,
+) {
+  if redact_env_keys.is_empty()
+    || (log.stdout.is_empty() && log.stderr.is_empty())
+  {
+    return;
+  }
+  let key_set: BTreeSet<&str> =
+    redact_env_keys.iter().map(String::as_str).collect();
+  let Ok(docker) = Docker::connect_with_defaults() else {
+    return;
+  };
+  let mut secret_values = BTreeSet::new();
+  if let Ok(inspected) =
+    docker.inspect_container(container_name, None).await
+    && let Some(cfg) = inspected.config
+    && let Some(env) = cfg.env
+  {
+    collect_secret_values_from_env_slice(
+      &env,
+      &key_set,
+      &mut secret_values,
+    );
+  }
+  apply_value_redactions_to_log(&secret_values, log);
+}
+
 /// Isolated `0700` BuildKit `--secret` directory outside `build_dir` / Git working tree.
 /// Automatically deletes all temporary secret files on explicit `cleanup()` AND on `Drop`.
 pub struct ScopedBuildSecretDir {
@@ -878,6 +999,7 @@ impl ScopedBuildSecretDir {
     Self::create_at_root(&build_secret_runtime_root(), run_id).await
   }
 
+  #[cfg(test)]
   pub fn path(&self) -> &Path {
     &self.dir
   }
