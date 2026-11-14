@@ -15,6 +15,7 @@ mod config;
 mod connection;
 mod docker;
 mod helpers;
+mod secret_lifecycle;
 mod stack;
 mod state;
 mod stats;
@@ -45,6 +46,8 @@ async fn app() -> anyhow::Result<()> {
     rustls::crypto::aws_lc_rs::default_provider()
       .install_default()
       .expect("Failed to install default crypto provider");
+
+    secret_lifecycle::reconcile_runtime_secrets_on_startup().await;
 
     stats::spawn_polling_thread();
     docker::stats::spawn_polling_thread();

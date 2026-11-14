@@ -302,10 +302,28 @@ impl Resolve<crate::api::Args> for ComposePull {
       git_token,
       registry_token,
       mut replacers,
-      ..
+      external_env_vars,
+      service_env_bindings,
+      file_secret_bindings,
+      secret_env_keys: _,
     } = self;
 
     let mut res = ComposePullResponse::default();
+
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    let has_external_secrets = !external_env_vars.is_empty()
+      || !service_env_bindings.is_empty()
+      || !file_secret_bindings.is_empty();
+    if has_external_secrets && !compose_cmd_wrapper.is_empty() {
+      res.logs.push(Log::error(
+        "Secret Provider Conflict",
+        String::from(
+          "Cannot execute Stack with both external Secret Providers and compose_cmd_wrapper configured.",
+        ),
+      ));
+      return Ok(res);
+    }
 
     let mut interpolator =
       Interpolator::new(None, &periphery_config().secrets);
@@ -321,6 +339,7 @@ impl Resolve<crate::api::Args> for ComposePull {
       repo.as_ref(),
       git_token,
       replacers.clone(),
+      &external_env_vars,
       &mut res,
       args,
     )
@@ -373,7 +392,7 @@ impl Resolve<crate::api::Args> for ComposePull {
       format!(" -- {}", services.join(" "))
     };
 
-    let file_args = stack.compose_file_paths().join(" -f ");
+    let mut file_args = stack.compose_file_paths().join(" -f ");
 
     let env_file_args = env_file_args(
       env_file_path,
@@ -382,9 +401,31 @@ impl Resolve<crate::api::Args> for ComposePull {
 
     let project_name = stack.project_name(false);
 
-    // Parse wrapper configuration
-    let compose_cmd_wrapper =
-      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    let prepared_secrets =
+      match crate::secret_lifecycle::prepare_stack_secret_generation(
+        &project_name,
+        &service_env_bindings,
+        &file_secret_bindings,
+      )
+      .await
+      {
+        Ok(p) => p,
+        Err(e) => {
+          res.logs.push(Log::error(
+            "Prepare External Secrets",
+            format_serror(&e.into()),
+          ));
+          return Ok(res);
+        }
+      };
+    if let Some(prep) = &prepared_secrets {
+      write!(
+        &mut file_args,
+        " -f {}",
+        escape(prep.override_compose_path.to_string_lossy())
+      )?;
+    }
+
     // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
     let default_include = vec![String::from("up")];
     let wrapper_include =
@@ -407,6 +448,10 @@ impl Resolve<crate::api::Args> for ComposePull {
     ) {
       Ok(result) => result,
       Err(log) => {
+        crate::secret_lifecycle::abort_prepared_stack_secret_generation(
+          prepared_secrets,
+        )
+        .await;
         res.logs.push(log);
         return Ok(res);
       }
@@ -432,6 +477,11 @@ impl Resolve<crate::api::Args> for ComposePull {
       // not the case since it is provided above.
       unreachable!()
     };
+
+    crate::secret_lifecycle::abort_prepared_stack_secret_generation(
+      prepared_secrets,
+    )
+    .await;
 
     res.logs.push(log);
 
@@ -464,10 +514,40 @@ impl Resolve<crate::api::Args> for ComposeUp {
       git_token,
       registry_token,
       mut replacers,
-      ..
+      external_env_vars,
+      service_env_bindings,
+      file_secret_bindings,
+      mut secret_env_keys,
     } = self;
 
     let mut res = DeployStackResponse::default();
+
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    let has_external_secrets = !external_env_vars.is_empty()
+      || !service_env_bindings.is_empty()
+      || !file_secret_bindings.is_empty()
+      || !secret_env_keys.is_empty();
+    if has_external_secrets && !compose_cmd_wrapper.is_empty() {
+      res.logs.push(Log::error(
+        "Secret Provider Conflict",
+        String::from(
+          "Cannot execute Stack with both external Secret Providers and compose_cmd_wrapper configured.",
+        ),
+      ));
+      return Ok(res);
+    }
+
+    for ev in &external_env_vars {
+      if !secret_env_keys.contains(&ev.variable) {
+        secret_env_keys.push(ev.variable.clone());
+      }
+    }
+    for sb in &service_env_bindings {
+      if !secret_env_keys.contains(&sb.variable) {
+        secret_env_keys.push(sb.variable.clone());
+      }
+    }
 
     let mut interpolator =
       Interpolator::new(None, &periphery_config().secrets);
@@ -483,6 +563,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
       repo.as_ref(),
       git_token,
       replacers.clone(),
+      &external_env_vars,
       &mut res,
       args,
     )
@@ -502,7 +583,13 @@ impl Resolve<crate::api::Args> for ComposeUp {
       format!("Failed to validate run directory on host after stack write (canonicalize error), path={}", run_directory.to_string_lossy()),
     )?;
 
-    validate_files(&stack, &run_directory, &mut res).await;
+    validate_files(
+      &stack,
+      &run_directory,
+      !external_env_vars.is_empty() || !secret_env_keys.is_empty(),
+      &mut res,
+    )
+    .await;
     if !all_logs_success(&res.logs) {
       return Ok(res);
     }
@@ -547,7 +634,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
       format!(" -- {}", services.join(" "))
     };
 
-    let file_args = stack.compose_file_paths().join(" -f ");
+    let mut file_args = stack.compose_file_paths().join(" -f ");
 
     // This will be the last project name, which is the one that needs to be destroyed.
     // Might be different from the current project name, if user renames stack / changes to custom project name.
@@ -559,9 +646,31 @@ impl Resolve<crate::api::Args> for ComposeUp {
       &stack.config.additional_env_files,
     )?;
 
-    // Parse wrapper configuration once for reuse
-    let compose_cmd_wrapper =
-      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    let prepared_secrets =
+      match crate::secret_lifecycle::prepare_stack_secret_generation(
+        &project_name,
+        &service_env_bindings,
+        &file_secret_bindings,
+      )
+      .await
+      {
+        Ok(p) => p,
+        Err(e) => {
+          res.logs.push(Log::error(
+            "Prepare External Secrets",
+            format_serror(&e.into()),
+          ));
+          return Ok(res);
+        }
+      };
+    if let Some(prep) = &prepared_secrets {
+      write!(
+        &mut file_args,
+        " -f {}",
+        escape(prep.override_compose_path.to_string_lossy())
+      )?;
+    }
+
     // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
     let default_include = vec![String::from("up")];
     let wrapper_include =
@@ -573,205 +682,254 @@ impl Resolve<crate::api::Args> for ComposeUp {
         &stack.config.compose_cmd_wrapper_include
       };
 
-    // Uses 'docker compose config' command to extract services (including image)
-    // after performing interpolation
-    {
-      let command = format!(
-        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} config",
-      );
-      let (command, wrapped) = match maybe_wrap_command(
-        command,
-        &compose_cmd_wrapper,
-        wrapper_include,
-        "config",
-      ) {
-        Ok(result) => result,
-        Err(log) => {
-          res.logs.push(log);
-          return Ok(res);
+    let deploy_step_res: anyhow::Result<()> = async {
+      // Uses 'docker compose config' command to extract services (including image)
+      // after performing interpolation
+      {
+        let command = format!(
+          "{docker_compose} -p {project_name} -f {file_args}{env_file_args} config",
+        );
+        let (command, wrapped) = match maybe_wrap_command(
+          command,
+          &compose_cmd_wrapper,
+          wrapper_include,
+          "config",
+        ) {
+          Ok(result) => result,
+          Err(log) => {
+            res.logs.push(log);
+            return Ok(());
+          }
+        };
+        let span = info_span!("GetComposeConfig", command);
+        let mut config_log = if wrapped {
+          run_komodo_shell_command(
+            "Compose Config",
+            command,
+            CommandOptions::default().path(run_directory.as_path()),
+          )
+          .instrument(span)
+          .await
+        } else {
+          run_komodo_standard_command(
+            "Compose Config",
+            command,
+            CommandOptions::default().path(run_directory.as_path()),
+          )
+          .instrument(span)
+          .await
+        };
+
+        if !config_log.success {
+          config_log.sanitize(&replacers);
+          res.logs.push(config_log);
+          return Ok(());
         }
-      };
-      let span = info_span!("GetComposeConfig", command);
-      let mut config_log = if wrapped {
-        run_komodo_shell_command(
-          "Compose Config",
+
+        // attach sanitized + structurally redacted merged config in any case.
+        let sanitized_merged =
+          svi::replace_in_string(&config_log.stdout, &replacers);
+        res.merged_config = Some(
+          crate::secret_lifecycle::redact_compose_merged_config_yaml(
+            &sanitized_merged,
+            &secret_env_keys,
+          ),
+        );
+
+        if let Err(e) = parse_compose_services(
+          &config_log.stdout,
+          &project_name,
+          &mut res.services,
+        ) {
+          config_log.sanitize(&replacers);
+          config_log.stdout =
+            crate::secret_lifecycle::redact_compose_merged_config_yaml(
+              &config_log.stdout,
+              &secret_env_keys,
+            );
+          res.logs.push(config_log);
+          res.logs.push(Log::error(
+            "Parse Compose Services",
+            format_serror(&e.into()),
+          ));
+          return Ok(());
+        }
+
+        config_log.sanitize(&replacers);
+        config_log.stdout =
+          crate::secret_lifecycle::redact_compose_merged_config_yaml(
+            &config_log.stdout,
+            &secret_env_keys,
+          );
+        res.logs.push(config_log);
+      }
+
+      if stack.config.run_build {
+        let build_extra_args =
+          format_extra_args(&stack.config.build_extra_args);
+        let command = format!(
+          "{docker_compose} -p {project_name} -f {file_args}{env_file_args} build{build_extra_args}{service_args}",
+        );
+        let (command, wrapped) = match maybe_wrap_command(
+          command,
+          &compose_cmd_wrapper,
+          wrapper_include,
+          "build",
+        ) {
+          Ok(result) => result,
+          Err(log) => {
+            res.logs.push(log);
+            return Ok(());
+          }
+        };
+        let mode = if wrapped {
+          KomodoCommandMode::Shell
+        } else {
+          KomodoCommandMode::Standard
+        };
+        let span = info_span!("ExecuteComposeBuild");
+        let Some(log) = run_komodo_command_with_sanitization(
+          "Compose Build",
           command,
           CommandOptions::default().path(run_directory.as_path()),
+          mode,
+          &replacers,
         )
         .instrument(span)
         .await
-      } else {
-        run_komodo_standard_command(
-          "Compose Config",
-          command,
-          CommandOptions::default().path(run_directory.as_path()),
-        )
-        .instrument(span)
-        .await
-      };
-
-      if !config_log.success {
-        config_log.sanitize(&replacers);
-        res.logs.push(config_log);
-        return Ok(res);
-      }
-
-      // attach sanitized merged config in any case.
-      res.merged_config =
-        svi::replace_in_string(&config_log.stdout, &replacers).into();
-
-      if let Err(e) = parse_compose_services(
-        &config_log.stdout,
-        &project_name,
-        &mut res.services,
-      ) {
-        config_log.sanitize(&replacers);
-        res.logs.push(config_log);
-        res.logs.push(Log::error(
-          "Parse Compose Services",
-          format_serror(&e.into()),
-        ));
-        // early return with error log
-        // including sanitized config log
-        // and parse error for clear view
-        // of what the issue might be.
-        return Ok(res);
-      }
-
-      config_log.sanitize(&replacers);
-      res.logs.push(config_log);
-    }
-
-    if stack.config.run_build {
-      let build_extra_args =
-        format_extra_args(&stack.config.build_extra_args);
-      let command = format!(
-        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} build{build_extra_args}{service_args}",
-      );
-      let (command, wrapped) = match maybe_wrap_command(
-        command,
-        &compose_cmd_wrapper,
-        wrapper_include,
-        "build",
-      ) {
-        Ok(result) => result,
-        Err(log) => {
-          res.logs.push(log);
-          return Ok(res);
-        }
-      };
-      let mode = if wrapped {
-        KomodoCommandMode::Shell
-      } else {
-        KomodoCommandMode::Standard
-      };
-      let span = info_span!("ExecuteComposeBuild");
-      let Some(log) = run_komodo_command_with_sanitization(
-        "Compose Build",
-        command,
-        CommandOptions::default().path(run_directory.as_path()),
-        mode,
-        &replacers,
-      )
-      .instrument(span)
-      .await
-      else {
-        unreachable!()
-      };
-      res.logs.push(log);
-      if !all_logs_success(&res.logs) {
-        return Ok(res);
-      }
-    }
-
-    // Pull images before deploying
-    if stack.config.auto_pull {
-      // Pull images before destroying to minimize downtime.
-      // If this fails, do not continue.
-      let command = format!(
-        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
-      );
-      let (command, wrapped) = match maybe_wrap_command(
-        command,
-        &compose_cmd_wrapper,
-        wrapper_include,
-        "pull",
-      ) {
-        Ok(result) => result,
-        Err(log) => {
-          res.logs.push(log);
-          return Ok(res);
-        }
-      };
-      let mode = if wrapped {
-        KomodoCommandMode::Shell
-      } else {
-        KomodoCommandMode::Standard
-      };
-      let span = info_span!("RunComposePull");
-      let Some(log) = run_komodo_command_with_sanitization(
-        "Compose Pull",
-        command,
-        CommandOptions::default().path(run_directory.as_path()),
-        mode,
-        &replacers,
-      )
-      .instrument(span)
-      .await
-      else {
-        unreachable!()
-      };
-      res.logs.push(log);
-      if !all_logs_success(&res.logs) {
-        return Ok(res);
-      }
-    }
-
-    if stack.config.destroy_before_deploy
-      // Also check if project name changed, which also requires taking down.
-      || last_project_name != project_name
-    {
-      // Take down the existing compose stack.
-      // This one tries to use the previously deployed service name, to ensure the right stack is taken down.
-      compose_down(&last_project_name, &services, &mut res)
-        .await
-        .context("Failed to take down existing compose stack")?;
-    }
-
-    // Run compose up
-    let extra_args = format_extra_args(&stack.config.extra_args);
-    let command = format!(
-      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{service_args}",
-    );
-    let (command, _) = match maybe_wrap_command(
-      command,
-      &compose_cmd_wrapper,
-      wrapper_include,
-      "up",
-    ) {
-      Ok(result) => result,
-      Err(log) => {
+        else {
+          unreachable!()
+        };
         res.logs.push(log);
-        return Ok(res);
+        if !all_logs_success(&res.logs) {
+          return Ok(());
+        }
       }
-    };
 
-    let span = info_span!("ExecuteComposeUp");
-    let Some(log) = run_komodo_command_with_sanitization(
-      "Compose Up",
-      command,
-      CommandOptions::default().path(run_directory.as_path()),
-      KomodoCommandMode::Shell,
-      &replacers,
-    )
-    .instrument(span)
-    .await
-    else {
-      unreachable!()
-    };
+      // Pull images before deploying
+      if stack.config.auto_pull {
+        let command = format!(
+          "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
+        );
+        let (command, wrapped) = match maybe_wrap_command(
+          command,
+          &compose_cmd_wrapper,
+          wrapper_include,
+          "pull",
+        ) {
+          Ok(result) => result,
+          Err(log) => {
+            res.logs.push(log);
+            return Ok(());
+          }
+        };
+        let mode = if wrapped {
+          KomodoCommandMode::Shell
+        } else {
+          KomodoCommandMode::Standard
+        };
+        let span = info_span!("RunComposePull");
+        let Some(log) = run_komodo_command_with_sanitization(
+          "Compose Pull",
+          command,
+          CommandOptions::default().path(run_directory.as_path()),
+          mode,
+          &replacers,
+        )
+        .instrument(span)
+        .await
+        else {
+          unreachable!()
+        };
+        res.logs.push(log);
+        if !all_logs_success(&res.logs) {
+          return Ok(());
+        }
+      }
 
-    res.deployed = log.success;
-    res.logs.push(log);
+      if stack.config.destroy_before_deploy
+        || last_project_name != project_name
+      {
+        compose_down(&last_project_name, &services, &mut res)
+          .await
+          .context("Failed to take down existing compose stack")?;
+        if last_project_name != project_name {
+          let _ = crate::secret_lifecycle::purge_stack_secret_runtime(
+            &last_project_name,
+          )
+          .await;
+        }
+      }
+
+      // Run compose up
+      let extra_args = format_extra_args(&stack.config.extra_args);
+      let command = format!(
+        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{service_args}",
+      );
+      let (command, _) = match maybe_wrap_command(
+        command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "up",
+      ) {
+        Ok(result) => result,
+        Err(log) => {
+          res.logs.push(log);
+          return Ok(());
+        }
+      };
+
+      let span = info_span!("ExecuteComposeUp");
+      let Some(log) = run_komodo_command_with_sanitization(
+        "Compose Up",
+        command,
+        CommandOptions::default().path(run_directory.as_path()),
+        KomodoCommandMode::Shell,
+        &replacers,
+      )
+      .instrument(span)
+      .await
+      else {
+        unreachable!()
+      };
+
+      res.deployed = log.success;
+      res.logs.push(log);
+
+      Ok(())
+    }
+    .await;
+
+    if let Err(e) = deploy_step_res {
+      crate::secret_lifecycle::abort_prepared_stack_secret_generation(
+        prepared_secrets,
+      )
+      .await;
+      return Err(e);
+    }
+
+    if res.deployed {
+      match crate::secret_lifecycle::commit_stack_secret_generation(
+        &project_name,
+        prepared_secrets.as_ref(),
+      )
+      .await
+      {
+        Ok(active_gen) => {
+          res.active_secret_generation = active_gen;
+        }
+        Err(e) => {
+          warn!(
+            "Failed to update runtime secret manifest for stack '{project_name}': {e:#}"
+          );
+        }
+      }
+    } else {
+      crate::secret_lifecycle::abort_prepared_stack_secret_generation(
+        prepared_secrets,
+      )
+      .await;
+    }
 
     if res.deployed && !stack.config.post_deploy.is_none() {
       let post_deploy_path =
@@ -817,7 +975,9 @@ impl Resolve<crate::api::Args> for ComposeExecution {
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
     let ComposeExecution {
-      project, command, ..
+      project,
+      command,
+      cleanup_runtime_secrets,
     } = self;
     let docker_compose = docker_compose();
     let log = run_komodo_standard_command(
@@ -826,6 +986,16 @@ impl Resolve<crate::api::Args> for ComposeExecution {
       CommandOptions::default(),
     )
     .await;
+    if log.success && cleanup_runtime_secrets {
+      if let Err(e) =
+        crate::secret_lifecycle::purge_stack_secret_runtime(&project)
+          .await
+      {
+        warn!(
+          "Failed to purge runtime secrets for stack '{project}' after compose command: {e:#}"
+        );
+      }
+    }
     Ok(log)
   }
 }
@@ -854,6 +1024,10 @@ impl Resolve<crate::api::Args> for ComposeRun {
       git_token,
       registry_token,
       mut replacers,
+      external_env_vars,
+      service_env_bindings,
+      file_secret_bindings,
+      secret_env_keys: _,
       service,
       command,
       no_tty,
@@ -865,8 +1039,21 @@ impl Resolve<crate::api::Args> for ComposeRun {
       user,
       entrypoint,
       pull,
-      ..
     } = self;
+
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    let has_external_secrets = !external_env_vars.is_empty()
+      || !service_env_bindings.is_empty()
+      || !file_secret_bindings.is_empty();
+    if has_external_secrets && !compose_cmd_wrapper.is_empty() {
+      return Ok(Log::error(
+        "Secret Provider Conflict",
+        String::from(
+          "Cannot execute Stack with both external Secret Providers and compose_cmd_wrapper configured.",
+        ),
+      ));
+    }
 
     let mut interpolator =
       Interpolator::new(None, &periphery_config().secrets);
@@ -881,6 +1068,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
       repo.as_ref(),
       git_token,
       replacers.clone(),
+      &external_env_vars,
       &mut res,
       args,
     )
@@ -904,7 +1092,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
 
     let docker_compose = docker_compose();
 
-    let file_args = if stack.config.file_paths.is_empty() {
+    let mut file_args = if stack.config.file_paths.is_empty() {
       String::from("compose.yaml")
     } else {
       stack.config.file_paths.join(" -f ")
@@ -917,13 +1105,34 @@ impl Resolve<crate::api::Args> for ComposeRun {
 
     let project_name = stack.project_name(true);
 
+    let prepared_secrets =
+      match crate::secret_lifecycle::prepare_stack_secret_generation(
+        &project_name,
+        &service_env_bindings,
+        &file_secret_bindings,
+      )
+      .await
+      {
+        Ok(p) => p,
+        Err(e) => {
+          return Ok(Log::error(
+            "Prepare External Secrets",
+            format_serror(&e.into()),
+          ));
+        }
+      };
+    if let Some(prep) = &prepared_secrets {
+      write!(
+        &mut file_args,
+        " -f {}",
+        escape(prep.override_compose_path.to_string_lossy())
+      )?;
+    }
+
     // Comes straight off the request and interpolated into a
     // command string which is handed to `bash -c`, so must be escaped.
     let service = escape(Cow::Borrowed(&service));
 
-    // Parse wrapper configuration
-    let compose_cmd_wrapper =
-      parse_multiline_command(&stack.config.compose_cmd_wrapper);
     // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
     static DEFAULT_INCLUDE: LazyLock<Vec<String>> =
       LazyLock::new(|| vec![String::from("up")]);
@@ -947,7 +1156,13 @@ impl Resolve<crate::api::Args> for ComposeRun {
         "pull",
       ) {
         Ok(result) => result,
-        Err(log) => return Ok(log),
+        Err(log) => {
+          crate::secret_lifecycle::abort_prepared_stack_secret_generation(
+            prepared_secrets,
+          )
+          .await;
+          return Ok(log);
+        }
       };
       let mode = if wrapped {
         KomodoCommandMode::Shell
@@ -966,6 +1181,10 @@ impl Resolve<crate::api::Args> for ComposeRun {
         unreachable!()
       };
       if !pull_log.success {
+        crate::secret_lifecycle::abort_prepared_stack_secret_generation(
+          prepared_secrets,
+        )
+        .await;
         return Ok(pull_log);
       }
     }
@@ -1029,7 +1248,13 @@ impl Resolve<crate::api::Args> for ComposeRun {
       "run",
     ) {
       Ok(result) => result,
-      Err(log) => return Ok(log),
+      Err(log) => {
+        crate::secret_lifecycle::abort_prepared_stack_secret_generation(
+          prepared_secrets,
+        )
+        .await;
+        return Ok(log);
+      }
     };
 
     let span = info_span!("RunComposeRun", run_command);
@@ -1045,6 +1270,11 @@ impl Resolve<crate::api::Args> for ComposeRun {
     else {
       unreachable!()
     };
+
+    crate::secret_lifecycle::abort_prepared_stack_secret_generation(
+      prepared_secrets,
+    )
+    .await;
 
     Ok(log)
   }

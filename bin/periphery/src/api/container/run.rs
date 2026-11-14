@@ -16,8 +16,9 @@ use komodo_client::entities::{
   update::Log,
 };
 use mogh_resolver::Resolve;
-use periphery_client::api::container::{
-  RemoveContainer, RunContainer,
+use periphery_client::api::{
+  ExternalEnvVar,
+  container::{RemoveContainer, RunContainer},
 };
 use tracing::Instrument;
 
@@ -25,7 +26,8 @@ use crate::{
   config::periphery_config,
   docker::{docker_login, pull_image},
   helpers::{
-    push_conversions, push_environment, push_extra_args, push_labels,
+    push_conversions, push_environment, push_external_environment,
+    push_extra_args, push_labels,
   },
 };
 
@@ -51,7 +53,7 @@ impl Resolve<crate::api::Args> for RunContainer {
       stop_time,
       registry_token,
       mut replacers,
-      ..
+      external_env_vars,
     } = self;
 
     let mut interpolator =
@@ -94,6 +96,12 @@ impl Resolve<crate::api::Args> for RunContainer {
     let _ = pull_image(image).await;
     debug!("image pulled");
 
+    // Validate and build the complete `docker run` command BEFORE removing the existing container
+    // so any validation/escaping failure fails closed without taking down the running container.
+    let command =
+      docker_run_command(&deployment, image, &external_env_vars)
+        .context("Unable to generate valid docker run command")?;
+
     // Remove the existing container under the previously deployed name,
     // in case the name configuration changed since the last deploy.
     let _ = (RemoveContainer {
@@ -104,9 +112,6 @@ impl Resolve<crate::api::Args> for RunContainer {
     .resolve(args)
     .await;
     debug!("container stopped and removed");
-
-    let command = docker_run_command(&deployment, image)
-      .context("Unable to generate valid docker run command")?;
 
     let span = info_span!("ExecuteDockerRun");
     let Some(log) = run_komodo_command_with_sanitization(
@@ -131,6 +136,7 @@ impl Resolve<crate::api::Args> for RunContainer {
 fn docker_run_command(
   deployment: &Deployment,
   image: &str,
+  external_env_vars: &[ExternalEnvVar],
 ) -> anyhow::Result<String> {
   let name = deployment.custom_name();
   let DeploymentConfig {
@@ -159,11 +165,18 @@ fn docker_run_command(
     "-v",
   )?;
 
-  push_environment(
-    &mut res,
-    &environment_vars_from_str(environment)
-      .context("Invalid environment")?,
-  )?;
+  let external_keys: std::collections::HashSet<&str> =
+    external_env_vars
+      .iter()
+      .map(|ev| ev.variable.as_str())
+      .collect();
+  let standard_env: Vec<_> = environment_vars_from_str(environment)
+    .context("Invalid environment")?
+    .into_iter()
+    .filter(|ev| !external_keys.contains(ev.variable.as_str()))
+    .collect();
+  push_environment(&mut res, &standard_env)?;
+  push_external_environment(&mut res, external_env_vars)?;
 
   push_restart(&mut res, restart)?;
 
@@ -193,4 +206,55 @@ fn push_restart(
   };
   write!(command, " --restart {restart}")
     .context("Failed to write restart mode")
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn docker_run_command_shell_escapes_arbitrary_external_secrets_and_rejects_bad_keys()
+   {
+    let mut deployment = Deployment {
+      name: String::from("api-svc"),
+      ..Default::default()
+    };
+    deployment.config.environment =
+      String::from("PORT=8080\nDATABASE_URL=stale\n");
+
+    let tricky = "p@ss#word/123 'sq' \"dq\" $(rm -rf /) `whoami` \\slash\nline2;echo pwned";
+    let cmd = docker_run_command(
+      &deployment,
+      "alpine:3.20",
+      &[ExternalEnvVar {
+        variable: String::from("DATABASE_URL"),
+        value: String::from(tricky),
+      }],
+    )
+    .unwrap();
+
+    let argv = shlex::split(&cmd).expect("valid POSIX shell quoting");
+    assert!(argv.contains(&String::from("PORT=8080")));
+    assert!(
+      !argv.contains(&String::from("DATABASE_URL=stale")),
+      "external env must override duplicate standard key"
+    );
+    assert!(
+      argv.contains(&format!("DATABASE_URL={tricky}")),
+      "exact literal secret value must arrive as a single --env token"
+    );
+
+    // Reject invalid variable identifier before RemoveContainer
+    assert!(
+      docker_run_command(
+        &deployment,
+        "alpine:3.20",
+        &[ExternalEnvVar {
+          variable: String::from("BAD-KEY;rm"),
+          value: String::from("v"),
+        }],
+      )
+      .is_err()
+    );
+  }
 }

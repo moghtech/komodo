@@ -137,6 +137,7 @@ pub async fn pull_or_clone_stack(
 pub async fn validate_files(
   stack: &Stack,
   run_directory: &Path,
+  exclude_secret_env_file: bool,
   res: &mut DeployStackResponse,
 ) {
   let file_paths = stack
@@ -175,7 +176,26 @@ pub async fn validate_files(
     return;
   }
 
+  let stack_env_norm = {
+    let p =
+      stack.config.env_file_path.trim().trim_start_matches("./");
+    if p.is_empty() { ".env" } else { p }
+  };
+
   for (full_path, file) in file_paths {
+    let norm = file
+      .path
+      .trim()
+      .trim_start_matches("./")
+      .trim_end_matches('/');
+    if norm == ".komodo-secrets"
+      || norm.starts_with(".komodo-secrets/")
+      || (exclude_secret_env_file
+        && (norm == ".env" || norm == stack_env_norm))
+    {
+      // Do not echo resolved secret `.env` or `.komodo-secrets` plaintext back to Core!
+      continue;
+    }
     let file_contents =
       match tokio::fs::read_to_string(&full_path).await.with_context(
         || format!("Failed to read file contents at {full_path:?}"),
