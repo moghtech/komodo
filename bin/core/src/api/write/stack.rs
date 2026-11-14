@@ -985,13 +985,19 @@ pub async fn check_stack_for_update_inner(
   let stack_id = stack.id.clone();
 
   let run = async move {
-    match execute::inner_handler(
-      ExecuteRequest::DeployStack(DeployStack {
-        stack: stack.id.clone(),
-        services: deploy_services,
-        stop_time: None,
-      }),
-      auto_redeploy_user().to_owned(),
+    match crate::secret_provider::authz::with_execution_subject(
+      crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+        actor: komodo_client::entities::secret_provider::SecretExecutionActor::AutoRedeploy,
+        actor_resource_id: stack.id.clone(),
+      },
+      execute::inner_handler(
+        ExecuteRequest::DeployStack(DeployStack {
+          stack: stack.id.clone(),
+          services: deploy_services,
+          stop_time: None,
+        }),
+        auto_redeploy_user().to_owned(),
+      ),
     )
     .await
     {

@@ -21,6 +21,7 @@ use crate::{
 use super::{
   SystemCommand, Version,
   resource::{Resource, ResourceListItem, ResourceQuery},
+  secret_provider::{BuildSecretBinding, SecretSource},
 };
 
 #[cfg(feature = "utoipa")]
@@ -539,6 +540,22 @@ pub struct BuildConfig {
   ))]
   #[builder(default)]
   pub labels: String,
+
+  /// External secret provider sources scoped for this Build.
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  #[builder(default)]
+  pub secret_sources: Vec<SecretSource>,
+
+  /// Structured external secret bindings mounted via BuildKit `--secret` (never `--build-arg` or `ENV`).
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  #[builder(default)]
+  pub secret_bindings: Vec<BuildSecretBinding>,
+
+  /// When enabled, passes a fresh non-sensitive `--build-arg KOMODO_SECRET_CACHE_NONCE=<uuid>`
+  /// to explicitly invalidate BuildKit `RUN` layer cache when secret-dependent steps must re-execute.
+  #[serde(default)]
+  #[builder(default)]
+  pub secret_cache_bust: bool,
 }
 
 impl BuildConfig {
@@ -632,6 +649,9 @@ impl Default for BuildConfig {
       webhook_secret: Default::default(),
       dockerfile: Default::default(),
       files_on_host: Default::default(),
+      secret_sources: Default::default(),
+      secret_bindings: Default::default(),
+      secret_cache_bust: Default::default(),
     }
   }
 }

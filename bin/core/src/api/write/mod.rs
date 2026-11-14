@@ -233,6 +233,9 @@ pub fn router() -> Router {
 
 async fn variant_handler(
   user: Extension<User>,
+  subject: Option<
+    Extension<crate::secret_provider::authz::ExecutionSubjectContext>,
+  >,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
 ) -> mogh_error::Result<axum::response::Response> {
@@ -240,16 +243,25 @@ async fn variant_handler(
     "type": variant,
     "params": params,
   }))?;
-  handler(user, Json(req)).await
+  handler(user, subject, Json(req)).await
 }
 
 async fn handler(
   Extension(user): Extension<User>,
+  subject: Option<
+    Extension<crate::secret_provider::authz::ExecutionSubjectContext>,
+  >,
   Json(request): Json<WriteRequest>,
 ) -> mogh_error::Result<axum::response::Response> {
-  let res = tokio::spawn(task(request, user))
-    .await
-    .context("failure in spawned task");
+  let subj = subject.map(|Extension(s)| s);
+  let res = tokio::spawn(
+    crate::secret_provider::authz::maybe_with_execution_subject(
+      subj,
+      task(request, user),
+    ),
+  )
+  .await
+  .context("failure in spawned task");
 
   res?
 }

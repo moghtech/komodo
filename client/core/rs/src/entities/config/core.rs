@@ -15,7 +15,9 @@ use mogh_auth_client::config::NamedOauthConfig;
 use serde::Deserialize;
 
 use crate::{
-  deserializers::option_string_list_deserializer,
+  deserializers::{
+    option_string_list_deserializer, string_list_deserializer,
+  },
   entities::{
     Timelength,
     config::DatabaseConfig,
@@ -311,6 +313,19 @@ pub struct Env {
   pub komodo_repo_directory: Option<PathBuf>,
   /// Override `action_directory`
   pub komodo_action_directory: Option<PathBuf>,
+
+  /// Dedicated 32-byte master encryption key (Base64/hex or `file:/path`) for Secret Provider credentials.
+  pub komodo_secret_provider_encryption_key: Option<String>,
+  /// Load `secret_provider_encryption_key` from file.
+  pub komodo_secret_provider_encryption_key_file: Option<PathBuf>,
+  /// Optional previous 32-byte encryption keys kept in keyring for rotation decryption.
+  pub komodo_secret_provider_previous_encryption_keys:
+    Option<Vec<String>>,
+  /// Load `secret_provider_previous_encryption_keys` from file.
+  pub komodo_secret_provider_previous_encryption_keys_file:
+    Option<PathBuf>,
+  /// Controlled test-only flag allowing Secret Providers to target loopback (`127.0.0.1` / `::1`).
+  pub komodo_secret_provider_allow_loopback: Option<bool>,
 }
 
 fn default_core_config_paths() -> Vec<PathBuf> {
@@ -759,6 +774,27 @@ pub struct CoreConfig {
   #[serde(default, skip_serializing_if = "HashMap::is_empty")]
   pub secrets: HashMap<String, String>,
 
+  /// Dedicated 32-byte master encryption key (Base64, URL-safe Base64, 64-char hex,
+  /// optional `<key_id>:<encoded_key>`, or `file:/path/to/key`) used to encrypt
+  /// external `SecretProvider` bootstrap credentials with AES-256-GCM at rest.
+  /// Must be distinct from `jwt_secret` and never stored in MongoDB.
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  pub secret_provider_encryption_key: String,
+
+  /// Previous 32-byte encryption keys retained during key rotation so existing
+  /// `SecretProvider` credentials can be decrypted and re-encrypted under the active key.
+  #[serde(
+    default,
+    deserialize_with = "string_list_deserializer",
+    skip_serializing_if = "Vec::is_empty"
+  )]
+  pub secret_provider_previous_encryption_keys: Vec<String>,
+
+  /// Controlled test/harness flag permitting external Secret Providers to resolve
+  /// loopback addresses (`127.0.0.0/8`, `::1`). Defaults to `false`.
+  #[serde(default)]
+  pub secret_provider_allow_loopback: bool,
+
   // =======
   // = SSL =
   // =======
@@ -998,6 +1034,9 @@ impl Default for CoreConfig {
       git_providers: Default::default(),
       image_registries: Default::default(),
       secrets: Default::default(),
+      secret_provider_encryption_key: Default::default(),
+      secret_provider_previous_encryption_keys: Default::default(),
+      secret_provider_allow_loopback: Default::default(),
       ssl_enabled: Default::default(),
       ssl_key_file: default_ssl_key_file(),
       ssl_cert_file: default_ssl_cert_file(),
@@ -1119,6 +1158,27 @@ impl CoreConfig {
         .into_iter()
         .map(|(id, secret)| (id, empty_or_redacted(&secret)))
         .collect(),
+      secret_provider_encryption_key: if self
+        .secret_provider_encryption_key
+        .starts_with("file:")
+      {
+        self.secret_provider_encryption_key.clone()
+      } else {
+        empty_or_redacted(&config.secret_provider_encryption_key)
+      },
+      secret_provider_previous_encryption_keys: config
+        .secret_provider_previous_encryption_keys
+        .into_iter()
+        .map(|key| {
+          if key.starts_with("file:") {
+            key
+          } else {
+            empty_or_redacted(&key)
+          }
+        })
+        .collect(),
+      secret_provider_allow_loopback: config
+        .secret_provider_allow_loopback,
       git_providers: config
         .git_providers
         .into_iter()

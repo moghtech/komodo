@@ -552,13 +552,19 @@ pub async fn check_deployment_for_update_inner(
     let image = image.clone();
 
     let run = async move {
-      match execute::inner_handler(
-        ExecuteRequest::Deploy(Deploy {
-          deployment: name.clone(),
-          stop_signal: None,
-          stop_time: None,
-        }),
-        auto_redeploy_user().to_owned(),
+      match crate::secret_provider::authz::with_execution_subject(
+        crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+          actor: komodo_client::entities::secret_provider::SecretExecutionActor::AutoRedeploy,
+          actor_resource_id: id.clone(),
+        },
+        execute::inner_handler(
+          ExecuteRequest::Deploy(Deploy {
+            deployment: name.clone(),
+            stop_signal: None,
+            stop_time: None,
+          }),
+          auto_redeploy_user().to_owned(),
+        ),
       )
       .await
       {

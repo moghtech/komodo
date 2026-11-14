@@ -93,20 +93,26 @@ pub async fn handle_build_webhook<B: super::ExtractBranch>(
   }
 
   let user = git_webhook_user().to_owned();
+  let build_id = build.id.clone();
   let run = ExecuteRequest::RunBuild(RunBuild { build: build.id });
   let update = init_execution_update(&run, &user).await?;
   let ExecuteRequest::RunBuild(run) = run else {
     unreachable!()
   };
 
-  run
-    .resolve(&ExecuteArgs {
+  crate::secret_provider::authz::with_execution_subject(
+    crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+      actor: komodo_client::entities::secret_provider::SecretExecutionActor::Webhook,
+      actor_resource_id: build_id,
+    },
+    run.resolve(&ExecuteArgs {
       user,
       update,
       task_id: Uuid::new_v4(),
-    })
-    .await
-    .map_err(|e| e.error)?;
+    }),
+  )
+  .await
+  .map_err(|e| e.error)?;
 
   Ok(())
 }
@@ -271,7 +277,15 @@ async fn handle_repo_webhook_inner<
     return Ok(());
   }
 
-  E::resolve(repo).await
+  let repo_id = repo.id.clone();
+  crate::secret_provider::authz::with_execution_subject(
+    crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+      actor: komodo_client::entities::secret_provider::SecretExecutionActor::Webhook,
+      actor_resource_id: repo_id,
+    },
+    E::resolve(repo),
+  )
+  .await
 }
 
 // =======
@@ -404,7 +418,16 @@ pub async fn handle_stack_webhook_inner<
     return Ok(());
   }
 
-  E::resolve(stack).await.map_err(|e| e.error)
+  let stack_id = stack.id.clone();
+  crate::secret_provider::authz::with_execution_subject(
+    crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+      actor: komodo_client::entities::secret_provider::SecretExecutionActor::Webhook,
+      actor_resource_id: stack_id,
+    },
+    E::resolve(stack),
+  )
+  .await
+  .map_err(|e| e.error)
 }
 
 // ======
@@ -519,7 +542,15 @@ async fn handle_sync_webhook_inner<
     return Ok(());
   }
 
-  E::resolve(sync).await
+  let sync_id = sync.id.clone();
+  crate::secret_provider::authz::with_execution_subject(
+    crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+      actor: komodo_client::entities::secret_provider::SecretExecutionActor::Webhook,
+      actor_resource_id: sync_id,
+    },
+    E::resolve(sync),
+  )
+  .await
 }
 
 // ===========
@@ -561,6 +592,7 @@ pub async fn handle_procedure_webhook<B: super::ExtractBranch>(
   }
 
   let user = git_webhook_user().to_owned();
+  let proc_id = procedure.id.clone();
   let req = ExecuteRequest::RunProcedure(RunProcedure {
     procedure: procedure.id,
   });
@@ -568,14 +600,19 @@ pub async fn handle_procedure_webhook<B: super::ExtractBranch>(
   let ExecuteRequest::RunProcedure(req) = req else {
     unreachable!()
   };
-  req
-    .resolve(&ExecuteArgs {
+  crate::secret_provider::authz::with_execution_subject(
+    crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+      actor: komodo_client::entities::secret_provider::SecretExecutionActor::Webhook,
+      actor_resource_id: proc_id,
+    },
+    req.resolve(&ExecuteArgs {
       user,
       update,
       task_id: Uuid::new_v4(),
-    })
-    .await
-    .map_err(|e| e.error)?;
+    }),
+  )
+  .await
+  .map_err(|e| e.error)?;
   Ok(())
 }
 
@@ -629,6 +666,7 @@ pub async fn handle_action_webhook<B: super::ExtractBranch>(
     return Err(anyhow!("Something is wrong with serde_json..."));
   };
 
+  let action_id = action.id.clone();
   let req = ExecuteRequest::RunAction(RunAction {
     action: action.id,
     args: args.into(),
@@ -637,13 +675,18 @@ pub async fn handle_action_webhook<B: super::ExtractBranch>(
   let ExecuteRequest::RunAction(req) = req else {
     unreachable!()
   };
-  req
-    .resolve(&ExecuteArgs {
+  crate::secret_provider::authz::with_execution_subject(
+    crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+      actor: komodo_client::entities::secret_provider::SecretExecutionActor::Webhook,
+      actor_resource_id: action_id,
+    },
+    req.resolve(&ExecuteArgs {
       user,
       update,
       task_id: Uuid::new_v4(),
-    })
-    .await
-    .map_err(|e| e.error)?;
+    }),
+  )
+  .await
+  .map_err(|e| e.error)?;
   Ok(())
 }

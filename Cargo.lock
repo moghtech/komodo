@@ -1482,6 +1482,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78c8292055d1c1df0cce5d180393dc8cce0abec0a7102adb6c7b1eef6016d60a"
 dependencies = [
  "generic-array",
+ "rand_core 0.6.4",
  "typenum",
 ]
 
@@ -2254,7 +2255,6 @@ dependencies = [
  "komodo_client",
  "mogh_cache",
  "tokio",
- "urlencoding",
 ]
 
 [[package]]
@@ -2899,7 +2899,6 @@ name = "interpolate"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "formatting",
  "komodo_client",
  "svi",
 ]
@@ -3130,6 +3129,7 @@ dependencies = [
 name = "komodo_core"
 version = "0.0.0"
 dependencies = [
+ "aes-gcm",
  "anyhow",
  "arc-swap",
  "async_timing_util",
@@ -3173,6 +3173,7 @@ dependencies = [
  "mogh_validations",
  "partial_derive2",
  "periphery_client",
+ "rand 0.10.2",
  "regex",
  "reqwest 0.13.4",
  "rustls 0.23.43",

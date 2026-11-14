@@ -401,7 +401,14 @@ impl Resolve<ExecuteArgs> for RunSync {
     );
 
     // Execute the deploy cache
-    deploy_from_cache(deploy_cache, &mut update.logs).await;
+    crate::secret_provider::authz::with_execution_subject(
+      crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+        actor: komodo_client::entities::secret_provider::SecretExecutionActor::ResourceSync,
+        actor_resource_id: sync.id.clone(),
+      },
+      deploy_from_cache(deploy_cache, &mut update.logs),
+    )
+    .await;
 
     let db = db_client();
 

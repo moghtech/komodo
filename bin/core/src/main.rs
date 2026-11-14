@@ -22,6 +22,7 @@ mod permission;
 mod report;
 mod resource;
 mod schedule;
+mod secret_provider;
 mod stack;
 mod startup;
 mod state;

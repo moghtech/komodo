@@ -1,28 +1,36 @@
+use std::str::FromStr;
+
 use anyhow::{Context, anyhow};
-use database::mungos::mongodb::bson::doc;
-use komodo_client::entities::{komodo_timestamp, user::User};
+use database::mungos::mongodb::bson::{doc, oid::ObjectId};
+use komodo_client::entities::{
+  ResourceTarget, komodo_timestamp,
+  secret_provider::SecretExecutionActor,
+  user::{User, action_user},
+};
 use mogh_auth_server::RequestAuthentication;
 
 use crate::{
-  auth::JWT_PROVIDER, helpers::query::get_user, state::db_client,
+  auth::JWT_PROVIDER, helpers::query::get_user,
+  secret_provider::authz::ExecutionSubjectContext, state::db_client,
 };
 
-pub async fn extract_user_from_auth(
+pub async fn extract_user_and_subject_from_auth(
   auth: RequestAuthentication,
   require_user_enabled: bool,
-) -> anyhow::Result<User> {
-  let user_id = match auth {
-    RequestAuthentication::UserId(user_id) => user_id,
+) -> anyhow::Result<(User, Option<ExecutionSubjectContext>)> {
+  let (user_id, subject) = match auth {
+    RequestAuthentication::UserId(user_id) => (user_id, None),
     RequestAuthentication::KeyAndSecret { key, secret } => {
-      auth_api_key_get_user_id(&key, &secret).await?
+      auth_api_key_get_user_and_subject(&key, &secret).await?
     }
     RequestAuthentication::PublicKey(_) => todo!(),
   };
-  if require_user_enabled {
-    check_enabled(&user_id).await
+  let user = if require_user_enabled {
+    check_enabled(&user_id).await?
   } else {
-    get_user(&user_id).await
-  }
+    get_user(&user_id).await?
+  };
+  Ok((user, subject))
 }
 
 pub async fn auth_jwt_check_enabled(
@@ -47,6 +55,15 @@ pub async fn auth_api_key_get_user_id(
   key: &str,
   secret: &str,
 ) -> anyhow::Result<String> {
+  auth_api_key_get_user_and_subject(key, secret)
+    .await
+    .map(|(uid, _)| uid)
+}
+
+pub async fn auth_api_key_get_user_and_subject(
+  key: &str,
+  secret: &str,
+) -> anyhow::Result<(String, Option<ExecutionSubjectContext>)> {
   let key = db_client()
     .api_keys
     .find_one(doc! { "key": key })
@@ -65,8 +82,32 @@ pub async fn auth_api_key_get_user_id(
   if bcrypt::verify(secret, &key.secret)
     .map_err(|_| anyhow!("Invalid user credentials"))?
   {
-    // secret matches
-    Ok(key.user_id)
+    // If this is an ephemeral Action API key (`user_id == action_user().id`),
+    // resolve the Action ID from the originating Update (`key.name == update.id`).
+    let subject = if key.user_id == action_user().id {
+      let action_id = if let Ok(oid) = ObjectId::from_str(&key.name) {
+        db_client()
+          .updates
+          .find_one(doc! { "_id": oid })
+          .await
+          .ok()
+          .flatten()
+          .and_then(|u| match u.target {
+            ResourceTarget::Action(id) => Some(id),
+            _ => None,
+          })
+          .unwrap_or_default()
+      } else {
+        String::new()
+      };
+      Some(ExecutionSubjectContext::SystemActor {
+        actor: SecretExecutionActor::Action,
+        actor_resource_id: action_id,
+      })
+    } else {
+      None
+    };
+    Ok((key.user_id, subject))
   } else {
     // secret mismatch
     Err(anyhow!("Invalid user credentials"))

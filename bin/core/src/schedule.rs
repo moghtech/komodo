@@ -105,13 +105,18 @@ pub fn spawn_schedule_executor() {
                     unreachable!()
                   };
 
-                  if let Err(e) = request
-                    .resolve(&ExecuteArgs {
+                  if let Err(e) = crate::secret_provider::authz::with_execution_subject(
+                    crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+                      actor: komodo_client::entities::secret_provider::SecretExecutionActor::Schedule,
+                      actor_resource_id: id.clone(),
+                    },
+                    request.resolve(&ExecuteArgs {
                       user: action_user().to_owned(),
                       update,
                       task_id: Uuid::new_v4(),
-                    })
-                    .await
+                    }),
+                  )
+                  .await
                   {
                     warn!(
                       "Scheduled action run on {id} failed | {e:?}"
@@ -176,13 +181,18 @@ pub fn spawn_schedule_executor() {
                   else {
                     unreachable!()
                   };
-                  if let Err(e) = request
-                    .resolve(&ExecuteArgs {
+                  if let Err(e) = crate::secret_provider::authz::with_execution_subject(
+                    crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+                      actor: komodo_client::entities::secret_provider::SecretExecutionActor::Schedule,
+                      actor_resource_id: id.clone(),
+                    },
+                    request.resolve(&ExecuteArgs {
                       user: procedure_user().to_owned(),
                       update,
                       task_id: Uuid::new_v4(),
-                    })
-                    .await
+                    }),
+                  )
+                  .await
                   {
                     warn!(
                       "Scheduled procedure run on {id} failed | {e:?}"

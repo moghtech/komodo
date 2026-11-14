@@ -298,6 +298,9 @@ pub fn router() -> Router {
 
 async fn variant_handler(
   user: Extension<User>,
+  subject: Option<
+    Extension<crate::secret_provider::authz::ExecutionSubjectContext>,
+  >,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
 ) -> mogh_error::Result<axum::response::Response> {
@@ -305,11 +308,14 @@ async fn variant_handler(
     "type": variant,
     "params": params,
   }))?;
-  handler(user, Json(req)).await
+  handler(user, subject, Json(req)).await
 }
 
 async fn handler(
   Extension(user): Extension<User>,
+  subject: Option<
+    Extension<crate::secret_provider::authz::ExecutionSubjectContext>,
+  >,
   Json(request): Json<ReadRequest>,
 ) -> mogh_error::Result<axum::response::Response> {
   let req_id = Uuid::new_v4();
@@ -326,7 +332,12 @@ async fn handler(
     "READ REQUEST",
   );
 
-  let res = request.resolve(&ReadArgs { user }).await;
+  let res =
+    crate::secret_provider::authz::maybe_with_execution_subject(
+      subject.map(|Extension(s)| s),
+      request.resolve(&ReadArgs { user }),
+    )
+    .await;
 
   if let Err(e) = &res {
     trace!(

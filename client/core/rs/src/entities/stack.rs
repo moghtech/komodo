@@ -35,6 +35,7 @@ use super::{
   FileContents, SystemCommand,
   docker::container::ContainerListItem,
   resource::{Resource, ResourceListItem, ResourceQuery},
+  secret_provider::{SecretSource, StackSecretBinding},
 };
 
 #[cfg(feature = "utoipa")]
@@ -674,6 +675,17 @@ pub struct StackConfig {
   ))]
   #[builder(default)]
   pub environment: String,
+
+  /// External secret provider sources scoped for this Stack.
+  /// Stores provider references and remote scope selectors only — never secret values.
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  #[builder(default)]
+  pub secret_sources: Vec<SecretSource>,
+
+  /// Structured external secret bindings for Compose `.env`, service environment, or Compose file secrets.
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  #[builder(default)]
+  pub secret_bindings: Vec<StackSecretBinding>,
 }
 
 impl StackConfig {
@@ -764,6 +776,8 @@ impl Default for StackConfig {
       webhook_force_deploy: Default::default(),
       send_alerts: default_send_alerts(),
       links: Default::default(),
+      secret_sources: Default::default(),
+      secret_bindings: Default::default(),
     }
   }
 }

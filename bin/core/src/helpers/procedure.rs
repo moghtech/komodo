@@ -203,16 +203,31 @@ async fn execute_execution(
         unreachable!()
       };
       let update_id = update.id.clone();
+      let proc_subject = match crate::secret_provider::authz::current_execution_subject() {
+        Some(
+          s @ crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+            actor: komodo_client::entities::secret_provider::SecretExecutionActor::Schedule
+              | komodo_client::entities::secret_provider::SecretExecutionActor::Webhook,
+            ..
+          },
+        ) => s,
+        _ => crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+          actor: komodo_client::entities::secret_provider::SecretExecutionActor::Procedure,
+          actor_resource_id: parent_id.to_string(),
+        },
+      };
       handle_resolve_result(
-        req
-          .resolve(&ExecuteArgs {
+        crate::secret_provider::authz::with_execution_subject(
+          proc_subject,
+          req.resolve(&ExecuteArgs {
             user,
             update,
             task_id,
-          })
-          .await
-          .map_err(|e| e.error)
-          .context(concat!("Failed at ", stringify!($Variant))),
+          }),
+        )
+        .await
+        .map_err(|e| e.error)
+        .context(concat!("Failed at ", stringify!($Variant))),
         &update_id,
       )
       .await?

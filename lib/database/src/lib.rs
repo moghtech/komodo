@@ -15,6 +15,10 @@ use komodo_client::entities::{
   procedure::Procedure,
   provider::{GitProviderAccount, ImageRegistryAccount},
   repo::Repo,
+  secret_provider::{
+    SecretDeploymentMetadata, SecretProvider, SecretProviderGrant,
+    StoredSecretProviderCredential,
+  },
   server::Server,
   stack::Stack,
   stats::SystemStatsRecord,
@@ -53,6 +57,12 @@ pub struct Client {
   pub variables: Collection<Variable>,
   pub git_accounts: Collection<GitProviderAccount>,
   pub registry_accounts: Collection<ImageRegistryAccount>,
+  pub secret_providers: Collection<SecretProvider>,
+  pub secret_provider_credentials:
+    Collection<StoredSecretProviderCredential>,
+  pub secret_provider_grants: Collection<SecretProviderGrant>,
+  pub secret_deployment_metadata:
+    Collection<SecretDeploymentMetadata>,
   pub updates: Collection<Update>,
   pub alerts: Collection<Alert>,
   pub stats: Collection<SystemStatsRecord>,
@@ -91,6 +101,17 @@ impl Client {
       variables: mongo_indexed::collection(&db, true).await?,
       git_accounts: mongo_indexed::collection(&db, true).await?,
       registry_accounts: registry_accounts_collection(&db).await?,
+      secret_providers: mongo_indexed::collection(&db, true).await?,
+      secret_provider_credentials: mongo_indexed::collection(
+        &db, true,
+      )
+      .await?,
+      secret_provider_grants: mongo_indexed::collection(&db, true)
+        .await?,
+      secret_deployment_metadata: mongo_indexed::collection(
+        &db, true,
+      )
+      .await?,
       updates: mongo_indexed::collection(&db, true).await?,
       alerts: mongo_indexed::collection(&db, true).await?,
       stats: mongo_indexed::collection(&db, true).await?,

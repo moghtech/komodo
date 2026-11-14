@@ -128,6 +128,12 @@ pub struct ServerConfig {
   #[partial_default(default_insecure_tls())]
   pub insecure_tls: bool,
 
+  /// Optional PEM-encoded root CA certificate(s) used to verify Periphery TLS certificates
+  /// on Core -> Periphery WSS connections when `insecure_tls = false`.
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  #[builder(default)]
+  pub ca_cert_pem: String,
+
   /// The address to use with links for containers on the server.
   /// If empty, will use the 'address' for links.
   #[serde(default)]
@@ -329,6 +335,7 @@ impl Default for ServerConfig {
     Self {
       address: Default::default(),
       insecure_tls: default_insecure_tls(),
+      ca_cert_pem: Default::default(),
       external_address: Default::default(),
       enabled: default_enabled(),
       auto_rotate_keys: default_auto_rotate_keys(),

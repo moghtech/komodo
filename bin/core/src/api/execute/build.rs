@@ -620,7 +620,9 @@ async fn handle_post_build_redeploy(build_id: &str) {
   let futures =
     redeploy_deployments
       .into_iter()
-      .map(|deployment| async move {
+      .map(|deployment| {
+        let build_origin_id = build_id.to_string();
+        async move {
         let state = get_deployment_state(&deployment.id)
           .await
           .unwrap_or_default();
@@ -637,24 +639,31 @@ async fn handle_post_build_redeploy(build_id: &str) {
             stop_time: None,
           });
           let user = auto_redeploy_user().to_owned();
-          let res = async {
-            let update = init_execution_update(&req, &user).await?;
-            Deploy {
-              deployment: deployment.id.clone(),
-              stop_signal: None,
-              stop_time: None,
-            }
-            .resolve(&ExecuteArgs {
-              user,
-              update,
-              task_id: Uuid::new_v4(),
-            })
-            .await
-          }
+          let res = crate::secret_provider::authz::with_execution_subject(
+            crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+              actor: komodo_client::entities::secret_provider::SecretExecutionActor::AutoRedeploy,
+              actor_resource_id: build_origin_id,
+            },
+            async {
+              let update = init_execution_update(&req, &user).await?;
+              Deploy {
+                deployment: deployment.id.clone(),
+                stop_signal: None,
+                stop_time: None,
+              }
+              .resolve(&ExecuteArgs {
+                user,
+                update,
+                task_id: Uuid::new_v4(),
+              })
+              .await
+            },
+          )
           .await;
           Some((deployment.id.clone(), res))
         } else {
           None
+        }
         }
       });
 
