@@ -8,7 +8,55 @@ use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::api::DeployStackResponse;
+use crate::api::{DeployStackResponse, ExternalEnvVar};
+
+/// Direct service-scoped environment variable resolved from an external Secret Provider.
+#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExternalServiceEnvBinding {
+  pub variable: String,
+  pub value: String,
+  #[serde(default)]
+  pub services: Vec<String>,
+}
+
+impl std::fmt::Debug for ExternalServiceEnvBinding {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("ExternalServiceEnvBinding")
+      .field("variable", &self.variable)
+      .field("value", &"[REDACTED]")
+      .field("services", &self.services)
+      .finish()
+  }
+}
+
+/// Runtime Compose file secret resolved from an external Secret Provider.
+#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExternalFileSecretBinding {
+  pub secret_name: String,
+  #[serde(default)]
+  pub bytes: Vec<u8>,
+  #[serde(default)]
+  pub services: Vec<String>,
+  #[serde(default)]
+  pub target_path: String,
+  #[serde(default)]
+  pub uid: String,
+  #[serde(default)]
+  pub gid: String,
+  #[serde(default)]
+  pub mode: Option<u32>,
+}
+
+impl std::fmt::Debug for ExternalFileSecretBinding {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("ExternalFileSecretBinding")
+      .field("secret_name", &self.secret_name)
+      .field("bytes_len", &self.bytes.len())
+      .field("services", &self.services)
+      .field("target_path", &self.target_path)
+      .finish()
+  }
+}
 
 //
 
@@ -23,6 +71,10 @@ pub struct GetComposeContentsOnHost {
   pub run_directory: String,
   /// Both compose files and env / additional files, all relative to run directory.
   pub file_paths: Vec<StackFileDependency>,
+  /// Relative file paths containing resolved external secrets (e.g. `.env`, `.komodo-secrets`)
+  /// that must never be returned to Core's `StackInfo`.
+  #[serde(default)]
+  pub exclude_paths: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -147,6 +199,18 @@ pub struct ComposePull {
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
+  /// Resolved external `.env` variables (never re-interpolated on Periphery).
+  #[serde(default)]
+  pub external_env_vars: Vec<ExternalEnvVar>,
+  /// Resolved external service-scoped environment bindings (`ServiceEnv`).
+  #[serde(default)]
+  pub service_env_bindings: Vec<ExternalServiceEnvBinding>,
+  /// Resolved external Compose file secret bindings (`ComposeFileSecret`).
+  #[serde(default)]
+  pub file_secret_bindings: Vec<ExternalFileSecretBinding>,
+  /// Secret-bearing env var keys for structured `merged_config` redaction.
+  #[serde(default)]
+  pub secret_env_keys: Vec<String>,
 }
 
 /// Response for [ComposePull]
@@ -182,6 +246,18 @@ pub struct ComposeUp {
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
+  /// Resolved external `.env` variables (never re-interpolated on Periphery).
+  #[serde(default)]
+  pub external_env_vars: Vec<ExternalEnvVar>,
+  /// Resolved external service-scoped environment bindings (`ServiceEnv`).
+  #[serde(default)]
+  pub service_env_bindings: Vec<ExternalServiceEnvBinding>,
+  /// Resolved external Compose file secret bindings (`ComposeFileSecret`).
+  #[serde(default)]
+  pub file_secret_bindings: Vec<ExternalFileSecretBinding>,
+  /// Secret-bearing env var keys for structured `merged_config` redaction.
+  #[serde(default)]
+  pub secret_env_keys: Vec<String>,
 }
 
 //
@@ -204,6 +280,9 @@ pub struct ComposeExecution {
   pub project: String,
   /// The command in `docker compose -p {project} {command}`
   pub command: String,
+  /// Purge all runtime secret generations and manifest for `project` after `down` succeeds.
+  #[serde(default)]
+  pub cleanup_runtime_secrets: bool,
 }
 
 //
@@ -224,6 +303,18 @@ pub struct ComposeRun {
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
+  /// Resolved external `.env` variables (never re-interpolated on Periphery).
+  #[serde(default)]
+  pub external_env_vars: Vec<ExternalEnvVar>,
+  /// Resolved external service-scoped environment bindings (`ServiceEnv`).
+  #[serde(default)]
+  pub service_env_bindings: Vec<ExternalServiceEnvBinding>,
+  /// Resolved external Compose file secret bindings (`ComposeFileSecret`).
+  #[serde(default)]
+  pub file_secret_bindings: Vec<ExternalFileSecretBinding>,
+  /// Secret-bearing env var keys for structured `merged_config` redaction.
+  #[serde(default)]
+  pub secret_env_keys: Vec<String>,
 
   /// Service to run
   pub service: String,

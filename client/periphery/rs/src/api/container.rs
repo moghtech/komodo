@@ -10,6 +10,8 @@ use komodo_client::entities::{
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
+use crate::api::ExternalEnvVar;
+
 //
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -101,6 +103,9 @@ pub struct RunContainer {
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
+  /// Resolved external container environment variables (never re-interpolated on Periphery).
+  #[serde(default)]
+  pub external_env_vars: Vec<ExternalEnvVar>,
 }
 
 //

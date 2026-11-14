@@ -73,6 +73,10 @@ pub async fn send_alert_to_alerter(
     return Ok(());
   }
 
+  crate::secret_provider::resolver::validate_alerter_no_vault_refs(
+    alerter,
+  )?;
+
   if is_in_maintenance(
     &alerter.config.maintenance_windows,
     komodo_timestamp(),

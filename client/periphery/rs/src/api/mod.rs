@@ -1,6 +1,7 @@
 use komodo_client::entities::{
-  FileContents,
+  EnvironmentVar, FileContents,
   config::{GitProvider, ImageRegistry},
+  server::PeripheryCapabilities,
   stack::{StackRemoteFileContents, StackServiceNames},
   update::Log,
 };
@@ -49,9 +50,11 @@ pub struct GetHealthResponse {}
 #[error(anyhow::Error)]
 pub struct GetVersion {}
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct GetVersionResponse {
   pub version: String,
+  #[serde(default)]
+  pub capabilities: PeripheryCapabilities,
 }
 
 //
@@ -108,4 +111,42 @@ pub struct DeployStackResponse {
   pub commit_hash: Option<String>,
   /// If its a repo based stack, will include the latest commit message
   pub commit_message: Option<String>,
+  /// Active runtime secret generation ID when external `ComposeFileSecret` or `ServiceEnv` bindings were materialized.
+  #[serde(default)]
+  pub active_secret_generation: Option<String>,
+}
+
+/// Redacted-Debug environment variable DTO used to deliver single-execution external secret values
+/// from Core to Periphery without ever printing raw values in `{:?}` debug formatting.
+#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExternalEnvVar {
+  pub variable: String,
+  pub value: String,
+}
+
+impl std::fmt::Debug for ExternalEnvVar {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("ExternalEnvVar")
+      .field("variable", &self.variable)
+      .field("value", &"[REDACTED]")
+      .finish()
+  }
+}
+
+impl From<EnvironmentVar> for ExternalEnvVar {
+  fn from(v: EnvironmentVar) -> Self {
+    Self {
+      variable: v.variable,
+      value: v.value,
+    }
+  }
+}
+
+impl From<ExternalEnvVar> for EnvironmentVar {
+  fn from(v: ExternalEnvVar) -> Self {
+    Self {
+      variable: v.variable,
+      value: v.value,
+    }
+  }
 }

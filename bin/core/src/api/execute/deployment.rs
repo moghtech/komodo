@@ -21,8 +21,9 @@ use komodo_client::{
 use mogh_cache::TimeoutCache;
 use mogh_error::AddStatusCodeError;
 use mogh_resolver::Resolve;
-use periphery_client::api;
+use periphery_client::api::{self, ExternalEnvVar};
 use reqwest::StatusCode;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
   helpers::{
@@ -34,6 +35,14 @@ use crate::{
   },
   monitor::{refresh_server_cache, refresh_swarm_cache},
   resource::{self, setup_deployment_execution},
+  secret_provider::{
+    execution::{
+      build_external_secrets_log,
+      delete_resource_deployment_metadata, merge_secret_replacers,
+      upsert_deployment_metadata,
+    },
+    resolver::resolve_deployment_secrets,
+  },
   state::action_states,
 };
 
@@ -186,21 +195,66 @@ impl Resolve<ExecuteArgs> for Deploy {
 
     // interpolate variables / secrets, returning the sanitizing replacers to send to
     // periphery so it may sanitize the final command for safe logging (avoids exposing secret values)
-    let secret_replacers = if !deployment.config.skip_secret_interp {
-      let VariablesAndSecrets { variables, secrets } =
-        get_variables_and_secrets().await?;
+    let is_swarm = matches!(swarm_or_server, SwarmOrServer::Swarm(_));
+    let VariablesAndSecrets { variables, secrets } =
+      if !deployment.config.skip_secret_interp {
+        get_variables_and_secrets().await?
+      } else {
+        Default::default()
+      };
+    let mut interpolator = Interpolator::new(
+      (!deployment.config.skip_secret_interp).then_some(&variables),
+      &secrets,
+    );
+    let resolved_ext = resolve_deployment_secrets(
+      &deployment,
+      user,
+      Some(PermissionLevel::Execute),
+      is_swarm,
+      &mut interpolator,
+      &CancellationToken::new(),
+    )
+    .await?;
 
-      let mut interpolator =
-        Interpolator::new(Some(&variables), &secrets);
+    if !deployment.config.skip_secret_interp {
+      if let Some(ext) = &resolved_ext {
+        deployment.config.environment.clear();
+        interpolator.interpolate_deployment(&mut deployment)?;
+        deployment.config.environment = ext
+          .standard_env_vars
+          .iter()
+          .map(|ev| format!("{}={}", ev.variable, ev.value))
+          .collect::<Vec<_>>()
+          .join("\n");
+      } else {
+        interpolator.interpolate_deployment(&mut deployment)?;
+      }
+      interpolator.push_logs(&mut update.logs);
+    }
+    if let Some(ext) = &resolved_ext {
+      update
+        .logs
+        .push(build_external_secrets_log(&ext.provenance));
+    }
 
-      interpolator
-        .interpolate_deployment(&mut deployment)?
-        .push_logs(&mut update.logs);
-
-      interpolator.secret_replacers
-    } else {
-      Default::default()
-    };
+    let secret_replacers = merge_secret_replacers(
+      interpolator.secret_replacers,
+      resolved_ext
+        .as_ref()
+        .map(|e| e.replacers.clone())
+        .unwrap_or_default(),
+    );
+    let external_env_vars: Vec<ExternalEnvVar> = resolved_ext
+      .as_ref()
+      .map(|ext| {
+        ext
+          .external_env_vars
+          .iter()
+          .cloned()
+          .map(ExternalEnvVar::from)
+          .collect()
+      })
+      .unwrap_or_default();
 
     update.version = version;
     update_update(update.clone()).await?;
@@ -213,7 +267,7 @@ impl Resolve<ExecuteArgs> for Deploy {
     let prev_deployed_name = deployment.info.deployed_name.clone();
     let mut deployed = false;
 
-    match swarm_or_server {
+    match &swarm_or_server {
       SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
         match swarm_request(
@@ -221,13 +275,13 @@ impl Resolve<ExecuteArgs> for Deploy {
           api::swarm::CreateSwarmService {
             deployment,
             registry_token,
-            replacers: secret_replacers.into_iter().collect(),
+            replacers: secret_replacers,
           },
         )
         .await
         {
           Ok(logs) => {
-            refresh_swarm_cache(&swarm, true).await;
+            refresh_swarm_cache(swarm, true).await;
             deployed = logs.iter().all(|log| log.success);
             update.logs.extend(logs)
           }
@@ -240,19 +294,25 @@ impl Resolve<ExecuteArgs> for Deploy {
         };
       }
       SwarmOrServer::Server(server) => {
-        match periphery_client(&server)
-          .await?
+        let periphery = periphery_client(server).await?;
+        if resolved_ext.is_some() {
+          periphery
+            .require_confidential_external_secret_transport()
+            .await?;
+        }
+        match periphery
           .request(api::container::RunContainer {
             deployment,
             stop_signal: self.stop_signal,
             stop_time: self.stop_time,
             registry_token,
-            replacers: secret_replacers.into_iter().collect(),
+            replacers: secret_replacers,
+            external_env_vars,
           })
           .await
         {
           Ok(log) => {
-            refresh_server_cache(&server, true).await;
+            refresh_server_cache(server, true).await;
             deployed = log.success;
             update.logs.push(log)
           }
@@ -263,6 +323,35 @@ impl Resolve<ExecuteArgs> for Deploy {
             );
           }
         };
+      }
+    }
+
+    if deployed
+      && let SwarmOrServer::Server(server) = &swarm_or_server
+    {
+      match &resolved_ext {
+        Some(ext) => {
+          if let Err(e) = upsert_deployment_metadata(
+            &resource::get::<Deployment>(&deployment_id).await?,
+            &server.id,
+            &fresh_name,
+            ext,
+          )
+          .await
+          {
+            warn!(
+              "Failed to persist SecretDeploymentMetadata for Deployment {} | {e:#}",
+              deployment_id
+            );
+          }
+        }
+        None => {
+          let _ = delete_resource_deployment_metadata(
+            "Deployment",
+            &deployment_id,
+          )
+          .await;
+        }
       }
     }
 
@@ -1024,8 +1113,13 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
 
     // Clear the tracked deployed name once the container / service
     // is confirmed removed, so the next deploy uses the fresh name.
-    if log.success
-      && let Err(e) = resource::update_info::<Deployment>(
+    if log.success {
+      let _ = delete_resource_deployment_metadata(
+        "Deployment",
+        &deployment.id,
+      )
+      .await;
+      if let Err(e) = resource::update_info::<Deployment>(
         &deployment.id,
         &DeploymentInfo {
           latest_image_digest: deployment
@@ -1036,11 +1130,12 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         },
       )
       .await
-    {
-      warn!(
-        "Failed to clear deployment {} ({}) deployed name after destroy | {e:#}",
-        deployment.name, deployment.id,
-      );
+      {
+        warn!(
+          "Failed to clear deployment {} ({}) deployed name after destroy | {e:#}",
+          deployment.name, deployment.id,
+        );
+      }
     }
 
     update.logs.push(log);

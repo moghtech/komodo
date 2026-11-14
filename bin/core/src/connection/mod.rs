@@ -15,7 +15,7 @@ use encoding::{
 use komodo_client::entities::{
   builder::{AwsBuilderConfig, UrlBuilderConfig},
   optional_str,
-  server::Server,
+  server::{PeripheryCapabilities, Server},
 };
 use mogh_cache::CloneCache;
 use mogh_error::serror_into_anyhow_error;
@@ -95,16 +95,72 @@ impl PeripheryConnections {
   }
 }
 
+/// Direction of an established Core <-> Periphery WebSocket connection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectionDirection {
+  CoreToPeriphery,
+  PeripheryToCore,
+}
+
+/// Verified security properties of an active Core <-> Periphery transport session.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ConnectionSecurity {
+  pub direction: ConnectionDirection,
+  pub tls_encrypted: bool,
+  pub tls_verified: bool,
+  pub mutual_noise_verified: bool,
+}
+
+/// Validate that the active Core <-> Periphery session and remote Periphery capabilities
+/// meet the strict confidential-channel requirements for external Secret Provider values.
+pub fn validate_confidential_transport(
+  security: &ConnectionSecurity,
+  capabilities: &PeripheryCapabilities,
+) -> anyhow::Result<()> {
+  if !capabilities.external_secrets_v1 {
+    anyhow::bail!(
+      "Target Periphery agent does not advertise 'external_secrets_v1' capability; upgrade Periphery before deploying external secrets"
+    );
+  }
+  if !security.tls_encrypted {
+    anyhow::bail!(
+      "Core <-> Periphery connection is not using end-to-end WSS/TLS (plaintext ws:// or unencrypted proxy hop detected); external secrets require verified full-path WSS/TLS"
+    );
+  }
+  if !security.tls_verified {
+    anyhow::bail!(
+      "Core <-> Periphery TLS certificate verification is disabled (insecure_tls = true); configure a valid TLS certificate or ca_cert_pem before deploying external secrets"
+    );
+  }
+  if !security.mutual_noise_verified {
+    anyhow::bail!(
+      "Core <-> Periphery connection did not complete mutual Noise public-key verification (legacy passkey or unpinned Periphery public key); pin Periphery public_key before deploying external secrets"
+    );
+  }
+  if security.direction == ConnectionDirection::PeripheryToCore
+    && capabilities.outbound_tls_verified != Some(true)
+  {
+    anyhow::bail!(
+      "Inbound Periphery -> Core connection did not use verified WSS TLS on Periphery (ws://, core_tls_insecure_skip_verify = true, or unpinned Core public key); configure wss:// with verified TLS or core_ca_cert_pem on Periphery"
+    );
+  }
+  Ok(())
+}
+
 /// The configurable args of a connection
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PeripheryConnectionArgs<'a> {
   /// Usually the server id
   pub id: &'a str,
   pub address: Option<&'a str>,
-  periphery_public_key: Option<&'a str>,
+  pub periphery_public_key: Option<&'a str>,
   /// V1 legacy support.
   /// Only possible for Core -> Periphery.
-  passkey: Option<&'a str>,
+  pub passkey: Option<&'a str>,
+  /// Outbound TLS skip-verify flag (participates in connection equality so toggling TLS config forces reconnect).
+  pub insecure_tls: bool,
+  /// Optional PEM-encoded root CA certificate(s) for outbound WSS verification.
+  pub ca_cert_pem: Option<&'a str>,
 }
 
 impl PublicKeyValidator for PeripheryConnectionArgs<'_> {
@@ -154,11 +210,18 @@ impl PublicKeyValidator for PeripheryConnectionArgs<'_> {
 
 impl<'a> PeripheryConnectionArgs<'a> {
   pub fn from_server(server: &'a Server) -> Self {
+    let address = optional_str(&server.config.address);
     Self {
       id: &server.id,
-      address: optional_str(&server.config.address),
+      address,
       periphery_public_key: optional_str(&server.info.public_key),
       passkey: optional_str(&server.config.passkey),
+      insecure_tls: address.is_some() && server.config.insecure_tls,
+      ca_cert_pem: if address.is_some() {
+        optional_str(&server.config.ca_cert_pem)
+      } else {
+        None
+      },
     }
   }
 
@@ -173,6 +236,8 @@ impl<'a> PeripheryConnectionArgs<'a> {
         &config.periphery_public_key,
       ),
       passkey: optional_str(&config.passkey),
+      insecure_tls: config.insecure_tls,
+      ca_cert_pem: optional_str(&config.ca_cert_pem),
     }
   }
 
@@ -188,6 +253,8 @@ impl<'a> PeripheryConnectionArgs<'a> {
         &config.periphery_public_key,
       ),
       passkey: None,
+      insecure_tls: config.insecure_tls,
+      ca_cert_pem: None,
     }
   }
 
@@ -199,6 +266,8 @@ impl<'a> PeripheryConnectionArgs<'a> {
         .periphery_public_key
         .map(str::to_string),
       passkey: self.passkey.map(str::to_string),
+      insecure_tls: self.insecure_tls,
+      ca_cert_pem: self.ca_cert_pem.map(str::to_string),
     }
   }
 
@@ -224,6 +293,8 @@ pub struct OwnedPeripheryConnectionArgs {
   /// V1 legacy support.
   /// Only possible for Core -> Periphery connection.
   pub passkey: Option<String>,
+  pub insecure_tls: bool,
+  pub ca_cert_pem: Option<String>,
 }
 
 impl OwnedPeripheryConnectionArgs {
@@ -233,6 +304,8 @@ impl OwnedPeripheryConnectionArgs {
       address: self.address.as_deref(),
       periphery_public_key: self.periphery_public_key.as_deref(),
       passkey: self.passkey.as_deref(),
+      insecure_tls: self.insecure_tls,
+      ca_cert_pem: self.ca_cert_pem.as_deref(),
     }
   }
 }
@@ -270,6 +343,8 @@ pub struct PeripheryConnection {
   pub cancel: CancellationToken,
   /// Whether Periphery is currently connected.
   pub connected: AtomicBool,
+  /// Verified transport security metadata for the currently active socket (`None` when disconnected).
+  pub security: RwLock<Option<ConnectionSecurity>>,
   // These fields must be maintained if new connection replaces old
   // at the same server id.
   /// Stores latest connection error
@@ -294,6 +369,7 @@ impl PeripheryConnection {
         args: args.into(),
         cancel: CancellationToken::new(),
         connected: AtomicBool::new(false),
+        security: RwLock::new(None),
         error: Default::default(),
         responses: Default::default(),
         terminals: Default::default(),
@@ -319,6 +395,7 @@ impl PeripheryConnection {
         args: args.into(),
         cancel: CancellationToken::new(),
         connected: AtomicBool::new(false),
+        security: RwLock::new(None),
         error: self.error.clone(),
         responses: self.responses.clone(),
         terminals: self.terminals.clone(),
@@ -416,6 +493,7 @@ impl PeripheryConnection {
     tokio::join!(forward_writes, handle_reads);
 
     self.set_connected(false);
+    self.set_security(None).await;
   }
 
   pub async fn handle_incoming_message(
@@ -482,6 +560,17 @@ impl PeripheryConnection {
     self.connected.load(atomic::Ordering::Relaxed)
   }
 
+  pub async fn security(&self) -> Option<ConnectionSecurity> {
+    *self.security.read().await
+  }
+
+  pub async fn set_security(
+    &self,
+    security: Option<ConnectionSecurity>,
+  ) {
+    *self.security.write().await = security;
+  }
+
   /// Polls connected 3 times (500ms in between) before bailing.
   pub async fn bail_if_not_connected(&self) -> anyhow::Result<()> {
     const POLL_TIMES: usize = 3;
@@ -544,4 +633,108 @@ fn spawn_update_attempted_public_key(
       );
     };
   });
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn confidential_transport_gate_rejects_ws_insecure_passkey_and_legacy_periphery()
+   {
+    let caps_ok = PeripheryCapabilities {
+      external_secrets_v1: true,
+      outbound_tls_verified: None,
+    };
+    let outbound_ok = ConnectionSecurity {
+      direction: ConnectionDirection::CoreToPeriphery,
+      tls_encrypted: true,
+      tls_verified: true,
+      mutual_noise_verified: true,
+    };
+    assert!(
+      validate_confidential_transport(&outbound_ok, &caps_ok).is_ok()
+    );
+
+    // Reject missing Periphery capability
+    assert!(
+      validate_confidential_transport(
+        &outbound_ok,
+        &PeripheryCapabilities::default(),
+      )
+      .is_err()
+    );
+    // Reject plaintext ws://
+    assert!(
+      validate_confidential_transport(
+        &ConnectionSecurity {
+          tls_encrypted: false,
+          tls_verified: false,
+          ..outbound_ok
+        },
+        &caps_ok,
+      )
+      .is_err()
+    );
+    // Reject insecure_tls = true
+    assert!(
+      validate_confidential_transport(
+        &ConnectionSecurity {
+          tls_verified: false,
+          ..outbound_ok
+        },
+        &caps_ok,
+      )
+      .is_err()
+    );
+    // Reject unpinned public key / legacy passkey
+    assert!(
+      validate_confidential_transport(
+        &ConnectionSecurity {
+          mutual_noise_verified: false,
+          ..outbound_ok
+        },
+        &caps_ok,
+      )
+      .is_err()
+    );
+
+    // Inbound Periphery -> Core requires BOTH Core ssl_enabled AND Periphery outbound_tls_verified = Some(true)
+    let inbound_ok = ConnectionSecurity {
+      direction: ConnectionDirection::PeripheryToCore,
+      tls_encrypted: true,
+      tls_verified: true,
+      mutual_noise_verified: true,
+    };
+    assert!(
+      validate_confidential_transport(
+        &inbound_ok,
+        &PeripheryCapabilities {
+          external_secrets_v1: true,
+          outbound_tls_verified: Some(true),
+        },
+      )
+      .is_ok()
+    );
+    assert!(
+      validate_confidential_transport(
+        &inbound_ok,
+        &PeripheryCapabilities {
+          external_secrets_v1: true,
+          outbound_tls_verified: Some(false),
+        },
+      )
+      .is_err()
+    );
+    assert!(
+      validate_confidential_transport(
+        &inbound_ok,
+        &PeripheryCapabilities {
+          external_secrets_v1: true,
+          outbound_tls_verified: None,
+        },
+      )
+      .is_err()
+    );
+  }
 }

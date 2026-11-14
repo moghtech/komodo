@@ -242,6 +242,17 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
         .context("failed at call to periphery")?,
     };
 
+    let mut log = log;
+    let secret_keys =
+      crate::secret_provider::redaction::deployment_secret_env_keys(
+        &deployment,
+      )
+      .await;
+    crate::secret_provider::redaction::redact_log_env_assignments(
+      &mut log,
+      &secret_keys,
+    );
+
     Ok(log)
   }
 }
@@ -298,6 +309,17 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
         .context("Failed to search container log from server")?,
     };
 
+    let mut log = log;
+    let secret_keys =
+      crate::secret_provider::redaction::deployment_secret_env_keys(
+        &deployment,
+      )
+      .await;
+    crate::secret_provider::redaction::redact_log_env_assignments(
+      &mut log,
+      &secret_keys,
+    );
+
     Ok(log)
   }
 }
@@ -338,14 +360,25 @@ impl Resolve<ReadArgs> for InspectDeploymentContainer {
       );
     }
 
-    periphery_client(&server)
+    let mut res = periphery_client(&server)
       .await?
       .request(InspectContainer {
         name: deployment.deployed_name().to_string(),
       })
       .await
-      .context("Failed to inspect container on server")
-      .map_err(Into::into)
+      .context("Failed to inspect container on server")?;
+
+    let secret_keys =
+      crate::secret_provider::redaction::deployment_secret_env_keys(
+        &deployment,
+      )
+      .await;
+    crate::secret_provider::redaction::mask_container_env(
+      &mut res,
+      &secret_keys,
+    );
+
+    Ok(res)
   }
 }
 
@@ -358,7 +391,7 @@ impl Resolve<ReadArgs> for InspectDeploymentSwarmService {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
       user,
-      PermissionLevel::Read.logs(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
 
@@ -371,15 +404,26 @@ impl Resolve<ReadArgs> for InspectDeploymentSwarmService {
       );
     };
 
-    swarm_request(
+    let mut res = swarm_request(
       &swarm.config.server_ids,
       periphery_client::api::swarm::InspectSwarmService {
         service: deployment.deployed_name().to_string(),
       },
     )
     .await
-    .context("Failed to inspect service on swarm")
-    .map_err(Into::into)
+    .context("Failed to inspect service on swarm")?;
+
+    let secret_keys =
+      crate::secret_provider::redaction::deployment_secret_env_keys(
+        &deployment,
+      )
+      .await;
+    crate::secret_provider::redaction::mask_swarm_service_env(
+      &mut res,
+      &secret_keys,
+    );
+
+    Ok(res)
   }
 }
 

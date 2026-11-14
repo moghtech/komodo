@@ -51,6 +51,7 @@ impl Resolve<crate::api::Args> for RunContainer {
       stop_time,
       registry_token,
       mut replacers,
+      ..
     } = self;
 
     let mut interpolator =

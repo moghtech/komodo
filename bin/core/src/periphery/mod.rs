@@ -9,9 +9,12 @@ use serde_json::json;
 use transport::channel::channel;
 use uuid::Uuid;
 
+use komodo_client::entities::server::PeripheryCapabilities;
+
 use crate::{
   connection::{
     PeripheryConnection, PeripheryConnectionArgs, ResponseChannels,
+    validate_confidential_transport,
   },
   state::periphery_connections,
 };
@@ -79,6 +82,39 @@ impl PeripheryClient {
   pub async fn health_check(&self) -> anyhow::Result<()> {
     self.request(api::GetHealth {}).await?;
     Ok(())
+  }
+
+  /// Verify that the active Core <-> Periphery connection satisfies confidential transport
+  /// (verified full-path WSS/TLS + mutual Noise public-key verification + `external_secrets_v1` capability)
+  /// BEFORE transmitting any resolved external secret payloads over the wire.
+  pub async fn require_confidential_external_secret_transport(
+    &self,
+  ) -> anyhow::Result<PeripheryCapabilities> {
+    let connection =
+      periphery_connections().get(&self.id).await.with_context(
+        || format!("No connection found for Periphery {}", self.id),
+      )?;
+
+    connection.bail_if_not_connected().await?;
+
+    let security = connection.security().await.with_context(|| {
+      format!(
+        "Periphery {} has no verified connection security state; refusing to transmit external secrets",
+        self.id
+      )
+    })?;
+
+    let version_res = self
+      .request(api::GetVersion {})
+      .await
+      .context("Failed to query Periphery capabilities prior to external secret dispatch")?;
+
+    validate_confidential_transport(
+      &security,
+      &version_res.capabilities,
+    )?;
+
+    Ok(version_res.capabilities)
   }
 
   pub async fn request<T>(

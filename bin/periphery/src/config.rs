@@ -94,6 +94,11 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       core_tls_insecure_skip_verify: env
         .periphery_core_tls_insecure_skip_verify
         .unwrap_or(config.core_tls_insecure_skip_verify),
+      core_ca_cert_pem: maybe_read_item_from_file(
+        env.periphery_core_ca_cert_pem_file,
+        env.periphery_core_ca_cert_pem,
+      )
+      .or(config.core_ca_cert_pem),
       connect_as: env
         .periphery_connect_as
         .unwrap_or(config.connect_as),

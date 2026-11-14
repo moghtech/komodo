@@ -388,6 +388,11 @@ impl super::KomodoResource for Deployment {
     _update: &mut Update,
   ) -> anyhow::Result<()> {
     deployment_status_cache().remove(&resource.id).await;
+    let _ = crate::secret_provider::execution::delete_resource_deployment_metadata(
+      "Deployment",
+      &resource.id,
+    )
+    .await;
     Ok(())
   }
 }

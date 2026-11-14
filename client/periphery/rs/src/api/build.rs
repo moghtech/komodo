@@ -4,6 +4,8 @@ use komodo_client::entities::{
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
+use crate::api::ExternalEnvVar;
+
 //
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -25,6 +27,12 @@ pub struct Build {
   /// Add more tags for this build in addition to the version tags.
   #[serde(default)]
   pub additional_tags: Vec<String>,
+  /// Resolved external BuildKit `--secret` values (never re-interpolated on Periphery).
+  #[serde(default)]
+  pub external_secret_args: Vec<ExternalEnvVar>,
+  /// Optional non-sensitive `--build-arg KOMODO_SECRET_CACHE_NONCE=<nonce>` when `secret_cache_bust = true`.
+  #[serde(default)]
+  pub secret_cache_bust_nonce: Option<String>,
 }
 
 pub type BuildResponse = Vec<Log>;

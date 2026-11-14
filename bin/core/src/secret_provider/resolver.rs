@@ -541,6 +541,20 @@ pub fn build_uses_external_secrets(
   Ok(!refs.is_empty())
 }
 
+fn strip_matching_outer_template_quotes(template: &str) -> &str {
+  if template.len() >= 2 {
+    let bytes = template.as_bytes();
+    let first = bytes[0];
+    let last = bytes[bytes.len() - 1];
+    if (first == b'"' && last == b'"')
+      || (first == b'\'' && last == b'\'')
+    {
+      return &template[1..template.len() - 1];
+    }
+  }
+  template
+}
+
 /// Single-pass segment substitution on a single value string:
 /// - Segments outside `[[...]]` are emitted verbatim.
 /// - `[[vault.<slug>.<key>]]` tokens are replaced literally byte-for-byte from `inline_values`
@@ -1139,8 +1153,10 @@ pub async fn resolve_stack_secrets(
       interpolator.interpolate_string(&mut interpolated_val)?;
       standard_env_vars.insert(kv_var, interpolated_val);
     } else {
+      let unquoted_tpl =
+        strip_matching_outer_template_quotes(&kv_val);
       let (final_val, used_refs) = substitute_value_single_pass(
-        &kv_val,
+        unquoted_tpl,
         &inline_values,
         interpolator,
       )?;
@@ -1511,8 +1527,10 @@ pub async fn resolve_deployment_secrets(
       interpolator.interpolate_string(&mut interpolated_val)?;
       standard_map.insert(kv_var, interpolated_val);
     } else {
+      let unquoted_tpl =
+        strip_matching_outer_template_quotes(&kv_val);
       let (final_val, used_refs) = substitute_value_single_pass(
-        &kv_val,
+        unquoted_tpl,
         &inline_values,
         interpolator,
       )?;
@@ -1732,8 +1750,10 @@ pub async fn resolve_build_secrets(
       interpolator.interpolate_string(&mut interpolated_val)?;
       standard_map.insert(kv_var, interpolated_val);
     } else {
+      let unquoted_tpl =
+        strip_matching_outer_template_quotes(&kv_val);
       let (final_val, used_refs) = substitute_value_single_pass(
-        &kv_val,
+        unquoted_tpl,
         &inline_values,
         interpolator,
       )?;
@@ -1971,5 +1991,42 @@ mod tests {
     let err2 =
       validate_stack_unsupported_vault_fields(&stack).unwrap_err();
     assert!(format!("{err2:#}").contains("file_contents"));
+  }
+
+  #[test]
+  fn strips_template_wrapping_quotes_while_preserving_remote_quotes()
+  {
+    let vars = HashMap::new();
+    let secrets = HashMap::new();
+    let mut interp = Interpolator::new(Some(&vars), &secrets);
+    let mut inline = HashMap::new();
+    inline.insert(
+      ExternalSecretRef {
+        provider_slug: String::from("infisical-prod"),
+        secret_key: String::from("QUOTED_VAL"),
+      },
+      ResolvedSecretValue::from_text(
+        String::from("\"hello-world\""),
+        Some(1),
+      ),
+    );
+
+    // Case 1: unquoted template -> remote quotes preserved verbatim
+    let tpl1 = strip_matching_outer_template_quotes(
+      "[[vault.infisical-prod.QUOTED_VAL]]",
+    );
+    let (v1, _) =
+      substitute_value_single_pass(tpl1, &inline, &mut interp)
+        .unwrap();
+    assert_eq!(v1, "\"hello-world\"");
+
+    // Case 2: quoted template in komodo.toml / UI -> outer template quotes stripped once, remote quotes preserved
+    let tpl2 = strip_matching_outer_template_quotes(
+      "\"prefix:[[vault.infisical-prod.QUOTED_VAL]]:suffix\"",
+    );
+    let (v2, _) =
+      substitute_value_single_pass(tpl2, &inline, &mut interp)
+        .unwrap();
+    assert_eq!(v2, "prefix:\"hello-world\":suffix");
   }
 }

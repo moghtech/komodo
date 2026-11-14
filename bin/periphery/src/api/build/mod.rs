@@ -151,6 +151,7 @@ impl Resolve<crate::api::Args> for build::Build {
       mut replacers,
       commit_hash,
       additional_tags,
+      ..
     } = self;
 
     let mut logs = Vec::new();

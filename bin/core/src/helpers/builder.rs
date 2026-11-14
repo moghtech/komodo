@@ -183,15 +183,13 @@ async fn get_aws_builder(
   .await?;
 
   let start_connect_ts = komodo_timestamp();
-  let mut res = Ok(GetVersionResponse {
-    version: String::new(),
-  });
+  let mut res = Ok(GetVersionResponse::default());
   for _ in 0..BUILDER_POLL_MAX_TRIES {
     let version = periphery
       .request(api::GetVersion {})
       .await
       .context("failed to reach periphery client on builder");
-    if let Ok(GetVersionResponse { version }) = &version {
+    if let Ok(GetVersionResponse { version, .. }) = &version {
       let connect_log = Log {
         stage: "build instance connected".to_string(),
         success: true,

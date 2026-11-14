@@ -829,6 +829,9 @@ async fn interpolate(
   repo: &mut Repo,
   update: &mut Update,
 ) -> anyhow::Result<HashSet<(String, String)>> {
+  crate::secret_provider::resolver::validate_repo_no_vault_refs(
+    repo,
+  )?;
   if !repo.config.skip_secret_interp {
     let VariablesAndSecrets { variables, secrets } =
       get_variables_and_secrets().await?;

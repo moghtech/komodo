@@ -135,6 +135,7 @@ impl ExecuteCompose for StartStack {
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!("start{service_args}"),
+        cleanup_runtime_secrets: false,
       })
       .await
   }
@@ -153,6 +154,7 @@ impl ExecuteCompose for RestartStack {
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!("restart{service_args}"),
+        cleanup_runtime_secrets: false,
       })
       .await
   }
@@ -171,6 +173,7 @@ impl ExecuteCompose for PauseStack {
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!("pause{service_args}"),
+        cleanup_runtime_secrets: false,
       })
       .await
   }
@@ -189,6 +192,7 @@ impl ExecuteCompose for UnpauseStack {
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!("unpause{service_args}"),
+        cleanup_runtime_secrets: false,
       })
       .await
   }
@@ -208,6 +212,7 @@ impl ExecuteCompose for StopStack {
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!("stop{maybe_timeout}{service_args}"),
+        cleanup_runtime_secrets: false,
       })
       .await
   }
@@ -221,6 +226,7 @@ impl ExecuteCompose for DestroyStack {
     services: Vec<String>,
     (timeout, remove_orphans): Self::Extras,
   ) -> anyhow::Result<Log> {
+    let full_destroy = services.is_empty();
     let service_args = service_args(&services);
     let maybe_timeout = maybe_timeout(timeout);
     let maybe_remove_orphans = if remove_orphans {
@@ -228,14 +234,23 @@ impl ExecuteCompose for DestroyStack {
     } else {
       ""
     };
-    periphery
+    let log = periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!(
           "down{maybe_timeout}{maybe_remove_orphans}{service_args}"
         ),
+        cleanup_runtime_secrets: full_destroy,
       })
-      .await
+      .await?;
+    if full_destroy && log.success {
+      let _ = crate::secret_provider::execution::delete_resource_deployment_metadata(
+        "Stack",
+        &stack.id,
+      )
+      .await;
+    }
+    Ok(log)
   }
 }
 

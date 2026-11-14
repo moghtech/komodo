@@ -196,10 +196,17 @@ impl Resolve<Args> for GetHealth {
 impl Resolve<Args> for GetVersion {
   async fn resolve(
     self,
-    _: &Args,
+    args: &Args,
   ) -> anyhow::Result<GetVersionResponse> {
+    let outbound_tls_verified =
+      crate::state::core_tls_verified().get(&args.core).await;
     Ok(GetVersionResponse {
       version: env!("CARGO_PKG_VERSION").to_string(),
+      capabilities:
+        komodo_client::entities::server::PeripheryCapabilities {
+          external_secrets_v1: true,
+          outbound_tls_verified,
+        },
     })
   }
 }

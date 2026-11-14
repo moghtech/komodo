@@ -119,6 +119,7 @@ impl Resolve<crate::api::Args> for GetComposeContentsOnHost {
       name,
       run_directory,
       file_paths,
+      exclude_paths,
     } = self;
     let root = periphery_config()
       .stack_dir()
@@ -129,6 +130,20 @@ impl Resolve<crate::api::Args> for GetComposeContentsOnHost {
     let mut res = GetComposeContentsOnHostResponse::default();
 
     for file in file_paths {
+      let normalized_rel = file
+        .path
+        .trim()
+        .trim_start_matches("./")
+        .trim_end_matches('/');
+      if exclude_paths.iter().any(|ex| {
+        let ex_norm =
+          ex.trim().trim_start_matches("./").trim_end_matches('/');
+        !ex_norm.is_empty()
+          && (normalized_rel == ex_norm
+            || normalized_rel.starts_with(&format!("{ex_norm}/")))
+      }) {
+        continue;
+      }
       let full_path = run_directory
         .join(&file.path)
         .components()
@@ -287,6 +302,7 @@ impl Resolve<crate::api::Args> for ComposePull {
       git_token,
       registry_token,
       mut replacers,
+      ..
     } = self;
 
     let mut res = ComposePullResponse::default();
@@ -448,6 +464,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
       git_token,
       registry_token,
       mut replacers,
+      ..
     } = self;
 
     let mut res = DeployStackResponse::default();
@@ -799,7 +816,9 @@ impl Resolve<crate::api::Args> for ComposeExecution {
     self,
     args: &crate::api::Args,
   ) -> anyhow::Result<Log> {
-    let ComposeExecution { project, command } = self;
+    let ComposeExecution {
+      project, command, ..
+    } = self;
     let docker_compose = docker_compose();
     let log = run_komodo_standard_command(
       "Compose Command",
@@ -846,6 +865,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
       user,
       entrypoint,
       pull,
+      ..
     } = self;
 
     let mut interpolator =

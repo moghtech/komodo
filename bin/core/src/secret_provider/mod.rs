@@ -17,8 +17,10 @@ use crate::state::db_client;
 pub mod adapter;
 pub mod authz;
 pub mod crypto;
+pub mod execution;
 pub mod http;
 pub mod infisical;
+pub mod redaction;
 pub mod resolver;
 
 #[cfg(test)]
