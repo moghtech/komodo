@@ -27,7 +27,6 @@ def parse_args():
 
 	p.add_argument(
 		"--root-directory", "-r",
-		default="/etc/komodo",
 		help="Specify a specific Periphery root directory."
 	)
 
@@ -140,6 +139,7 @@ def map_config_line(args, home_dir, line):
 			return f'root_directory = "{args.root_directory}"'
 		if args.user:
 			return f'root_directory = "{home_dir}/komodo"'
+		return 'root_directory = "/etc/komodo"'
 	## Handle core_address
 	if line.startswith("# core_address =") and args.core_address != None:
 		return f'core_address = "{args.core_address}"'
