@@ -27,7 +27,6 @@ def parse_args():
 
 	p.add_argument(
 		"--root-directory", "-r",
-		default="/etc/komodo",
 		help="Specify a specific Periphery root directory."
 	)
 
