@@ -15,6 +15,7 @@ mod config;
 mod connection;
 mod docker;
 mod helpers;
+mod secret_lifecycle;
 mod stack;
 mod state;
 mod stats;
@@ -45,6 +46,8 @@ async fn app() -> anyhow::Result<()> {
     rustls::crypto::aws_lc_rs::default_provider()
       .install_default()
       .expect("Failed to install default crypto provider");
+
+    secret_lifecycle::reconcile_runtime_secrets_on_startup().await;
 
     stats::spawn_polling_thread();
     docker::stats::spawn_polling_thread();
@@ -97,23 +100,33 @@ async fn app() -> anyhow::Result<()> {
   Ok(())
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-  // Handle `periphery key gen` and `periphery key compute <private-key>`
-  if let Some(Command::Key { command }) = &periphery_args().command {
-    return mogh_pki::cli::handle(command, mogh_pki::PkiKind::Mutual)
-      .await;
-  }
+fn main() -> anyhow::Result<()> {
+  tokio::runtime::Builder::new_multi_thread()
+    .enable_all()
+    .thread_stack_size(8 * 1024 * 1024)
+    .build()?
+    .block_on(async {
+      // Handle `periphery key gen` and `periphery key compute <private-key>`
+      if let Some(Command::Key { command }) =
+        &periphery_args().command
+      {
+        return mogh_pki::cli::handle(
+          command,
+          mogh_pki::PkiKind::Mutual,
+        )
+        .await;
+      }
 
-  let mut term_signal = tokio::signal::unix::signal(
-    tokio::signal::unix::SignalKind::terminate(),
-  )?;
-  tokio::select! {
-    res = tokio::spawn(app()) => return res?,
-    _ = term_signal.recv() => {
-      info!("Exiting all active Terminals for shutdown");
-      terminal::delete_all_terminals().await;
-      Ok(())
-    },
-  }
+      let mut term_signal = tokio::signal::unix::signal(
+        tokio::signal::unix::SignalKind::terminate(),
+      )?;
+      tokio::select! {
+        res = tokio::spawn(app()) => return res?,
+        _ = term_signal.recv() => {
+          info!("Exiting all active Terminals for shutdown");
+          terminal::delete_all_terminals().await;
+          Ok(())
+        },
+      }
+    })
 }

@@ -1,6 +1,10 @@
 # Providers
 
-Providers allow Komodo to authenticate against external git providers and docker registries on behalf of your resources. Once configured, provider accounts are available to attach to Builds, Repos, Stacks, and Resource Syncs.
+Providers allow Komodo to authenticate against external secret managers (Infisical), git providers, and docker registries on behalf of your resources. Once configured, providers are available to attach to Stacks, Deployments, Builds, Repos, and Resource Syncs.
+
+:::tip External Secret Providers
+For managing Infisical Machine Identity Universal Auth, encryption keyring setup, RBAC grants, and `[[vault.<provider-slug>.<secret-key>]]` references under **Settings > Providers > Secret Providers**, see [External Secret Providers](./secret-providers.md).
+:::
 
 ### Usage
 

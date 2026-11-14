@@ -114,6 +114,25 @@ pub fn push_environment(
   Ok(())
 }
 
+pub fn push_external_environment(
+  command: &mut String,
+  external_environment: &[periphery_client::api::ExternalEnvVar],
+) -> anyhow::Result<()> {
+  for ev in external_environment {
+    environment::validate_env_var_key(&ev.variable)?;
+    if ev.value.contains('\0') {
+      anyhow::bail!(
+        "External environment variable '{}' cannot contain NUL bytes",
+        ev.variable
+      );
+    }
+    let token = format!("{}={}", ev.variable, ev.value);
+    write!(command, " --env {}", escape(token.into()))
+      .context("Failed to format external environment")?;
+  }
+  Ok(())
+}
+
 pub fn format_log_grep(
   terms: &[String],
   combinator: SearchCombinator,

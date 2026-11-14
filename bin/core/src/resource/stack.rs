@@ -363,11 +363,22 @@ impl super::KomodoResource for Stack {
     stack: &Resource<Self::Config, Self::Info>,
     update: &mut Update,
   ) -> anyhow::Result<()> {
-    // If it is Up, it should be taken down
+    // If it is Up (or has deployed external runtime secrets on a Server), ensure stack & runtime secrets are cleaned up
     let state = get_stack_state(stack)
       .await
       .context("failed to get stack state")?;
-    if matches!(state, StackState::Down | StackState::Unknown) {
+    let has_runtime_secret_meta =
+      crate::secret_provider::execution::get_resource_deployment_metadata(
+        "Stack",
+        &stack.id,
+      )
+      .await
+      .ok()
+      .flatten()
+      .is_some();
+    if matches!(state, StackState::Down | StackState::Unknown)
+      && !has_runtime_secret_meta
+    {
       return Ok(());
     }
     // stack needs to be destroyed
@@ -444,6 +455,7 @@ impl super::KomodoResource for Stack {
           .request(ComposeExecution {
             project: stack.project_name(false),
             command: String::from("down --remove-orphans"),
+            cleanup_runtime_secrets: true,
           })
           .await
         {
@@ -469,6 +481,11 @@ impl super::KomodoResource for Stack {
     _update: &mut Update,
   ) -> anyhow::Result<()> {
     stack_status_cache().remove(&resource.id).await;
+    let _ = crate::secret_provider::execution::delete_resource_deployment_metadata(
+      "Stack",
+      &resource.id,
+    )
+    .await;
     Ok(())
   }
 }

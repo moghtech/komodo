@@ -151,6 +151,8 @@ impl Resolve<crate::api::Args> for build::Build {
       mut replacers,
       commit_hash,
       additional_tags,
+      external_secret_args,
+      secret_cache_bust_nonce,
     } = self;
 
     let mut logs = Vec::new();
@@ -300,12 +302,11 @@ impl Resolve<crate::api::Args> for build::Build {
       }
     }
 
-    // Get command parts
-    // Do this in fallible block to ensure
-    // cancel token removed from cache on failure.
-    let command = async {
+    // Get command parts + isolated BuildKit secret directory guard
+    // Do this in fallible block to ensure cancel token and temporary secrets are removed on failure.
+    let command_and_guard = async {
       let mut build_args = environment_vars_from_str(build_args)
-      .context("Invalid build_args")?;
+        .context("Invalid build_args")?;
 
       // Add IMAGE_NAME to build args
       if !build_args.iter().any(|a| a.variable == "IMAGE_NAME") {
@@ -320,7 +321,8 @@ impl Resolve<crate::api::Args> for build::Build {
       }
       // Maybe Add IMAGE_TAG to build args
       if !build.config.image_tag.is_empty()
-        && !build_args.iter().any(|a| a.variable == "IMAGE_TAG") {
+        && !build_args.iter().any(|a| a.variable == "IMAGE_TAG")
+      {
         build_args.push(EnvironmentVar {
           variable: String::from("IMAGE_TAG"),
           value: build.config.image_tag.clone(),
@@ -333,13 +335,50 @@ impl Resolve<crate::api::Args> for build::Build {
           value: build.config.version.to_string(),
         });
       }
+      // Add optional non-sensitive KOMODO_SECRET_CACHE_NONCE when secret_cache_bust = true
+      if let Some(nonce) = &secret_cache_bust_nonce
+        && !nonce.is_empty()
+      {
+        if !nonce
+          .chars()
+          .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-'))
+        {
+          return Err(anyhow!(
+            "Invalid secret_cache_bust_nonce format"
+          ));
+        }
+        if !build_args
+          .iter()
+          .any(|a| a.variable == "KOMODO_SECRET_CACHE_NONCE")
+        {
+          build_args.push(EnvironmentVar {
+            variable: String::from("KOMODO_SECRET_CACHE_NONCE"),
+            value: nonce.clone(),
+          });
+        }
+      }
 
       let build_args = parse_build_args(&build_args);
 
       let secret_args = environment_vars_from_str(secret_args)
         .context("Invalid secret_args")?;
-      let command_secret_args =
-        parse_secret_args(&secret_args, &build_path).await?;
+      let (command_secret_args, secret_guard) =
+        if !secret_args.is_empty() || !external_secret_args.is_empty() {
+          let guard =
+            crate::secret_lifecycle::ScopedBuildSecretDir::create(
+              &args.id.to_string(),
+            )
+            .await?;
+          let flags = guard
+            .write_buildkit_secret_args(
+              &secret_args,
+              &external_secret_args,
+            )
+            .await?;
+          (flags, Some(guard))
+        } else {
+          (String::new(), None)
+        };
 
       let labels = format_labels(
         &environment_vars_from_str(labels)
@@ -364,11 +403,12 @@ impl Resolve<crate::api::Args> for build::Build {
         "docker{buildx} build{build_args}{command_secret_args}{extra_args}{labels}{image_tags}{maybe_push} -f {dockerfile_path} .",
       );
 
-      anyhow::Ok(command)
-    }.await;
+      anyhow::Ok((command, secret_guard))
+    }
+    .await;
 
-    let command = match command {
-      Ok(command) => command,
+    let (command, mut secret_guard) = match command_and_guard {
+      Ok(pair) => pair,
       Err(e) => {
         build_cancel_cache().remove(&build.id).await;
         return Err(e);
@@ -390,6 +430,10 @@ impl Resolve<crate::api::Args> for build::Build {
     {
       logs.push(build_log);
     };
+
+    if let Some(guard) = secret_guard.as_mut() {
+      guard.cleanup().await;
+    }
 
     build_cancel_cache().remove(&build.id).await;
 

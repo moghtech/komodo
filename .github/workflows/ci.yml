@@ -22,22 +22,16 @@ jobs:
         with:
           toolchain: stable
 
-      # - name: Cache cargo registry
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       ~/.cargo/registry
-      #       ~/.cargo/git
-      #       target
-      #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-cargo-
-
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --workspace --verbose
 
-      - name: Run tests
-        run: cargo test --verbose
+      - name: Run unit tests
+        run: cargo test --workspace --verbose -- --skip live_
+
+      - name: Verify resource schema is up to date
+        run: |
+          cargo xtask generate resource-schema --pretty --file=./ui/public/schema/resources.json
+          git diff --exit-code ./ui/public/schema/resources.json
 
   fmt:
     name: Format
@@ -54,3 +48,31 @@ jobs:
 
       - name: Check formatting
         run: cargo fmt --all -- --check
+
+  ui:
+    name: UI Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Build TypeScript client
+        run: |
+          yarn --cwd ./client/core/ts install --frozen-lockfile
+          yarn --cwd ./client/core/ts build
+          (cd ./client/core/ts && yarn link)
+
+      - name: Install, test, and build UI
+        run: |
+          yarn --cwd ./ui install --frozen-lockfile
+          (cd ./ui && yarn link komodo_client)
+          yarn --cwd ./ui test
+          yarn --cwd ./ui build

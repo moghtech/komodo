@@ -168,6 +168,14 @@ pub fn core_connections() -> &'static CoreConnections {
   CORE_CONNECTIONS.get_or_init(Default::default)
 }
 
+/// Core Host -> whether the active outbound Periphery -> Core websocket is using
+/// verified WSS TLS (`socket.is_tls() && !core_tls_insecure_skip_verify`) with pinned Core public keys.
+pub fn core_tls_verified() -> &'static CloneCache<String, bool> {
+  static CORE_TLS_VERIFIED: OnceLock<CloneCache<String, bool>> =
+    OnceLock::new();
+  CORE_TLS_VERIFIED.get_or_init(Default::default)
+}
+
 pub fn stats_client() -> &'static RwLock<StatsClient> {
   static STATS_CLIENT: OnceLock<RwLock<StatsClient>> =
     OnceLock::new();

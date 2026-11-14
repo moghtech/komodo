@@ -455,6 +455,20 @@ pub fn core_config() -> &'static CoreConfig {
 
       // These can't be overridden on env
       secrets: config.secrets,
+      secret_provider_encryption_key: maybe_read_item_from_file(
+        env.komodo_secret_provider_encryption_key_file,
+        env.komodo_secret_provider_encryption_key,
+      )
+      .unwrap_or(config.secret_provider_encryption_key),
+      secret_provider_previous_encryption_keys:
+        maybe_read_list_from_file(
+          env.komodo_secret_provider_previous_encryption_keys_file,
+          env.komodo_secret_provider_previous_encryption_keys,
+        )
+        .unwrap_or(config.secret_provider_previous_encryption_keys),
+      secret_provider_allow_loopback: env
+        .komodo_secret_provider_allow_loopback
+        .unwrap_or(config.secret_provider_allow_loopback),
       git_providers: config.git_providers,
       image_registries: config.image_registries,
     }

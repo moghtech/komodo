@@ -61,8 +61,21 @@ pub const MAX_VARIABLE_NAME_LENGTH: usize = 500;
 /// Validate variable names
 ///
 /// - Between [MIN_VARIABLE_NAME_LENGTH] and [MAX_VARIABLE_NAME_LENGTH] characters
+/// - Reserves the `vault` / `vault.*` namespace for external Secret Providers
 /// - Matches `^[a-zA-Z_][a-zA-Z0-9_]*$`
 pub fn validate_variable_name(name: &str) -> anyhow::Result<()> {
+  let trimmed = name.trim();
+  if trimmed.eq_ignore_ascii_case("vault")
+    || trimmed.as_bytes().get(..6).is_some_and(|p| {
+      p.eq_ignore_ascii_case(b"vault.")
+        || p.eq_ignore_ascii_case(b"vault:")
+        || p.eq_ignore_ascii_case(b"vault/")
+    })
+  {
+    anyhow::bail!(
+      "Variable name '{name}' is reserved for external Secret Providers ('vault.<provider>.<key>')"
+    );
+  }
   StringValidator::default()
     .min_length(MIN_VARIABLE_NAME_LENGTH)
     .max_length(MAX_VARIABLE_NAME_LENGTH)
@@ -82,4 +95,24 @@ pub fn validate_variable_value(value: &str) -> anyhow::Result<()> {
     .max_length(MAX_VARIABLE_VALUE_LENGTH)
     .validate(value)
     .context("Failed to validate variable value")
+}
+
+#[cfg(test)]
+mod tests {
+  use super::validate_variable_name;
+
+  #[test]
+  fn reserves_vault_namespace_for_external_secret_providers() {
+    assert!(validate_variable_name("APP_ENV").is_ok());
+    assert!(validate_variable_name("VAULT_ADDR").is_ok());
+    assert!(validate_variable_name("vault").is_err());
+    assert!(validate_variable_name("VAULT").is_err());
+    assert!(
+      validate_variable_name("vault.infisical.DB_PASSWORD").is_err()
+    );
+    assert!(
+      validate_variable_name("VAULT.infisical.DB_PASSWORD").is_err()
+    );
+    assert!(validate_variable_name("vault:secret").is_err());
+  }
 }

@@ -93,4 +93,7 @@ export default defineConfig({
       },
     },
   },
+  ssr: {
+    noExternal: ["mogh_ui", "mogh_auth_client", "komodo_client"],
+  },
 });

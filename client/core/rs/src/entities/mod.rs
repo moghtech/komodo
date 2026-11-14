@@ -47,7 +47,7 @@ pub mod onboarding_key;
 pub mod permission;
 /// Subtypes of [Procedure][procedure::Procedure].
 pub mod procedure;
-/// Subtypes of [GitProviderAccount][provider::GitProviderAccount] and [DockerRegistryAccount][provider::DockerRegistryAccount]
+/// Subtypes of [GitProviderAccount][provider::GitProviderAccount] and [ImageRegistryAccount][provider::ImageRegistryAccount]
 pub mod provider;
 /// Subtypes of [Repo][repo::Repo].
 pub mod repo;
@@ -57,6 +57,8 @@ pub mod report;
 pub mod resource;
 /// Subtypes of [Schedule][schedule::Schedule]
 pub mod schedule;
+/// Subtypes of [SecretProvider][secret_provider::SecretProvider].
+pub mod secret_provider;
 /// Subtypes of [Server][server::Server].
 pub mod server;
 /// Subtypes of [Stack][stack::Stack]
@@ -1370,6 +1372,15 @@ pub enum Operation {
   CreateDockerRegistryAccount,
   UpdateDockerRegistryAccount,
   DeleteDockerRegistryAccount,
+
+  // Secret Provider
+  CreateSecretProvider,
+  UpdateSecretProvider,
+  DeleteSecretProvider,
+  CreateSecretProviderGrant,
+  UpdateSecretProviderGrant,
+  DeleteSecretProviderGrant,
+  RotateSecretProviderKeys,
 }
 
 #[typeshare]

@@ -221,12 +221,24 @@ impl Resolve<ReadArgs> for InspectContainer {
         .into(),
       );
     }
-    let res = periphery_client(&server)
+    let requested_name = self.container.clone();
+    let mut res = periphery_client(&server)
       .await?
       .request(periphery::container::InspectContainer {
         name: self.container,
       })
       .await?;
+    let secret_keys =
+      crate::secret_provider::redaction::server_container_secret_env_keys(
+        &server.id,
+        &requested_name,
+        Some(&res),
+      )
+      .await;
+    crate::secret_provider::redaction::mask_container_env(
+      &mut res,
+      &secret_keys,
+    );
     Ok(res)
   }
 }
@@ -334,15 +346,29 @@ impl Resolve<ReadArgs> for GetContainerLog {
       PermissionLevel::Read.logs(),
     )
     .await?;
-    let res = periphery_client(&server)
+    let secret_keys =
+      crate::secret_provider::redaction::server_container_secret_env_keys(
+        &server.id,
+        &container,
+        None,
+      )
+      .await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
+    let mut res = periphery_client(&server)
       .await?
       .request(periphery::container::GetContainerLog {
-        name: container,
+        name: container.clone(),
         tail: cmp::min(tail, MAX_LOG_LENGTH),
         timestamps,
+        redact_env_keys,
       })
       .await
       .context("failed at call to periphery")?;
+    crate::secret_provider::redaction::redact_log_env_assignments(
+      &mut res,
+      &secret_keys,
+    );
     Ok(res)
   }
 }
@@ -366,17 +392,31 @@ impl Resolve<ReadArgs> for SearchContainerLog {
       PermissionLevel::Read.logs(),
     )
     .await?;
-    let res = periphery_client(&server)
+    let secret_keys =
+      crate::secret_provider::redaction::server_container_secret_env_keys(
+        &server.id,
+        &container,
+        None,
+      )
+      .await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
+    let mut res = periphery_client(&server)
       .await?
       .request(periphery::container::GetContainerLogSearch {
-        name: container,
+        name: container.clone(),
         terms,
         combinator,
         invert,
         timestamps,
+        redact_env_keys,
       })
       .await
       .context("failed at call to periphery")?;
+    crate::secret_provider::redaction::redact_log_env_assignments(
+      &mut res,
+      &secret_keys,
+    );
     Ok(res)
   }
 }

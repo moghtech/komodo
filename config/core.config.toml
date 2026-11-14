@@ -624,6 +624,34 @@ aws.secret_access_key = ""
 # ]
 # organizations = ["Mogh"] # These become available in the UI
 
+############################
+# SECRET PROVIDER KEYRING  #
+############################
+
+## Dedicated 32-byte master encryption key used to encrypt external Secret Provider
+## bootstrap credentials (e.g. Infisical Universal Auth client secrets) at rest with AES-256-GCM.
+## Must NOT reuse `jwt_secret` and must be backed up separately from MongoDB backups:
+## losing this key renders stored Secret Provider credentials unrecoverable until re-entered.
+##
+## Generate a key with: `openssl rand -base64 32` (or `openssl rand -hex 32`).
+## Optionally prefix with `<key_id>:` (e.g. `k2026:<base64>`) or load via `file:/path/to/secret.key`.
+## If omitted, external Secret Providers refuse credential storage and resolution (fail-closed; never falls back to plaintext).
+##
+## Env: KOMODO_SECRET_PROVIDER_ENCRYPTION_KEY or KOMODO_SECRET_PROVIDER_ENCRYPTION_KEY_FILE
+## Default: None
+# secret_provider_encryption_key = "file:/config/keys/secret_provider_master.key"
+
+## Optional previous 32-byte encryption keys retained during key rotation.
+## To rotate keys without downtime:
+##   1. Move the old `secret_provider_encryption_key` into `secret_provider_previous_encryption_keys`.
+##   2. Set a newly generated 32-byte key in `secret_provider_encryption_key` and restart Core.
+##   3. Run `RotateSecretProviderEncryptionKeys` (or click "Rotate Encryption Keys" in Settings -> Providers).
+##   4. Remove old keys once all credentials are re-encrypted onto the active key (after old DB backup retention expires).
+##
+## Env: KOMODO_SECRET_PROVIDER_PREVIOUS_ENCRYPTION_KEYS or KOMODO_SECRET_PROVIDER_PREVIOUS_ENCRYPTION_KEYS_FILE
+## Default: []
+# secret_provider_previous_encryption_keys = []
+
 ###########
 # SECRETS #
 ###########

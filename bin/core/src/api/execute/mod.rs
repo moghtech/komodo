@@ -183,6 +183,9 @@ pub fn router() -> Router {
 
 async fn variant_handler(
   user: Extension<User>,
+  subject: Option<
+    Extension<crate::secret_provider::authz::ExecutionSubjectContext>,
+  >,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
 ) -> mogh_error::Result<(TypedHeader<ContentType>, String)> {
@@ -190,18 +193,29 @@ async fn variant_handler(
     "type": variant,
     "params": params,
   }))?;
-  handler(user, Json(req)).await
+  handler(user, subject, Json(req)).await
 }
 
 async fn handler(
   Extension(user): Extension<User>,
+  subject: Option<
+    Extension<crate::secret_provider::authz::ExecutionSubjectContext>,
+  >,
   Json(request): Json<ExecuteRequest>,
 ) -> mogh_error::Result<(TypedHeader<ContentType>, String)> {
-  let res = match inner_handler(request, user).await? {
-    ExecutionResult::Single(update) => serde_json::to_string(&update)
-      .context("Failed to serialize Update")?,
-    ExecutionResult::Batch(res) => res,
-  };
+  let res =
+    match crate::secret_provider::authz::maybe_with_execution_subject(
+      subject.map(|Extension(s)| s),
+      inner_handler(request, user),
+    )
+    .await?
+    {
+      ExecutionResult::Single(update) => {
+        serde_json::to_string(&update)
+          .context("Failed to serialize Update")?
+      }
+      ExecutionResult::Batch(res) => res,
+    };
   Ok((TypedHeader(ContentType::json()), res))
 }
 
@@ -246,8 +260,14 @@ pub fn inner_handler(
 
     // Spawn a task for the execution which continues
     // running after this method returns.
-    let handle =
-      tokio::spawn(task(task_id, request, user, update.clone()));
+    let inherited_subject =
+      crate::secret_provider::authz::current_execution_subject();
+    let handle = tokio::spawn(
+      crate::secret_provider::authz::maybe_with_execution_subject(
+        inherited_subject,
+        task(task_id, request, user, update.clone()),
+      ),
+    );
 
     // Spawns another task to monitor the first for failures,
     // and add the log to Update about it (which primary task can't do because it errored out)

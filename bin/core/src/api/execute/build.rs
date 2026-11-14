@@ -38,7 +38,7 @@ use komodo_client::{
   },
 };
 use mogh_resolver::Resolve;
-use periphery_client::api;
+use periphery_client::api::{self, ExternalEnvVar};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
@@ -58,6 +58,13 @@ use crate::{
   },
   permission::get_check_permissions,
   resource::{self, refresh_build_state_cache},
+  secret_provider::{
+    execution::{
+      build_external_secrets_log, generate_build_cache_bust_nonce,
+      merge_secret_replacers,
+    },
+    resolver::{resolve_build_secrets, validate_repo_no_vault_refs},
+  },
   state::{action_states, db_client},
 };
 
@@ -207,6 +214,72 @@ impl Resolve<ExecuteArgs> for RunBuild {
       }
     });
 
+    // PREFLIGHT & INTERPOLATE VARIABLES + EXTERNAL SECRETS (before provisioning temporary Builder!)
+    let mut interpolator = Interpolator::new(
+      (!build.config.skip_secret_interp).then_some(&variables),
+      &secrets,
+    );
+    let resolved_ext = resolve_build_secrets(
+      &build,
+      user,
+      Some(PermissionLevel::Execute),
+      &mut interpolator,
+      &cancel,
+    )
+    .await?;
+
+    if !build.config.skip_secret_interp {
+      if let Some(ext) = &resolved_ext {
+        build.config.secret_args.clear();
+        interpolator.interpolate_build(&mut build)?;
+        build.config.secret_args = ext
+          .standard_secret_args
+          .iter()
+          .map(|ev| format!("{}={}", ev.variable, ev.value))
+          .collect::<Vec<_>>()
+          .join("\n");
+      } else {
+        interpolator.interpolate_build(&mut build)?;
+      }
+
+      if let Some(repo) = repo.as_mut() {
+        validate_repo_no_vault_refs(repo)?;
+        interpolator.interpolate_repo(repo)?;
+      }
+
+      interpolator.push_logs(&mut update.logs);
+    } else if let Some(repo) = repo.as_ref() {
+      validate_repo_no_vault_refs(repo)?;
+    }
+
+    if let Some(ext) = &resolved_ext {
+      update
+        .logs
+        .push(build_external_secrets_log(&ext.provenance));
+    }
+
+    let secret_replacers = merge_secret_replacers(
+      interpolator.secret_replacers,
+      resolved_ext
+        .as_ref()
+        .map(|e| e.replacers.clone())
+        .unwrap_or_default(),
+    );
+    let external_secret_args: Vec<ExternalEnvVar> = resolved_ext
+      .as_ref()
+      .map(|ext| {
+        ext
+          .external_build_secrets
+          .iter()
+          .cloned()
+          .map(ExternalEnvVar::from)
+          .collect()
+      })
+      .unwrap_or_default();
+    let secret_cache_bust_nonce = (resolved_ext.is_some()
+      && build.config.secret_cache_bust)
+      .then(generate_build_cache_bust_nonce);
+
     // GET BUILDER PERIPHERY
     let (periphery, cleanup_data) = match connect_builder_periphery(
       build.name.clone(),
@@ -233,23 +306,22 @@ impl Resolve<ExecuteArgs> for RunBuild {
       }
     };
 
-    // INTERPOLATE VARIABLES
-    let secret_replacers = if !build.config.skip_secret_interp {
-      let mut interpolator =
-        Interpolator::new(Some(&variables), &secrets);
-
-      interpolator.interpolate_build(&mut build)?;
-
-      if let Some(repo) = repo.as_mut() {
-        interpolator.interpolate_repo(repo)?;
-      }
-
-      interpolator.push_logs(&mut update.logs);
-
-      interpolator.secret_replacers
-    } else {
-      Default::default()
-    };
+    if resolved_ext.is_some()
+      && let Err(e) = periphery
+        .require_confidential_external_secret_transport()
+        .await
+    {
+      update.logs.push(Log::error(
+        "Confidential Transport Gate",
+        format_serror(&e.into()),
+      ));
+      cleanup_builder_instance(periphery, cleanup_data, &mut update)
+        .await;
+      return handle_early_return(
+        update, build.id, build.name, false,
+      )
+      .await;
+    }
 
     let commit_message = if !build.config.files_on_host
       && (!build.config.repo.is_empty()
@@ -311,11 +383,13 @@ impl Resolve<ExecuteArgs> for RunBuild {
             build: build.clone(),
             repo,
             registry_tokens,
-            replacers: secret_replacers.into_iter().collect(),
+            replacers: secret_replacers,
             // To push a commit hash tagged image
             commit_hash: optional_string(&update.commit_hash),
             // Unused for now
             additional_tags: Default::default(),
+            external_secret_args,
+            secret_cache_bust_nonce,
           }) => res.context("Failed at call to Periphery to build"),
         _ = cancel.cancelled() => {
           info!("Build cancelled during build, cleaning up builder");
@@ -620,7 +694,9 @@ async fn handle_post_build_redeploy(build_id: &str) {
   let futures =
     redeploy_deployments
       .into_iter()
-      .map(|deployment| async move {
+      .map(|deployment| {
+        let build_origin_id = build_id.to_string();
+        async move {
         let state = get_deployment_state(&deployment.id)
           .await
           .unwrap_or_default();
@@ -637,24 +713,31 @@ async fn handle_post_build_redeploy(build_id: &str) {
             stop_time: None,
           });
           let user = auto_redeploy_user().to_owned();
-          let res = async {
-            let update = init_execution_update(&req, &user).await?;
-            Deploy {
-              deployment: deployment.id.clone(),
-              stop_signal: None,
-              stop_time: None,
-            }
-            .resolve(&ExecuteArgs {
-              user,
-              update,
-              task_id: Uuid::new_v4(),
-            })
-            .await
-          }
+          let res = crate::secret_provider::authz::with_execution_subject(
+            crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+              actor: komodo_client::entities::secret_provider::SecretExecutionActor::AutoRedeploy,
+              actor_resource_id: build_origin_id,
+            },
+            async {
+              let update = init_execution_update(&req, &user).await?;
+              Deploy {
+                deployment: deployment.id.clone(),
+                stop_signal: None,
+                stop_time: None,
+              }
+              .resolve(&ExecuteArgs {
+                user,
+                update,
+                task_id: Uuid::new_v4(),
+              })
+              .await
+            },
+          )
           .await;
           Some((deployment.id.clone(), res))
         } else {
           None
+        }
         }
       });
 

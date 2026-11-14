@@ -56,8 +56,9 @@ in `core.config.toml`, `komodo.cli.toml`, or in the Core container environment.
 ```
 
 :::warning
-Currently no built-in encryption is supported,
-so you may want to encrypt the files before backing up remotely if your backup solution doesn't support that natively.
+Currently no built-in encryption is supported for general database dump files,
+so you should encrypt `/backups` before storing remotely.
+Note that **External Secret Provider** credentials (`SecretProviderCredential.gz`) are encrypted at rest with AES-256-GCM using `KOMODO_SECRET_PROVIDER_ENCRYPTION_KEY` — you **must** back up that 32-byte master key separately from `/backups` in order to decrypt Secret Provider credentials after a database restore. See [External Secret Providers](../configuration/secret-providers.md#1-master-key-configuration--key-rotation).
 :::
 
 ## Remote Backups

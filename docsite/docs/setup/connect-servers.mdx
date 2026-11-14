@@ -150,6 +150,16 @@ Core and Periphery authenticate using automatically generated public/private key
 
 The onboarding key is no longer needed after the initial connection, and the Periphery private key never leaves the server.
 
+### Confidential Transport for External Secrets
+
+While the Noise handshake cryptographically authenticates the identity of Core and Periphery during WebSocket login, **ongoing RPC payload confidentiality is provided by TLS (`https://` / `wss://`)**.
+
+When deploying a `Stack`, `Deployment`, or `Build` that resolves external secrets from **Settings → Providers → Secrets** (see [Secret Providers](../configuration/secret-providers.md)), Komodo Core enforces a fail-closed transport gate before sending any secret material to Periphery:
+
+- **Inbound (`Core → Periphery`)**: The Server (or URL Builder) address must use TLS (`https://` / `wss://`), `insecure_tls` must be `false`, and if Periphery uses a private CA certificate, `ca_cert_pem` must be configured on the Server/Builder.
+- **Outbound (`Periphery → Core`)**: Periphery must connect via `wss://`, `core_tls_insecure_skip_verify` must be `false`, and if Core uses a private CA certificate, `core_ca_cert_pem` (`PERIPHERY_CORE_CA_CERT_PEM` / `PERIPHERY_CORE_CA_CERT_PEM_FILE`) must be configured on Periphery.
+- Plaintext `http://` / `ws://` connections, TLS-skipping connections, or older Periphery versions without external secret lifecycle capability are rejected before execution.
+
 ### Default key locations
 
 | Component | Install Method | Default path                           |

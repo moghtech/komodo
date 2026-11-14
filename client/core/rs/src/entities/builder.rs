@@ -302,6 +302,9 @@ impl MergePartial for BuilderConfig {
             insecure_tls: partial
               .insecure_tls
               .unwrap_or(config.insecure_tls),
+            ca_cert_pem: partial
+              .ca_cert_pem
+              .unwrap_or(config.ca_cert_pem),
             passkey: partial.passkey.unwrap_or(config.passkey),
           };
           BuilderConfig::Url(config)
@@ -396,6 +399,11 @@ pub struct UrlBuilderConfig {
   #[builder(default = default_insecure_tls())]
   #[partial_default(default_insecure_tls())]
   pub insecure_tls: bool,
+  /// Optional PEM-encoded root CA certificate(s) used to verify Periphery TLS certificates
+  /// when `insecure_tls = false`.
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  #[builder(default)]
+  pub ca_cert_pem: String,
   /// Deprecated. Use private / public keys instead.
   /// An optional override passkey to use
   /// to authenticate with periphery agent.
@@ -419,6 +427,7 @@ impl Default for UrlBuilderConfig {
       address: default_address(),
       periphery_public_key: Default::default(),
       insecure_tls: default_insecure_tls(),
+      ca_cert_pem: Default::default(),
       passkey: Default::default(),
     }
   }

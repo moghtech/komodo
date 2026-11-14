@@ -124,3 +124,11 @@ await komodo.write("UpdateDeployment", {
 await komodo.execute("Deploy", { deployment: "api-server" });
 console.log(`Scaled api-server to ${replicas} replicas`);
 ```
+
+## External Secret Provider Authorization
+
+When a `Procedure` or `Action` triggers `DeployStack`, `DeployStackIfChanged`, `Deploy`, or `RunBuild` on resources that consume external [Secret Providers](../configuration/secret-providers.md):
+
+- Built-in system users (`Procedure` / `Action`) do **not** bypass `SecretProviderGrant` checks.
+- Grant an explicit `SystemActor` (`actor = "Procedure"` or `actor = "Action"`, optionally restricted to a single `actor_resource_id`) on the Secret Provider under **Settings → Providers → Secrets**.
+- `Action` configs themselves cannot interpolate `[[vault.<provider-slug>.<secret-key>]]` directly.

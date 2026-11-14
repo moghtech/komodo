@@ -214,6 +214,12 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
       ).into());
     }
 
+    crate::secret_provider::execution::ensure_writable_stack_file_path(
+      &stack,
+      &file_path,
+    )
+    .await?;
+
     let mut update =
       make_update(&stack, Operation::WriteStackContents, user);
 
@@ -507,6 +513,12 @@ impl Resolve<WriteArgs> for RefreshStackCache {
       })
       .collect::<HashMap<_, _>>();
 
+    let excluded_secret_paths =
+      crate::secret_provider::execution::excluded_secret_paths_for_stack(
+        &stack,
+      )
+      .await;
+
     let (
       latest_services,
       remote_contents,
@@ -523,26 +535,34 @@ impl Resolve<WriteArgs> for RefreshStackCache {
       )
       .await
       {
-        let GetComposeContentsOnHostResponse { contents, errors } =
-          match swarm_or_server_request(
-            &swarm_or_server,
-            GetComposeContentsOnHost {
-              file_paths: stack.all_file_dependencies(),
-              name: stack.name.clone(),
-              run_directory: stack.config.run_directory.clone(),
-            },
-          )
-          .await
-          {
-            Ok(res) => res,
-            Err(e) => GetComposeContentsOnHostResponse {
-              contents: Default::default(),
-              errors: vec![FileContents {
-                path: stack.config.run_directory.clone(),
-                contents: format_serror(&e.into()),
-              }],
-            },
-          };
+        let GetComposeContentsOnHostResponse {
+          mut contents,
+          mut errors,
+        } = match swarm_or_server_request(
+          &swarm_or_server,
+          GetComposeContentsOnHost {
+            file_paths: stack.all_file_dependencies(),
+            name: stack.name.clone(),
+            run_directory: stack.config.run_directory.clone(),
+            exclude_paths: excluded_secret_paths.clone(),
+          },
+        )
+        .await
+        {
+          Ok(res) => res,
+          Err(e) => GetComposeContentsOnHostResponse {
+            contents: Default::default(),
+            errors: vec![FileContents {
+              path: stack.config.run_directory.clone(),
+              contents: format_serror(&e.into()),
+            }],
+          },
+        };
+        crate::secret_provider::execution::filter_stack_remote_contents(
+          &mut contents,
+          &mut errors,
+          &excluded_secret_paths,
+        );
         let project_name = stack.project_name(true);
 
         let mut services = Vec::new();
@@ -584,8 +604,8 @@ impl Resolve<WriteArgs> for RefreshStackCache {
       // REPO BASED STACK
       // ================
       let RemoteComposeContents {
-        successful: remote_contents,
-        errored: remote_errors,
+        successful: mut remote_contents,
+        errored: mut remote_errors,
         hash: latest_hash,
         message: latest_message,
         ..
@@ -595,6 +615,17 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         Some(&mut missing_files),
       )
       .await?;
+      crate::secret_provider::execution::filter_stack_remote_contents(
+        &mut remote_contents,
+        &mut remote_errors,
+        &excluded_secret_paths,
+      );
+      missing_files.retain(|p| {
+        !crate::secret_provider::execution::is_excluded_secret_stack_path(
+          p,
+          &excluded_secret_paths,
+        )
+      });
 
       let project_name = stack.project_name(true);
 
@@ -985,13 +1016,19 @@ pub async fn check_stack_for_update_inner(
   let stack_id = stack.id.clone();
 
   let run = async move {
-    match execute::inner_handler(
-      ExecuteRequest::DeployStack(DeployStack {
-        stack: stack.id.clone(),
-        services: deploy_services,
-        stop_time: None,
-      }),
-      auto_redeploy_user().to_owned(),
+    match crate::secret_provider::authz::with_execution_subject(
+      crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+        actor: komodo_client::entities::secret_provider::SecretExecutionActor::AutoRedeploy,
+        actor_resource_id: stack.id.clone(),
+      },
+      execute::inner_handler(
+        ExecuteRequest::DeployStack(DeployStack {
+          stack: stack.id.clone(),
+          services: deploy_services,
+          stop_time: None,
+        }),
+        auto_redeploy_user().to_owned(),
+      ),
     )
     .await
     {

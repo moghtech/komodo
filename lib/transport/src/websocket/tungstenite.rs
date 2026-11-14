@@ -170,15 +170,49 @@ impl WebsocketReceiver for TungsteniteWebsocketReceiver {
 }
 
 impl TungsteniteWebsocket {
+  /// Returns `true` when the underlying TCP stream is wrapped in a real TLS (`rustls`) session.
+  pub fn is_tls(&self) -> bool {
+    matches!(self.0.get_ref(), MaybeTlsStream::Rustls(_))
+  }
+
   pub async fn connect_maybe_tls_insecure(
     url: &str,
     insecure: bool,
   ) -> mogh_error::Result<(Self, HeaderValue)> {
-    if insecure {
-      Self::connect_tls_insecure(url).await
-    } else {
-      Self::connect(url).await
+    Self::connect_with_tls_config(url, insecure, None).await
+  }
+
+  /// Connect to a WebSocket endpoint using:
+  /// - Plaintext TCP if `url` is `ws://...`
+  /// - Insecure TLS if `url` is `wss://...` and `insecure == true`
+  /// - Verified TLS pinned strictly to `ca_cert_pem` if provided and non-empty
+  /// - Verified TLS using native OS roots otherwise
+  pub async fn connect_with_tls_config(
+    url: &str,
+    insecure: bool,
+    ca_cert_pem: Option<&str>,
+  ) -> mogh_error::Result<(Self, HeaderValue)> {
+    if !url.starts_with("wss://") {
+      return Self::connect(url).await;
     }
+    if insecure {
+      return Self::connect_tls_insecure(url).await;
+    }
+    if let Some(pem) =
+      ca_cert_pem.map(str::trim).filter(|s| !s.is_empty())
+    {
+      let tls_config = build_custom_ca_client_config(pem)
+        .context("Invalid custom CA PEM certificate configuration")?;
+      let res = tokio_tungstenite::connect_async_tls_with_config(
+        make_request(url)?,
+        None,
+        false,
+        Some(Connector::Rustls(Arc::new(tls_config))),
+      )
+      .await;
+      return Self::handle_connection_result(url, res);
+    }
+    Self::connect(url).await
   }
 
   pub async fn connect(
@@ -252,6 +286,36 @@ fn make_request(url: &str) -> mogh_error::Result<http::Request<()>> {
     )),
   );
   Ok(request)
+}
+
+fn build_custom_ca_client_config(
+  pem: &str,
+) -> anyhow::Result<ClientConfig> {
+  use rustls::pki_types::{CertificateDer, pem::PemObject as _};
+
+  let _ =
+    rustls::crypto::aws_lc_rs::default_provider().install_default();
+
+  let mut root_store = rustls::RootCertStore::empty();
+  let mut count = 0usize;
+  for cert in CertificateDer::pem_slice_iter(pem.as_bytes()) {
+    let cert =
+      cert.context("Failed to parse PEM certificate entry")?;
+    root_store
+      .add(cert)
+      .context("Failed to add CA certificate to TLS root store")?;
+    count += 1;
+  }
+  if count == 0 {
+    return Err(anyhow!(
+      "No valid PEM certificates found in configured CA bundle"
+    ));
+  }
+  Ok(
+    ClientConfig::builder()
+      .with_root_certificates(root_store)
+      .with_no_client_auth(),
+  )
 }
 
 #[derive(Debug)]

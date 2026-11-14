@@ -31,6 +31,11 @@ use crate::{
   },
   permission::get_check_permissions,
   resource,
+  secret_provider::redaction::{
+    mask_container_env, mask_swarm_service_env,
+    redact_compose_merged_config_yaml, redact_log_env_assignments,
+    stack_secret_env_keys,
+  },
   stack::setup_stack_execution,
   state::{action_states, stack_status_cache},
 };
@@ -42,14 +47,22 @@ impl Resolve<ReadArgs> for GetStack {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> mogh_error::Result<Stack> {
-    Ok(
-      get_check_permissions::<Stack>(
-        &self.stack,
-        user,
-        PermissionLevel::Read.into(),
-      )
-      .await?,
+    let mut stack = get_check_permissions::<Stack>(
+      &self.stack,
+      user,
+      PermissionLevel::Read.into(),
     )
+    .await?;
+    if stack.info.deployed_config.is_some() {
+      let keys: Vec<String> =
+        stack_secret_env_keys(&stack).await.into_iter().collect();
+      if !keys.is_empty()
+        && let Some(cfg) = stack.info.deployed_config.as_mut()
+      {
+        *cfg = redact_compose_merged_config_yaml(cfg, &keys);
+      }
+    }
+    Ok(stack)
   }
 }
 
@@ -287,6 +300,9 @@ impl Resolve<ReadArgs> for GetStackLog {
     .await?;
 
     swarm_or_server.verify_has_target()?;
+    let secret_keys = stack_secret_env_keys(&stack).await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
 
     let log = match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -319,10 +335,14 @@ impl Resolve<ReadArgs> for GetStackLog {
           services,
           tail,
           timestamps,
+          redact_env_keys,
         })
         .await
         .context("Failed to get stack log from periphery")?,
     };
+
+    let mut log = log;
+    redact_log_env_assignments(&mut log, &secret_keys);
 
     Ok(log)
   }
@@ -349,6 +369,9 @@ impl Resolve<ReadArgs> for SearchStackLog {
     .await?;
 
     swarm_or_server.verify_has_target()?;
+    let secret_keys = stack_secret_env_keys(&stack).await;
+    let redact_env_keys: Vec<String> =
+      secret_keys.iter().cloned().collect();
 
     let log = match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
@@ -381,10 +404,14 @@ impl Resolve<ReadArgs> for SearchStackLog {
           combinator,
           invert,
           timestamps,
+          redact_env_keys,
         })
         .await
         .context("Failed to search stack log from periphery")?,
     };
+
+    let mut log = log;
+    redact_log_env_assignments(&mut log, &secret_keys);
 
     Ok(log)
   }
@@ -429,11 +456,14 @@ impl Resolve<ReadArgs> for InspectStackContainer {
       ).into());
     };
 
-    let res = periphery_client(&server)
+    let mut res = periphery_client(&server)
       .await?
       .request(InspectContainer { name })
       .await
       .context("Failed to inspect container on server")?;
+
+    let secret_keys = stack_secret_env_keys(&stack).await;
+    mask_container_env(&mut res, &secret_keys);
 
     Ok(res)
   }
@@ -480,13 +510,17 @@ impl Resolve<ReadArgs> for InspectStackSwarmService {
       ).into());
     };
 
-    swarm_request(
+    let mut res = swarm_request(
       &swarm.config.server_ids,
       periphery_client::api::swarm::InspectSwarmService { service },
     )
     .await
-    .context("Failed to inspect service on swarm")
-    .map_err(Into::into)
+    .context("Failed to inspect service on swarm")?;
+
+    let secret_keys = stack_secret_env_keys(&stack).await;
+    mask_swarm_service_env(&mut res, &secret_keys);
+
+    Ok(res)
   }
 }
 

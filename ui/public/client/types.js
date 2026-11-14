@@ -201,6 +201,13 @@ export var Operation;
     Operation["CreateDockerRegistryAccount"] = "CreateDockerRegistryAccount";
     Operation["UpdateDockerRegistryAccount"] = "UpdateDockerRegistryAccount";
     Operation["DeleteDockerRegistryAccount"] = "DeleteDockerRegistryAccount";
+    Operation["CreateSecretProvider"] = "CreateSecretProvider";
+    Operation["UpdateSecretProvider"] = "UpdateSecretProvider";
+    Operation["DeleteSecretProvider"] = "DeleteSecretProvider";
+    Operation["CreateSecretProviderGrant"] = "CreateSecretProviderGrant";
+    Operation["UpdateSecretProviderGrant"] = "UpdateSecretProviderGrant";
+    Operation["DeleteSecretProviderGrant"] = "DeleteSecretProviderGrant";
+    Operation["RotateSecretProviderKeys"] = "RotateSecretProviderKeys";
 })(Operation || (Operation = {}));
 /** An update's status */
 export var UpdateStatus;
@@ -212,6 +219,16 @@ export var UpdateStatus;
     /** The run is complete */
     UpdateStatus["Complete"] = "Complete";
 })(UpdateStatus || (UpdateStatus = {}));
+export var SecretValueFormat;
+(function (SecretValueFormat) {
+    SecretValueFormat["Text"] = "Text";
+    SecretValueFormat["Binary"] = "Binary";
+})(SecretValueFormat || (SecretValueFormat = {}));
+export var SecretConflictPolicy;
+(function (SecretConflictPolicy) {
+    SecretConflictPolicy["Fail"] = "Fail";
+    SecretConflictPolicy["ReplaceExisting"] = "ReplaceExisting";
+})(SecretConflictPolicy || (SecretConflictPolicy = {}));
 export var BuildState;
 (function (BuildState) {
     /** Currently building */
@@ -1006,6 +1023,12 @@ export var SearchCombinator;
     SearchCombinator["Or"] = "Or";
     SearchCombinator["And"] = "And";
 })(SearchCombinator || (SearchCombinator = {}));
+export var SecretCheckStageStatus;
+(function (SecretCheckStageStatus) {
+    SecretCheckStageStatus["Passed"] = "Passed";
+    SecretCheckStageStatus["Failed"] = "Failed";
+    SecretCheckStageStatus["Skipped"] = "Skipped";
+})(SecretCheckStageStatus || (SecretCheckStageStatus = {}));
 /** Days of the week */
 export var DayOfWeek;
 (function (DayOfWeek) {
@@ -1109,6 +1132,28 @@ export var RepoWebhookAction;
     RepoWebhookAction["Pull"] = "Pull";
     RepoWebhookAction["Build"] = "Build";
 })(RepoWebhookAction || (RepoWebhookAction = {}));
+/**
+ * Automated / indirect execution subjects in Komodo that require explicit grant authorization
+ * (never implicitly authorized via built-in `admin: true` service user flags).
+ */
+export var SecretExecutionActor;
+(function (SecretExecutionActor) {
+    SecretExecutionActor["Procedure"] = "Procedure";
+    SecretExecutionActor["Webhook"] = "Webhook";
+    SecretExecutionActor["Schedule"] = "Schedule";
+    SecretExecutionActor["AutoRedeploy"] = "AutoRedeploy";
+    SecretExecutionActor["ResourceSync"] = "ResourceSync";
+    SecretExecutionActor["Action"] = "Action";
+})(SecretExecutionActor || (SecretExecutionActor = {}));
+export var SecretUsage;
+(function (SecretUsage) {
+    SecretUsage["MetadataList"] = "MetadataList";
+    SecretUsage["Preview"] = "Preview";
+    SecretUsage["StackEnv"] = "StackEnv";
+    SecretUsage["StackComposeFileSecret"] = "StackComposeFileSecret";
+    SecretUsage["DeploymentEnv"] = "DeploymentEnv";
+    SecretUsage["BuildSecret"] = "BuildSecret";
+})(SecretUsage || (SecretUsage = {}));
 /** The specific types of permission that a User or UserGroup can have on a resource. */
 export var SpecificPermission;
 (function (SpecificPermission) {

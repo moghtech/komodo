@@ -85,15 +85,21 @@ pub async fn run_startup_actions() {
       }
     };
 
-    if let Err(e) = (RunAction {
-      action: name.clone(),
-      args: Default::default(),
-    })
-    .resolve(&ExecuteArgs {
-      user: action_user().to_owned(),
-      update,
-      task_id: Uuid::new_v4(),
-    })
+    if let Err(e) = crate::secret_provider::authz::with_execution_subject(
+      crate::secret_provider::authz::ExecutionSubjectContext::SystemActor {
+        actor: komodo_client::entities::secret_provider::SecretExecutionActor::Action,
+        actor_resource_id: id.clone(),
+      },
+      (RunAction {
+        action: name.clone(),
+        args: Default::default(),
+      })
+      .resolve(&ExecuteArgs {
+        user: action_user().to_owned(),
+        update,
+        task_id: Uuid::new_v4(),
+      }),
+    )
     .await
     {
       error!(
@@ -120,6 +126,7 @@ pub async fn on_startup() {
     in_progress_update_cleanup(),
     open_alert_cleanup(),
     action_api_key_cleanup(),
+    crate::secret_provider::verify_startup_integrity(),
     ensure_first_server_and_builder(),
     ensure_init_user_and_resources(),
   );

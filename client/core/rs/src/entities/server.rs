@@ -128,6 +128,12 @@ pub struct ServerConfig {
   #[partial_default(default_insecure_tls())]
   pub insecure_tls: bool,
 
+  /// Optional PEM-encoded root CA certificate(s) used to verify Periphery TLS certificates
+  /// on Core -> Periphery WSS connections when `insecure_tls = false`.
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  #[builder(default)]
+  pub ca_cert_pem: String,
+
   /// The address to use with links for containers on the server.
   /// If empty, will use the 'address' for links.
   #[serde(default)]
@@ -329,6 +335,7 @@ impl Default for ServerConfig {
     Self {
       address: Default::default(),
       insecure_tls: default_insecure_tls(),
+      ca_cert_pem: Default::default(),
       external_address: Default::default(),
       enabled: default_enabled(),
       auto_rotate_keys: default_auto_rotate_keys(),
@@ -429,6 +436,23 @@ pub struct ServerHealth {
   pub disks: HashMap<PathBuf, ServerHealthState>,
 }
 
+/// Capabilities reported by a Periphery agent.
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct PeripheryCapabilities {
+  /// Whether this Periphery agent supports external secret injection v1
+  /// (controlled `.env` escaping, Compose runtime file secrets, isolated BuildKit secrets).
+  #[serde(default)]
+  pub external_secrets_v1: bool,
+  /// For Periphery -> Core outbound connections, whether Periphery verified Core's WSS TLS certificate
+  /// (`wss://` with `core_tls_insecure_skip_verify = false`). `None` when queried on a Core -> Periphery inbound listener.
+  #[serde(default)]
+  pub outbound_tls_verified: Option<bool>,
+}
+
 /// Info about Periphery configuration
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
@@ -448,6 +472,9 @@ pub struct PeripheryInformation {
   pub docker_connected: bool,
   /// The host public ip, if it can be resolved.
   pub public_ip: Option<String>,
+  /// Capabilities supported by this Periphery instance.
+  #[serde(default)]
+  pub capabilities: PeripheryCapabilities,
 }
 
 /// Current pending actions on the server.

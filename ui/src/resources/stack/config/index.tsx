@@ -30,6 +30,9 @@ import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { ShowHideButton } from "mogh_ui";
 import SecretsSearch from "@/components/config/secrets-search";
+import { StackExternalSecretsPanel } from "@/components/secret-provider/resource-secrets-panel";
+import { hasComposeWrapperConflict } from "@/components/secret-provider/utils";
+import { Alert } from "@mantine/core";
 import { MonacoEditor } from "mogh_ui";
 import { EnableSwitch } from "mogh_ui";
 import StackConfigFiles from "./config-files";
@@ -245,6 +248,8 @@ export default function StackConfig({
     },
   };
 
+  const mergedConfig: Types.StackConfig = { ...config, ...update };
+
   const environment: ConfigGroupArgs<Types.StackConfig> = {
     label: "Environment",
     description: `Pass these variables to the docker ${currSwarmId ? "stack" : "compose"} command`,
@@ -258,7 +263,17 @@ export default function StackConfig({
     fields: {
       environment: (env, set) => (
         <Stack>
-          <SecretsSearch server={update.server_id ?? config.server_id} />
+          <SecretsSearch
+            server={update.server_id ?? config.server_id}
+            externalResourceTarget={
+              currSwarmId ? undefined : { type: "Stack", id }
+            }
+            onInsertExternalLine={(line) => {
+              const base = (env || "").trimEnd();
+              set({ environment: base ? `${base}\n${line}\n` : `${line}\n` });
+            }}
+            disabled={disabled}
+          />
           <MonacoEditor
             value={env || "  # VARIABLE = value\n"}
             onValueChange={(environment) => set({ environment })}
@@ -358,6 +373,24 @@ export default function StackConfig({
             </ConfigItem>
           );
         }),
+    },
+  };
+
+  const externalSecretsGroup: ConfigGroupArgs<Types.StackConfig> = {
+    label: "External Secrets",
+    description:
+      "Configure Infisical scope overrides, structured Compose/Service/File secret bindings, and preview secret provenance.",
+    fields: {
+      secret_sources: (_sources, set) => (
+        <StackExternalSecretsPanel
+          stackId={id}
+          config={mergedConfig}
+          allServices={allServices}
+          swarmId={currSwarmId}
+          disabled={disabled}
+          onChange={set}
+        />
+      ),
     },
   };
 
@@ -513,16 +546,24 @@ export default function StackConfig({
       description: "Optional wrapper for secrets management tools.",
       fields: {
         compose_cmd_wrapper: (value, set) => (
-          <MonacoEditor
-            value={
-              value || "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
-            }
-            language="shell"
-            onValueChange={(compose_cmd_wrapper) =>
-              set({ compose_cmd_wrapper })
-            }
-            readOnly={disabled}
-          />
+          <Stack>
+            {hasComposeWrapperConflict(mergedConfig) && (
+              <Alert color="red" icon={<ICONS.Alert size="1rem" />}>
+                Conflict: Native External Secrets and Compose Command Wrapper
+                cannot both be configured on the same Stack execution.
+              </Alert>
+            )}
+            <MonacoEditor
+              value={
+                value || "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
+              }
+              language="shell"
+              onValueChange={(compose_cmd_wrapper) =>
+                set({ compose_cmd_wrapper })
+              }
+              readOnly={disabled}
+            />
+          </Stack>
         ),
         compose_cmd_wrapper_include: (values, set) => {
           const commands = currSwarmId
@@ -763,6 +804,7 @@ export default function StackConfig({
           },
         },
         environment,
+        externalSecretsGroup,
         configFiles,
         ...generalCommon,
       ],
@@ -881,6 +923,7 @@ export default function StackConfig({
           },
         },
         environment,
+        externalSecretsGroup,
         configFiles,
         ...generalCommon,
         {
@@ -968,6 +1011,7 @@ export default function StackConfig({
           },
         },
         environment,
+        externalSecretsGroup,
         ...generalCommon,
       ],
       advanced,

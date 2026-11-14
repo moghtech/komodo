@@ -46,6 +46,7 @@ const sidebars: SidebarsConfig = {
       label: "Configuration",
       items: [
         "configuration/providers",
+        "configuration/secret-providers",
         "configuration/variables",
         "configuration/permissioning",
       ],

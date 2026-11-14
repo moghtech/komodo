@@ -6,8 +6,7 @@ All resources have common traits, such as a unique `name` and `id` amongst all o
 All resources can be assigned `tags`, which can be used to group related resources.
 
 :::note
-Many resources need access to git repos / docker registries. There is an in-built token management system (managed in UI or in config file) to give resources access to credentials.
-All resources which depend on git repos / docker registries are able to use these credentials to access private repos.
+Many resources need access to git repos, docker registries, or external secret managers. Komodo includes built-in [Provider management](configuration/providers) (`Settings → Providers`) for Git accounts, Image Registries, and external [Secret Providers](configuration/secret-providers) (such as Infisical).
 :::
 
 ## [Server](setup/connect-servers)
@@ -32,7 +31,7 @@ All resources which depend on git repos / docker registries are able to use thes
 - Deploy with docker compose.
 - Provide the compose file in UI, or move the files to a git repo and use a webhook for auto redeploy on push.
 - Supports composing multiple compose files using `docker compose -f ... -f ...`.
-- Pass environment variables usable within the compose file. Interpolate in app-wide variables / secrets.
+- Pass environment variables usable within the compose file. Interpolate app-wide variables / secrets, or inject external secrets from [Secret Providers](configuration/secret-providers) (`[[vault.<provider-slug>.<secret-key>]]`, service-scoped env bindings, and Compose file secrets).
 
 ## Repo
 

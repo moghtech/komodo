@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use super::MongoId;
+pub use super::secret_provider::*;
 
 #[typeshare(serialized_as = "Partial<GitProviderAccount>")]
 pub type _PartialGitProviderAccount = PartialGitProviderAccount;

@@ -528,7 +528,14 @@ export declare enum Operation {
     DeleteGitProviderAccount = "DeleteGitProviderAccount",
     CreateDockerRegistryAccount = "CreateDockerRegistryAccount",
     UpdateDockerRegistryAccount = "UpdateDockerRegistryAccount",
-    DeleteDockerRegistryAccount = "DeleteDockerRegistryAccount"
+    DeleteDockerRegistryAccount = "DeleteDockerRegistryAccount",
+    CreateSecretProvider = "CreateSecretProvider",
+    UpdateSecretProvider = "UpdateSecretProvider",
+    DeleteSecretProvider = "DeleteSecretProvider",
+    CreateSecretProviderGrant = "CreateSecretProviderGrant",
+    UpdateSecretProviderGrant = "UpdateSecretProviderGrant",
+    DeleteSecretProviderGrant = "DeleteSecretProviderGrant",
+    RotateSecretProviderKeys = "RotateSecretProviderKeys"
 }
 /** Represents the output of some command being run */
 export interface Log {
@@ -628,6 +635,42 @@ export interface SystemCommand {
     path?: string;
     command?: string;
     shell_mode?: boolean;
+}
+export type SecretSelector = {
+    type: "Infisical";
+    params: InfisicalSecretSelector;
+};
+/**
+ * Named secret source configured on a Stack, Deployment, or Build.
+ * Stores provider reference and selector metadata only — never secret values.
+ */
+export interface SecretSource {
+    /** Local alias used by `SecretBinding.source` (if empty, matches `provider` slug). */
+    name?: string;
+    /** Immutable `SecretProvider.slug`. */
+    provider: string;
+    selector: SecretSelector;
+}
+export declare enum SecretValueFormat {
+    Text = "Text",
+    Binary = "Binary"
+}
+export declare enum SecretConflictPolicy {
+    Fail = "Fail",
+    ReplaceExisting = "ReplaceExisting"
+}
+export interface BuildSecretBinding {
+    /** References `SecretSource.name` on this Build, or a `SecretProvider.slug` directly. */
+    source: string;
+    /** Exact remote secret key name. */
+    remote_key: string;
+    /** Target BuildKit `--secret id=<secret_id>` mount identifier. */
+    secret_id: string;
+    format?: SecretValueFormat;
+    json_field?: string;
+    required: boolean;
+    allow_empty: boolean;
+    conflict_policy?: SecretConflictPolicy;
 }
 /** The build configuration. */
 export interface BuildConfig {
@@ -751,6 +794,15 @@ export interface BuildConfig {
     secret_args?: string;
     /** Docker labels */
     labels?: string;
+    /** External secret provider sources scoped for this Build. */
+    secret_sources?: SecretSource[];
+    /** Structured external secret bindings mounted via BuildKit `--secret` (never `--build-arg` or `ENV`). */
+    secret_bindings?: BuildSecretBinding[];
+    /**
+     * When enabled, passes a fresh non-sensitive `--build-arg KOMODO_SECRET_CACHE_NONCE=<uuid>`
+     * to explicitly invalidate BuildKit `RUN` layer cache when secret-dependent steps must re-execute.
+     */
+    secret_cache_bust?: boolean;
 }
 export interface BuildInfo {
     /** The timestamp build was last built. */
@@ -1370,6 +1422,110 @@ export interface User {
 }
 export type CreateLocalUserResponse = User;
 export type CreateProcedureResponse = Procedure;
+export type SecretGrantSubject = 
+/** Grants usage to a specific real Komodo User (human or service user / API key owner). */
+{
+    type: "User";
+    params: {
+        user_id: string;
+    };
+}
+/** Grants usage to members of a Komodo UserGroup (`everyone` or explicit membership). */
+ | {
+    type: "UserGroup";
+    params: {
+        group_id: string;
+    };
+}
+/** Grants usage to an explicit indirect execution actor (optionally restricted to a specific trigger resource ID, e.g. Procedure ID). */
+ | {
+    type: "SystemActor";
+    params: {
+        actor: SecretExecutionActor;
+        actor_resource_id?: string;
+    };
+}
+/**
+ * Grants usage to any real authenticated & enabled user who holds the required Komodo permission
+ * (`Read`/`Write`/`Execute`) on one of `allowed_resources`. Does NOT match indirect system actors.
+ */
+ | {
+    type: "ResourceAuthorized";
+    params?: undefined;
+};
+export type SecretResourceScope = {
+    type: "Stack";
+    params: {
+        id: string;
+    };
+} | {
+    type: "Deployment";
+    params: {
+        id: string;
+    };
+} | {
+    type: "Build";
+    params: {
+        id: string;
+    };
+} | {
+    type: "AllStacks";
+    params?: undefined;
+} | {
+    type: "AllDeployments";
+    params?: undefined;
+} | {
+    type: "AllBuilds";
+    params?: undefined;
+};
+export type SecretSelectorScope = {
+    type: "Infisical";
+    params: InfisicalSelectorScope;
+};
+/**
+ * Admin-managed authorization grant binding a `SecretProvider` to subjects, resources,
+ * remote selector scopes, and allowed usages. Default policy is deny-all when no grant matches.
+ */
+export interface SecretProviderGrant {
+    _id?: MongoId;
+    provider_id: string;
+    name?: string;
+    description?: string;
+    enabled: boolean;
+    revision: I64;
+    subject: SecretGrantSubject;
+    allowed_resources?: SecretResourceScope[];
+    selector_scope: SecretSelectorScope;
+    allowed_usages?: Array<SecretUsage>;
+    updated_at?: I64;
+}
+export type CreateSecretProviderGrantResponse = SecretProviderGrant;
+export type SecretProviderConfig = {
+    type: "Infisical";
+    params: InfisicalProviderConfig;
+};
+/**
+ * Public representation of an external Secret Provider managed at `Settings -> Providers -> Secrets`.
+ * Never contains bootstrap credentials or encrypted credential envelopes.
+ */
+export interface SecretProvider {
+    _id?: MongoId;
+    /** Immutable, globally unique slug (`[a-z0-9-]+`, no dots) used in `[[vault.<slug>.<key>]]`. */
+    slug?: string;
+    /** Mutable human-readable display name. */
+    name?: string;
+    description?: string;
+    enabled: boolean;
+    /** Optimistic concurrency revision (increments on every config/state/credential mutation). */
+    revision: I64;
+    /** Credential revision (increments whenever stored credentials are replaced or cleared). */
+    credential_revision?: I64;
+    /** Whether an encrypted credential envelope is currently stored for this provider. */
+    has_credentials?: boolean;
+    updated_at?: I64;
+    config: SecretProviderConfig;
+}
+export type CreateSecretProviderResponse = SecretProvider;
 export type CreateServiceUserResponse = User;
 /**
  * A non-secret global variable which can be interpolated into deployment
@@ -1440,6 +1596,8 @@ export interface OnboardingKey {
 }
 export type DeleteOnboardingKeyResponse = OnboardingKey;
 export type DeleteProcedureResponse = Procedure;
+export type DeleteSecretProviderGrantResponse = SecretProviderGrant;
+export type DeleteSecretProviderResponse = SecretProvider;
 export type DeleteUserResponse = User;
 export type DeleteVariableResponse = Variable;
 export type DeploymentImage = 
@@ -1475,6 +1633,18 @@ export declare enum TerminationSignal {
     SigInt = "SIGINT",
     SigQuit = "SIGQUIT",
     SigTerm = "SIGTERM"
+}
+export interface DeploymentSecretBinding {
+    /** References `SecretSource.name` on this Deployment, or a `SecretProvider.slug` directly. */
+    source: string;
+    /** Exact remote secret key name. */
+    remote_key: string;
+    /** Target container environment variable name. */
+    variable: string;
+    json_field?: string;
+    required: boolean;
+    allow_empty: boolean;
+    conflict_policy?: SecretConflictPolicy;
 }
 export interface DeploymentConfig {
     /**
@@ -1581,6 +1751,10 @@ export interface DeploymentConfig {
     environment?: string;
     /** The docker labels given to the container. */
     labels?: string;
+    /** External secret provider sources scoped for this Deployment. */
+    secret_sources?: SecretSource[];
+    /** Structured external secret bindings injected into container environment variables. */
+    secret_bindings?: DeploymentSecretBinding[];
 }
 /**
  * Example:
@@ -2175,6 +2349,19 @@ export declare enum Timelength {
     /** `30-day` */
     ThirtyDays = "30-day"
 }
+/** Capabilities reported by a Periphery agent. */
+export interface PeripheryCapabilities {
+    /**
+     * Whether this Periphery agent supports external secret injection v1
+     * (controlled `.env` escaping, Compose runtime file secrets, isolated BuildKit secrets).
+     */
+    external_secrets_v1?: boolean;
+    /**
+     * For Periphery -> Core outbound connections, whether Periphery verified Core's WSS TLS certificate
+     * (`wss://` with `core_tls_insecure_skip_verify = false`). `None` when queried on a Core -> Periphery inbound listener.
+     */
+    outbound_tls_verified?: boolean;
+}
 /** Info about Periphery configuration */
 export interface PeripheryInformation {
     /** The Periphery version. */
@@ -2191,6 +2378,8 @@ export interface PeripheryInformation {
     docker_connected: boolean;
     /** The host public ip, if it can be resolved. */
     public_ip?: string;
+    /** Capabilities supported by this Periphery instance. */
+    capabilities?: PeripheryCapabilities;
 }
 export type GetPeripheryInformationResponse = PeripheryInformation;
 export type GetPermissionResponse = PermissionLevelAndSpecifics;
@@ -2460,6 +2649,7 @@ export interface ResourceSyncInfo {
 }
 export type ResourceSync = Resource<ResourceSyncConfig, ResourceSyncInfo>;
 export type GetResourceSyncResponse = ResourceSync;
+export type GetSecretProviderResponse = SecretProvider;
 /** Current pending actions on the server. */
 export interface ServerActionState {
     /** Server currently pruning networks */
@@ -2504,6 +2694,11 @@ export interface ServerConfig {
      * but if you use valid certs you can switch this to false.
      */
     insecure_tls: boolean;
+    /**
+     * Optional PEM-encoded root CA certificate(s) used to verify Periphery TLS certificates
+     * on Core -> Periphery WSS connections when `insecure_tls = false`.
+     */
+    ca_cert_pem?: string;
     /**
      * The address to use with links for containers on the server.
      * If empty, will use the 'address' for links.
@@ -2631,6 +2826,48 @@ export interface StackFileDependency {
     services?: string[];
     /** Specify */
     requires?: StackFileRequires;
+}
+/** Explicit injection target for a Stack structured secret binding. */
+export type StackSecretTarget = 
+/** Injects `variable` into the Stack's `.env` file (`write_env_file()`) for Compose `${VAR}` interpolation. */
+{
+    type: "ComposeEnv";
+    params: {
+        variable: string;
+    };
+}
+/** Injects `variable` directly into the container environment of the specified Compose `services`. */
+ | {
+    type: "ServiceEnv";
+    params: {
+        variable: string;
+        services: string[];
+    };
+}
+/** Mounts an immutable controlled file secret into the specified Compose `services` via Compose `secrets:`. */
+ | {
+    type: "ComposeFileSecret";
+    params: {
+        secret_name: string;
+        services: string[];
+        target_path?: string;
+        uid?: string;
+        gid?: string;
+        mode?: number;
+    };
+};
+export interface StackSecretBinding {
+    /** References `SecretSource.name` on this Stack, or a `SecretProvider.slug` directly. */
+    source: string;
+    /** Exact remote secret key name (dots preserved literally). */
+    remote_key: string;
+    target: StackSecretTarget;
+    format?: SecretValueFormat;
+    /** Reserved extension point for future JSON field extraction; unsupported in Infisical v1 (must be empty). */
+    json_field?: string;
+    required: boolean;
+    allow_empty: boolean;
+    conflict_policy?: SecretConflictPolicy;
 }
 /** The compose file configuration. */
 export interface StackConfig {
@@ -2853,6 +3090,13 @@ export interface StackConfig {
      * Note. Not used in Swarm mode.
      */
     environment?: string;
+    /**
+     * External secret provider sources scoped for this Stack.
+     * Stores provider references and remote scope selectors only — never secret values.
+     */
+    secret_sources?: SecretSource[];
+    /** Structured external secret bindings for Compose `.env`, service environment, or Compose file secrets. */
+    secret_bindings?: StackSecretBinding[];
 }
 export interface FileContents {
     /** The path to the file */
@@ -5069,6 +5313,32 @@ export interface ApiKey {
 }
 export type ListApiKeysForServiceUserResponse = ApiKey[];
 export type ListApiKeysResponse = ApiKey[];
+/** Capabilities reported by a SecretProvider adapter. */
+export interface SecretProviderCapabilities {
+    supports_metadata_listing: boolean;
+    supports_versions: boolean;
+    supports_binary_values: boolean;
+    supports_json_selector: boolean;
+    supports_leases: boolean;
+}
+/**
+ * Safe non-admin summary of a `SecretProvider` returned to resource pickers.
+ * Never exposes endpoint credentials, private CAs, or internal auth IDs.
+ */
+export interface SecretProviderSummary {
+    id: string;
+    slug: string;
+    name: string;
+    description?: string;
+    kind: SecretProviderKind;
+    enabled: boolean;
+    has_credentials: boolean;
+    capabilities: SecretProviderCapabilities;
+    default_selector?: SecretSelector;
+    /** Whether the caller currently holds an active grant for the requested resource/metadata scope. */
+    granted: boolean;
+}
+export type ListAvailableSecretProvidersResponse = SecretProviderSummary[];
 export interface BuildVersionResponseItem {
     version: Version;
     ts: I64;
@@ -5091,6 +5361,17 @@ export interface ComposeProject {
 export type ListComposeProjectsResponse = ComposeProject[];
 export type ListContainersResponse = ContainerListItem[];
 export type ListDeploymentsResponse = DeploymentListItem[];
+/** Metadata-only secret descriptor returned to UI selectors (never includes secret values). */
+export interface ExternalSecretMetadataItem {
+    key: string;
+    version?: I64;
+    comment?: string;
+    imported?: boolean;
+    source_environment?: string;
+    source_path?: string;
+    value_hidden?: boolean;
+}
+export type ListExternalSecretKeysResponse = ExternalSecretMetadataItem[];
 export type ListFullActionsResponse = Action[];
 export type ListFullAlertersResponse = Alerter[];
 export type ListFullBuildersResponse = Builder[];
@@ -5358,6 +5639,17 @@ export interface Schedule {
     tags: string[];
 }
 export type ListSchedulesResponse = Schedule[];
+export type ListSecretProviderGrantsResponse = SecretProviderGrant[];
+/** Dependency summary showing which Stack/Deployment/Build references a `SecretProvider`. */
+export interface SecretProviderResourceUsage {
+    resource_type: ResourceTarget["type"];
+    resource_id: string;
+    resource_name: string;
+    reference_kinds: string[];
+    keys: string[];
+}
+export type ListSecretProviderUsagesResponse = SecretProviderResourceUsage[];
+export type ListSecretProvidersResponse = SecretProvider[];
 export type ListSecretsResponse = string[];
 export declare enum ServerState {
     /** Server health check passing. */
@@ -5853,6 +6145,8 @@ export type UpdatePermissionOnResourceTypeResponse = NoData;
 export type UpdatePermissionOnTargetResponse = NoData;
 export type UpdateProcedureResponse = Procedure;
 export type UpdateResourceMetaResponse = NoData;
+export type UpdateSecretProviderGrantResponse = SecretProviderGrant;
+export type UpdateSecretProviderResponse = SecretProvider;
 export type UpdateServiceUserDescriptionResponse = User;
 export type UpdateUserAdminResponse = NoData;
 export type UpdateUserBasePermissionsResponse = NoData;
@@ -6984,6 +7278,43 @@ export interface CreateResourceSync {
     /** Optional partial config to initialize the sync with. */
     config?: _PartialResourceSyncConfig;
 }
+/**
+ * Write-only bootstrap credential input for a Secret Provider.
+ * Implements custom `Debug` so request debug logs never print raw secrets.
+ */
+export type SecretProviderCredentialInput = {
+    type: "Infisical";
+    params: {
+        client_secret: string;
+    };
+};
+/**
+ * **Admin only.** Create an external secret provider.
+ * Response: [CreateSecretProviderResponse].
+ */
+export interface CreateSecretProvider {
+    /** Immutable, globally unique slug (`[a-z0-9-]+`, no dots). */
+    slug: string;
+    name: string;
+    description?: string;
+    enabled?: boolean;
+    config: SecretProviderConfig;
+    credential?: SecretProviderCredentialInput;
+}
+/**
+ * **Admin only.** Create an authorization grant for a secret provider.
+ * Response: [CreateSecretProviderGrantResponse].
+ */
+export interface CreateSecretProviderGrant {
+    provider_id: string;
+    name?: string;
+    description?: string;
+    enabled?: boolean;
+    subject: SecretGrantSubject;
+    allowed_resources?: SecretResourceScope[];
+    selector_scope: SecretSelectorScope;
+    allowed_usages?: Array<SecretUsage>;
+}
 /** Create a server. Response: [Server]. */
 export interface CreateServer {
     /** The name given to newly created server. */
@@ -7242,6 +7573,20 @@ export interface DeleteResourceSync {
     id: string;
 }
 /**
+ * **Admin only.** Delete an external secret provider if no resources depend on it.
+ * Response: [DeleteSecretProviderResponse].
+ */
+export interface DeleteSecretProvider {
+    id: string;
+}
+/**
+ * **Admin only.** Delete an authorization grant for a secret provider.
+ * Response: [DeleteSecretProviderGrantResponse].
+ */
+export interface DeleteSecretProviderGrant {
+    id: string;
+}
+/**
  * Deletes the server at the given id, and returns the deleted server.
  * Response: [Server]
  */
@@ -7369,6 +7714,13 @@ export interface DeployStackIfChanged {
      * Only used if the stack needs to be taken down first.
      */
     stop_time?: number;
+}
+/** Non-sensitive provenance record stored for an executed deployment (never stores plaintext or unkeyed hashes). */
+export interface DeployedSecretProvenance {
+    provider_slug: string;
+    remote_key: string;
+    target: string;
+    version?: I64;
 }
 /**
  * Stops and destroys the container on the target server.
@@ -8108,6 +8460,14 @@ export interface GetResourceSyncsSummaryResponse {
     /** The number of syncs with unknown state. */
     unknown: number;
 }
+/**
+ * **Admin only.** Get a specific external secret provider configuration by ID or slug.
+ * Never returns credentials or encrypted ciphertexts.
+ * Response: [GetSecretProviderResponse].
+ */
+export interface GetSecretProvider {
+    id_or_slug: string;
+}
 /** Get a specific server. Response: [Server]. */
 export interface GetServer {
     /** Id or name */
@@ -8348,6 +8708,51 @@ export interface GlobalAutoUpdate {
      * With this enabled, convert this into an UpdateAvailable alert.
      */
     skip_auto_update?: boolean;
+}
+/** Infisical v4 secret selector (`projectId`, `environment`, `secretPath`, `includeImports`, `expandSecretReferences`). */
+export interface InfisicalSecretSelector {
+    project_id: string;
+    environment: string;
+    secret_path: string;
+    /** Explicitly defaults to `false`; requires admin grant `allow_imports = true` when enabled. */
+    include_imports?: boolean;
+    /** Explicitly defaults to `false`; requires admin grant `allow_expand_references = true` when enabled. */
+    expand_references?: boolean;
+}
+export interface InfisicalProviderConfig {
+    /**
+     * Base HTTPS URL for Infisical Cloud (`https://app.infisical.com` or `https://eu.infisical.com`)
+     * or a self-hosted Infisical instance.
+     */
+    endpoint: string;
+    /** Machine Identity Universal Auth Client ID (non-secret identifier). */
+    client_id?: string;
+    /** Optional Organization slug for Universal Auth login scoping. */
+    organization_slug?: string;
+    /** Optional PEM-encoded root CA certificate(s) for verifying self-hosted TLS endpoints. */
+    ca_cert_pem?: string;
+    /**
+     * Admin-controlled flag allowing connections to private/internal IP ranges for self-hosted Infisical
+     * (cloud metadata and link-local ranges remain unconditionally blocked).
+     */
+    allow_private_ips?: boolean;
+    /**
+     * Optional default scope selector used when inline `[[vault.<slug>.<key>]]` references
+     * do not specify a resource-level `SecretSource` override.
+     */
+    default_selector?: InfisicalSecretSelector;
+}
+export interface InfisicalSelectorScope {
+    /** Allowed Infisical `projectId`s (exact match). */
+    project_ids?: string[];
+    /** Allowed Infisical environment slugs (exact match, e.g. `["prod"]`). */
+    environments?: string[];
+    /** Allowed normalized secret path segment prefixes (e.g. `["/"]` or `["/api"]`). */
+    path_prefixes?: string[];
+    /** Whether resources under this grant may set `include_imports = true` (default `false`). */
+    allow_imports?: boolean;
+    /** Whether resources under this grant may set `expand_references = true` (default `false`). */
+    allow_expand_references?: boolean;
 }
 /**
  * Inspect a container on the server. Response: [Container].
@@ -8738,6 +9143,13 @@ export interface ListApiKeysForServiceUser {
     user: string;
 }
 /**
+ * List safe secret provider summaries available to the caller (for resource editors / key pickers).
+ * Response: [ListAvailableSecretProvidersResponse].
+ */
+export interface ListAvailableSecretProviders {
+    target?: ResourceTarget;
+}
+/**
  * Retrieve versions of the build that were built in the past and available for deployment,
  * sorted by most recent first.
  * Response: [ListBuildVersionsResponse].
@@ -8918,6 +9330,18 @@ export interface ListDeployments {
     sort_by?: DeploymentSortBy;
     /** Reverse the sort direction. */
     sort_desc?: boolean;
+}
+/**
+ * List remote secret key names and metadata (`viewSecretValue=false`, never secret values)
+ * for an authorized caller, target resource, provider slug/ID, and selector.
+ * Response: [ListExternalSecretKeysResponse].
+ */
+export interface ListExternalSecretKeys {
+    target: ResourceTarget;
+    /** Provider ID or immutable slug. */
+    provider: string;
+    /** Optional explicit selector; falls back to the resource's `SecretSource` or provider `default_selector`. */
+    selector?: SecretSelector;
 }
 /** List actions matching optional query. Response: [ListFullActionsResponse]. */
 export interface ListFullActions {
@@ -9415,6 +9839,27 @@ export interface ListSchedules {
     sort_desc?: boolean;
 }
 /**
+ * **Admin only.** List authorization grants for external secret providers.
+ * Response: [ListSecretProviderGrantsResponse].
+ */
+export interface ListSecretProviderGrants {
+    provider_id?: string;
+}
+/**
+ * **Admin only.** List resources referencing a given secret provider (inline `[[vault.<slug>...]]` or structured bindings).
+ * Response: [ListSecretProviderUsagesResponse].
+ */
+export interface ListSecretProviderUsages {
+    provider_id: string;
+}
+/**
+ * **Admin only.** List external secret providers.
+ * Response: [ListSecretProvidersResponse].
+ */
+export interface ListSecretProviders {
+    kind?: SecretProviderKind;
+}
+/**
  * List the secret keys (not values) in the core configuration file.
  * Response: [ListSecretsResponse].
  */
@@ -9842,6 +10287,29 @@ export interface PauseStack {
     services?: string[];
 }
 /**
+ * Validate inline `[[vault.<slug>.<key>]]` references and structured bindings on a Stack, Deployment, or Build.
+ * Returns variable/target names, referenced keys, and status — never returns plaintext values.
+ * Response: [PreviewResourceSecretsResponse].
+ */
+export interface PreviewResourceSecrets {
+    target: ResourceTarget;
+}
+/** Non-sensitive preview item showing target variable/secret name, referenced external keys, and status. */
+export interface ResourceSecretPreviewItem {
+    target: string;
+    references: string[];
+    status: string;
+    ok: boolean;
+    version?: I64;
+}
+export interface PreviewResourceSecretsResponse {
+    valid: boolean;
+    items: ResourceSecretPreviewItem[];
+    errors: string[];
+    last_deployed_at?: I64;
+    deployed_provenance?: DeployedSecretProvenance[];
+}
+/**
  * Prunes the docker buildx cache on the target server. Response: [Update].
  *
  * 1. Runs `docker buildx prune -a -f`.
@@ -10266,6 +10734,16 @@ export interface RotateCoreKeys {
     force?: boolean;
 }
 /**
+ * **Admin only.** Re-encrypt all stored secret provider credentials under the active master key.
+ * Response: [RotateSecretProviderEncryptionKeysResponse].
+ */
+export interface RotateSecretProviderEncryptionKeys {
+}
+export interface RotateSecretProviderEncryptionKeysResponse {
+    rotated_count: Usize;
+    active_key_id: string;
+}
+/**
  * Rotates the private / public keys for the server.
  * Response: [Update]
  */
@@ -10509,6 +10987,15 @@ export interface SearchSwarmServiceLog {
     /** Enable `--details` */
     details?: boolean;
 }
+export declare enum SecretCheckStageStatus {
+    Passed = "Passed",
+    Failed = "Failed",
+    Skipped = "Skipped"
+}
+export interface SecretTestStageResult {
+    status: SecretCheckStageStatus;
+    message: string;
+}
 /**
  * Send a custom alert message to configured Alerters. Response: [Update].
  * Alias: `alert`
@@ -10710,6 +11197,46 @@ export interface TerminationSignalLabel {
 export interface TestAlerter {
     /** Name or id */
     alerter: string;
+}
+/** Explicit credential mutation mode on provider updates (never uses `********` sentinel values). */
+export type CredentialUpdate = {
+    type: "Keep";
+    params?: undefined;
+} | {
+    type: "Replace";
+    params: SecretProviderCredentialInput;
+} | {
+    type: "Clear";
+    params?: undefined;
+};
+/**
+ * **Admin only.** Test authentication, metadata listing, and value-read permission on a saved or unsaved provider.
+ * Response: [TestSecretProviderResponse].
+ */
+export interface TestSecretProviderConnection {
+    /**
+     * Optional existing provider ID (allows testing with stored credentials when `credential_update = Keep`,
+     * provided target/identity config has not changed).
+     */
+    id?: string;
+    /** Optional config override (required when `id` is `None`). */
+    config?: SecretProviderConfig;
+    credential_update?: CredentialUpdate;
+    /** Optional scope selector to verify metadata access and value-read permission. */
+    selector?: SecretSelector;
+    /** Optional specific secret key name to verify actual value-read permission without returning the value. */
+    sample_key?: string;
+}
+/**
+ * Structured 3-stage connection test result:
+ * reports authentication, scope metadata discovery, and actual value-read permission separately.
+ */
+export interface TestSecretProviderResponse {
+    ready_for_deploy: boolean;
+    authentication: SecretTestStageResult;
+    metadata_access: SecretTestStageResult;
+    value_read_access: SecretTestStageResult;
+    key_count?: Usize;
 }
 /** Info for the all system disks combined. */
 export interface TotalDiskUsage {
@@ -10994,6 +11521,35 @@ export interface UpdateResourceSync {
     config: _PartialResourceSyncConfig;
 }
 /**
+ * **Admin only.** Update an external secret provider.
+ * Changing endpoint/identity/CA requires `credential_update = Replace(...)` or `Clear` (rejects `Keep`).
+ * Response: [UpdateSecretProviderResponse].
+ */
+export interface UpdateSecretProvider {
+    id: string;
+    expected_revision: I64;
+    name?: string;
+    description?: string;
+    enabled?: boolean;
+    config?: SecretProviderConfig;
+    credential_update?: CredentialUpdate;
+}
+/**
+ * **Admin only.** Update an authorization grant for a secret provider.
+ * Response: [UpdateSecretProviderGrantResponse].
+ */
+export interface UpdateSecretProviderGrant {
+    id: string;
+    expected_revision: I64;
+    name?: string;
+    description?: string;
+    enabled?: boolean;
+    subject?: SecretGrantSubject;
+    allowed_resources?: SecretResourceScope[];
+    selector_scope?: SecretSelectorScope;
+    allowed_usages?: Array<SecretUsage>;
+}
+/**
  * Update the server at the given id, and return the updated server.
  * Response: [Server].
  *
@@ -11149,6 +11705,11 @@ export interface UrlBuilderConfig {
     periphery_public_key?: string;
     /** Whether to validate the Periphery tls certificates. */
     insecure_tls: boolean;
+    /**
+     * Optional PEM-encoded root CA certificate(s) used to verify Periphery TLS certificates
+     * when `insecure_tls = false`.
+     */
+    ca_cert_pem?: string;
     /**
      * Deprecated. Use private / public keys instead.
      * An optional override passkey to use
@@ -11941,6 +12502,27 @@ export type ReadRequest = {
     type: "ListImageRegistryAccounts";
     params: ListImageRegistryAccounts;
 } | {
+    type: "GetSecretProvider";
+    params: GetSecretProvider;
+} | {
+    type: "ListSecretProviders";
+    params: ListSecretProviders;
+} | {
+    type: "ListAvailableSecretProviders";
+    params: ListAvailableSecretProviders;
+} | {
+    type: "ListSecretProviderGrants";
+    params: ListSecretProviderGrants;
+} | {
+    type: "ListSecretProviderUsages";
+    params: ListSecretProviderUsages;
+} | {
+    type: "ListExternalSecretKeys";
+    params: ListExternalSecretKeys;
+} | {
+    type: "PreviewResourceSecrets";
+    params: PreviewResourceSecrets;
+} | {
     type: "ListOnboardingKeys";
     params: ListOnboardingKeys;
 };
@@ -11948,6 +12530,26 @@ export declare enum RepoWebhookAction {
     Clone = "Clone",
     Pull = "Pull",
     Build = "Build"
+}
+/**
+ * Automated / indirect execution subjects in Komodo that require explicit grant authorization
+ * (never implicitly authorized via built-in `admin: true` service user flags).
+ */
+export declare enum SecretExecutionActor {
+    Procedure = "Procedure",
+    Webhook = "Webhook",
+    Schedule = "Schedule",
+    AutoRedeploy = "AutoRedeploy",
+    ResourceSync = "ResourceSync",
+    Action = "Action"
+}
+export declare enum SecretUsage {
+    MetadataList = "MetadataList",
+    Preview = "Preview",
+    StackEnv = "StackEnv",
+    StackComposeFileSecret = "StackComposeFileSecret",
+    DeploymentEnv = "DeploymentEnv",
+    BuildSecret = "BuildSecret"
 }
 /** The specific types of permission that a User or UserGroup can have on a resource. */
 export declare enum SpecificPermission {
@@ -12335,6 +12937,30 @@ export type WriteRequest = {
     type: "DeleteImageRegistryAccount";
     params: DeleteImageRegistryAccount;
 } | {
+    type: "CreateSecretProvider";
+    params: CreateSecretProvider;
+} | {
+    type: "UpdateSecretProvider";
+    params: UpdateSecretProvider;
+} | {
+    type: "DeleteSecretProvider";
+    params: DeleteSecretProvider;
+} | {
+    type: "TestSecretProviderConnection";
+    params: TestSecretProviderConnection;
+} | {
+    type: "CreateSecretProviderGrant";
+    params: CreateSecretProviderGrant;
+} | {
+    type: "UpdateSecretProviderGrant";
+    params: UpdateSecretProviderGrant;
+} | {
+    type: "DeleteSecretProviderGrant";
+    params: DeleteSecretProviderGrant;
+} | {
+    type: "RotateSecretProviderEncryptionKeys";
+    params: RotateSecretProviderEncryptionKeys;
+} | {
     type: "CloseAlert";
     params: CloseAlert;
 };
@@ -12350,3 +12976,4 @@ export type WsLoginMessage = {
         secret: string;
     };
 };
+export type SecretProviderKind = SecretProviderConfig["type"];

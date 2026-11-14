@@ -149,6 +149,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       repo.as_ref(),
       git_token,
       replacers.clone(),
+      &[],
       &mut res,
       args,
     )
@@ -168,7 +169,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       "Failed to validate run directory on host after stack write (canonicalize error)",
     )?;
 
-    validate_files(&stack, &run_directory, &mut res).await;
+    validate_files(&stack, &run_directory, false, &mut res).await;
     if !all_logs_success(&res.logs) {
       return Ok(res);
     }

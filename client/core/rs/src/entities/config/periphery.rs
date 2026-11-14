@@ -156,8 +156,13 @@ pub struct Env {
   /// Override `core_addresses`
   #[serde(alias = "periphery_core_address")]
   pub periphery_core_addresses: Option<Vec<String>>,
-  /// Override `core_tls_insecure_skip_verify`
+  /// Allow Periphery to connect to Core
+  /// without validating the Core certs
   pub periphery_core_tls_insecure_skip_verify: Option<bool>,
+  /// Override `core_ca_cert_pem`
+  pub periphery_core_ca_cert_pem: Option<String>,
+  /// Override `core_ca_cert_pem` from file
+  pub periphery_core_ca_cert_pem_file: Option<PathBuf>,
   /// Override `connect_as`
   pub periphery_connect_as: Option<String>,
   /// Override `server_enabled`
@@ -281,6 +286,11 @@ pub struct PeripheryConfig {
   /// without validating the Core certs
   #[serde(default)]
   pub core_tls_insecure_skip_verify: bool,
+
+  /// Optional PEM-encoded root CA certificate(s) (or `file:/path/to/ca.pem`)
+  /// used to verify Komodo Core's TLS certificate on outbound WSS connections.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub core_ca_cert_pem: Option<String>,
 
   /// Server name / id to connect as
   #[serde(default)]
@@ -473,6 +483,7 @@ impl Default for PeripheryConfig {
       passkeys: None,
       core_addresses: Default::default(),
       core_tls_insecure_skip_verify: Default::default(),
+      core_ca_cert_pem: None,
       connect_as: Default::default(),
       server_enabled: Default::default(),
       port: default_periphery_port(),
@@ -524,6 +535,7 @@ impl PeripheryConfig {
       core_addresses: self.core_addresses.clone(),
       core_tls_insecure_skip_verify: self
         .core_tls_insecure_skip_verify,
+      core_ca_cert_pem: self.core_ca_cert_pem.clone(),
       connect_as: self.connect_as.clone(),
       server_enabled: self.server_enabled,
       port: self.port,

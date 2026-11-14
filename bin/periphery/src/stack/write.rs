@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::entities::{
-  FileContents, RepoExecutionArgs, all_logs_success, repo::Repo,
-  stack::Stack, to_path_compatible_name, update::Log,
+  EnvironmentVar, FileContents, RepoExecutionArgs, all_logs_success,
+  repo::Repo, stack::Stack, to_path_compatible_name, update::Log,
 };
 use mogh_resolver::Resolve;
 use periphery_client::api::{
-  DeployStackResponse,
+  DeployStackResponse, ExternalEnvVar,
   compose::{ComposePullResponse, ComposeRunResponse},
   git::{CloneRepo, PullOrCloneRepo},
 };
@@ -66,6 +66,7 @@ pub async fn write_stack<'a>(
   repo: Option<&Repo>,
   git_token: Option<String>,
   replacers: Vec<(String, String)>,
+  external_env_vars: &[ExternalEnvVar],
   res: impl WriteStackRes,
   req_args: &Args,
 ) -> anyhow::Result<(
@@ -74,29 +75,50 @@ pub async fn write_stack<'a>(
   // env_file_path
   Option<&'a str>,
 )> {
+  let external_env: Vec<EnvironmentVar> = external_env_vars
+    .iter()
+    .map(|ev| EnvironmentVar {
+      variable: ev.variable.clone(),
+      value: ev.value.clone(),
+    })
+    .collect();
   if stack.config.files_on_host {
-    write_stack_files_on_host(stack, res).await
+    write_stack_files_on_host(stack, &external_env, res).await
   } else if let Some(repo) = repo {
     write_stack_linked_repo(
-      stack, repo, git_token, replacers, res, req_args,
+      stack,
+      repo,
+      git_token,
+      replacers,
+      &external_env,
+      res,
+      req_args,
     )
     .await
   } else if !stack.config.repo.is_empty() {
-    write_stack_inline_repo(stack, git_token, res, req_args).await
+    write_stack_inline_repo(
+      stack,
+      git_token,
+      &external_env,
+      res,
+      req_args,
+    )
+    .await
   } else {
-    write_stack_ui_defined(stack, res).await
+    write_stack_ui_defined(stack, &external_env, res).await
   }
 }
 
 #[instrument("WriteStackFilesOnHost", skip_all)]
-async fn write_stack_files_on_host(
-  stack: &Stack,
+async fn write_stack_files_on_host<'a>(
+  stack: &'a Stack,
+  external_env: &[EnvironmentVar],
   mut res: impl WriteStackRes,
 ) -> anyhow::Result<(
   // run_directory
   PathBuf,
   // env_file_path
-  Option<&str>,
+  Option<&'a str>,
 )> {
   let run_directory = periphery_config()
     .stack_dir()
@@ -104,8 +126,9 @@ async fn write_stack_files_on_host(
     .join(&stack.config.run_directory)
     .components()
     .collect::<PathBuf>();
-  let env_file_path = environment::write_env_file(
+  let env_file_path = environment::write_stack_env_file(
     &stack.config.env_vars()?,
+    external_env,
     run_directory.as_path(),
     &stack.config.env_file_path,
     res.logs(),
@@ -131,6 +154,7 @@ async fn write_stack_linked_repo<'a>(
   repo: &Repo,
   git_token: Option<String>,
   replacers: Vec<(String, String)>,
+  external_env: &[EnvironmentVar],
   mut res: impl WriteStackRes,
   req_args: &Args,
 ) -> anyhow::Result<(
@@ -205,8 +229,9 @@ async fn write_stack_linked_repo<'a>(
     .components()
     .collect::<PathBuf>();
 
-  let env_file_path = environment::write_env_file(
+  let env_file_path = environment::write_stack_env_file(
     &stack.config.env_vars()?,
+    external_env,
     run_directory.as_path(),
     &stack.config.env_file_path,
     res.logs(),
@@ -228,6 +253,7 @@ async fn write_stack_linked_repo<'a>(
 async fn write_stack_inline_repo<'a>(
   stack: &'a Stack,
   git_token: Option<String>,
+  external_env: &[EnvironmentVar],
   mut res: impl WriteStackRes,
   req_args: &Args,
 ) -> anyhow::Result<(
@@ -290,8 +316,9 @@ async fn write_stack_inline_repo<'a>(
     .components()
     .collect::<PathBuf>();
 
-  let env_file_path = environment::write_env_file(
+  let env_file_path = environment::write_stack_env_file(
     &stack.config.env_vars()?,
+    external_env,
     run_directory.as_path(),
     &stack.config.env_file_path,
     res.logs(),
@@ -310,14 +337,15 @@ async fn write_stack_inline_repo<'a>(
 }
 
 #[instrument("WriteStackUiDefined", skip_all)]
-async fn write_stack_ui_defined(
-  stack: &Stack,
+async fn write_stack_ui_defined<'a>(
+  stack: &'a Stack,
+  external_env: &[EnvironmentVar],
   mut res: impl WriteStackRes,
 ) -> anyhow::Result<(
   // run_directory
   PathBuf,
   // env_file_path
-  Option<&str>,
+  Option<&'a str>,
 )> {
   if stack.config.file_contents.trim().is_empty() {
     return Err(anyhow!(
@@ -337,8 +365,9 @@ async fn write_stack_ui_defined(
       "failed to create stack run directory at {run_directory:?}"
     )
   })?;
-  let env_file_path = environment::write_env_file(
+  let env_file_path = environment::write_stack_env_file(
     &stack.config.env_vars()?,
+    external_env,
     run_directory.as_path(),
     &stack.config.env_file_path,
     res.logs(),

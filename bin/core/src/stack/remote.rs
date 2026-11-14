@@ -53,7 +53,19 @@ pub async fn get_repo_compose_contents(
   let mut successful = Vec::new();
   let mut errored = Vec::new();
 
+  let excluded_paths =
+    crate::secret_provider::execution::excluded_secret_paths_for_stack(
+      stack,
+    )
+    .await;
+
   for file in stack.all_file_dependencies() {
+    if crate::secret_provider::execution::is_excluded_secret_stack_path(
+      &file.path,
+      &excluded_paths,
+    ) {
+      continue;
+    }
     let file_path = run_directory.join(&file.path);
     if !file_path.exists()
       && let Some(missing_files) = &mut missing_files

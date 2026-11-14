@@ -417,6 +417,7 @@ pub async fn get_latest_update(
     .context("failed to query db for latest update")
 }
 
+#[derive(Default)]
 pub struct VariablesAndSecrets {
   pub variables: HashMap<String, String>,
   pub secrets: HashMap<String, String>,

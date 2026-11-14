@@ -44,3 +44,7 @@ https://<HOST>/listener/<AUTH_TYPE>/<RESOURCE_TYPE>/<ID_OR_NAME>/<EXECUTION>
 ## Branch Filtering
 
 Your git provider sends webhooks on pushes to **any** branch. Komodo only triggers the action when the push matches the **branch configured on the resource**. For example, a Build pointed at the `release` branch will ignore pushes to `main`.
+
+## External Secret Providers
+
+When an incoming Git webhook triggers a `Build`, `Stack`, `ResourceSync`, `Procedure`, or `Action` that resolves external secrets from **Settings → Providers → Secrets**, configure an explicit `SystemActor` (`actor = "Webhook"`, optionally restricted to `actor_resource_id`) grant on the [Secret Provider](../configuration/secret-providers.md).

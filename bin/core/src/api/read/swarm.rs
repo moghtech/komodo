@@ -268,14 +268,44 @@ impl Resolve<ReadArgs> for InspectSwarmService {
       PermissionLevel::Read.inspect(),
     )
     .await?;
-    swarm_request(
+    let mut res = swarm_request(
       &swarm.config.server_ids,
       periphery_client::api::swarm::InspectSwarmService {
         service: self.service,
       },
     )
-    .await
-    .map_err(Into::into)
+    .await?;
+    let mut secret_keys = std::collections::BTreeSet::new();
+    let svc_name = res
+      .spec
+      .as_ref()
+      .and_then(|s| s.name.as_deref())
+      .unwrap_or_default();
+    let cache = crate::state::all_resources_cache().load();
+    for dep in cache.deployments.values() {
+      if dep.config.swarm_id == swarm.id
+        && dep.deployed_name() == svc_name
+      {
+        secret_keys.extend(
+          crate::secret_provider::redaction::configured_deployment_secret_env_keys(dep),
+        );
+      }
+    }
+    for stk in cache.stacks.values() {
+      if stk.config.swarm_id == swarm.id
+        && svc_name
+          .starts_with(&format!("{}_", stk.project_name(false)))
+      {
+        secret_keys.extend(
+          crate::secret_provider::redaction::configured_stack_secret_env_keys(stk),
+        );
+      }
+    }
+    crate::secret_provider::redaction::mask_swarm_service_env(
+      &mut res,
+      &secret_keys,
+    );
+    Ok(res)
   }
 }
 
@@ -367,14 +397,34 @@ impl Resolve<ReadArgs> for InspectSwarmTask {
       PermissionLevel::Read.inspect(),
     )
     .await?;
-    swarm_request(
+    let mut res = swarm_request(
       &swarm.config.server_ids,
       periphery_client::api::swarm::InspectSwarmTask {
         task: self.task,
       },
     )
-    .await
-    .map_err(Into::into)
+    .await?;
+    let mut secret_keys = std::collections::BTreeSet::new();
+    let cache = crate::state::all_resources_cache().load();
+    for dep in cache.deployments.values() {
+      if dep.config.swarm_id == swarm.id {
+        secret_keys.extend(
+          crate::secret_provider::redaction::configured_deployment_secret_env_keys(dep),
+        );
+      }
+    }
+    for stk in cache.stacks.values() {
+      if stk.config.swarm_id == swarm.id {
+        secret_keys.extend(
+          crate::secret_provider::redaction::configured_stack_secret_env_keys(stk),
+        );
+      }
+    }
+    crate::secret_provider::redaction::mask_swarm_task_env(
+      &mut res,
+      &secret_keys,
+    );
+    Ok(res)
   }
 }
 

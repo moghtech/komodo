@@ -151,6 +151,14 @@ exclude_disk_mounts = []
 ## Env: PERIPHERY_ONBOARDING_KEY
 # onboarding_key = "MC4CAQAwBQYDK2VuBCIEIHPHNA/0M9ejFviE2y4dpyczAvnAwPWDQtGGGhEJ2G6K"
 
+## Optional PEM-encoded root CA certificate(s) (or `file:/path/to/ca.pem`) used by outbound Periphery
+## to verify Komodo Core's `wss://` TLS certificate when Core uses a private/internal CA.
+## External Secret Provider executions require an end-to-end verified TLS/WSS transport channel
+## between Core and Periphery (`ws://` plaintext and `tls_insecure` are rejected).
+## Env: PERIPHERY_CORE_CA_CERT_PEM or PERIPHERY_CORE_CA_CERT_PEM_FILE
+## Default: None (uses host root certificate store)
+# core_ca_cert_pem = "file:/etc/komodo/ssl/core-ca.pem"
+
 ################
 # INBOUND MODE #
 ################

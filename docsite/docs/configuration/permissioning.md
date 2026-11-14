@@ -83,3 +83,15 @@ Users also have some configurable global permissions, these are:
  - create build permission
 
 Only users with these permissions (as well as admins) can add additional servers to Komodo, and can create additional builds, respectively.
+
+## External Secret Provider Grants
+
+External [Secret Providers](./secret-providers.md) (`Settings → Providers → Secrets`) enforce a **default-deny** authorization layer on top of standard Komodo resource permissions:
+
+1. **Provider Management (`Admin` only)**: Only Komodo admins can create, update, test, disable, delete, or view full `SecretProvider` configurations and `SecretProviderGrant`s. No Read API ever returns stored credentials or encrypted ciphertexts, even to admins.
+2. **Resource Usage (`SecretProviderGrant`)**: Even if a user (or admin) holds `Read`, `Execute`, or `Write` permission on a `Stack`, `Deployment`, or `Build`, listing remote secret keys, previewing secret bindings, or resolving secrets at deploy/build time requires a matching enabled `SecretProviderGrant` covering:
+   - **Subject**: `User`, `UserGroup`, `ResourceAuthorized` (any enabled real user holding the required Komodo permission on the target resource), or `SystemActor`.
+   - **Resource Scope**: Specific `Stack` / `Deployment` / `Build` IDs or `AllStacks` / `AllDeployments` / `AllBuilds`.
+   - **Remote Selector Scope**: Allowed Infisical `project_ids`, `environments`, normalized `path_prefixes`, and explicit opt-in flags for `allow_imports` and `allow_expand_references`.
+   - **Allowed Usages**: `MetadataList`, `Preview`, `StackEnv`, `StackComposeFileSecret`, `DeploymentEnv`, `BuildSecret`.
+3. **Automated / Indirect Executions (`SystemActor`)**: Built-in internal system actors (`Procedure`, `Webhook`, `Schedule`, `AutoRedeploy`, `ResourceSync`, `Action`) **never** inherit implicit admin access to external secret providers. Unattended executions must be explicitly authorized via a `SystemActor` grant (optionally restricted to a specific `actor_resource_id` such as a single Procedure or ResourceSync ID).

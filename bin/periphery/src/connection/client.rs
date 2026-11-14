@@ -21,7 +21,7 @@ use transport::{
 use crate::{
   config::periphery_config,
   connection::core_public_keys,
-  state::{core_connections, periphery_keys},
+  state::{core_connections, core_tls_verified, periphery_keys},
 };
 
 #[instrument("StartCoreConnection")]
@@ -159,13 +159,20 @@ pub async fn handler(
 
         already_logged_login_error = false;
 
+        let verified_wss = socket.is_tls()
+          && !config.core_tls_insecure_skip_verify
+          && !core_public_keys().load().is_empty();
+        core_tls_verified().insert(core.clone(), verified_wss).await;
+
         super::handle_socket(
           socket,
           &core,
           &channel.sender,
           &mut receiver,
         )
-        .await
+        .await;
+
+        core_tls_verified().remove(&core).await;
       }
     }
   });
@@ -220,7 +227,30 @@ async fn connect_websocket(
   url: &str,
 ) -> anyhow::Result<(TungsteniteWebsocket, HeaderValue)> {
   let config = periphery_config();
-  TungsteniteWebsocket::connect_maybe_tls_insecure(url, config.core_tls_insecure_skip_verify)
+  let ca_pem = match config.core_ca_cert_pem.as_deref().map(str::trim)
+  {
+    Some(spec) if !spec.is_empty() => {
+      if let Some(file_path) = spec.strip_prefix("file:") {
+        Some(
+          tokio::fs::read_to_string(file_path).await.with_context(
+            || {
+              format!(
+                "Failed to read core_ca_cert_pem file at {file_path}"
+              )
+            },
+          )?,
+        )
+      } else {
+        Some(spec.to_string())
+      }
+    }
+    _ => None,
+  };
+  TungsteniteWebsocket::connect_with_tls_config(
+    url,
+    config.core_tls_insecure_skip_verify,
+    ca_pem.as_deref(),
+  )
     .await
     .map_err(|e| match e.status {
       StatusCode::NOT_FOUND => anyhow!("404 Not Found: Server '{}' does not exist.", config.connect_as),

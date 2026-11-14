@@ -135,6 +135,10 @@ impl Resolve<ExecuteArgs> for RunAction {
 
     update_update(update.clone()).await?;
 
+    crate::secret_provider::resolver::validate_action_no_vault_refs(
+      &action,
+    )?;
+
     let default_args = parse_action_arguments(
       &action.config.arguments,
       action.config.arguments_format,
@@ -151,6 +155,13 @@ impl Resolve<ExecuteArgs> for RunAction {
 
     let args = serde_json::to_string(&args)
       .context("Failed to serialize action run arguments")?;
+
+    crate::secret_provider::resolver::ensure_no_vault_refs_in_unsupported_field(
+      &args,
+      "Action",
+      "args",
+      "External secret providers in V1 are supported on Stack, Deployment, and Build only.",
+    )?;
 
     let CreateApiKeyResponse { key, secret } = create_api_key(
       &KomodoAuthImpl,

@@ -20,6 +20,7 @@ use super::{
   TerminationSignal, Version,
   docker::container::ContainerStateStatusEnum,
   resource::{Resource, ResourceListItem, ResourceQuery},
+  secret_provider::{DeploymentSecretBinding, SecretSource},
 };
 
 #[cfg(feature = "utoipa")]
@@ -313,6 +314,16 @@ pub struct DeploymentConfig {
   ))]
   #[builder(default)]
   pub labels: String,
+
+  /// External secret provider sources scoped for this Deployment.
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  #[builder(default)]
+  pub secret_sources: Vec<SecretSource>,
+
+  /// Structured external secret bindings injected into container environment variables.
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  #[builder(default)]
+  pub secret_bindings: Vec<DeploymentSecretBinding>,
 }
 
 impl DeploymentConfig {
@@ -368,6 +379,8 @@ impl Default for DeploymentConfig {
       volumes: Default::default(),
       environment: Default::default(),
       labels: Default::default(),
+      secret_sources: Default::default(),
+      secret_bindings: Default::default(),
     }
   }
 }

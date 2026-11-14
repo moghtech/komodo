@@ -24,7 +24,10 @@ use crate::{
   state::periphery_connections,
 };
 
-use super::{PeripheryConnection, PeripheryConnectionArgs};
+use super::{
+  ConnectionDirection, ConnectionSecurity, PeripheryConnection,
+  PeripheryConnectionArgs,
+};
 
 impl PeripheryConnectionArgs<'_> {
   pub async fn spawn_client_connection(
@@ -37,6 +40,9 @@ impl PeripheryConnectionArgs<'_> {
         "Cannot spawn client connection with empty address"
       ));
     };
+
+    let insecure_tls = insecure || self.insecure_tls;
+    let ca_cert_pem = self.ca_cert_pem.map(str::to_string);
 
     let address = fix_ws_address(address);
     let identifiers =
@@ -52,9 +58,10 @@ impl PeripheryConnectionArgs<'_> {
     tokio::spawn(async move {
       loop {
         let ws = tokio::select! {
-          ws = TungsteniteWebsocket::connect_maybe_tls_insecure(
+          ws = TungsteniteWebsocket::connect_with_tls_config(
             &endpoint,
-            insecure && endpoint.starts_with("wss"),
+            insecure_tls && endpoint.starts_with("wss"),
+            ca_cert_pem.as_deref(),
           ) => ws,
           _ = connection.cancel.cancelled() => {
             break
@@ -86,16 +93,30 @@ impl PeripheryConnectionArgs<'_> {
           core_connection_query().as_bytes(),
         );
 
-        if let Err(e) =
-          connection.client_login(&mut socket, identifiers).await
+        let mutual_noise_verified = match connection
+          .client_login(&mut socket, identifiers)
+          .await
         {
-          connection.set_error(e).await;
-          tokio::time::sleep(Duration::from_secs(
-            CONNECTION_RETRY_SECONDS,
-          ))
-          .await;
-          continue;
+          Ok(verified) => verified,
+          Err(e) => {
+            connection.set_error(e).await;
+            tokio::time::sleep(Duration::from_secs(
+              CONNECTION_RETRY_SECONDS,
+            ))
+            .await;
+            continue;
+          }
         };
+
+        let tls_encrypted = socket.is_tls();
+        connection
+          .set_security(Some(ConnectionSecurity {
+            direction: ConnectionDirection::CoreToPeriphery,
+            tls_encrypted,
+            tls_verified: tls_encrypted && !insecure_tls,
+            mutual_noise_verified,
+          }))
+          .await;
 
         // Waits until after connection is handled then
         // force refreshes the server cache.
@@ -119,7 +140,8 @@ impl PeripheryConnectionArgs<'_> {
 
 impl PeripheryConnection {
   /// Custom Core -> Periphery side only login wrapper
-  /// to implement passkey support for backward compatibility
+  /// to implement passkey support for backward compatibility.
+  /// Returns whether mutual Noise public-key verification succeeded.
   #[instrument(
     "PeripheryLogin",
     skip(self, socket, identifiers),
@@ -133,7 +155,7 @@ impl PeripheryConnection {
     &self,
     socket: &mut TungsteniteWebsocket,
     identifiers: ConnectionIdentifiers<'_>,
-  ) -> anyhow::Result<()> {
+  ) -> anyhow::Result<bool> {
     // Get the required auth type
     let v1_passkey_flow =
       socket
@@ -142,11 +164,14 @@ impl PeripheryConnection {
         .context("Failed to receive Login V1PasskeyFlow message")?;
 
     if v1_passkey_flow {
-      handle_passkey_login(socket, self.args.passkey.as_deref()).await
+      handle_passkey_login(socket, self.args.passkey.as_deref())
+        .await?;
+      Ok(false)
     } else {
       self
         .handle_login::<_, ClientLoginFlow>(socket, identifiers, true)
-        .await
+        .await?;
+      Ok(self.args.periphery_public_key.is_some())
     }
   }
 }

@@ -40,14 +40,16 @@ use transport::{
 
 use crate::{
   api::write::WriteArgs,
-  config::core_keys,
+  config::{core_config, core_keys},
   helpers::query::id_or_name_filter,
   monitor::refresh_server_cache,
   resource::KomodoResource,
   state::{db_client, periphery_connections},
 };
 
-use super::PeripheryConnectionArgs;
+use super::{
+  ConnectionDirection, ConnectionSecurity, PeripheryConnectionArgs,
+};
 
 pub async fn handler(
   Query(PeripheryConnectionQuery {
@@ -201,6 +203,16 @@ async fn existing_server_handler(
 
       return;
     }
+
+    let core_ssl = core_config().ssl_enabled;
+    connection
+      .set_security(Some(ConnectionSecurity {
+        direction: ConnectionDirection::PeripheryToCore,
+        tls_encrypted: core_ssl,
+        tls_verified: core_ssl,
+        mutual_noise_verified: true,
+      }))
+      .await;
 
     // Waits until after connection is handled then
     // force refreshes the server cache.

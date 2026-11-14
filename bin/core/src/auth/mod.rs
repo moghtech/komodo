@@ -175,16 +175,20 @@ impl AuthImpl for KomodoAuthImpl {
     mogh_error::Result<axum::extract::Request>,
   > {
     Box::pin(async move {
-      let mut user = middleware::extract_user_from_auth(
-        auth,
-        require_user_enabled,
-      )
-      .await
-      .status_code(StatusCode::UNAUTHORIZED)?;
+      let (mut user, subject) =
+        middleware::extract_user_and_subject_from_auth(
+          auth,
+          require_user_enabled,
+        )
+        .await
+        .status_code(StatusCode::UNAUTHORIZED)?;
       // Sanitize the user for safety before
       // attaching to the request handlers.
       user.sanitize();
       req.extensions_mut().insert(user);
+      if let Some(subject) = subject {
+        req.extensions_mut().insert(subject);
+      }
       Ok(req)
     })
   }
