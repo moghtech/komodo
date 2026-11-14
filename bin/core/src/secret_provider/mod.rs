@@ -14,10 +14,22 @@ use komodo_client::entities::secret_provider::{
 
 use crate::state::db_client;
 
+pub mod adapter;
 pub mod authz;
 pub mod crypto;
+pub mod http;
+pub mod infisical;
+pub mod resolver;
+
+#[cfg(test)]
+mod live_infisical_test;
 
 use crypto::SecretProviderKeyring;
+
+/// Evict any cached auth tokens and HTTP connection pools associated with `provider_id`.
+pub fn invalidate_provider_runtime_caches(provider_id: &str) {
+  infisical::invalidate_infisical_provider_cache(provider_id);
+}
 
 /// Store or replace the encrypted bootstrap credential envelope for `provider`.
 pub async fn save_provider_credential(
@@ -97,6 +109,7 @@ pub async fn load_provider_credential(
 pub async fn delete_provider_credential(
   provider_id: &str,
 ) -> anyhow::Result<()> {
+  invalidate_provider_runtime_caches(provider_id);
   db_client()
     .secret_provider_credentials
     .delete_many(doc! { "provider_id": provider_id })
@@ -150,6 +163,7 @@ pub async fn rotate_all_provider_credentials()
         .context(
           "Failed to persist rotated SecretProviderCredential",
         )?;
+      invalidate_provider_runtime_caches(&provider.id);
       rotated_count += 1;
     }
   }
