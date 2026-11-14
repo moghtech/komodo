@@ -7,6 +7,7 @@
     "dev": "vite --host",
     "preview": "vite preview --host --port 5173",
     "build": "tsc && vite build",
+    "test": "tsc -p tsconfig.test.json && vite build --ssr tests/secret-provider-ui.test.tsx --outDir .test-dist && node --import ./tests/setup.mjs --test .test-dist/secret-provider-ui.test.js && rm -rf .test-dist",
     "build-client": "cd ../client/core/ts && yarn && yarn build && yarn link"
   },
   "dependencies": {

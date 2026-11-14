@@ -94,6 +94,7 @@ pub trait SecretProviderAdapter: Send + Sync {
     provider: &'a SecretProvider,
     credential: &'a SecretProviderCredentialInput,
     selector_override: Option<&'a SecretSelector>,
+    sample_key: Option<&'a str>,
     cancel: &'a CancellationToken,
   ) -> AdapterFuture<'a, TestSecretProviderResponse>;
 
@@ -119,7 +120,9 @@ pub trait SecretProviderAdapter: Send + Sync {
 pub fn get_adapter(
   kind: SecretProviderKind,
 ) -> &'static dyn SecretProviderAdapter {
-  match kind {
+  let adapter: &'static dyn SecretProviderAdapter = match kind {
     SecretProviderKind::Infisical => &INFISICAL_ADAPTER,
-  }
+  };
+  debug_assert_eq!(adapter.kind(), kind);
+  adapter
 }

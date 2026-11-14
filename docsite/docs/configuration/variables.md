@@ -42,6 +42,9 @@ SOME_ENV_VAR = value_1
   - The variable **WILL NOT be available globally to all Komodo resources**, it will only be available to the resources on the associated Server resource on which that single Periphery agent is running.
   - This effectively distributes your secret locations, can be good or bad depending on your security requirements. It does avoid the need to send the secret over network from Core to Periphery, Periphery based secrets are never exposed to the network.
 
-- **Use a dedicated secret management tool** such as Hashicorp Vault, alongside Komodo
-  - Ultimately Komodo variable / secret features **may not fill enterprise level secret management requirements**, organizations of this level should still use a dedicated secret management solution. At this point Komodo is not intended as an enterprise level secret management solution.
-  - These solutions do require application level integrations, your applications should only receive credentials to access the secret management API. **Your applications will pull the actual secret values from the dedicated secret management tool, they stay out of Komodo entirely**.
+- **Use Komodo External Secret Providers (Infisical)**:
+  - Configure Infisical under **Settings → Providers → Secret Providers** and reference secrets via `[[vault.<provider-slug>.<secret-key>]]` or structured bindings on Stacks, Deployments, and Builds (`secret_args`).
+  - Komodo performs single-pass byte-for-byte literal replacement without storing secret values in MongoDB or `ResourceSync` TOML files. See [External Secret Providers](./secret-providers.md) for setup, RBAC grants, `.env` security boundaries, and key rotation.
+
+- **Use application-side secret SDKs** alongside Komodo
+  - If your security policy prohibits writing resolved secrets to a target host `.env` or container environment at all, your applications can pull secrets directly from your secret manager at runtime.

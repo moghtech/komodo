@@ -529,7 +529,13 @@ async fn live_infisical_v0_162_19_universal_auth_and_v4_secrets_contract()
 
   // 8a. 3-stage test_connection MUST pass all 3 stages!
   let diag = INFISICAL_ADAPTER
-    .test_connection(&provider, &cred, None, &cancel)
+    .test_connection(
+      &provider,
+      &cred,
+      None,
+      Some("DATABASE_URL"),
+      &cancel,
+    )
     .await
     .unwrap();
   assert!(
@@ -784,7 +790,13 @@ async fn live_infisical_v0_162_19_universal_auth_and_v4_secrets_contract()
   };
 
   let limited_diag = INFISICAL_ADAPTER
-    .test_connection(&limited_provider, &limited_cred, None, &cancel)
+    .test_connection(
+      &limited_provider,
+      &limited_cred,
+      None,
+      None,
+      &cancel,
+    )
     .await
     .unwrap();
   assert!(!limited_diag.ready_for_deploy);

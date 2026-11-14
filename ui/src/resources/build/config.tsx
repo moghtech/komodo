@@ -23,6 +23,7 @@ import ImageRegistryConfig from "@/components/config/image-registry-config";
 import SystemCommand from "@/components/config/system-command";
 import { MonacoEditor } from "mogh_ui";
 import SecretsSearch from "@/components/config/secrets-search";
+import { BuildExternalSecretsPanel } from "@/components/secret-provider/resource-secrets-panel";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
 import { InputList } from "mogh_ui";
@@ -89,6 +90,7 @@ export default function BuildConfig({
   if (!config) return null;
 
   const disabled = globalDisabled || !canWrite;
+  const mergedConfig: Types.BuildConfig = { ...config, ...update };
 
   const gitProvider = update.git_provider ?? config.git_provider;
   const webhookIntegration = getIntegration(gitProvider);
@@ -366,7 +368,18 @@ export default function BuildConfig({
           </Link>
         </Group>
       ),
-      labelExtra: !disabled && <SecretsSearch />,
+      labelExtra: !disabled && (
+        <SecretsSearch
+          externalResourceTarget={{ type: "Build", id }}
+          onInsertExternalLine={(line) => {
+            const current = (update.secret_args ?? config.secret_args ?? "").trimEnd();
+            setUpdate({
+              ...update,
+              secret_args: current ? `${current}\n${line}\n` : `${line}\n`,
+            });
+          }}
+        />
+      ),
       fields: {
         secret_args: (env, set) => (
           <MonacoEditor
@@ -374,6 +387,21 @@ export default function BuildConfig({
             onValueChange={(secret_args) => set({ secret_args })}
             language="key_value"
             readOnly={disabled}
+          />
+        ),
+      },
+    },
+    {
+      label: "External Build Secrets",
+      description:
+        "Configure Infisical scope overrides, BuildKit --secret bindings, cache-busting nonce, and preview secret provenance.",
+      fields: {
+        secret_sources: (_sources, set) => (
+          <BuildExternalSecretsPanel
+            buildId={id}
+            config={mergedConfig}
+            disabled={disabled}
+            onChange={set}
           />
         ),
       },

@@ -11,13 +11,20 @@ use crate::api::read;
     read::list_secrets,
     read::list_onboarding_keys,
     read::list_schedules,
-    // git / registry providers
+    // git / registry / secret providers
     read::get_git_provider_account,
     read::list_git_provider_accounts,
     read::list_git_providers_from_config,
     read::get_image_registry_account,
     read::list_image_registry_accounts,
     read::list_image_registries_from_config,
+    read::get_secret_provider,
+    read::list_secret_providers,
+    read::list_available_secret_providers,
+    read::list_secret_provider_grants,
+    read::list_secret_provider_usages,
+    read::list_external_secret_keys,
+    read::preview_resource_secrets,
     // swarm
     read::list_swarms,
     read::list_full_swarms,

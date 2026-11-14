@@ -50,7 +50,10 @@ image_registry = [
 | `dockerfile_path` | Dockerfile path, relative to the build directory. | `Dockerfile` |
 | `image_registry` | Registry to push images to (domain + account + optional organization). | `[]` |
 | `build_args` | Build arguments in `KEY=value` format. Visible in `docker history`. | `""` |
-| `secret_args` | Build secrets in `KEY=value` format. Access via `RUN --mount=type=secret,id=KEY`. Not visible in image history. | `""` |
+| `secret_args` | Build secrets in `KEY=value` format (supports `[[vault.<slug>.<key>]]` [External Secret Providers](configuration/secret-providers.md)). Access via `RUN --mount=type=secret,id=KEY`. Not visible in image history. | `""` |
+| `secret_sources` | Optional named external secret scope overrides for BuildKit secrets. | `[]` |
+| `secret_bindings` | Structured external secret bindings mounted via BuildKit `--secret` outside the build context. | `[]` |
+| `secret_cache_bust` | When `true` and external secrets are used, passes a non-sensitive `KOMODO_SECRET_CACHE_NONCE` build arg so rotated secrets invalidate BuildKit `RUN` layer cache. | `false` |
 | `skip_secret_interp` | Skip secret interpolation in build_args. | `false` |
 | `extra_args` | Additional flags passed to `docker build`. | `[]` |
 | `use_buildx` | Use `docker buildx build` instead of `docker build`. | `false` |

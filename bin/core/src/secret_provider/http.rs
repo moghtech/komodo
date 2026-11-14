@@ -630,10 +630,6 @@ impl HardenedHttpClient {
     Ok(instance)
   }
 
-  pub fn canonical_base(&self) -> &Url {
-    &self.canonical_base
-  }
-
   /// Execute an HTTP request under the provider concurrency semaphore, overall `deadline`,
   /// `cancel` token, strict no-redirect check, and streamed `MAX_SECRET_RESPONSE_BYTES` body limit.
   pub async fn send_bounded<F>(

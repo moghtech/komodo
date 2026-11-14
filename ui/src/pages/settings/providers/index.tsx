@@ -18,10 +18,12 @@ import { CopyButton } from "mogh_ui";
 import { Types } from "komodo_client";
 import { SharedTextUpdate, useSharedTextUpdateData } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
+import SecretProvidersSection from "./secret-providers";
 
 export default function SettingsProviders() {
   return (
     <Stack gap="xl">
+      <SecretProvidersSection />
       <Providers type="GitProvider" />
       <Providers type="ImageRegistry" />
     </Stack>

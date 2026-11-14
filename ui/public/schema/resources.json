@@ -338,6 +338,13 @@
             "null"
           ]
         },
+        "ca_cert_pem": {
+          "description": "Optional PEM-encoded root CA certificate(s) used to verify Periphery TLS certificates\non Core -> Periphery WSS connections when `insecure_tls = false`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "external_address": {
           "description": "The address to use with links for containers on the server.\nIf empty, will use the 'address' for links.",
           "type": [
@@ -879,6 +886,26 @@
             "string",
             "null"
           ]
+        },
+        "secret_sources": {
+          "description": "External secret provider sources scoped for this Stack.\nStores provider references and remote scope selectors only — never secret values.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/SecretSource"
+          }
+        },
+        "secret_bindings": {
+          "description": "Structured external secret bindings for Compose `.env`, service environment, or Compose file secrets.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/StackSecretBinding"
+          }
         }
       }
     },
@@ -964,6 +991,256 @@
         }
       }
     },
+    "SecretSource": {
+      "description": "Named secret source configured on a Stack, Deployment, or Build.\nStores provider reference and selector metadata only — never secret values.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Local alias used by `SecretBinding.source` (if empty, matches `provider` slug).",
+          "type": "string",
+          "default": ""
+        },
+        "provider": {
+          "description": "Immutable `SecretProvider.slug`.",
+          "type": "string"
+        },
+        "selector": {
+          "$ref": "#/definitions/SecretSelector"
+        }
+      },
+      "required": [
+        "provider",
+        "selector"
+      ]
+    },
+    "SecretSelector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Infisical"
+            },
+            "params": {
+              "$ref": "#/definitions/InfisicalSecretSelector"
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        }
+      ]
+    },
+    "InfisicalSecretSelector": {
+      "description": "Infisical v4 secret selector (`projectId`, `environment`, `secretPath`, `includeImports`, `expandSecretReferences`).",
+      "type": "object",
+      "properties": {
+        "project_id": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string"
+        },
+        "secret_path": {
+          "type": "string",
+          "default": "/"
+        },
+        "include_imports": {
+          "description": "Explicitly defaults to `false`; requires admin grant `allow_imports = true` when enabled.",
+          "type": "boolean",
+          "default": false
+        },
+        "expand_references": {
+          "description": "Explicitly defaults to `false`; requires admin grant `allow_expand_references = true` when enabled.",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "project_id",
+        "environment"
+      ]
+    },
+    "StackSecretBinding": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "description": "References `SecretSource.name` on this Stack, or a `SecretProvider.slug` directly.",
+          "type": "string"
+        },
+        "remote_key": {
+          "description": "Exact remote secret key name (dots preserved literally).",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/StackSecretTarget"
+        },
+        "format": {
+          "default": "Text",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SecretValueFormat"
+            }
+          ]
+        },
+        "json_field": {
+          "description": "Reserved extension point for future JSON field extraction; unsupported in Infisical v1 (must be empty).",
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true
+        },
+        "allow_empty": {
+          "type": "boolean",
+          "default": true
+        },
+        "conflict_policy": {
+          "default": "Fail",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SecretConflictPolicy"
+            }
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "remote_key",
+        "target"
+      ]
+    },
+    "StackSecretTarget": {
+      "description": "Explicit injection target for a Stack structured secret binding.",
+      "oneOf": [
+        {
+          "description": "Injects `variable` into the Stack's `.env` file (`write_env_file()`) for Compose `${VAR}` interpolation.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "ComposeEnv"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "variable": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "variable"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Injects `variable` directly into the container environment of the specified Compose `services`.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "ServiceEnv"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "variable": {
+                  "type": "string"
+                },
+                "services": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "variable",
+                "services"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        },
+        {
+          "description": "Mounts an immutable controlled file secret into the specified Compose `services` via Compose `secrets:`.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "ComposeFileSecret"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "secret_name": {
+                  "type": "string"
+                },
+                "services": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "target_path": {
+                  "type": "string",
+                  "default": ""
+                },
+                "uid": {
+                  "type": "string",
+                  "default": ""
+                },
+                "gid": {
+                  "type": "string",
+                  "default": ""
+                },
+                "mode": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0,
+                  "default": null
+                }
+              },
+              "required": [
+                "secret_name",
+                "services"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "params"
+          ]
+        }
+      ]
+    },
+    "SecretValueFormat": {
+      "type": "string",
+      "enum": [
+        "Text",
+        "Binary"
+      ]
+    },
+    "SecretConflictPolicy": {
+      "type": "string",
+      "enum": [
+        "Fail",
+        "ReplaceExisting"
+      ]
+    },
     "ResourceToml4": {
       "type": "object",
       "properties": {
@@ -1022,6 +1299,13 @@
         },
         "server": {
           "description": "The Server to deploy the Deployment on, setting the Deployment into Container mode.\n\nNote. If both swarm_id and server_id are set,\nswarm_id overrides server_id and the Deployment will be in Swarm mode.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "custom_name": {
+          "description": "Specify a custom container / service name,\nif different from Deployment name.",
           "type": [
             "string",
             "null"
@@ -1186,6 +1470,26 @@
             "string",
             "null"
           ]
+        },
+        "secret_sources": {
+          "description": "External secret provider sources scoped for this Deployment.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/SecretSource"
+          }
+        },
+        "secret_bindings": {
+          "description": "Structured external secret bindings injected into container environment variables.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/DeploymentSecretBinding"
+          }
         }
       }
     },
@@ -1292,6 +1596,47 @@
         "SIGINT",
         "SIGQUIT",
         "SIGTERM"
+      ]
+    },
+    "DeploymentSecretBinding": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "description": "References `SecretSource.name` on this Deployment, or a `SecretProvider.slug` directly.",
+          "type": "string"
+        },
+        "remote_key": {
+          "description": "Exact remote secret key name.",
+          "type": "string"
+        },
+        "variable": {
+          "description": "Target container environment variable name.",
+          "type": "string"
+        },
+        "json_field": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true
+        },
+        "allow_empty": {
+          "type": "boolean",
+          "default": true
+        },
+        "conflict_policy": {
+          "default": "Fail",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SecretConflictPolicy"
+            }
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "remote_key",
+        "variable"
       ]
     },
     "ResourceToml5": {
@@ -1572,6 +1917,33 @@
             "string",
             "null"
           ]
+        },
+        "secret_sources": {
+          "description": "External secret provider sources scoped for this Build.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/SecretSource"
+          }
+        },
+        "secret_bindings": {
+          "description": "Structured external secret bindings mounted via BuildKit `--secret` (never `--build-arg` or `ENV`).",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/BuildSecretBinding"
+          }
+        },
+        "secret_cache_bust": {
+          "description": "When enabled, passes a fresh non-sensitive `--build-arg KOMODO_SECRET_CACHE_NONCE=<uuid>`\nto explicitly invalidate BuildKit `RUN` layer cache when secret-dependent steps must re-execute.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },
@@ -1595,6 +1967,55 @@
           "default": ""
         }
       }
+    },
+    "BuildSecretBinding": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "description": "References `SecretSource.name` on this Build, or a `SecretProvider.slug` directly.",
+          "type": "string"
+        },
+        "remote_key": {
+          "description": "Exact remote secret key name.",
+          "type": "string"
+        },
+        "secret_id": {
+          "description": "Target BuildKit `--secret id=<secret_id>` mount identifier.",
+          "type": "string"
+        },
+        "format": {
+          "default": "Text",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SecretValueFormat"
+            }
+          ]
+        },
+        "json_field": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true
+        },
+        "allow_empty": {
+          "type": "boolean",
+          "default": true
+        },
+        "conflict_policy": {
+          "default": "Fail",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SecretConflictPolicy"
+            }
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "remote_key",
+        "secret_id"
+      ]
     },
     "ResourceToml6": {
       "type": "object",
@@ -3312,6 +3733,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* stacks\nfoo-*\n# add some more\nextra-stack-1, extra-stack-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3346,6 +3775,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* stacks\nfoo-*\n# add some more\nextra-stack-1, extra-stack-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3380,6 +3817,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* stacks\nfoo-*\n# add some more\nextra-stack-1, extra-stack-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3540,6 +3985,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* stacks\nfoo-*\n# add some more\nextra-stack-1, extra-stack-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3679,6 +4132,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* deployments\nfoo-*\n# add some more\nextra-deployment-1, extra-deployment-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3821,6 +4282,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* deployments\nfoo-*\n# add some more\nextra-deployment-1, extra-deployment-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3847,6 +4316,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* builds\nfoo-*\n# add some more\nextra-build-1, extra-build-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3886,6 +4363,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* repos\nfoo-*\n# add some more\nextra-repo-1, extra-repo-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3912,6 +4397,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* repos\nfoo-*\n# add some more\nextra-repo-1, extra-repo-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3938,6 +4431,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* repos\nfoo-*\n# add some more\nextra-repo-1, extra-repo-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -3977,6 +4478,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* procedures\nfoo-*\n# add some more\nextra-procedure-1, extra-procedure-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -4031,6 +4540,14 @@
         "pattern": {
           "description": "Id or name or wildcard pattern or regex.\nSupports multiline and comma delineated combinations of the above.\n\nExample:\n```text\n# match all foo-* actions\nfoo-*\n# add some more\nextra-action-1, extra-action-2\n```",
           "type": "string"
+        },
+        "tags": {
+          "description": "Filter matches by tag.\nIf empty, skips tag filtering.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -5770,6 +6287,13 @@
           "description": "Whether to validate the Periphery tls certificates.",
           "type": [
             "boolean",
+            "null"
+          ]
+        },
+        "ca_cert_pem": {
+          "description": "Optional PEM-encoded root CA certificate(s) used to verify Periphery TLS certificates\nwhen `insecure_tls = false`.",
+          "type": [
+            "string",
             "null"
           ]
         },

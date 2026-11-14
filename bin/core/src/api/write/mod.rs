@@ -217,6 +217,16 @@ pub enum WriteRequest {
   UpdateImageRegistryAccount(UpdateImageRegistryAccount),
   #[serde(alias = "DeleteDockerRegistryAccount")]
   DeleteImageRegistryAccount(DeleteImageRegistryAccount),
+  CreateSecretProvider(CreateSecretProvider),
+  UpdateSecretProvider(UpdateSecretProvider),
+  DeleteSecretProvider(DeleteSecretProvider),
+  TestSecretProviderConnection(TestSecretProviderConnection),
+  CreateSecretProviderGrant(CreateSecretProviderGrant),
+  UpdateSecretProviderGrant(UpdateSecretProviderGrant),
+  DeleteSecretProviderGrant(DeleteSecretProviderGrant),
+  RotateSecretProviderEncryptionKeys(
+    RotateSecretProviderEncryptionKeys,
+  ),
 
   // ==== ALERT ====
   CloseAlert(CloseAlert),

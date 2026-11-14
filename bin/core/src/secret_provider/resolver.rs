@@ -31,10 +31,11 @@ use super::{
     AdapterResolveItemRequest, ResolvedSecretValue, get_adapter,
   },
   authz::{
-    authorize_secret_access, collect_inline_vault_refs_in_str,
+    authorize_secret_access_ext, collect_inline_vault_refs_in_str,
     find_secret_provider, resolve_selector_for_provider,
   },
   crypto::SecretProviderKeyring,
+  execution::get_resource_deployment_metadata,
   load_provider_credential,
 };
 
@@ -740,13 +741,15 @@ struct BatchFetchEngine {
     BatchSelectorGroupKey,
     IndexMap<String, MergedKeyRequirement>,
   >,
+  allow_preview_grant: bool,
 }
 
 impl BatchFetchEngine {
-  fn new() -> Self {
+  fn new_with_mode(allow_preview_grant: bool) -> Self {
     Self {
       providers_by_slug: HashMap::new(),
       groups: IndexMap::new(),
+      allow_preview_grant,
     }
   }
 
@@ -894,13 +897,14 @@ impl BatchFetchEngine {
         .flat_map(|req| req.usages.iter().copied())
         .collect();
       for usage in all_usages {
-        authorize_secret_access(
+        authorize_secret_access_ext(
           user,
           &provider.id,
           resource_target,
           &group_key.selector,
           usage,
           override_resource_level,
+          self.allow_preview_grant,
         )
         .await?;
       }
@@ -967,6 +971,27 @@ pub async fn resolve_stack_secrets(
   interpolator: &mut Interpolator<'_>,
   cancel: &CancellationToken,
 ) -> anyhow::Result<Option<ResolvedStackSecrets>> {
+  resolve_stack_secrets_inner(
+    stack,
+    user,
+    override_resource_level,
+    is_swarm,
+    interpolator,
+    false,
+    cancel,
+  )
+  .await
+}
+
+async fn resolve_stack_secrets_inner(
+  stack: &Stack,
+  user: &User,
+  override_resource_level: Option<PermissionLevel>,
+  is_swarm: bool,
+  interpolator: &mut Interpolator<'_>,
+  allow_preview_grant: bool,
+  cancel: &CancellationToken,
+) -> anyhow::Result<Option<ResolvedStackSecrets>> {
   if !stack_uses_external_secrets(stack)? {
     return Ok(None);
   }
@@ -997,7 +1022,8 @@ pub async fn resolve_stack_secrets(
     )?;
 
   // Verify duplicate keys inside `stack.config.environment` when external secrets are involved
-  let mut engine = BatchFetchEngine::new();
+  let mut engine =
+    BatchFetchEngine::new_with_mode(allow_preview_grant);
   let mut inline_lookup_keys: HashMap<
     ExternalSecretRef,
     (String, SecretSelector),
@@ -1404,6 +1430,27 @@ pub async fn resolve_deployment_secrets(
   interpolator: &mut Interpolator<'_>,
   cancel: &CancellationToken,
 ) -> anyhow::Result<Option<ResolvedDeploymentSecrets>> {
+  resolve_deployment_secrets_inner(
+    deployment,
+    user,
+    override_resource_level,
+    is_swarm,
+    interpolator,
+    false,
+    cancel,
+  )
+  .await
+}
+
+async fn resolve_deployment_secrets_inner(
+  deployment: &Deployment,
+  user: &User,
+  override_resource_level: Option<PermissionLevel>,
+  is_swarm: bool,
+  interpolator: &mut Interpolator<'_>,
+  allow_preview_grant: bool,
+  cancel: &CancellationToken,
+) -> anyhow::Result<Option<ResolvedDeploymentSecrets>> {
   if !deployment_uses_external_secrets(deployment)? {
     return Ok(None);
   }
@@ -1428,7 +1475,8 @@ pub async fn resolve_deployment_secrets(
     "Failed to parse Deployment 'environment' key-value definitions",
   )?;
 
-  let mut engine = BatchFetchEngine::new();
+  let mut engine =
+    BatchFetchEngine::new_with_mode(allow_preview_grant);
   let mut inline_lookup_keys: HashMap<
     ExternalSecretRef,
     (String, SecretSelector),
@@ -1637,6 +1685,25 @@ pub async fn resolve_build_secrets(
   interpolator: &mut Interpolator<'_>,
   cancel: &CancellationToken,
 ) -> anyhow::Result<Option<ResolvedBuildSecrets>> {
+  resolve_build_secrets_inner(
+    build,
+    user,
+    override_resource_level,
+    interpolator,
+    false,
+    cancel,
+  )
+  .await
+}
+
+async fn resolve_build_secrets_inner(
+  build: &Build,
+  user: &User,
+  override_resource_level: Option<PermissionLevel>,
+  interpolator: &mut Interpolator<'_>,
+  allow_preview_grant: bool,
+  cancel: &CancellationToken,
+) -> anyhow::Result<Option<ResolvedBuildSecrets>> {
   if !build_uses_external_secrets(build)? {
     return Ok(None);
   }
@@ -1652,7 +1719,8 @@ pub async fn resolve_build_secrets(
       "Failed to parse Build 'secret_args' key-value definitions",
     )?;
 
-  let mut engine = BatchFetchEngine::new();
+  let mut engine =
+    BatchFetchEngine::new_with_mode(allow_preview_grant);
   let mut inline_lookup_keys: HashMap<
     ExternalSecretRef,
     (String, SecretSelector),
@@ -1866,6 +1934,182 @@ pub fn build_preview_items_from_provenance(
     errors: Vec::new(),
     last_deployed_at,
     deployed_provenance,
+  }
+}
+
+/// Validate a Stack, Deployment, or Build's external secret configuration, RBAC grants,
+/// and upstream Infisical availability without returning or persisting any secret values.
+pub async fn preview_resource_secrets(
+  target: &ResourceTarget,
+  user: &User,
+) -> anyhow::Result<PreviewResourceSecretsResponse> {
+  let crate::helpers::query::VariablesAndSecrets {
+    variables,
+    secrets,
+  } = crate::helpers::query::get_variables_and_secrets().await?;
+  let mut interpolator =
+    Interpolator::new(Some(&variables), &secrets);
+  let cancel = CancellationToken::new();
+
+  match target {
+    ResourceTarget::Stack(id_or_name) => {
+      let stack = crate::permission::get_check_permissions::<Stack>(
+        id_or_name,
+        user,
+        PermissionLevel::Read.into(),
+      )
+      .await?;
+      let meta =
+        get_resource_deployment_metadata("Stack", &stack.id).await?;
+      let last_deployed_at = meta.as_ref().map(|m| m.deployed_at);
+      let deployed_provenance =
+        meta.map(|m| m.provenance).unwrap_or_default();
+      let is_swarm = !stack.config.swarm_id.trim().is_empty();
+
+      let res: anyhow::Result<Option<Vec<DeployedSecretProvenance>>> =
+        async {
+          validate_stack_unsupported_vault_fields(&stack)?;
+          let resolved = resolve_stack_secrets_inner(
+            &stack,
+            user,
+            Some(PermissionLevel::Read),
+            is_swarm,
+            &mut interpolator,
+            true,
+            &cancel,
+          )
+          .await?;
+          Ok(resolved.map(|r| r.provenance))
+        }
+        .await;
+
+      match res {
+        Ok(Some(prov)) => Ok(build_preview_items_from_provenance(
+          &prov,
+          last_deployed_at,
+          deployed_provenance,
+        )),
+        Ok(None) => Ok(PreviewResourceSecretsResponse {
+          valid: true,
+          items: Vec::new(),
+          errors: Vec::new(),
+          last_deployed_at,
+          deployed_provenance,
+        }),
+        Err(err) => Ok(PreviewResourceSecretsResponse {
+          valid: false,
+          items: Vec::new(),
+          errors: vec![format!("{err:#}")],
+          last_deployed_at,
+          deployed_provenance,
+        }),
+      }
+    }
+    ResourceTarget::Deployment(id_or_name) => {
+      let dep =
+        crate::permission::get_check_permissions::<Deployment>(
+          id_or_name,
+          user,
+          PermissionLevel::Read.into(),
+        )
+        .await?;
+      let meta =
+        get_resource_deployment_metadata("Deployment", &dep.id)
+          .await?;
+      let last_deployed_at = meta.as_ref().map(|m| m.deployed_at);
+      let deployed_provenance =
+        meta.map(|m| m.provenance).unwrap_or_default();
+      let is_swarm = !dep.config.swarm_id.trim().is_empty();
+
+      let res: anyhow::Result<Option<Vec<DeployedSecretProvenance>>> =
+        async {
+          validate_deployment_unsupported_vault_fields(&dep)?;
+          let resolved = resolve_deployment_secrets_inner(
+            &dep,
+            user,
+            Some(PermissionLevel::Read),
+            is_swarm,
+            &mut interpolator,
+            true,
+            &cancel,
+          )
+          .await?;
+          Ok(resolved.map(|r| r.provenance))
+        }
+        .await;
+
+      match res {
+        Ok(Some(prov)) => Ok(build_preview_items_from_provenance(
+          &prov,
+          last_deployed_at,
+          deployed_provenance,
+        )),
+        Ok(None) => Ok(PreviewResourceSecretsResponse {
+          valid: true,
+          items: Vec::new(),
+          errors: Vec::new(),
+          last_deployed_at,
+          deployed_provenance,
+        }),
+        Err(err) => Ok(PreviewResourceSecretsResponse {
+          valid: false,
+          items: Vec::new(),
+          errors: vec![format!("{err:#}")],
+          last_deployed_at,
+          deployed_provenance,
+        }),
+      }
+    }
+    ResourceTarget::Build(id_or_name) => {
+      let build = crate::permission::get_check_permissions::<Build>(
+        id_or_name,
+        user,
+        PermissionLevel::Read.into(),
+      )
+      .await?;
+
+      let res: anyhow::Result<Option<Vec<DeployedSecretProvenance>>> =
+        async {
+          validate_build_unsupported_vault_fields(&build)?;
+          let resolved = resolve_build_secrets_inner(
+            &build,
+            user,
+            Some(PermissionLevel::Read),
+            &mut interpolator,
+            true,
+            &cancel,
+          )
+          .await?;
+          Ok(resolved.map(|r| r.provenance))
+        }
+        .await;
+
+      match res {
+        Ok(Some(prov)) => Ok(build_preview_items_from_provenance(
+          &prov,
+          None,
+          Vec::new(),
+        )),
+        Ok(None) => Ok(PreviewResourceSecretsResponse {
+          valid: true,
+          items: Vec::new(),
+          errors: Vec::new(),
+          last_deployed_at: None,
+          deployed_provenance: Vec::new(),
+        }),
+        Err(err) => Ok(PreviewResourceSecretsResponse {
+          valid: false,
+          items: Vec::new(),
+          errors: vec![format!("{err:#}")],
+          last_deployed_at: None,
+          deployed_provenance: Vec::new(),
+        }),
+      }
+    }
+    _ => bail!(
+      "PreviewResourceSecrets is only supported on Stack, Deployment, and Build resources (got {:?})",
+      target.extract_variant()
+    ),
   }
 }
 

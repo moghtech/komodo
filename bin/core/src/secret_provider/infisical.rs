@@ -746,6 +746,7 @@ impl SecretProviderAdapter for InfisicalAdapter {
     provider: &'a SecretProvider,
     credential: &'a SecretProviderCredentialInput,
     selector_override: Option<&'a SecretSelector>,
+    sample_key: Option<&'a str>,
     cancel: &'a CancellationToken,
   ) -> AdapterFuture<'a, TestSecretProviderResponse> {
     Box::pin(async move {
@@ -952,6 +953,51 @@ impl SecretProviderAdapter for InfisicalAdapter {
               },
               key_count: Some(key_count),
             })
+          } else if let Some(sample) =
+            sample_key.map(str::trim).filter(|s| !s.is_empty())
+          {
+            match merged.get(sample) {
+              Some(entry) if !entry.secret_value_hidden => {
+                Ok(TestSecretProviderResponse {
+                  ready_for_deploy: true,
+                  authentication: auth_stage,
+                  metadata_access: meta_stage,
+                  value_read_access: SecretTestStageResult {
+                    status: SecretCheckStageStatus::Passed,
+                    message: format!(
+                      "Secret value read (ReadValue / viewSecretValue=true) verified including sample key '{sample}'"
+                    ),
+                  },
+                  key_count: Some(key_count),
+                })
+              }
+              Some(_) => Ok(TestSecretProviderResponse {
+                ready_for_deploy: false,
+                authentication: auth_stage,
+                metadata_access: meta_stage,
+                value_read_access: SecretTestStageResult {
+                  status: SecretCheckStageStatus::Failed,
+                  message: format!(
+                    "Sample secret key '{sample}' returned secretValueHidden=true — grant ReadValue permission"
+                  ),
+                },
+                key_count: Some(key_count),
+              }),
+              None => Ok(TestSecretProviderResponse {
+                ready_for_deploy: false,
+                authentication: auth_stage,
+                metadata_access: meta_stage,
+                value_read_access: SecretTestStageResult {
+                  status: SecretCheckStageStatus::Failed,
+                  message: format!(
+                    "Sample secret key '{sample}' was not found in project '{}', environment '{}', path '{normalized_path}'",
+                    sel.project_id.trim(),
+                    sel.environment.trim()
+                  ),
+                },
+                key_count: Some(key_count),
+              }),
+            }
           } else {
             Ok(TestSecretProviderResponse {
               ready_for_deploy: true,
@@ -1735,7 +1781,7 @@ pub(crate) mod tests {
       &pki.untrusted_ca_cert_pem,
     );
     let bad_res = INFISICAL_ADAPTER
-      .test_connection(&bad_provider, &cred, None, &cancel)
+      .test_connection(&bad_provider, &cred, None, None, &cancel)
       .await
       .unwrap();
     assert!(!bad_res.ready_for_deploy);
@@ -1940,7 +1986,7 @@ pub(crate) mod tests {
       &pki.ca_cert_pem,
     );
     let res_redir = INFISICAL_ADAPTER
-      .test_connection(&p_redir, &cred, None, &cancel)
+      .test_connection(&p_redir, &cred, None, None, &cancel)
       .await
       .unwrap();
     assert!(!res_redir.ready_for_deploy);
@@ -1963,7 +2009,7 @@ pub(crate) mod tests {
       &pki.ca_cert_pem,
     );
     let res_huge = INFISICAL_ADAPTER
-      .test_connection(&p_huge, &cred, None, &cancel)
+      .test_connection(&p_huge, &cred, None, None, &cancel)
       .await
       .unwrap();
     assert!(!res_huge.ready_for_deploy);
@@ -2025,7 +2071,7 @@ pub(crate) mod tests {
     );
     // 3-stage test_connection must report Auth=Passed, Metadata=Passed, ValueRead=Failed, ready_for_deploy=false!
     let diag = INFISICAL_ADAPTER
-      .test_connection(&p_hidden, &cred, None, &cancel)
+      .test_connection(&p_hidden, &cred, None, None, &cancel)
       .await
       .unwrap();
     assert!(!diag.ready_for_deploy);

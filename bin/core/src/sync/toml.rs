@@ -389,3 +389,177 @@ impl ToToml for Procedure {
     Ok(())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use komodo_client::entities::{
+    build::{BuildConfig, BuildInfo},
+    deployment::{DeploymentConfig, DeploymentInfo},
+    secret_provider::{
+      BuildSecretBinding, DeploymentSecretBinding,
+      InfisicalSecretSelector, SecretConflictPolicy, SecretSelector,
+      SecretSource, SecretValueFormat, StackSecretBinding,
+      StackSecretTarget,
+    },
+    stack::{StackConfig, StackInfo},
+  };
+
+  use super::*;
+
+  #[test]
+  fn external_secret_references_and_bindings_roundtrip_toml_without_resolving()
+   {
+    let source = SecretSource {
+      name: "inf-app".to_string(),
+      provider: "infisical-prod".to_string(),
+      selector: SecretSelector::Infisical(InfisicalSecretSelector {
+        project_id: "proj-123".to_string(),
+        environment: "prod".to_string(),
+        secret_path: "/app".to_string(),
+        include_imports: true,
+        expand_references: true,
+      }),
+    };
+
+    let stack = Resource::<StackConfig, StackInfo> {
+      id: "stack-id".to_string(),
+      name: "demo-stack".to_string(),
+      config: StackConfig {
+        server_id: "srv-1".to_string(),
+        environment: "DATABASE_URL=[[vault.infisical-prod.DATABASE_URL]]\nMIXED=postgres://[[DB_USER]]:[[vault.infisical-prod.DB_PASSWORD]]@db:5432/app".to_string(),
+        secret_sources: vec![source.clone()],
+        secret_bindings: vec![
+          StackSecretBinding {
+            source: "inf-app".to_string(),
+            remote_key: "SERVICE_KEY".to_string(),
+            target: StackSecretTarget::ServiceEnv {
+              variable: "SERVICE_KEY".to_string(),
+              services: vec!["api".to_string()],
+            },
+            format: SecretValueFormat::Text,
+            json_field: String::new(),
+            required: true,
+            allow_empty: false,
+            conflict_policy: SecretConflictPolicy::ReplaceExisting,
+          },
+          StackSecretBinding {
+            source: "inf-app".to_string(),
+            remote_key: "TLS_KEY".to_string(),
+            target: StackSecretTarget::ComposeFileSecret {
+              secret_name: "tls_key".to_string(),
+              services: vec!["api".to_string()],
+              target_path: "/run/secrets/tls.key".to_string(),
+              uid: String::new(),
+              gid: String::new(),
+              mode: Some(0o400),
+            },
+            format: SecretValueFormat::Text,
+            json_field: String::new(),
+            required: true,
+            allow_empty: false,
+            conflict_policy: SecretConflictPolicy::Fail,
+          },
+        ],
+        ..Default::default()
+      },
+      ..Default::default()
+    };
+
+    let dep = Resource::<DeploymentConfig, DeploymentInfo> {
+      id: "dep-id".to_string(),
+      name: "demo-dep".to_string(),
+      config: DeploymentConfig {
+        server_id: "srv-1".to_string(),
+        environment: "API_URL=[[vault.infisical-prod.API_URL]]"
+          .to_string(),
+        secret_sources: vec![source.clone()],
+        secret_bindings: vec![DeploymentSecretBinding {
+          source: "inf-app".to_string(),
+          remote_key: "JWT_SECRET".to_string(),
+          variable: "JWT_SECRET".to_string(),
+          json_field: String::new(),
+          required: true,
+          allow_empty: false,
+          conflict_policy: SecretConflictPolicy::ReplaceExisting,
+        }],
+        ..Default::default()
+      },
+      ..Default::default()
+    };
+
+    let build = Resource::<BuildConfig, BuildInfo> {
+      id: "build-id".to_string(),
+      name: "demo-build".to_string(),
+      config: BuildConfig {
+        builder_id: "bld-1".to_string(),
+        secret_args: "NPM_TOKEN=[[vault.infisical-prod.NPM_TOKEN]]"
+          .to_string(),
+        secret_sources: vec![source.clone()],
+        secret_bindings: vec![BuildSecretBinding {
+          source: "inf-app".to_string(),
+          remote_key: "CARGO_REGISTRY_TOKEN".to_string(),
+          secret_id: "cargo_token".to_string(),
+          format: SecretValueFormat::Text,
+          json_field: String::new(),
+          required: true,
+          allow_empty: false,
+          conflict_policy: SecretConflictPolicy::Fail,
+        }],
+        secret_cache_bust: true,
+        ..Default::default()
+      },
+      ..Default::default()
+    };
+
+    let tags = HashMap::new();
+    let mut combined = String::new();
+    resource_push_to_toml::<Stack>(
+      stack,
+      true,
+      Vec::new(),
+      &mut combined,
+      &tags,
+    )
+    .unwrap();
+    resource_push_to_toml::<Deployment>(
+      dep,
+      false,
+      Vec::new(),
+      &mut combined,
+      &tags,
+    )
+    .unwrap();
+    resource_push_to_toml::<Build>(
+      build,
+      false,
+      Vec::new(),
+      &mut combined,
+      &tags,
+    )
+    .unwrap();
+
+    assert!(
+      combined.contains("[[vault.infisical-prod.DATABASE_URL]]")
+    );
+    assert!(
+      combined.contains("[[vault.infisical-prod.DB_PASSWORD]]")
+    );
+
+    let parsed = super::super::deserialize_resources_toml(&combined)
+      .expect("exported TOML must parse back into ResourcesToml");
+    assert_eq!(parsed.stacks.len(), 1);
+    assert_eq!(parsed.deployments.len(), 1);
+    assert_eq!(parsed.builds.len(), 1);
+
+    let ps = &parsed.stacks[0].config;
+    assert_eq!(ps.secret_sources.as_ref().unwrap(), &vec![source]);
+    assert_eq!(ps.secret_bindings.as_ref().unwrap().len(), 2);
+
+    let pd = &parsed.deployments[0].config;
+    assert_eq!(pd.secret_bindings.as_ref().unwrap().len(), 1);
+
+    let pb = &parsed.builds[0].config;
+    assert_eq!(pb.secret_cache_bust, Some(true));
+    assert_eq!(pb.secret_bindings.as_ref().unwrap().len(), 1);
+  }
+}

@@ -139,6 +139,14 @@ use crate::api::write;
     write::create_image_registry_account,
     write::update_image_registry_account,
     write::delete_image_registry_account,
+    write::create_secret_provider,
+    write::update_secret_provider,
+    write::delete_secret_provider,
+    write::test_secret_provider_connection,
+    write::create_secret_provider_grant,
+    write::update_secret_provider_grant,
+    write::delete_secret_provider_grant,
+    write::rotate_secret_provider_encryption_keys,
   ),
 )]
 pub struct KomodoWriteApi;

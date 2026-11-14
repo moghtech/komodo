@@ -27,7 +27,9 @@ LOG_LEVEL = info
 | `file_paths` | List of compose files. Supports composing multiple files via `docker compose -f ... -f ...`. | `[]` |
 | `run_directory` | Working directory for compose commands. | — |
 | `project_name` | Override the compose project name. Defaults to the Stack name. | Stack name |
-| `environment` | Environment variables written to a `.env` file and passed via `--env-file`. Supports [variable interpolation](../configuration/variables.md). | `""` |
+| `environment` | Environment variables written to a `.env` file (`0600`) and passed via `--env-file`. Supports [variable interpolation](../configuration/variables.md) and inline `[[vault.<slug>.<key>]]` [External Secret Providers](../configuration/secret-providers.md). | `""` |
+| `secret_sources` | Optional named external secret scope overrides (e.g. Infisical Project/Environment/Path). | `[]` |
+| `secret_bindings` | Structured external secret bindings targeting `.env` (`ComposeEnv`), explicit service environments (`ServiceEnv`), or `0400` Compose file secrets (`ComposeFileSecret`). | `[]` |
 | `extra_args` | Additional flags passed to `docker compose up`. | `""` |
 | `ignore_services` | Services to exclude from health checks (e.g. init containers that exit after startup). | `[]` |
 | `git_provider` | Git provider domain. | `github.com` |

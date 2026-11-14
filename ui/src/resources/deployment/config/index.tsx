@@ -11,6 +11,7 @@ import DeploymentImageConfig from "./image";
 import { MonacoEditor } from "mogh_ui";
 import DeploymentNetworkSelector from "./network";
 import SecretsSearch from "@/components/config/secrets-search";
+import { DeploymentExternalSecretsPanel } from "@/components/secret-provider/resource-secrets-panel";
 import DeploymentRestartSelector from "./restart";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
@@ -48,6 +49,7 @@ export default function DeploymentConfig({
 
   const currSwarmId = update.swarm_id ?? config.swarm_id;
   const currServerId = update.server_id ?? config.server_id;
+  const mergedConfig: Types.DeploymentConfig = { ...config, ...update };
 
   return (
     <Config
@@ -234,6 +236,16 @@ export default function DeploymentConfig({
                 <Stack>
                   <SecretsSearch
                     server={update.server_id ?? config.server_id}
+                    externalResourceTarget={
+                      currSwarmId ? undefined : { type: "Deployment", id }
+                    }
+                    onInsertExternalLine={(line) => {
+                      const base = (env || "").trimEnd();
+                      set({
+                        environment: base ? `${base}\n${line}\n` : `${line}\n`,
+                      });
+                    }}
+                    disabled={disabled}
                   />
                   <MonacoEditor
                     value={env || "  # VARIABLE = value\n"}
@@ -244,6 +256,22 @@ export default function DeploymentConfig({
                 </Stack>
               ),
               // skip_secret_interp: true,
+            },
+          },
+          {
+            label: "External Secrets",
+            description:
+              "Configure Infisical scope overrides, container environment secret bindings, and preview secret provenance.",
+            fields: {
+              secret_sources: (_sources, set) => (
+                <DeploymentExternalSecretsPanel
+                  deploymentId={id}
+                  config={mergedConfig}
+                  swarmId={currSwarmId}
+                  disabled={disabled}
+                  onChange={set}
+                />
+              ),
             },
           },
           {

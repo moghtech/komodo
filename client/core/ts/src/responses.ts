@@ -186,6 +186,13 @@ export type ReadResponses = {
   ListGitProviderAccounts: Types.ListGitProviderAccountsResponse;
   GetImageRegistryAccount: Types.GetImageRegistryAccountResponse;
   ListImageRegistryAccounts: Types.ListImageRegistryAccountsResponse;
+  GetSecretProvider: Types.GetSecretProviderResponse;
+  ListSecretProviders: Types.ListSecretProvidersResponse;
+  ListAvailableSecretProviders: Types.ListAvailableSecretProvidersResponse;
+  ListSecretProviderGrants: Types.ListSecretProviderGrantsResponse;
+  ListSecretProviderUsages: Types.ListSecretProviderUsagesResponse;
+  ListExternalSecretKeys: Types.ListExternalSecretKeysResponse;
+  PreviewResourceSecrets: Types.PreviewResourceSecretsResponse;
 
   // ==== ONBOARDING KEY ====
   ListOnboardingKeys: Types.ListOnboardingKeysResponse;
@@ -346,6 +353,14 @@ export type WriteResponses = {
   CreateImageRegistryAccount: Types.CreateImageRegistryAccountResponse;
   UpdateImageRegistryAccount: Types.UpdateImageRegistryAccountResponse;
   DeleteImageRegistryAccount: Types.DeleteImageRegistryAccountResponse;
+  CreateSecretProvider: Types.CreateSecretProviderResponse;
+  UpdateSecretProvider: Types.UpdateSecretProviderResponse;
+  DeleteSecretProvider: Types.DeleteSecretProviderResponse;
+  TestSecretProviderConnection: Types.TestSecretProviderResponse;
+  CreateSecretProviderGrant: Types.CreateSecretProviderGrantResponse;
+  UpdateSecretProviderGrant: Types.UpdateSecretProviderGrantResponse;
+  DeleteSecretProviderGrant: Types.DeleteSecretProviderGrantResponse;
+  RotateSecretProviderEncryptionKeys: Types.RotateSecretProviderEncryptionKeysResponse;
 
   // ==== ALERT ====
   CloseAlert: Types.NoData;

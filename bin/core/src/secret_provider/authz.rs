@@ -4,7 +4,9 @@ use anyhow::{Context, bail};
 use database::mungos::{
   find::find_collect,
   mongodb::bson::{Document, doc, oid::ObjectId},
+  mongodb::options::FindOptions,
 };
+use indexmap::IndexSet;
 use komodo_client::entities::{
   ResourceTarget, ResourceTargetVariant,
   action::Action,
@@ -16,7 +18,8 @@ use komodo_client::entities::{
     ExternalSecretRef, InfisicalSecretSelector,
     InfisicalSelectorScope, SecretExecutionActor, SecretGrantSubject,
     SecretProvider, SecretProviderConfig, SecretProviderGrant,
-    SecretProviderResourceUsage, SecretResourceScope, SecretSelector,
+    SecretProviderKind, SecretProviderResourceUsage,
+    SecretProviderSummary, SecretResourceScope, SecretSelector,
     SecretSelectorScope, SecretSource, SecretUsage,
     normalize_secret_path, secret_path_matches_prefix,
   },
@@ -29,6 +32,8 @@ use crate::{
   helpers::query::get_user_user_group_ids,
   permission::get_check_permissions, resource, state::db_client,
 };
+
+use super::adapter::get_adapter;
 
 /// Explicit execution principal propagated across direct HTTP calls, spawned tasks,
 /// Procedures, Webhooks, Schedules, AutoRedeploy, ResourceSync, and Action API calls.
@@ -474,6 +479,27 @@ pub async fn authorize_secret_access(
   usage: SecretUsage,
   override_resource_level: Option<PermissionLevel>,
 ) -> anyhow::Result<SecretProvider> {
+  authorize_secret_access_ext(
+    fallback_user,
+    provider_id_or_slug,
+    target,
+    selector,
+    usage,
+    override_resource_level,
+    false,
+  )
+  .await
+}
+
+pub async fn authorize_secret_access_ext(
+  fallback_user: &User,
+  provider_id_or_slug: &str,
+  target: &ResourceTarget,
+  selector: &SecretSelector,
+  usage: SecretUsage,
+  override_resource_level: Option<PermissionLevel>,
+  allow_preview_grant: bool,
+) -> anyhow::Result<SecretProvider> {
   let subject = resolve_effective_subject(fallback_user)?;
   let provider = find_secret_provider(provider_id_or_slug).await?;
 
@@ -560,7 +586,17 @@ pub async fn authorize_secret_access(
       &canonical_target,
       selector,
       usage,
-    )? {
+    )? || (allow_preview_grant
+      && grant_matches_request(
+        grant,
+        &provider.id,
+        &subject,
+        &user_group_ids,
+        &canonical_target,
+        selector,
+        SecretUsage::Preview,
+      )?)
+    {
       return Ok(provider);
     }
   }
@@ -572,6 +608,200 @@ pub async fn authorize_secret_access(
     canonical_target,
     usage
   )
+}
+
+/// Validate and normalize a `SecretProviderGrant` payload before database persistence.
+pub fn validate_and_normalize_grant_fields(
+  provider: &SecretProvider,
+  subject: &SecretGrantSubject,
+  allowed_resources: &[SecretResourceScope],
+  selector_scope: &SecretSelectorScope,
+  allowed_usages: &IndexSet<SecretUsage>,
+) -> anyhow::Result<SecretSelectorScope> {
+  match subject {
+    SecretGrantSubject::User { user_id } => {
+      let uid = user_id.trim();
+      if uid.is_empty() {
+        bail!(
+          "SecretProviderGrant 'User' subject requires a non-empty user_id"
+        );
+      }
+      if User::is_service_user(uid) {
+        bail!(
+          "SecretProviderGrant 'User' subject cannot target inbuilt virtual user '{uid}'; use 'SystemActor' instead"
+        );
+      }
+    }
+    SecretGrantSubject::UserGroup { group_id } => {
+      if group_id.trim().is_empty() {
+        bail!(
+          "SecretProviderGrant 'UserGroup' subject requires a non-empty group_id"
+        );
+      }
+    }
+    SecretGrantSubject::ResourceAuthorized => {}
+    SecretGrantSubject::SystemActor { .. } => {}
+  }
+
+  if allowed_resources.is_empty() {
+    bail!(
+      "SecretProviderGrant must specify at least one allowed_resources scope"
+    );
+  }
+  for scope in allowed_resources {
+    match scope {
+      SecretResourceScope::Stack { id }
+      | SecretResourceScope::Deployment { id }
+      | SecretResourceScope::Build { id } => {
+        if id.trim().is_empty() {
+          bail!(
+            "SecretProviderGrant resource scope requires a non-empty resource ID"
+          );
+        }
+      }
+      SecretResourceScope::AllStacks
+      | SecretResourceScope::AllDeployments
+      | SecretResourceScope::AllBuilds => {}
+    }
+  }
+
+  if allowed_usages.is_empty() {
+    bail!(
+      "SecretProviderGrant must specify at least one allowed_usages entry"
+    );
+  }
+
+  match (&provider.config, selector_scope) {
+    (
+      SecretProviderConfig::Infisical(_),
+      SecretSelectorScope::Infisical(inf),
+    ) => {
+      let project_ids: Vec<String> = inf
+        .project_ids
+        .iter()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+      if project_ids.is_empty() {
+        bail!(
+          "Infisical grant selector_scope requires at least one non-empty project_id"
+        );
+      }
+      let environments: Vec<String> = inf
+        .environments
+        .iter()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+      if environments.is_empty() {
+        bail!(
+          "Infisical grant selector_scope requires at least one non-empty environment"
+        );
+      }
+      if inf.path_prefixes.is_empty() {
+        bail!(
+          "Infisical grant selector_scope requires at least one path_prefix (e.g. '/')"
+        );
+      }
+      let mut normalized_prefixes =
+        Vec::with_capacity(inf.path_prefixes.len());
+      for p in &inf.path_prefixes {
+        normalized_prefixes.push(normalize_secret_path(p)?);
+      }
+      Ok(SecretSelectorScope::Infisical(InfisicalSelectorScope {
+        project_ids,
+        environments,
+        path_prefixes: normalized_prefixes,
+        allow_imports: inf.allow_imports,
+        allow_expand_references: inf.allow_expand_references,
+      }))
+    }
+  }
+}
+
+/// Return safe `SecretProviderSummary` descriptors for resource editors/pickers.
+/// - Real admins receive all enabled providers with `granted` indicating whether an active grant matches.
+/// - Non-admins receive ONLY enabled providers for which they hold an active matching grant.
+pub async fn list_available_secret_providers_for_user(
+  user: &User,
+  target: Option<&ResourceTarget>,
+) -> anyhow::Result<Vec<SecretProviderSummary>> {
+  if !user.enabled {
+    bail!("User account is disabled");
+  }
+  let subject = resolve_effective_subject(user)?;
+  let is_real_admin = user.admin && !User::is_service_user(&user.id);
+
+  let canonical_target = match target {
+    Some(t) => Some(
+      verify_resource_permission_or_existence(
+        t,
+        Some(user),
+        PermissionLevel::Read,
+      )
+      .await?,
+    ),
+    None => None,
+  };
+
+  let group_ids = match &subject {
+    ExecutionSubjectContext::DirectUser { user_id } => {
+      get_user_user_group_ids(user_id).await?
+    }
+    ExecutionSubjectContext::SystemActor { .. } => Vec::new(),
+  };
+
+  let db = db_client();
+  let (providers, grants) = tokio::try_join!(
+    find_collect(
+      &db.secret_providers,
+      doc! { "enabled": true },
+      FindOptions::builder().sort(doc! { "slug": 1 }).build(),
+    ),
+    find_collect(
+      &db.secret_provider_grants,
+      doc! { "enabled": true },
+      None,
+    ),
+  )
+  .context("Failed to load available secret providers")?;
+
+  let mut out = Vec::new();
+  for p in providers {
+    let kind: SecretProviderKind = (&p.config).into();
+    let capabilities = get_adapter(kind).capabilities();
+    let default_selector = match &p.config {
+      SecretProviderConfig::Infisical(cfg) => {
+        cfg.default_selector.clone().map(SecretSelector::Infisical)
+      }
+    };
+    let granted = grants.iter().any(|g| {
+      g.enabled
+        && g.provider_id == p.id
+        && subject_matches_grant(&subject, &group_ids, &g.subject)
+        && match &canonical_target {
+          Some(ct) => {
+            resource_matches_scopes(ct, &g.allowed_resources)
+          }
+          None => !g.allowed_resources.is_empty(),
+        }
+    });
+    if is_real_admin || granted {
+      out.push(SecretProviderSummary {
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        description: p.description,
+        kind,
+        enabled: p.enabled,
+        has_credentials: p.has_credentials,
+        capabilities,
+        default_selector,
+        granted,
+      });
+    }
+  }
+  Ok(out)
 }
 
 fn override_resource_permission(

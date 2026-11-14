@@ -282,6 +282,13 @@ enum ReadRequest {
   GetImageRegistryAccount(GetImageRegistryAccount),
   #[serde(alias = "ListDockerRegistryAccounts")]
   ListImageRegistryAccounts(ListImageRegistryAccounts),
+  GetSecretProvider(GetSecretProvider),
+  ListSecretProviders(ListSecretProviders),
+  ListAvailableSecretProviders(ListAvailableSecretProviders),
+  ListSecretProviderGrants(ListSecretProviderGrants),
+  ListSecretProviderUsages(ListSecretProviderUsages),
+  ListExternalSecretKeys(ListExternalSecretKeys),
+  PreviewResourceSecrets(PreviewResourceSecrets),
 
   // ==== ONBOARDING KEY ====
   ListOnboardingKeys(ListOnboardingKeys),

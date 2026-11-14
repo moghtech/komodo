@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 console.log("generating typescript types...");
 
 const gen_command =
-  "RUST_BACKTRACE=1 typeshare . --lang=typescript --output-file=./client/core/ts/src/types.ts";
+  "RUST_BACKTRACE=1 typeshare ./client/core/rs ./bin/core --lang=typescript --output-file=./client/core/ts/src/types.ts";
 
 exec(gen_command, (error, _stdout, _stderr) => {
   if (error) {
@@ -42,6 +42,7 @@ function fix_types() {
       ", PermissionLevelAndSpecifics",
       ", PermissionLevelAndSpecifics | PermissionLevel"
     )
-    .replaceAll("IndexMap", "Record");
+    .replaceAll("IndexMap", "Record") +
+    '\nexport type SecretProviderKind = SecretProviderConfig["type"];\n';
   writeFileSync(types_path, fixed);
 }
