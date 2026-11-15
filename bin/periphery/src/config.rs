@@ -169,6 +169,12 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       exclude_disk_mounts: env
         .periphery_exclude_disk_mounts
         .unwrap_or(config.exclude_disk_mounts),
+      include_network_interfaces: env
+        .periphery_include_network_interfaces
+        .unwrap_or(config.include_network_interfaces),
+      exclude_network_interfaces: env
+        .periphery_exclude_network_interfaces
+        .unwrap_or(config.exclude_network_interfaces),
       ssl_enabled: env
         .periphery_ssl_enabled
         .unwrap_or(config.ssl_enabled),

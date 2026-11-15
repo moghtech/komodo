@@ -216,6 +216,12 @@ pub struct Env {
   pub periphery_include_disk_mounts: Option<ForgivingVec<PathBuf>>,
   /// Override `exclude_disk_mounts`
   pub periphery_exclude_disk_mounts: Option<ForgivingVec<PathBuf>>,
+  /// Override `include_network_interfaces`
+  pub periphery_include_network_interfaces:
+    Option<ForgivingVec<String>>,
+  /// Override `exclude_network_interfaces`
+  pub periphery_exclude_network_interfaces:
+    Option<ForgivingVec<String>>,
 
   /// Override `ssl_enabled`
   pub periphery_ssl_enabled: Option<bool>,
@@ -414,6 +420,18 @@ pub struct PeripheryConfig {
   #[serde(default)]
   pub exclude_disk_mounts: ForgivingVec<PathBuf>,
 
+  /// If non-empty, only includes specific network interfaces in the
+  /// network report, matched exactly (no wildcards). The report sums
+  /// every interface by default, which on a host network namespace
+  /// counts bridged traffic once per `br-*` / `veth*` hop.
+  #[serde(default)]
+  pub include_network_interfaces: ForgivingVec<String>,
+
+  /// Exclude specific network interfaces from the network report,
+  /// matched exactly (no wildcards).
+  #[serde(default)]
+  pub exclude_network_interfaces: ForgivingVec<String>,
+
   /// Mapping on local periphery secrets. These can be interpolated into eg. Deployment environment variables.
   /// Default: none
   #[serde(default)]
@@ -493,6 +511,8 @@ impl Default for PeripheryConfig {
       allowed_ips: Default::default(),
       include_disk_mounts: Default::default(),
       exclude_disk_mounts: Default::default(),
+      include_network_interfaces: Default::default(),
+      exclude_network_interfaces: Default::default(),
       secrets: Default::default(),
       git_providers: Default::default(),
       image_registries: Default::default(),
@@ -543,6 +563,12 @@ impl PeripheryConfig {
       allowed_ips: self.allowed_ips.clone(),
       include_disk_mounts: self.include_disk_mounts.clone(),
       exclude_disk_mounts: self.exclude_disk_mounts.clone(),
+      include_network_interfaces: self
+        .include_network_interfaces
+        .clone(),
+      exclude_network_interfaces: self
+        .exclude_network_interfaces
+        .clone(),
       secrets: self
         .secrets
         .iter()

@@ -1,9 +1,12 @@
 use std::cmp::Ordering;
 
 use async_timing_util::wait_until_timelength;
-use komodo_client::entities::stats::{
-  SingleDiskUsage, SystemInformation, SystemLoadAverage,
-  SystemProcess, SystemStats,
+use komodo_client::{
+  deserializers::ForgivingVec,
+  entities::stats::{
+    SingleDiskUsage, SystemInformation, SystemLoadAverage,
+    SystemProcess, SystemStats,
+  },
 };
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
 
@@ -82,10 +85,18 @@ impl StatsClient {
   pub fn get_system_stats(&self) -> SystemStats {
     let memory = mem::read(&self.system);
 
+    let config = periphery_config();
     let mut network_ingress_bytes: u64 = 0;
     let mut network_egress_bytes: u64 = 0;
 
-    for network in self.networks.values() {
+    for (name, network) in self.networks.list() {
+      if !keep_network_interface(
+        name,
+        &config.include_network_interfaces,
+        &config.exclude_network_interfaces,
+      ) {
+        continue;
+      }
       network_ingress_bytes += network.received();
       network_egress_bytes += network.transmitted();
     }
@@ -196,6 +207,18 @@ impl StatsClient {
   }
 }
 
+fn keep_network_interface(
+  name: &str,
+  include: &ForgivingVec<String>,
+  exclude: &ForgivingVec<String>,
+) -> bool {
+  if exclude.iter().any(|excluded| excluded == name) {
+    return false;
+  }
+  include.is_empty()
+    || include.iter().any(|included| included == name)
+}
+
 fn get_system_information(
   sys: &sysinfo::System,
 ) -> SystemInformation {
@@ -213,5 +236,58 @@ fn get_system_information(
       .map(|cpu| cpu.brand().to_string())
       .unwrap_or_default(),
     cpu_arch: System::cpu_arch(),
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::keep_network_interface;
+  use komodo_client::deserializers::ForgivingVec;
+
+  fn list(names: &[&str]) -> ForgivingVec<String> {
+    ForgivingVec(names.iter().map(|name| name.to_string()).collect())
+  }
+
+  #[test]
+  fn empty_include_reports_every_interface() {
+    let (include, exclude) = (list(&[]), list(&[]));
+    assert!(keep_network_interface("eth0", &include, &exclude));
+    assert!(keep_network_interface(
+      "br-243da15fe116",
+      &include,
+      &exclude
+    ));
+    assert!(keep_network_interface(
+      "veth7179673",
+      &include,
+      &exclude
+    ));
+  }
+
+  #[test]
+  fn include_reports_only_named_interfaces() {
+    let (include, exclude) = (list(&["eth0"]), list(&[]));
+    assert!(keep_network_interface("eth0", &include, &exclude));
+    assert!(!keep_network_interface("eth1", &include, &exclude));
+    assert!(!keep_network_interface(
+      "br-243da15fe116",
+      &include,
+      &exclude
+    ));
+  }
+
+  #[test]
+  fn exclude_reports_everything_else() {
+    let (include, exclude) = (list(&[]), list(&["lo"]));
+    assert!(keep_network_interface("eth0", &include, &exclude));
+    assert!(!keep_network_interface("lo", &include, &exclude));
+  }
+
+  #[test]
+  fn exclude_wins_over_include() {
+    let (include, exclude) =
+      (list(&["eth0", "eth1"]), list(&["eth1"]));
+    assert!(keep_network_interface("eth0", &include, &exclude));
+    assert!(!keep_network_interface("eth1", &include, &exclude));
   }
 }

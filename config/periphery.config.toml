@@ -105,6 +105,25 @@ include_disk_mounts = []
 ## Default: empty, which won't exclude any disks.
 exclude_disk_mounts = []
 
+## Optional. Only include specific network interfaces in the network report
+## (the ingress / egress totals on the server page).
+## The report sums every interface, so on a systemd or `network_mode: host` install,
+## bridged container traffic is counted again on each `br-*` and `veth*` hop, and
+## loopback counts too. Listing the physical NIC (ie. `eth0`) reports that NIC's
+## traffic only.
+## Names must match exactly (no wildcards).
+## Example: include_network_interfaces = ["eth0"]
+## Env: PERIPHERY_INCLUDE_NETWORK_INTERFACES
+## Default: empty, which won't filter down the interfaces.
+include_network_interfaces = []
+
+## Optional. Don't include these network interfaces in the network report.
+## Names must match exactly (no wildcards).
+## Example: exclude_network_interfaces = ["lo"]
+## Env: PERIPHERY_EXCLUDE_NETWORK_INTERFACES
+## Default: empty, which won't exclude any interfaces.
+exclude_network_interfaces = []
+
 ########
 # AUTH #
 ########
