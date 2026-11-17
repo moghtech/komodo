@@ -368,13 +368,14 @@ export default function StackConfig({
       config_files: (value, set) => (
         <ConfigItem
           label="Config Files"
-          description="Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'."
+          description={`Add other config files to associate with the Stack, and edit in the UI. Relative to ${mode === "UI Defined" ? "the compose file" : "'Run Directory'"}.`}
         >
           <StackConfigFiles
             id={id}
             value={value}
             set={set}
             disabled={disabled}
+            uiDefined={mode === "UI Defined"}
           />
         </ConfigItem>
       ),
@@ -968,6 +969,7 @@ export default function StackConfig({
           },
         },
         environment,
+        configFiles,
         ...generalCommon,
       ],
       advanced,
