@@ -922,6 +922,22 @@
               "$ref": "#/definitions/StackFileRequires"
             }
           ]
+        },
+        "contents": {
+          "description": "File contents for UI Defined stacks, written next to the compose file on deploy.",
+          "type": "string"
+        },
+        "user": {
+          "description": "Numeric user id to own the written file. New files are owned by the Periphery user.",
+          "type": "string"
+        },
+        "group": {
+          "description": "Numeric group id to own the written file. New files are owned by the Periphery group.",
+          "type": "string"
+        },
+        "mode": {
+          "description": "Octal mode of the written file, eg. `0640`. New files default to `0644` (umask).",
+          "type": "string"
         }
       },
       "required": [

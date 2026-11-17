@@ -1,4 +1,8 @@
-use std::path::PathBuf;
+use std::{
+  fs::Permissions,
+  os::unix::fs::{PermissionsExt, fchown},
+  path::PathBuf,
+};
 
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
@@ -12,7 +16,7 @@ use periphery_client::api::{
   compose::{ComposePullResponse, ComposeRunResponse},
   git::{CloneRepo, PullOrCloneRepo},
 };
-use tokio::fs;
+use tokio::{fs, io::AsyncWriteExt};
 
 use crate::{api::Args, config::periphery_config, helpers};
 
@@ -369,6 +373,58 @@ async fn write_stack_ui_defined(
   .with_context(|| {
     format!("Failed to write compose file to {file_path:?}")
   })?;
+
+  for file in &stack.config.config_files {
+    if file.contents.is_empty() {
+      continue;
+    }
+    let (user, group, mode) = file.ownership()?;
+    let file_path = run_directory
+      .join(&file.path)
+      .components()
+      .collect::<PathBuf>();
+    if let Some(parent) = file_path.parent() {
+      fs::create_dir_all(parent).await.with_context(|| {
+        format!("Failed to create config file directory {parent:?}")
+      })?;
+    }
+    // Containers may read config files as a non-root user, so they are not
+    // created 0600 like the compose file. They may also be mounted read-write,
+    // so symlinks are not followed.
+    let mut config_file = fs::OpenOptions::new()
+      .write(true)
+      .create(true)
+      .truncate(true)
+      .mode(mode.unwrap_or(0o644))
+      .custom_flags(libc::O_NOFOLLOW)
+      .open(&file_path)
+      .await
+      .with_context(|| {
+        format!("Failed to open config file {file_path:?}")
+      })?;
+    if user.is_some() || group.is_some() {
+      fchown(&config_file, user, group).with_context(|| {
+        format!("Failed to set owner of config file {file_path:?}")
+      })?;
+    }
+    if let Some(mode) = mode {
+      config_file
+        .set_permissions(Permissions::from_mode(mode))
+        .await
+        .with_context(|| {
+          format!("Failed to set mode of config file {file_path:?}")
+        })?;
+    }
+    config_file
+      .write_all(file.contents.as_bytes())
+      .await
+      .with_context(|| {
+        format!("Failed to write config file {file_path:?}")
+      })?;
+    config_file.flush().await.with_context(|| {
+      format!("Failed to write config file {file_path:?}")
+    })?;
+  }
 
   Ok((
     run_directory,

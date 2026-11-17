@@ -2631,6 +2631,14 @@ export interface StackFileDependency {
     services?: string[];
     /** Specify */
     requires?: StackFileRequires;
+    /** File contents for UI Defined stacks, written next to the compose file on deploy. */
+    contents?: string;
+    /** Numeric user id to own the written file. New files are owned by the Periphery user. */
+    user?: string;
+    /** Numeric group id to own the written file. New files are owned by the Periphery group. */
+    group?: string;
+    /** Octal mode of the written file, eg. `0640`. New files default to `0644` (umask). */
+    mode?: string;
 }
 /** The compose file configuration. */
 export interface StackConfig {

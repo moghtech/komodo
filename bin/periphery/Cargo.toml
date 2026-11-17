@@ -61,4 +61,5 @@ tokio.workspace = true
 axum.workspace = true
 clap.workspace = true
 envy.workspace = true
+libc.workspace = true
 uuid.workspace = true

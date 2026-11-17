@@ -1188,6 +1188,18 @@ pub struct StackFileDependency {
   /// Specify
   #[serde(default, skip_serializing_if = "is_none")]
   pub requires: StackFileRequires,
+  /// File contents for UI Defined stacks, written next to the compose file on deploy.
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  pub contents: String,
+  /// Numeric user id to own the written file. New files are owned by the Periphery user.
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  pub user: String,
+  /// Numeric group id to own the written file. New files are owned by the Periphery group.
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  pub group: String,
+  /// Octal mode of the written file, eg. `0640`. New files default to `0644` (umask).
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  pub mode: String,
 }
 
 impl StackFileDependency {
@@ -1196,7 +1208,44 @@ impl StackFileDependency {
       path,
       services: Vec::new(),
       requires: StackFileRequires::Redeploy,
+      contents: String::new(),
+      user: String::new(),
+      group: String::new(),
+      mode: String::new(),
     }
+  }
+
+  /// Parses `user`, `group` and `mode` of a UI Defined config file.
+  pub fn ownership(
+    &self,
+  ) -> anyhow::Result<(Option<u32>, Option<u32>, Option<u32>)> {
+    let parse = |value: &str, radix: u32, field: &str| {
+      if value.is_empty() {
+        return Ok(None);
+      }
+      u32::from_str_radix(value, radix)
+        .map(Some)
+        .with_context(|| {
+          format!(
+            "Invalid {field} '{value}' for config file '{}'",
+            self.path
+          )
+        })
+    };
+    let mode = parse(&self.mode, 8, "mode")?;
+    if let Some(mode) = mode {
+      anyhow::ensure!(
+        mode <= 0o777,
+        "Invalid mode '{}' for config file '{}'",
+        self.mode,
+        self.path
+      );
+    }
+    Ok((
+      parse(&self.user, 10, "user")?,
+      parse(&self.group, 10, "group")?,
+      mode,
+    ))
   }
 }
 
@@ -1216,6 +1265,14 @@ struct __StackFileDependency {
   services: Vec<String>,
   #[serde(default, alias = "req")]
   requires: StackFileRequires,
+  #[serde(default)]
+  contents: String,
+  #[serde(default)]
+  user: String,
+  #[serde(default)]
+  group: String,
+  #[serde(default)]
+  mode: String,
 }
 
 impl<'de> Deserialize<'de> for StackFileDependency {
@@ -1243,6 +1300,10 @@ impl<'de> Deserialize<'de> for StackFileDependency {
           path,
           services: Vec::new(),
           requires: StackFileRequires::None,
+          contents: String::new(),
+          user: String::new(),
+          group: String::new(),
+          mode: String::new(),
         })
       }
 
@@ -1264,6 +1325,10 @@ impl<'de> Deserialize<'de> for StackFileDependency {
           path: v.path,
           services: v.services,
           requires: v.requires,
+          contents: v.contents,
+          user: v.user,
+          group: v.group,
+          mode: v.mode,
         })
       }
     }
