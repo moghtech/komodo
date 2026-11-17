@@ -8,6 +8,7 @@ use database::mungos::{
     options::FindOneOptions,
   },
 };
+use interpolate::unavailable_secret;
 use komodo_client::{
   busy::Busy,
   entities::{
@@ -38,7 +39,7 @@ use mogh_auth_server::provider::oidc::SubjectIdentifier;
 
 use crate::{
   config::core_config,
-  helpers::swarm::swarm_request,
+  helpers::{encryption::decrypt_variable, swarm::swarm_request},
   permission::get_user_permission_on_resource,
   resource::{self, KomodoResource},
   stack::compose_container_match_regex,
@@ -426,7 +427,18 @@ pub async fn get_variables_and_secrets()
 -> anyhow::Result<VariablesAndSecrets> {
   let variables = find_collect(&db_client().variables, None, None)
     .await
-    .context("failed to get all variables from db")?;
+    .context("failed to get all variables from db")?
+    .into_iter()
+    // Undecryptable secrets only fail interpolation where referenced.
+    .map(|variable| {
+      decrypt_variable(variable.clone()).unwrap_or_else(|e| {
+        Variable {
+          value: unavailable_secret(&format!("{e:#}")),
+          ..variable
+        }
+      })
+    })
+    .collect::<Vec<_>>();
   let mut secrets = core_config().secrets.clone();
 
   // extend secrets with secret variables

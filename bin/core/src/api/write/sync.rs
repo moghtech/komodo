@@ -526,6 +526,7 @@ impl Resolve<WriteArgs> for CommitSync {
       include_resources: sync.config.include_resources,
       tags: sync.config.match_tags.clone(),
       include_variables: sync.config.include_variables,
+      encrypt_secret_variables: sync.config.encrypt_secret_variables,
       include_user_groups: sync.config.include_user_groups,
       existing: resources
         .inspect_err(|e| warn!("Existing resource TOML is unavailable, resource meta will not be preserved | ERROR: {e:#}"))
@@ -825,6 +826,10 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
         crate::sync::variables::get_updates_for_view(
           &resources.variables,
           delete,
+          sync
+            .config
+            .managed
+            .then_some(sync.config.encrypt_secret_variables),
         )
         .await?
       } else {

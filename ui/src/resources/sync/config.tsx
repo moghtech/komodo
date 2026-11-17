@@ -174,6 +174,14 @@ export default function ResourceSyncConfig({
         label: "Sync Variables",
         description: "Include variables in the sync.",
       },
+      encrypt_secret_variables: {
+        hidden:
+          !coreInfo?.variable_encryption_enabled ||
+          !(update.include_variables ?? config.include_variables),
+        label: "Encrypt Secret Variables",
+        description:
+          "Commit secret variables with their encrypted value. Syncing them to another Core requires the same 'variable_encryption_key'.",
+      },
       include_user_groups: {
         label: "Sync User Groups",
         description: "Include user groups in the sync.",

@@ -148,6 +148,8 @@ pub struct GetCoreInfoResponse {
   pub public_key: String,
   /// Default pagination limit for the UI to use.
   pub default_pagination_limit: U64,
+  /// Whether secret Variables are encrypted in the database.
+  pub variable_encryption_enabled: bool,
 }
 
 //

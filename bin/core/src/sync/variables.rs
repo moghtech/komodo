@@ -11,7 +11,11 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 
-use crate::{api::write::WriteArgs, state::db_client};
+use crate::{
+  api::write::WriteArgs,
+  helpers::encryption::{decrypt_variable_or_stored, is_encrypted},
+  state::db_client,
+};
 
 use super::toml::TOML_PRETTY_OPTIONS;
 
@@ -33,18 +37,30 @@ pub struct ToUpdateItem {
 pub async fn get_updates_for_view(
   variables: &[Variable],
   delete: bool,
+  commit_encrypted: Option<bool>,
 ) -> anyhow::Result<Vec<DiffData>> {
+  // Values are compared decrypted. For managed syncs the representation
+  // must also match what a commit would write, so toggling encryption
+  // shows a diff which can be committed.
   let map = find_collect(&db_client().variables, None, None)
     .await
     .context("failed to query db for variables")?
     .into_iter()
-    .map(|v| (v.name.clone(), v))
+    .map(|v| {
+      let decrypted = decrypt_variable_or_stored(v.clone());
+      let committed = if commit_encrypted == Some(true) {
+        v
+      } else {
+        decrypted.clone()
+      };
+      (committed.name.clone(), (decrypted, committed))
+    })
     .collect::<HashMap<_, _>>();
 
   let mut diffs = Vec::<DiffData>::new();
 
   if delete {
-    for variable in map.values() {
+    for (_, variable) in map.values() {
       if !variables.iter().any(|v| v.name == variable.name) {
         diffs.push(DiffData::Delete {
           current: variable_to_toml(variable)?,
@@ -55,15 +71,19 @@ pub async fn get_updates_for_view(
 
   for variable in variables {
     match map.get(&variable.name) {
-      Some(original) => {
-        if original.value == variable.value
-          && original.description == variable.description
+      Some((decrypted, committed)) => {
+        if decrypted.value
+          == decrypt_variable_or_stored(variable.clone()).value
+          && (commit_encrypted.is_none()
+            || is_encrypted(&committed.value)
+              == is_encrypted(&variable.value))
+          && committed.description == variable.description
         {
           continue;
         }
         diffs.push(DiffData::Update {
           proposed: variable_to_toml(variable)?,
-          current: variable_to_toml(original)?,
+          current: variable_to_toml(committed)?,
         });
       }
       None => {
@@ -86,7 +106,7 @@ pub async fn get_updates_for_execution(
     .await
     .context("failed to query db for variables")?
     .into_iter()
-    .map(|v| (v.name.clone(), v))
+    .map(|v| (v.name.clone(), decrypt_variable_or_stored(v)))
     .collect::<HashMap<_, _>>();
 
   let mut to_create = Vec::<Variable>::new();
@@ -105,7 +125,8 @@ pub async fn get_updates_for_execution(
     match map.get(&variable.name) {
       Some(original) => {
         let item = ToUpdateItem {
-          update_value: original.value != variable.value,
+          update_value: original.value
+            != decrypt_variable_or_stored(variable.clone()).value,
           update_description: original.description
             != variable.description,
           update_is_secret: original.is_secret != variable.is_secret,

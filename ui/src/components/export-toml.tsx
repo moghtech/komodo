@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { UsableResource } from "@/resources";
-import { Box, Button, Modal } from "@mantine/core";
+import { Box, Button, Modal, Switch } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { MonacoEditor } from "mogh_ui";
@@ -53,6 +54,7 @@ function ExportTomlInner({
   includeVariables,
 }: ExportTomlProps) {
   const useAll = !(targets || listQuery || userGroups || includeVariables);
+  const [encryptSecretVariables, setEncryptSecretVariables] = useState(true);
 
   const listTargets = useRead(
     `List${listQuery?.type ?? "Server"}s`,
@@ -71,6 +73,7 @@ function ExportTomlInner({
       targets: exportTargets ? exportTargets : [],
       user_groups: userGroups ? userGroups : [],
       include_variables: includeVariables,
+      encrypt_secret_variables: encryptSecretVariables,
     },
     { enabled: !useAll && (!listQuery || !!listTargets) },
   );
@@ -82,6 +85,7 @@ function ExportTomlInner({
       include_resources: true,
       include_variables: true,
       include_user_groups: true,
+      encrypt_secret_variables: encryptSecretVariables,
     },
     { enabled: useAll },
   );
@@ -90,11 +94,13 @@ function ExportTomlInner({
     ? [allData, allPending]
     : [resourcesData, resourcesPending];
 
-  const enableFancyToml = useRead("GetCoreInfo", {}).data?.enable_fancy_toml;
+  const coreInfo = useRead("GetCoreInfo", {}).data;
+  const enableFancyToml = coreInfo?.enable_fancy_toml;
+  const showEncrypt =
+    (useAll || includeVariables) && coreInfo?.variable_encryption_enabled;
 
   return (
     <Box
-      pos="relative"
       w={{
         base: "calc(100vw - 5rem)",
         xs: "calc(100vw - 8rem)",
@@ -102,15 +108,25 @@ function ExportTomlInner({
       }}
       maw={1200}
     >
-      {loading && <LoadingScreen mt="0" h="30vh" />}
-      <MonacoEditor
-        value={data?.toml}
-        language="fancy_toml"
-        enableFancyToml={enableFancyToml}
-        readOnly
-      />
-      <Box pos="absolute" top={18} right={18} style={{ zIndex: 10 }}>
-        <CopyButton content={data?.toml ?? ""} />
+      {showEncrypt && (
+        <Switch
+          label="Encrypt secret Variables"
+          checked={encryptSecretVariables}
+          onChange={(e) => setEncryptSecretVariables(e.currentTarget.checked)}
+          mb="sm"
+        />
+      )}
+      <Box pos="relative">
+        {loading && <LoadingScreen mt="0" h="30vh" />}
+        <MonacoEditor
+          value={data?.toml}
+          language="fancy_toml"
+          enableFancyToml={enableFancyToml}
+          readOnly
+        />
+        <Box pos="absolute" top={18} right={18} style={{ zIndex: 10 }}>
+          <CopyButton content={data?.toml ?? ""} />
+        </Box>
       </Box>
     </Box>
   );

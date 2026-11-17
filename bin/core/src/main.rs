@@ -57,6 +57,8 @@ async fn app() -> anyhow::Result<()> {
 
     // Init jwt provider to crash on failure
     let _ = &auth::JWT_PROVIDER;
+    // Init variable encryption key to crash on failure
+    let _ = &*helpers::encryption::ENCRYPTION_KEY;
     // Init db_client check to crash on db init failure
     state::init_db_client().await;
     // Run after db connection.
