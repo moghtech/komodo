@@ -17,6 +17,9 @@ import { Section } from "mogh_ui";
 import { MonacoDiffEditor } from "mogh_ui";
 import { LoadingScreen } from "mogh_ui";
 import { atom, useAtom } from "jotai";
+import { useLayoutEffect, useRef } from "react";
+import { Types } from "komodo_client";
+import LogDuration from "./log-duration";
 import ResourceLink from "@/resources/link";
 import { To, useLocation, useNavigate } from "react-router-dom";
 
@@ -63,7 +66,15 @@ export default function UpdateDetails({
 
 export function UpdateDetailsContent({ id }: { id: string }) {
   const { close } = useUpdateDetails();
-  const { data: update, refetch } = useRead("GetUpdate", { id });
+  const { data: update, refetch } = useRead(
+    "GetUpdate",
+    { id },
+    {
+      // Live logs aren't sent over the websocket
+      refetchInterval: ({ state }) =>
+        state.data?.status === Types.UpdateStatus.InProgress ? 1000 : false,
+    },
+  );
   // Listen for updates on the update id and refetch
   useWebsocketMessages("update-details", (update) => {
     if (update.id === id) refetch();
@@ -74,6 +85,17 @@ export function UpdateDetailsContent({ id }: { id: string }) {
   if (!update) {
     return <LoadingScreen mt="0" h="50vh" />;
   }
+
+  const inProgress = update.status !== Types.UpdateStatus.Complete;
+  // Keyed by stage and start, so a running command's log keeps its box
+  // when the final logs, which may include more stages, arrive.
+  const seen = new Map<string, number>();
+  const logKeys = update.logs.map(({ stage, start_ts }) => {
+    const key = `${stage}-${start_ts}`;
+    const count = seen.get(key) ?? 0;
+    seen.set(key, count + 1);
+    return `${key}-${count}`;
+  });
 
   const Components =
     update.target.type === "System"
@@ -163,7 +185,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
         {/** LOGS */}
         {update?.logs.map((log, i) => (
           <Section
-            key={i}
+            key={logKeys[i]}
             title={log.stage}
             titleFz="h3"
             description={
@@ -172,8 +194,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
                   Stage {i + 1} of {update.logs.length}
                 </Text>
                 <Text>|</Text>
-                <Clock size="1rem" />
-                {fmtDuration(log.start_ts, log.end_ts)}
+                <LogDuration log={log} inProgress={inProgress} />
               </Group>
             }
             gap="xs"
@@ -194,36 +215,64 @@ export function UpdateDetailsContent({ id }: { id: string }) {
               </Stack>
             )}
             {log.stdout && (
-              <Stack className="bordered-light" bdrs="md" p="md">
-                <Text fw="bold">stdout</Text>
-                <Code
-                  component="pre"
-                  fz="sm"
-                  mah={500}
-                  dangerouslySetInnerHTML={{
-                    __html: updateLogToHtml(log.stdout),
-                  }}
-                  style={{ overflowY: "auto", whiteSpace: "pre-wrap" }}
-                />
-              </Stack>
+              <LogOutput
+                label="stdout"
+                output={log.stdout}
+                follow={inProgress}
+              />
             )}
             {log.stderr && (
-              <Stack className="bordered-light" bdrs="md" p="md">
-                <Text fw="bold">stderr</Text>
-                <Code
-                  component="pre"
-                  fz="sm"
-                  mah={500}
-                  dangerouslySetInnerHTML={{
-                    __html: updateLogToHtml(log.stderr),
-                  }}
-                  style={{ overflowY: "auto", whiteSpace: "pre-wrap" }}
-                />
-              </Stack>
+              <LogOutput
+                label="stderr"
+                output={log.stderr}
+                follow={inProgress}
+              />
             )}
           </Section>
         ))}
       </Stack>
+    </Stack>
+  );
+}
+
+/**
+ * With `follow` when first shown, keeps showing the end of the output
+ * as it changes, until scrolled up.
+ */
+function LogOutput({
+  label,
+  output,
+  follow,
+}: {
+  label: string;
+  output: string;
+  follow: boolean;
+}) {
+  const ref = useRef<HTMLPreElement>(null);
+  // The scroll position of the end of the previous output
+  const end = useRef(follow ? 0 : Infinity);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Allow being a few lines short of the end
+    if (el.scrollTop >= end.current - 50) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "instant" });
+    }
+    end.current = el.scrollHeight - el.clientHeight;
+  }, [output]);
+  return (
+    <Stack className="bordered-light" bdrs="md" p="md">
+      <Text fw="bold">{label}</Text>
+      <Code
+        ref={ref}
+        component="pre"
+        fz="sm"
+        mah={500}
+        dangerouslySetInnerHTML={{
+          __html: updateLogToHtml(output),
+        }}
+        style={{ overflowY: "auto", whiteSpace: "pre-wrap" }}
+      />
     </Stack>
   );
 }

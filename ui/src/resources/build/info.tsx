@@ -3,10 +3,10 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
 import { useFullBuild } from ".";
-import { fmtDuration, Section } from "mogh_ui";
+import { Section } from "mogh_ui";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
 import { ConfirmButton } from "mogh_ui";
-import { Clock, FilePlus } from "lucide-react";
+import { FilePlus } from "lucide-react";
 import { DEFAULT_BUILD_DOCKERFILE_CONTENTS } from "./config";
 import { updateLogToHtml } from "@/lib/utils";
 import { CopyButton } from "mogh_ui";
@@ -14,6 +14,8 @@ import { ICONS } from "@/lib/icons";
 import { ConfirmUpdate } from "mogh_ui";
 import { ShowHideButton } from "mogh_ui";
 import { MonacoEditor } from "mogh_ui";
+import { Types } from "komodo_client";
+import LogDuration from "@/components/updates/log-duration";
 
 export default function BuildInfo({
   id,
@@ -203,8 +205,10 @@ export default function BuildInfo({
                   Stage {i + 1} of {lastBuild.logs.length}
                 </Text>
                 <Text>|</Text>
-                <Clock size="1rem" />
-                {fmtDuration(log.start_ts, log.end_ts)}
+                <LogDuration
+                  log={log}
+                  inProgress={lastBuild.status !== Types.UpdateStatus.Complete}
+                />
               </Group>
             }
             gap="xs"

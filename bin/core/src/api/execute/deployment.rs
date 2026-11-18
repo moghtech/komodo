@@ -242,13 +242,16 @@ impl Resolve<ExecuteArgs> for Deploy {
       SwarmOrServer::Server(server) => {
         match periphery_client(&server)
           .await?
-          .request(api::container::RunContainer {
-            deployment,
-            stop_signal: self.stop_signal,
-            stop_time: self.stop_time,
-            registry_token,
-            replacers: secret_replacers.into_iter().collect(),
-          })
+          .request_with_live_logs(
+            api::container::RunContainer {
+              deployment,
+              stop_signal: self.stop_signal,
+              stop_time: self.stop_time,
+              registry_token,
+              replacers: secret_replacers.into_iter().collect(),
+            },
+            &update,
+          )
           .await
         {
           Ok(log) => {
@@ -319,6 +322,7 @@ fn pull_cache() -> &'static PullCache {
 pub async fn pull_deployment_inner(
   deployment: Deployment,
   server: &Server,
+  update: &Update,
 ) -> anyhow::Result<Log> {
   let (image, account, token) = match deployment.config.image {
     DeploymentImage::Build { build_id, version } => {
@@ -407,11 +411,14 @@ pub async fn pull_deployment_inner(
   let res = async {
     let log = match periphery_client(server)
       .await?
-      .request(api::docker::PullImage {
-        name: image,
-        account,
-        token,
-      })
+      .request_with_live_logs(
+        api::docker::PullImage {
+          name: image,
+          account,
+          token,
+        },
+        update,
+      )
       .await
     {
       Ok(log) => log,
@@ -478,7 +485,8 @@ impl Resolve<ExecuteArgs> for PullDeployment {
     // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let log = pull_deployment_inner(deployment, &server).await?;
+    let log =
+      pull_deployment_inner(deployment, &server, &update).await?;
 
     update.logs.push(log);
     update.finalize();

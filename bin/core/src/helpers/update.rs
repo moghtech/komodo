@@ -77,11 +77,18 @@ pub async fn add_update_without_send(
 }
 
 pub async fn update_update(update: Update) -> anyhow::Result<()> {
-  update_one_by_id(&db_client().updates, &update.id, database::mungos::update::Update::Set(to_document(&update)?), None)
-    .await
-    .context("failed to update the update on db. the update build process was deleted")?;
+  update_update_without_send(&update).await?;
   let update = update_list_item(update).await?;
   let _ = send_update(update).await;
+  Ok(())
+}
+
+pub async fn update_update_without_send(
+  update: &Update,
+) -> anyhow::Result<()> {
+  update_one_by_id(&db_client().updates, &update.id, database::mungos::update::Update::Set(to_document(update)?), None)
+    .await
+    .context("failed to update the update on db. the update build process was deleted")?;
   Ok(())
 }
 

@@ -213,14 +213,17 @@ impl Resolve<ExecuteArgs> for DeployStack {
       SwarmOrServer::Server(server) => {
         periphery_client(server)
           .await?
-          .request(ComposeUp {
-            stack: stack.clone(),
-            services: self.services,
-            repo,
-            git_token,
-            registry_token,
-            replacers: secret_replacers.into_iter().collect(),
-          })
+          .request_with_live_logs(
+            ComposeUp {
+              stack: stack.clone(),
+              services: self.services,
+              repo,
+              git_token,
+              registry_token,
+              replacers: secret_replacers.into_iter().collect(),
+            },
+            &update,
+          )
           .await?
       }
     };
@@ -881,7 +884,7 @@ pub async fn pull_stack_inner(
     {
       interpolator.interpolate_repo(repo)?;
     }
-    if let Some(update) = update {
+    if let Some(update) = update.as_mut() {
       interpolator.push_logs(&mut update.logs);
     }
     interpolator.secret_replacers
@@ -889,17 +892,21 @@ pub async fn pull_stack_inner(
     Default::default()
   };
 
-  let res = periphery_client(server)
-    .await?
-    .request(ComposePull {
-      stack,
-      services,
-      repo,
-      git_token,
-      registry_token,
-      replacers: secret_replacers.into_iter().collect(),
-    })
-    .await?;
+  let periphery = periphery_client(server).await?;
+  let request = ComposePull {
+    stack,
+    services,
+    repo,
+    git_token,
+    registry_token,
+    replacers: secret_replacers.into_iter().collect(),
+  };
+  let res = match update {
+    Some(update) => {
+      periphery.request_with_live_logs(request, update).await?
+    }
+    None => periphery.request(request).await?,
+  };
 
   // Ensure cached stack state up to date by updating server cache
   refresh_server_cache(server, true).await;
@@ -1381,24 +1388,27 @@ impl Resolve<ExecuteArgs> for RunStackService {
 
     let log = periphery_client(&server)
       .await?
-      .request(ComposeRun {
-        stack,
-        repo,
-        git_token,
-        registry_token,
-        replacers: secret_replacers.into_iter().collect(),
-        service: self.service,
-        command: self.command,
-        no_tty: self.no_tty,
-        no_deps: self.no_deps,
-        detach: self.detach,
-        service_ports: self.service_ports,
-        env: self.env,
-        workdir: self.workdir,
-        user: self.user,
-        entrypoint: self.entrypoint,
-        pull: self.pull,
-      })
+      .request_with_live_logs(
+        ComposeRun {
+          stack,
+          repo,
+          git_token,
+          registry_token,
+          replacers: secret_replacers.into_iter().collect(),
+          service: self.service,
+          command: self.command,
+          no_tty: self.no_tty,
+          no_deps: self.no_deps,
+          detach: self.detach,
+          service_ports: self.service_ports,
+          env: self.env,
+          workdir: self.workdir,
+          user: self.user,
+          entrypoint: self.entrypoint,
+          pull: self.pull,
+        },
+        &update,
+      )
       .await?;
 
     update.logs.push(log);

@@ -1,16 +1,35 @@
-use std::{path::PathBuf, process::Stdio, sync::OnceLock};
+use std::{
+  io,
+  path::PathBuf,
+  process::{Output, Stdio},
+  sync::OnceLock,
+  time::Duration,
+};
 
 use komodo_client::{
   entities::{komodo_timestamp, update::Log},
   parsers::parse_multiline_command,
 };
-use tokio::process::Command;
+use tokio::{
+  io::{AsyncRead, AsyncReadExt},
+  process::{Child, Command},
+  sync::mpsc,
+  time::MissedTickBehavior,
+};
 
 mod options;
 mod output;
 
 pub use options::*;
 pub use output::*;
+
+/// While a command runs with [CommandOptions::live_log], its log is sent
+/// at most this often, and only when there is new output.
+const LIVE_LOG_INTERVAL: Duration = Duration::from_secs(1);
+
+/// Live logs only include the end of longer output.
+/// The final log includes all of it.
+const LIVE_LOG_MAX_LENGTH: usize = 64 * 1024;
 
 /// Commands are run directly, and cannot include '&&'
 pub async fn run_komodo_standard_command(
@@ -69,35 +88,168 @@ pub enum KomodoCommandMode {
 /// and chains them together with '&&'.
 /// Supports full line and end of line comments.
 /// See [parse_multiline_command].
+///
+/// With [CommandOptions::live_log], the sanitized log is also sent
+/// there when the command starts, while it runs, and once more when it
+/// finishes.
 pub async fn run_komodo_command_with_sanitization(
   stage: &str,
   command: impl AsRef<str>,
-  options: CommandOptions<'_>,
+  mut options: CommandOptions<'_>,
   mode: KomodoCommandMode,
   replacers: &[(String, String)],
 ) -> Option<Log> {
-  let mut log = match mode {
-    KomodoCommandMode::Standard => {
-      run_komodo_standard_command(stage, command.as_ref(), options)
-        .await
-        .into()
-    }
-    KomodoCommandMode::Shell => {
-      run_komodo_shell_command(stage, command.as_ref(), options)
-        .await
-        .into()
-    }
+  let command = match mode {
     KomodoCommandMode::Multiline => {
-      run_komodo_multiline_command(stage, command, options).await
+      let command = parse_multiline_command(command);
+      if command.is_empty() {
+        return None;
+      }
+      command
     }
-  }?;
+    _ => command.as_ref().to_string(),
+  };
+  let start_ts = komodo_timestamp();
+  let live = options.live_log.take().map(|live_log| {
+    let live_output = LiveOutput::default();
+    options.live_output = Some(live_output.clone());
+    (live_log, live_output)
+  });
+
+  let output = {
+    let run = async {
+      match mode {
+        KomodoCommandMode::Standard => {
+          run_standard_command(&command, options).await
+        }
+        _ => run_shell_command(&command, options).await,
+      }
+    };
+    match &live {
+      Some((live_log, live_output)) => {
+        let log = Log {
+          stage: stage.to_string(),
+          command: svi::replace_in_string(&command, replacers),
+          success: true,
+          start_ts,
+          ..Default::default()
+        };
+        send_live_log(run, live_log, live_output, log, replacers)
+          .await
+      }
+      None => run.await,
+    }
+  };
+
+  let mut log = output_into_log(stage, command, start_ts, output);
 
   // Sanitize the command and output
   log.command = svi::replace_in_string(&log.command, replacers);
   log.stdout = svi::replace_in_string(&log.stdout, replacers);
   log.stderr = svi::replace_in_string(&log.stderr, replacers);
 
+  if let Some((live_log, _)) = live {
+    let tail = |output: &str| {
+      output[output.len() - live_tail(output.as_bytes()).len()..]
+        .to_string()
+    };
+    let _ = live_log.try_send(Log {
+      stage: log.stage.clone(),
+      command: log.command.clone(),
+      stdout: tail(&log.stdout),
+      stderr: tail(&log.stderr),
+      ..log
+    });
+  }
+
   Some(log)
+}
+
+/// Awaits `run`, sending `log` to `live_log` when it starts, and with
+/// the sanitized output so far every [LIVE_LOG_INTERVAL] while there is
+/// new output.
+async fn send_live_log(
+  run: impl Future<Output = CommandOutput>,
+  live_log: &mpsc::Sender<Log>,
+  live_output: &LiveOutput,
+  mut log: Log,
+  replacers: &[(String, String)],
+) -> CommandOutput {
+  tokio::pin!(run);
+  let mut interval = tokio::time::interval(LIVE_LOG_INTERVAL);
+  interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
+  // Shows the command as running before it has output. Its end_ts
+  // stays 0 until it finishes.
+  let _ = live_log.try_send(log.clone());
+  let mut len = (0, 0);
+  loop {
+    tokio::select! {
+      output = &mut run => return output,
+      _ = interval.tick() => {
+        let (stdout, stderr) = {
+          let live_output = live_output.lock().unwrap();
+          let prev_len = len;
+          len = (live_output.0.len(), live_output.1.len());
+          if len == prev_len {
+            continue;
+          }
+          (
+            sanitize_live_output(&live_output.0, replacers),
+            sanitize_live_output(&live_output.1, replacers),
+          )
+        };
+        if stdout == log.stdout && stderr == log.stderr {
+          continue;
+        }
+        log.stdout = stdout;
+        log.stderr = stderr;
+        // Only for display, so dropped when the receiver is behind.
+        let _ = live_log.try_send(log.clone());
+      }
+    }
+  }
+}
+
+/// Sanitizes the output of a running command. Only complete lines are
+/// kept, so a secret which isn't fully written yet is not sent partially.
+/// For secrets spanning multiple lines, as many lines are held back.
+fn sanitize_live_output(
+  output: &[u8],
+  replacers: &[(String, String)],
+) -> String {
+  // Replacements never include newlines, so they only remove lines.
+  let hold_back = replacers
+    .iter()
+    .map(|(secret, _)| secret.matches('\n').count())
+    .max()
+    .unwrap_or_default();
+  let tail = live_tail(output);
+  let cut = tail.len() < output.len();
+  let output =
+    svi::replace_in_string(&String::from_utf8_lossy(tail), replacers);
+  let lines = || output.match_indices('\n').map(|(i, _)| i + 1);
+  let end = lines().nth_back(hold_back).unwrap_or_default();
+  // The start of a multi-line secret may have been cut off with the
+  // beginning of the output, so as many lines are dropped there.
+  let start = match hold_back.checked_sub(1) {
+    Some(n) if cut => lines().nth(n).unwrap_or(end),
+    _ => 0,
+  };
+  output.get(start..end).unwrap_or_default().to_string()
+}
+
+/// The end of the output, from the first line starting
+/// in its last [LIVE_LOG_MAX_LENGTH] bytes.
+fn live_tail(output: &[u8]) -> &[u8] {
+  let Some(start) = output.len().checked_sub(LIVE_LOG_MAX_LENGTH)
+  else {
+    return output;
+  };
+  let start = output[start..]
+    .iter()
+    .position(|b| *b == b'\n')
+    .map_or(output.len(), |i| start + i + 1);
+  &output[start..]
 }
 
 pub fn output_into_log(
@@ -196,6 +348,8 @@ async fn run_command(
     timeout,
     cancel,
     stdin,
+    live_output,
+    live_log: _,
   } = options;
 
   // Attach the path to cmd as current dir
@@ -217,7 +371,11 @@ async fn run_command(
 
   // Fast path: nothing to write, and nothing to wait
   // on besides the command itself.
-  if timeout.is_none() && cancel.is_none() && stdin.is_none() {
+  if timeout.is_none()
+    && cancel.is_none()
+    && stdin.is_none()
+    && live_output.is_none()
+  {
     return CommandOutput::from(cmd.output().await);
   }
 
@@ -255,7 +413,9 @@ async fn run_command(
 
   // Nothing to signal on, so just wait for it to finish.
   if timeout.is_none() && cancel.is_none() {
-    return CommandOutput::from(child.wait_with_output().await);
+    return CommandOutput::from(
+      wait_for_output(child, live_output.as_ref()).await,
+    );
   }
 
   // Resolve to `()` only when the relevant control fires; otherwise stay
@@ -274,7 +434,7 @@ async fn run_command(
   };
 
   let killed_reason = tokio::select! {
-    output = child.wait_with_output() => {
+    output = wait_for_output(child, live_output.as_ref()) => {
       return CommandOutput::from(output);
     }
     _ = on_timeout => format!(
@@ -289,6 +449,51 @@ async fn run_command(
 
   kill_process_group(pid);
   CommandOutput::from_err_message(killed_reason)
+}
+
+/// Like `child.wait_with_output()`, but with `live` given, the output is
+/// appended to it as it arrives, and the result is read back from it.
+async fn wait_for_output(
+  mut child: Child,
+  live: Option<&LiveOutput>,
+) -> io::Result<Output> {
+  let Some(live) = live else {
+    return child.wait_with_output().await;
+  };
+  let stdout = child.stdout.take();
+  let stderr = child.stderr.take();
+  let (status, _, _) = tokio::try_join!(
+    child.wait(),
+    read_live(stdout, live, false),
+    read_live(stderr, live, true),
+  )?;
+  let (stdout, stderr) = std::mem::take(&mut *live.lock().unwrap());
+  Ok(Output {
+    status,
+    stdout,
+    stderr,
+  })
+}
+
+/// Reads the pipe to the end, appending each chunk to `live`.
+async fn read_live(
+  pipe: Option<impl AsyncRead + Unpin>,
+  live: &LiveOutput,
+  stderr: bool,
+) -> io::Result<()> {
+  let Some(mut pipe) = pipe else {
+    return Ok(());
+  };
+  let mut buf = [0u8; 8192];
+  loop {
+    let n = pipe.read(&mut buf).await?;
+    if n == 0 {
+      return Ok(());
+    }
+    let mut live = live.lock().unwrap();
+    let output = if stderr { &mut live.1 } else { &mut live.0 };
+    output.extend_from_slice(&buf[..n]);
+  }
 }
 
 /// Sends `SIGKILL` to the entire process group led by `pid`.
@@ -466,5 +671,71 @@ mod tests {
       pids.is_empty(),
       "backgrounded grandchild survived cancellation: pids={pids:?}"
     );
+  }
+
+  /// The log is sent when the command starts, then while it runs with
+  /// only the sanitized lines written so far, and when it finishes.
+  #[tokio::test]
+  async fn live_log_is_sent_while_running() {
+    let (live_log, mut live_logs) = mpsc::channel(10);
+    let replacers =
+      [(String::from("hunter2"), String::from("SECRET"))];
+    let run = run_komodo_command_with_sanitization(
+      "Test",
+      "echo hunter2; sleep 2; echo done",
+      CommandOptions::default().live_log(live_log),
+      KomodoCommandMode::Shell,
+      &replacers,
+    );
+    tokio::pin!(run);
+    for stdout in ["", "<SECRET>\n"] {
+      let live = tokio::select! {
+        _ = &mut run => panic!("finished too early"),
+        log = live_logs.recv() => log.unwrap(),
+      };
+      assert_eq!(live.stage, "Test");
+      assert_eq!(live.stdout, stdout);
+      assert_eq!(live.end_ts, 0);
+    }
+    let log = run.await.unwrap();
+    assert_eq!(log.stdout, "<SECRET>\ndone\n");
+    let last = live_logs.recv().await.unwrap();
+    assert_eq!((last.stdout, last.end_ts), (log.stdout, log.end_ts));
+  }
+
+  /// A line that is still being written, or that may end in the start
+  /// of a secret, is held back.
+  #[test]
+  fn live_output_holds_back_partial_secrets() {
+    let replacers =
+      [(String::from("hunter2"), String::from("SECRET"))];
+    let output =
+      |raw: &str| sanitize_live_output(raw.as_bytes(), &replacers);
+    assert_eq!(output("one\ntwo"), "one\n");
+    assert_eq!(output("one\nhunter2\nhun"), "one\n<SECRET>\n");
+
+    let replacers =
+      [(String::from("BEGIN\nKEY\nEND"), String::from("KEY"))];
+    let output =
+      |raw: &str| sanitize_live_output(raw.as_bytes(), &replacers);
+    assert_eq!(output("one\nBEGIN\nKEY\n"), "one\n");
+    assert_eq!(output("one\nBEGIN\nKEY\nEND\ntwo\n"), "one\n");
+    assert_eq!(
+      output("one\nBEGIN\nKEY\nEND\ntwo\nthree\n"),
+      "one\n<KEY>\n"
+    );
+
+    // Long output is cut to its last lines.
+    let line = "x".repeat(1000) + "\n";
+    let output =
+      sanitize_live_output(line.repeat(100).as_bytes(), &[]);
+    assert_eq!(output, line.repeat(LIVE_LOG_MAX_LENGTH / line.len()));
+
+    // Nor is the end of a multi-line secret cut off at the start.
+    let filler = "x".repeat(LIVE_LOG_MAX_LENGTH - 14);
+    let raw = format!("BEGIN\nKEY\nEND\n{filler}\na\nb\n");
+    assert_eq!(raw.len() - LIVE_LOG_MAX_LENGTH, 5);
+    let output = sanitize_live_output(raw.as_bytes(), &replacers);
+    assert_eq!(output, filler + "\n");
   }
 }

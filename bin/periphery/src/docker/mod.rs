@@ -1,7 +1,8 @@
 use anyhow::{Context, anyhow};
 use bollard::Docker;
 use command::{
-  CommandOptions, run_komodo_standard_command, run_standard_command,
+  CommandOptions, KomodoCommandMode,
+  run_komodo_command_with_sanitization, run_standard_command,
 };
 use komodo_client::entities::{
   TerminationSignal,
@@ -9,6 +10,7 @@ use komodo_client::entities::{
   update::Log,
 };
 use shell_escape::unix::escape;
+use tokio::sync::mpsc;
 
 pub mod compose;
 pub mod config;
@@ -87,14 +89,25 @@ pub async fn docker_login(
 }
 
 #[instrument("PullImage")]
-pub async fn pull_image(image: &str) -> Log {
+pub async fn pull_image(
+  image: &str,
+  live_log: mpsc::Sender<Log>,
+) -> Log {
   let command = format!("docker pull -- {image}");
-  run_komodo_standard_command(
+  let Some(log) = run_komodo_command_with_sanitization(
     "Docker Pull",
     command,
-    CommandOptions::default(),
+    CommandOptions::default().live_log(live_log),
+    KomodoCommandMode::Standard,
+    &[],
   )
   .await
+  else {
+    // Only reachable if command is empty,
+    // not the case since it is provided above.
+    unreachable!()
+  };
+  log
 }
 
 pub fn stop_container_command(

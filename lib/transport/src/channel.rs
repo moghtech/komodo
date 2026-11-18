@@ -109,6 +109,24 @@ impl Sender<EncodedTransportMessage> {
       .await
   }
 
+  /// Sent while the request is pending, see [encoding::Response::Progress].
+  pub async fn send_progress<'a, T: Serialize + Send>(
+    &self,
+    channel: Uuid,
+    progress: &'a T,
+  ) -> anyhow::Result<()>
+  where
+    &'a T: Send,
+  {
+    let json = JsonMessage(progress).encode()?;
+    self
+      .send_message(ResponseMessage::new(
+        channel,
+        encoding::Response::Progress(json).encode(),
+      ))
+      .await
+  }
+
   pub async fn send_response(
     &self,
     channel: Uuid,

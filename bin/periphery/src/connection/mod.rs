@@ -9,6 +9,7 @@ use periphery_client::transport::{
   EncodedRequestMessage, EncodedTransportMessage, RequestMessage,
   TransportMessage,
 };
+use tokio::sync::mpsc;
 use transport::{
   auth::{
     ConnectionIdentifiers, LoginFlow, LoginFlowArgs,
@@ -159,22 +160,37 @@ fn handle_request(
         }
       };
 
+    let (live_log, mut live_logs) = mpsc::channel(10);
+
     let resolve_response = async {
-      let response =
-        match request.resolve(&Args { core, id: channel }).await {
-          Ok(res) => res,
-          Err(e) => (&e).encode(),
-        };
+      let args = Args {
+        core,
+        id: channel,
+        live_log,
+      };
+      let response = match request.resolve(&args).await {
+        Ok(res) => res,
+        Err(e) => (&e).encode(),
+      };
       if let Err(e) = sender.send_response(channel, response).await {
         error!("Failed to send response over channel | {e:?}");
       }
     };
 
+    // Also sends the logs of running commands.
     let ping_in_progress = async {
       loop {
-        tokio::time::sleep(Duration::from_secs(4)).await;
-        if let Err(e) = sender.send_in_progress(channel).await {
-          error!("Failed to ping in progress over channel | {e:?}");
+        tokio::select! {
+          Some(log) = live_logs.recv() => {
+            if let Err(e) = sender.send_progress(channel, &log).await {
+              error!("Failed to send live log over channel | {e:?}");
+            }
+          }
+          _ = tokio::time::sleep(Duration::from_secs(4)) => {
+            if let Err(e) = sender.send_in_progress(channel).await {
+              error!("Failed to ping in progress over channel | {e:?}");
+            }
+          }
         }
       }
     };

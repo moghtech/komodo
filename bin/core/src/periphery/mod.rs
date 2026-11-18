@@ -1,11 +1,13 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::{Context, anyhow};
-use encoding::Decode as _;
+use encoding::{Decode as _, Response};
+use komodo_client::entities::update::{Log, Update};
 use mogh_resolver::HasResponse;
 use periphery_client::api;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::json;
+use tokio::sync::mpsc;
 use transport::channel::channel;
 use uuid::Uuid;
 
@@ -13,6 +15,7 @@ use crate::{
   connection::{
     PeripheryConnection, PeripheryConnectionArgs, ResponseChannels,
   },
+  helpers::update::update_update_without_send,
   state::periphery_connections,
 };
 
@@ -89,6 +92,64 @@ impl PeripheryClient {
     T: std::fmt::Debug + Serialize + HasResponse,
     T::Response: DeserializeOwned,
   {
+    self.request_inner(request, None).await
+  }
+
+  /// Like [Self::request], and adds the logs of commands
+  /// Periphery sends while they run to the update.
+  pub async fn request_with_live_logs<T>(
+    &self,
+    request: T,
+    update: &Update,
+  ) -> anyhow::Result<T::Response>
+  where
+    T: std::fmt::Debug + Serialize + HasResponse,
+    T::Response: DeserializeOwned,
+  {
+    // Only an Update stored in the database can show them.
+    if update.id.is_empty() {
+      return self.request(request).await;
+    }
+    let (live_log, mut live_logs) = mpsc::channel(10);
+    let res = self.request_inner(request, Some(live_log));
+    tokio::pin!(res);
+    let mut update = update.clone();
+    let prev_len = update.logs.len();
+    loop {
+      tokio::select! {
+        res = &mut res => {
+          // The logs so far may be incomplete. Remove them, as on error
+          // the Update may be finished from the one in the database.
+          if res.is_err() && update.logs.len() > prev_len {
+            update.logs.truncate(prev_len);
+            let _ = update_update_without_send(&update).await;
+          }
+          return res;
+        }
+        Some(log) = live_logs.recv() => {
+          // A command sends its log again as it grows, replace it.
+          match update.logs[prev_len..].iter_mut().find(|prev| {
+            prev.stage == log.stage && prev.start_ts == log.start_ts
+          }) {
+            Some(prev) => *prev = log,
+            None => update.logs.push(log),
+          }
+          // Not sent to clients, the open Update polls while in progress.
+          let _ = update_update_without_send(&update).await;
+        }
+      }
+    }
+  }
+
+  async fn request_inner<T>(
+    &self,
+    request: T,
+    live_log: Option<mpsc::Sender<Log>>,
+  ) -> anyhow::Result<T::Response>
+  where
+    T: std::fmt::Debug + Serialize + HasResponse,
+    T::Response: DeserializeOwned,
+  {
     let connection =
       periphery_connections().get(&self.id).await.with_context(
         || format!("No connection found for server {}", self.id),
@@ -129,12 +190,20 @@ impl PeripheryClient {
           .with_timeout(Duration::from_secs(10))
           .await?;
 
-        let Some(message) = message.decode()? else {
+        match message.decode_response()? {
+          Response::Ok(message) => return message.decode(),
+          Response::Err(e) => return Err(e),
           // Just a ping from periphery request handler
-          continue;
-        };
-
-        return message.decode();
+          Response::Pending => continue,
+          Response::Progress(log) => {
+            if let Some(live_log) = &live_log
+              && let Ok(log) = log.decode()
+            {
+              // Only for display, so dropped when the update is behind.
+              let _ = live_log.try_send(log);
+            }
+          }
+        }
       }
     }
     .await;

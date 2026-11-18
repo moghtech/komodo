@@ -17,7 +17,9 @@ use mogh_resolver::Resolve;
 use periphery_client::api::docker::*;
 
 use crate::{
-  docker::{docker_login, image::get_image_digest_from_registry},
+  docker::{
+    docker_login, image::get_image_digest_from_registry, pull_image,
+  },
   state::docker_client,
 };
 
@@ -129,14 +131,7 @@ impl Resolve<crate::api::Args> for PullImage {
         token.as_deref(),
       )
       .await?;
-      anyhow::Ok(
-        run_komodo_standard_command(
-          "Docker Pull",
-          format!("docker pull -- {name}"),
-          CommandOptions::default(),
-        )
-        .await,
-      )
+      anyhow::Ok(pull_image(&name, args.live_log.clone()).await)
     }
     .await;
 
