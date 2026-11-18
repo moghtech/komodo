@@ -12,7 +12,7 @@ use komodo_client::entities::{
   repo::Repo,
   resource::Resource,
   server::Server,
-  stack::Stack,
+  stack::{PartialStackConfig, Stack, StackFileDependency},
   swarm::Swarm,
   sync::ResourceSync,
   tag::Tag,
@@ -45,7 +45,8 @@ pub trait ToToml: ReplaceIds {
   fn push_additional(
     _resource: ResourceToml<Self::PartialConfig>,
     _toml: &mut String,
-  ) {
+  ) -> anyhow::Result<()> {
+    Ok(())
   }
 
   fn push_to_toml_string(
@@ -80,9 +81,7 @@ pub trait ToToml: ReplaceIds {
         .context("failed to serialize resource config to toml")?,
     );
 
-    Self::push_additional(resource, toml);
-
-    Ok(())
+    Self::push_additional(resource, toml)
   }
 }
 
@@ -178,11 +177,43 @@ impl ToToml for Swarm {
   }
 }
 
+/// Inline tables can't hold multiline strings,
+/// so these are written as an array of tables.
+fn stack_ui_config_files(
+  resource: &ResourceToml<PartialStackConfig>,
+) -> Option<&Vec<StackFileDependency>> {
+  resource
+    .config
+    .config_files
+    .as_ref()
+    .filter(|files| files.iter().any(|f| !f.contents.is_empty()))
+}
+
 impl ToToml for Stack {
+  fn push_additional(
+    resource: ResourceToml<Self::PartialConfig>,
+    toml: &mut String,
+  ) -> anyhow::Result<()> {
+    let Some(files) = stack_ui_config_files(&resource) else {
+      return Ok(());
+    };
+    for file in files {
+      toml.push_str("\n\n[[stack.config.config_files]]\n");
+      toml.push_str(
+        &toml_pretty::to_string(file, TOML_PRETTY_OPTIONS)
+          .context("failed to serialize stack config file to toml")?,
+      );
+    }
+    Ok(())
+  }
+
   fn edit_config_object(
-    _resource: &ResourceToml<Self::PartialConfig>,
-    config: IndexMap<String, serde_json::Value>,
+    resource: &ResourceToml<Self::PartialConfig>,
+    mut config: IndexMap<String, serde_json::Value>,
   ) -> anyhow::Result<IndexMap<String, serde_json::Value>> {
+    if stack_ui_config_files(resource).is_some() {
+      config.shift_remove("config_files");
+    }
     config
       .into_iter()
       .map(|(key, value)| {
@@ -296,7 +327,7 @@ impl ToToml for Builder {
   fn push_additional(
     resource: ResourceToml<Self::PartialConfig>,
     toml: &mut String,
-  ) {
+  ) -> anyhow::Result<()> {
     let empty_params = match resource.config {
       PartialBuilderConfig::Aws(config) => config.is_none(),
       PartialBuilderConfig::Server(config) => config.is_none(),
@@ -307,6 +338,7 @@ impl ToToml for Builder {
       // but in this case its needed to deserialize the enums.
       toml.push_str("\nparams = {}");
     }
+    Ok(())
   }
 
   fn edit_config_object(
@@ -387,5 +419,45 @@ impl ToToml for Procedure {
     }
 
     Ok(())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn stack_ui_config_files_toml_round_trip() {
+    let config_files = vec![StackFileDependency {
+      path: String::from("Caddyfile"),
+      contents: String::from(
+        "example.com {\n  @php path_regexp \\.php$\n  respond \"token = [[TOKEN]]\" 200\n}\n",
+      ),
+      group: String::from("101"),
+      mode: String::from("0640"),
+      ..StackFileDependency::full_redeploy(String::new())
+    }];
+    let resource = ResourceToml {
+      name: String::from("test"),
+      description: String::new(),
+      template: false,
+      tags: Vec::new(),
+      deploy: false,
+      after: Vec::new(),
+      config: PartialStackConfig {
+        file_contents: Some(String::from("services:\n  caddy: {}\n")),
+        config_files: Some(config_files.clone()),
+        ..Default::default()
+      },
+    };
+
+    let toml =
+      resource_toml_to_toml_string::<Stack>(resource).unwrap();
+    let parsed =
+      crate::sync::deserialize_resources_toml(&toml).unwrap();
+    assert_eq!(
+      parsed.stacks[0].config.config_files,
+      Some(config_files)
+    );
   }
 }

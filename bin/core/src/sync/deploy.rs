@@ -570,6 +570,10 @@ fn build_cache_for_stack<'a>(
         // Merge toml resource config (partial) onto default resource config.
         // Makes sure things that aren't defined in toml (come through as None) actually get removed.
         let config: StackConfig = stack.config.clone().into();
+        // UI defined config file contents are only stored in the config.
+        let ui_defined = !config.files_on_host
+          && config.repo.is_empty()
+          && config.linked_repo.is_empty();
         let config: PartialStackConfig = config.into();
 
         let mut diff =
@@ -591,7 +595,8 @@ fn build_cache_for_stack<'a>(
           || diff.repo.is_some()
           || diff.branch.is_some()
           || diff.commit.is_some()
-          || diff.compose_cmd_wrapper.is_some();
+          || diff.compose_cmd_wrapper.is_some()
+          || (ui_defined && diff.config_files.is_some());
         if changed {
           cache.insert(
             target,

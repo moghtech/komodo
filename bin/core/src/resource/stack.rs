@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use database::mungos::mongodb::Collection;
 use formatting::format_serror;
 use indexmap::IndexSet;
@@ -276,7 +276,8 @@ impl super::KomodoResource for Stack {
     config: &mut Self::PartialConfig,
     user: &User,
   ) -> anyhow::Result<()> {
-    validate_config(config, user).await
+    validate_config(config, user).await?;
+    validate_config_files(config, None)
   }
 
   async fn post_create(
@@ -333,11 +334,13 @@ impl super::KomodoResource for Stack {
   }
 
   async fn validate_update_config(
-    _id: &str,
+    id: &str,
     config: &mut Self::PartialConfig,
     user: &User,
   ) -> anyhow::Result<()> {
-    validate_config(config, user).await
+    validate_config(config, user).await?;
+    let stack = super::get::<Stack>(id).await?;
+    validate_config_files(config, Some(&stack.config))
   }
 
   async fn post_update(
@@ -515,6 +518,46 @@ async fn validate_config(
     .context("Cannot attach Repo to this Stack")?;
     // in case it comes in as name
     config.linked_repo = Some(repo.id);
+  }
+  Ok(())
+}
+
+/// Checks config files with contents against the updated fields,
+/// falling back to the current config for fields not being updated.
+fn validate_config_files(
+  config: &PartialStackConfig,
+  current: Option<&StackConfig>,
+) -> anyhow::Result<()> {
+  let compose_file_path = config
+    .file_paths
+    .as_ref()
+    .or(current.map(|c| &c.file_paths))
+    .and_then(|paths| paths.first())
+    .map(String::as_str)
+    .unwrap_or("compose.yaml");
+  let env_file_path = config
+    .env_file_path
+    .as_deref()
+    .or(current.map(|c| c.env_file_path.as_str()))
+    .unwrap_or(".env");
+  let config_files = config
+    .config_files
+    .as_ref()
+    .or(current.map(|c| &c.config_files));
+  for file in config_files.into_iter().flatten() {
+    if file.contents.is_empty() {
+      continue;
+    }
+    if file.path.is_empty() {
+      return Err(anyhow!("Config file path cannot be empty"));
+    }
+    if file.path == compose_file_path || file.path == env_file_path {
+      return Err(anyhow!(
+        "Config file path '{}' conflicts with the compose or env file",
+        file.path
+      ));
+    }
+    file.ownership()?;
   }
   Ok(())
 }

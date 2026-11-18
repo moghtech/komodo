@@ -33,6 +33,11 @@ impl<'a> Interpolator<'a> {
     if stack.config.skip_secret_interp {
       return Ok(self);
     }
+    for file in &mut stack.config.config_files {
+      self
+        .interpolate_string(&mut file.contents)
+        .context("failed interpolation into config file")?;
+    }
     self
       .interpolate_string(&mut stack.config.file_contents)?
       .interpolate_string(&mut stack.config.environment)?

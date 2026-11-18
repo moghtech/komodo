@@ -3223,6 +3223,7 @@ dependencies = [
  "hickory-resolver",
  "interpolate",
  "komodo_client",
+ "libc",
  "mogh_cache",
  "mogh_config",
  "mogh_error",
