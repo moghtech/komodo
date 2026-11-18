@@ -280,7 +280,8 @@ impl Resolve<crate::api::Args> for build::Build {
         &pre_build.command,
         CommandOptions::default()
           .path(pre_build_path.as_path())
-          .cancel(cancel.clone()),
+          .cancel(cancel.clone())
+          .live_log(args.live_log.clone()),
         if pre_build.shell_mode {
           KomodoCommandMode::Shell
         } else {
@@ -381,7 +382,8 @@ impl Resolve<crate::api::Args> for build::Build {
       command,
       CommandOptions::default()
         .path(build_path.as_path())
-        .cancel(cancel),
+        .cancel(cancel)
+        .live_log(args.live_log.clone()),
       KomodoCommandMode::Shell,
       &replacers,
     )

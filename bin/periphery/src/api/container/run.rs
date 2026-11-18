@@ -90,7 +90,7 @@ impl Resolve<crate::api::Args> for RunContainer {
       ));
     }
 
-    let _ = pull_image(image).await;
+    let _ = pull_image(image, args.live_log.clone()).await;
     debug!("image pulled");
 
     // Remove the existing container under the previously deployed name,
@@ -111,7 +111,7 @@ impl Resolve<crate::api::Args> for RunContainer {
     let Some(log) = run_komodo_command_with_sanitization(
       "Docker Run",
       command,
-      CommandOptions::default(),
+      CommandOptions::default().live_log(args.live_log.clone()),
       KomodoCommandMode::Shell,
       &replacers,
     )

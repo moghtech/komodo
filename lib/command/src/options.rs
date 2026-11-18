@@ -1,5 +1,11 @@
-use std::{path::Path, time::Duration};
+use std::{
+  path::Path,
+  sync::{Arc, Mutex},
+  time::Duration,
+};
 
+use komodo_client::entities::update::Log;
+use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 
 /// Controls for how a command is executed.
@@ -25,7 +31,16 @@ pub struct CommandOptions<'a> {
   /// secret into the command, it never appears in the process arguments,
   /// where any user on the host could read it out of `ps`.
   pub stdin: Option<&'a str>,
+  /// Set by the command runners for [Self::live_log].
+  pub(crate) live_output: Option<LiveOutput>,
+  /// Send the sanitized log of the command to this channel when it
+  /// starts, while it runs, and once more when it finishes. Only used by
+  /// [crate::run_komodo_command_with_sanitization].
+  pub live_log: Option<mpsc::Sender<Log>>,
 }
+
+/// Raw (stdout, stderr) of a running command.
+pub(crate) type LiveOutput = Arc<Mutex<(Vec<u8>, Vec<u8>)>>;
 
 impl<'a> CommandOptions<'a> {
   pub fn path(mut self, path: impl Into<Option<&'a Path>>) -> Self {
@@ -53,6 +68,14 @@ impl CommandOptions<'_> {
     cancel: impl Into<Option<CancellationToken>>,
   ) -> Self {
     self.cancel = cancel.into();
+    self
+  }
+
+  pub fn live_log(
+    mut self,
+    live_log: impl Into<Option<mpsc::Sender<Log>>>,
+  ) -> Self {
+    self.live_log = live_log.into();
     self
   }
 }

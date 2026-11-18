@@ -12,6 +12,7 @@ use periphery_client::api::{
 };
 use serde::{Deserialize, Serialize};
 use strum::EnumDiscriminants;
+use tokio::sync::mpsc;
 use uuid::Uuid;
 
 use crate::{config::periphery_config, state::stats_client};
@@ -33,6 +34,9 @@ pub struct Args {
   /// The execution id.
   /// Unique for every /execute call.
   pub id: Uuid,
+  /// Logs of running commands, sent to Core while the request
+  /// is pending. See [command::CommandOptions::live_log].
+  pub live_log: mpsc::Sender<Log>,
 }
 
 #[derive(

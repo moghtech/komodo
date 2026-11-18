@@ -307,7 +307,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
       // RUN BUILD
       let res = tokio::select! {
         res = periphery
-          .request(api::build::Build {
+          .request_with_live_logs(api::build::Build {
             build: build.clone(),
             repo,
             registry_tokens,
@@ -316,7 +316,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
             commit_hash: optional_string(&update.commit_hash),
             // Unused for now
             additional_tags: Default::default(),
-          }) => res.context("Failed at call to Periphery to build"),
+          }, &update) => res.context("Failed at call to Periphery to build"),
         _ = cancel.cancelled() => {
           info!("Build cancelled during build, cleaning up builder");
           if let Err(e) = periphery.request(api::build::CancelBuild {

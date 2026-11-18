@@ -7,9 +7,11 @@ use crate::{CastBytes, Decode, Encode};
 /// Message wrapper to handle Error unwrapping
 /// anywhere in the en/decoding chain.
 /// ```markdown
-/// | -- u8[] -- | ---------- u8 ----------- |
-/// | <CONTENTS> | 0: Ok, 1: Err, 2: Pending |
+/// | -- u8[] -- | ------------------ u8 ------------------ |
+/// | <CONTENTS> | 0: Ok, 1: Err, 2: Pending, 3: Progress |
 /// ```
+/// Progress is sent while the request is pending,
+/// and is decoded as Pending by receivers which don't handle it.
 #[derive(Clone, Debug)]
 pub struct EncodedResponse<T>(T);
 
@@ -19,6 +21,7 @@ pub enum Response<T> {
   Ok(T),
   Err(anyhow::Error),
   Pending,
+  Progress(T),
 }
 
 impl<T> Response<T> {
@@ -32,6 +35,7 @@ impl<T> Response<T> {
       Ok(t) => Ok(map(t)),
       Err(e) => Err(e),
       Pending => Pending,
+      Progress(t) => Progress(map(t)),
     }
   }
 
@@ -49,7 +53,7 @@ impl<T> Response<T> {
     match self.map(Decode::decode) {
       Response::Ok(res) => res.map(Some),
       Response::Err(e) => Err(e),
-      Response::Pending => Ok(None),
+      Response::Pending | Response::Progress(_) => Ok(None),
     }
   }
 }
@@ -70,6 +74,11 @@ impl<T: CastBytes + Send> Encode<EncodedResponse<T>> for Response<T> {
       }
       Pending => {
         vec![2]
+      }
+      Progress(data) => {
+        let mut bytes = data.into_vec();
+        bytes.push(3);
+        bytes
       }
     };
     EncodedResponse(T::from_vec(bytes))
@@ -94,17 +103,25 @@ impl<T: CastBytes> Encode<EncodedResponse<T>> for &anyhow::Error {
 
 impl<T: CastBytes> Decode<Option<T>> for EncodedResponse<T> {
   fn decode(self) -> AnyhowResult<Option<T>> {
+    self.decode_response()?.into()
+  }
+}
+
+impl<T: CastBytes> EncodedResponse<T> {
+  /// Like [Decode::decode], but keeps Pending and Progress apart.
+  pub fn decode_response(self) -> AnyhowResult<Response<T>> {
     let mut bytes = self.0.into_vec();
     let result_byte =
       bytes.pop().context("ResultWrapper bytes cannot be empty")?;
     match result_byte {
-      0 => Ok(Some(T::from_vec(bytes))),
+      0 => Ok(Response::Ok(T::from_vec(bytes))),
       1 => {
         Err(deserialize_error_bytes(&bytes).context(
           "Decoded error message over Core-Periphery communication channel",
         ))
       }
-      _ => Ok(None),
+      3 => Ok(Response::Progress(T::from_vec(bytes))),
+      _ => Ok(Response::Pending),
     }
   }
 }
@@ -123,7 +140,25 @@ impl<T> From<Response<T>> for AnyhowResult<Option<T>> {
     match value {
       Response::Ok(t) => Ok(Some(t)),
       Response::Err(e) => Err(e),
-      Response::Pending => Ok(None),
+      Response::Pending | Response::Progress(_) => Ok(None),
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn progress_is_decoded_as_pending_unless_handled() {
+    let encoded: EncodedResponse<Vec<u8>> =
+      Response::Progress(b"log".to_vec()).encode();
+    assert_eq!(encoded.clone().into_vec(), b"log\x03");
+    assert!(matches!(
+      encoded.clone().decode_response(),
+      Ok(Response::Progress(log)) if log == b"log"
+    ));
+    // Like Pending, which receivers that don't handle Progress expect.
+    assert!(matches!(encoded.decode(), Ok(None)));
   }
 }
