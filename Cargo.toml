@@ -96,6 +96,7 @@ dotenvy = "0.15.7"
 envy = "0.4.2"
 
 # CRYPTO / AUTH
+aes-gcm = { version = "0.10.3", default-features = false, features = ["aes", "alloc"] }
 uuid = { version = "1.25.0", features = ["v4", "fast-rng", "serde"] }
 rustls = { version = "0.23.43", features = ["aws-lc-rs"] }
 data-encoding = "2.11.1"

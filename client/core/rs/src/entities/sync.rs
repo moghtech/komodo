@@ -308,6 +308,14 @@ pub struct ResourceSyncConfig {
   #[builder(default)]
   pub include_variables: bool,
 
+  /// Whether sync should commit secret variables with their encrypted value,
+  /// when Core `variable_encryption_key` is configured.
+  /// Default: true
+  #[serde(default = "default_encrypt_secret_variables")]
+  #[builder(default = "default_encrypt_secret_variables()")]
+  #[partial_default(default_encrypt_secret_variables())]
+  pub encrypt_secret_variables: bool,
+
   /// Whether sync should include user groups.
   #[serde(default)]
   #[builder(default)]
@@ -367,6 +375,10 @@ fn default_include_resources() -> bool {
   true
 }
 
+fn default_encrypt_secret_variables() -> bool {
+  true
+}
+
 fn default_pending_alert() -> bool {
   true
 }
@@ -388,6 +400,7 @@ impl Default for ResourceSyncConfig {
       include_resources: default_include_resources(),
       match_tags: Default::default(),
       include_variables: Default::default(),
+      encrypt_secret_variables: default_encrypt_secret_variables(),
       include_user_groups: Default::default(),
       delete: Default::default(),
       webhook_enabled: default_webhook_enabled(),

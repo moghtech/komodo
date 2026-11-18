@@ -155,7 +155,18 @@ pub fn convert_resource<R: KomodoResource>(
 impl ToToml for Server {}
 impl ToToml for Action {}
 impl ToToml for Alerter {}
-impl ToToml for ResourceSync {}
+impl ToToml for ResourceSync {
+  fn edit_config_object(
+    resource: &ResourceToml<Self::PartialConfig>,
+    mut config: IndexMap<String, serde_json::Value>,
+  ) -> anyhow::Result<IndexMap<String, serde_json::Value>> {
+    // Only relevant when the sync includes variables.
+    if resource.config.include_variables != Some(true) {
+      config.shift_remove("encrypt_secret_variables");
+    }
+    Ok(config)
+  }
+}
 
 impl ToToml for Swarm {
   fn edit_config_object(

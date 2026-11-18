@@ -198,6 +198,11 @@ pub fn core_config() -> &'static CoreConfig {
           .komodo_database_db_name
           .unwrap_or(config.database.db_name),
       },
+      variable_encryption_key: maybe_read_item_from_file(
+        env.komodo_variable_encryption_key_file,
+        env.komodo_variable_encryption_key,
+      )
+      .unwrap_or(config.variable_encryption_key),
       init_admin_username: maybe_read_item_from_file(
         env.komodo_init_admin_username_file,
         env.komodo_init_admin_username,

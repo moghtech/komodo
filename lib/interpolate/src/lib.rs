@@ -6,6 +6,14 @@ use komodo_client::entities::{
   stack::Stack, update::Log,
 };
 
+const UNAVAILABLE_SECRET: &str = "\0komodo-unavailable-secret\0";
+
+/// Placeholder value for a secret which failed to load (eg. can't be decrypted).
+/// Interpolating it fails with the given reason, other secrets are unaffected.
+pub fn unavailable_secret(reason: &str) -> String {
+  format!("{UNAVAILABLE_SECRET}{reason}")
+}
+
 pub struct Interpolator<'a> {
   variables: Option<&'a HashMap<String, String>>,
   secrets: &'a HashMap<String, String>,
@@ -125,6 +133,13 @@ impl<'a> Interpolator<'a> {
     .with_context(|| {
       format!("failed to interpolate secrets into target '{target}'",)
     })?;
+    if let Some((name, reason)) =
+      more_replacers.iter().find_map(|(value, name)| {
+        Some((name, value.strip_prefix(UNAVAILABLE_SECRET)?))
+      })
+    {
+      anyhow::bail!("Secret '{name}' is unavailable | {reason}");
+    }
     self.secret_replacers.extend(more_replacers);
 
     // Set with result
@@ -176,6 +191,40 @@ impl<'a> Interpolator<'a> {
           .map(|(_, variable)| format!("<span class=\"text-muted-foreground\">replaced:</span> {variable}"))
           .collect::<Vec<_>>()
           .join("\n"),)
+      );
+    }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn only_referenced_unavailable_secrets_fail() {
+    let secrets = HashMap::from([
+      (String::from("OK"), String::from("value")),
+      (String::from("BAD"), unavailable_secret("no key configured")),
+    ]);
+    let variables = HashMap::from([(
+      String::from("NESTED"),
+      String::from("[[BAD]]"),
+    )]);
+    let mut interpolator =
+      Interpolator::new(Some(&variables), &secrets);
+
+    let mut target = String::from("a=[[OK]]");
+    interpolator.interpolate_string(&mut target).unwrap();
+    assert_eq!(target, "a=value");
+
+    for input in ["b=[[BAD]]", "c=[[NESTED]]"] {
+      let err = interpolator
+        .interpolate_string(&mut input.to_string())
+        .map(|_| ())
+        .unwrap_err()
+        .to_string();
+      assert!(
+        err.contains("'BAD'") && err.contains("no key configured")
       );
     }
   }

@@ -22,6 +22,11 @@ SOME_ENV_VAR = value_1
 
 - **In the UI**, you can go to `Settings` page, `Variables` tab. Here, you can create some Variables to store in the Komodo database.
   - There is a "secret" option you can check, this will **prevent the value from exposure in any updates / logs**, as well as prevent access to the value to any **non-admin** Komodo users.
+  - Optionally, secret values can be **encrypted at rest** in the database by setting `variable_encryption_key` (env: `KOMODO_VARIABLE_ENCRYPTION_KEY` or `KOMODO_VARIABLE_ENCRYPTION_KEY_FILE`) in the Core config to a base64 encoded 32 byte key (`openssl rand -base64 32`).
+    Values are encrypted with AES-256-GCM. Existing plain text secrets are encrypted on Core startup, and values are decrypted for interpolation and admin reads. Updates log the encrypted value.
+    **Keep a copy of the key**: without it, encrypted secrets (including those in database backups) can't be recovered, and interpolating them will fail.
+    TOML exports and ResourceSync commits write secret values encrypted, unless "Encrypt secret Variables" (`encrypt_secret_variables`) is disabled. Encrypted values can only be used by a Core with the same key.
+    ResourceSyncs accept both encrypted and plain text values, and compare them decrypted. Managed ResourceSyncs also show a pending change when a value isn't in the form a commit would write.
   - Variables can also be managed in ResourceSyncs (see [example](/docs/automate/sync-resources#deployments)) but should only be done for non-secret variables, to avoid committing sensitive data. You should manage secrets using one of the following options.
 
 - **Mount a config file to Core**: [Advanced Configuration](/docs/setup/advanced#mount-a-config-file)

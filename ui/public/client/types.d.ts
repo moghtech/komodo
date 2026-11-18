@@ -1389,8 +1389,9 @@ export interface Variable {
      * If marked as secret, the variable value will be hidden in updates / logs.
      * Additionally the value will not be served in read requests by non admin users.
      *
-     * Note that the value is NOT encrypted in the database, and will likely show up in database logs.
-     * The security of these variables comes down to the security
+     * Note that the value is only encrypted in the database if Core `variable_encryption_key` is configured.
+     * Otherwise it is stored in plain text, and will likely show up in database logs.
+     * The security of these variables then comes down to the security
      * of the database (system level encryption, network isolation, etc.)
      */
     is_secret?: boolean;
@@ -2373,6 +2374,12 @@ export interface ResourceSyncConfig {
     match_tags?: string[];
     /** Whether sync should include variables. */
     include_variables?: boolean;
+    /**
+     * Whether sync should commit secret variables with their encrypted value,
+     * when Core `variable_encryption_key` is configured.
+     * Default: true
+     */
+    encrypt_secret_variables: boolean;
     /** Whether sync should include user groups. */
     include_user_groups?: boolean;
     /**
@@ -7558,6 +7565,12 @@ export interface ExportAllResourcesToToml {
      */
     include_variables?: boolean;
     /**
+     * Whether to export secret Variables with their encrypted value,
+     * when Core `variable_encryption_key` is configured.
+     * Default: `true`
+     */
+    encrypt_secret_variables: boolean;
+    /**
      * Whether to include user groups in the exported contents.
      * Default: false
      */
@@ -7579,6 +7592,12 @@ export interface ExportResourcesToToml {
     user_groups?: string[];
     /** Whether to include variables */
     include_variables?: boolean;
+    /**
+     * Whether to export secret Variables with their encrypted value,
+     * when Core `variable_encryption_key` is configured.
+     * Default: `true`
+     */
+    encrypt_secret_variables: boolean;
     /**
      * Pass an existing [ResourcesToml] to preserve
      * the meta configuration.
@@ -7823,6 +7842,8 @@ export interface GetCoreInfoResponse {
     public_key: string;
     /** Default pagination limit for the UI to use. */
     default_pagination_limit: U64;
+    /** Whether secret Variables are encrypted in the database. */
+    variable_encryption_enabled: boolean;
 }
 /** Get a specific deployment by name or id. Response: [Deployment]. */
 export interface GetDeployment {

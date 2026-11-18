@@ -479,6 +479,14 @@ database.db_name = "komodo"
 ## Default: komodo_core.
 database.app_name = "komodo_core"
 
+## Optional key used to encrypt secret Variable values at rest in the database.
+## Must be 32 bytes, base64 encoded. Generate with `openssl rand -base64 32`.
+## When set, plain text secret Variables are encrypted on startup.
+## Keep a copy: secret Variables (and database backups) can't be decrypted without it.
+## Env: KOMODO_VARIABLE_ENCRYPTION_KEY or KOMODO_VARIABLE_ENCRYPTION_KEY_FILE
+## Default: empty (secret Variables are stored in plain text)
+variable_encryption_key = ""
+
 ############
 # WEBHOOKS #
 ############

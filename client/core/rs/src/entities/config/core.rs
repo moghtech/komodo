@@ -253,6 +253,10 @@ pub struct Env {
   /// Override `database.db_name`
   #[serde(alias = "komodo_mongo_db_name")]
   pub komodo_database_db_name: Option<String>,
+  /// Override `variable_encryption_key`
+  pub komodo_variable_encryption_key: Option<String>,
+  /// Override `variable_encryption_key` from file
+  pub komodo_variable_encryption_key_file: Option<PathBuf>,
 
   /// Override `aws.access_key_id`
   pub komodo_aws_access_key_id: Option<String>,
@@ -449,6 +453,13 @@ pub struct CoreConfig {
   /// Configure database connection
   #[serde(default, alias = "mongo")]
   pub database: DatabaseConfig,
+
+  /// Optionally provide a base64 encoded 32 byte key to encrypt
+  /// secret Variable values in the database.
+  /// Generate with `openssl rand -base64 32`.
+  /// Default: "" (empty string)
+  #[serde(default)]
+  pub variable_encryption_key: String,
 
   // ================
   // = Auth / Login =
@@ -949,6 +960,7 @@ impl Default for CoreConfig {
       first_server_address: Default::default(),
       first_server_name: Default::default(),
       database: Default::default(),
+      variable_encryption_key: Default::default(),
       local_auth: Default::default(),
       min_password_length: default_min_password_length(),
       init_admin_username: Default::default(),
@@ -1108,6 +1120,9 @@ impl CoreConfig {
       webhook_secret: empty_or_redacted(&config.webhook_secret),
       webhook_base_url: config.webhook_base_url,
       database: config.database.sanitized(),
+      variable_encryption_key: empty_or_redacted(
+        &config.variable_encryption_key,
+      ),
       aws: AwsCredentials {
         access_key_id: empty_or_redacted(&config.aws.access_key_id),
         secret_access_key: empty_or_redacted(

@@ -6,7 +6,12 @@ use database::mungos::{
 use komodo_client::api::read::*;
 use mogh_resolver::Resolve;
 
-use crate::{helpers::query::get_variable, state::db_client};
+use crate::{
+  helpers::{
+    encryption::decrypt_variable_or_stored, query::get_variable,
+  },
+  state::db_client,
+};
 
 use super::ReadArgs;
 
@@ -15,7 +20,8 @@ impl Resolve<ReadArgs> for GetVariable {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> mogh_error::Result<GetVariableResponse> {
-    let mut variable = get_variable(&self.name).await?;
+    let mut variable =
+      decrypt_variable_or_stored(get_variable(&self.name).await?);
     if !variable.is_secret || user.admin {
       return Ok(variable);
     }
@@ -35,7 +41,10 @@ impl Resolve<ReadArgs> for ListVariables {
       FindOptions::builder().sort(doc! { "name": 1 }).build(),
     )
     .await
-    .context("failed to query db for variables")?;
+    .context("failed to query db for variables")?
+    .into_iter()
+    .map(decrypt_variable_or_stored)
+    .collect::<Vec<_>>();
     if user.admin {
       return Ok(variables);
     }

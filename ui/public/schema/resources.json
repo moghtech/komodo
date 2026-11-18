@@ -6171,6 +6171,13 @@
             "null"
           ]
         },
+        "encrypt_secret_variables": {
+          "description": "Whether sync should commit secret variables with their encrypted value,\nwhen Core `variable_encryption_key` is configured.\nDefault: true",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "include_user_groups": {
           "description": "Whether sync should include user groups.",
           "type": [
@@ -6396,7 +6403,7 @@
           "default": ""
         },
         "is_secret": {
-          "description": "If marked as secret, the variable value will be hidden in updates / logs.\nAdditionally the value will not be served in read requests by non admin users.\n\nNote that the value is NOT encrypted in the database, and will likely show up in database logs.\nThe security of these variables comes down to the security\nof the database (system level encryption, network isolation, etc.)",
+          "description": "If marked as secret, the variable value will be hidden in updates / logs.\nAdditionally the value will not be served in read requests by non admin users.\n\nNote that the value is only encrypted in the database if Core `variable_encryption_key` is configured.\nOtherwise it is stored in plain text, and will likely show up in database logs.\nThe security of these variables then comes down to the security\nof the database (system level encryption, network isolation, etc.)",
           "type": "boolean",
           "default": false
         }

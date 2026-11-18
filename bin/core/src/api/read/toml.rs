@@ -21,8 +21,9 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 
 use crate::{
-  helpers::query::{
-    get_all_tags, get_id_to_tags, get_user_user_group_ids,
+  helpers::{
+    encryption::decrypt_variable_or_stored,
+    query::{get_all_tags, get_id_to_tags, get_user_user_group_ids},
   },
   permission::get_check_permissions,
   resource,
@@ -116,6 +117,7 @@ impl Resolve<ReadArgs> for ExportAllResourcesToToml {
       targets,
       user_groups,
       include_variables: self.include_variables,
+      encrypt_secret_variables: self.encrypt_secret_variables,
       existing: self.existing,
     }
     .resolve(args)
@@ -132,6 +134,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
       targets,
       user_groups,
       include_variables,
+      encrypt_secret_variables,
       existing,
     } = self;
     let mut res = ResourcesToml::default();
@@ -229,7 +232,12 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
       .await
       .context("failed to get variables from db")?
       .into_iter()
-      .map(|mut variable| {
+      .map(|variable| {
+        let mut variable = if encrypt_secret_variables {
+          variable
+        } else {
+          decrypt_variable_or_stored(variable)
+        };
         if !user.admin && variable.is_secret {
           variable.value = "#".repeat(variable.value.len())
         }

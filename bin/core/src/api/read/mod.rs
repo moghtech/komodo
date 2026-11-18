@@ -32,7 +32,7 @@ use uuid::Uuid;
 use crate::{
   auth::KomodoAuthImpl,
   config::{core_config, core_keys},
-  helpers::periphery_client,
+  helpers::{encryption::ENCRYPTION_KEY, periphery_client},
   resource,
 };
 
@@ -378,6 +378,7 @@ impl Resolve<ReadArgs> for GetCoreInfo {
       timezone: config.timezone.clone(),
       default_pagination_limit: config.default_pagination_limit,
       public_key: core_keys().load().public.to_string(),
+      variable_encryption_enabled: ENCRYPTION_KEY.is_some(),
     };
     Ok(info)
   }

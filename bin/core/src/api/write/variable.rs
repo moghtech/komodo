@@ -10,6 +10,9 @@ use reqwest::StatusCode;
 
 use crate::{
   helpers::{
+    encryption::{
+      decrypt_variable, decrypt_variable_or_stored, encrypt_value,
+    },
     query::get_variable,
     update::{add_update, make_update},
     validations::{validate_variable_name, validate_variable_value},
@@ -55,7 +58,7 @@ impl Resolve<WriteArgs> for CreateVariable {
 
     let variable = Variable {
       name,
-      value,
+      value: encrypt_value(is_secret, value)?,
       description,
       is_secret,
     };
@@ -79,7 +82,9 @@ impl Resolve<WriteArgs> for CreateVariable {
 
     add_update(update).await?;
 
-    Ok(get_variable(&variable.name).await?)
+    Ok(decrypt_variable_or_stored(
+      get_variable(&variable.name).await?,
+    ))
   }
 }
 
@@ -110,11 +115,14 @@ impl Resolve<WriteArgs> for UpdateVariableValue {
     validate_variable_value(&value)
       .status_code(StatusCode::BAD_REQUEST)?;
 
-    let variable = get_variable(&name).await?;
+    let variable =
+      decrypt_variable_or_stored(get_variable(&name).await?);
 
     if value == variable.value {
       return Ok(variable);
     }
+
+    let value = encrypt_value(variable.is_secret, value)?;
 
     db_client()
       .variables
@@ -148,7 +156,7 @@ impl Resolve<WriteArgs> for UpdateVariableValue {
 
     add_update(update).await?;
 
-    Ok(get_variable(&name).await?)
+    Ok(decrypt_variable_or_stored(get_variable(&name).await?))
   }
 }
 
@@ -182,7 +190,7 @@ impl Resolve<WriteArgs> for UpdateVariableDescription {
       .await
       .context("Failed to update variable description on db")?;
 
-    Ok(get_variable(&self.name).await?)
+    Ok(decrypt_variable_or_stored(get_variable(&self.name).await?))
   }
 }
 
@@ -207,16 +215,24 @@ impl Resolve<WriteArgs> for UpdateVariableIsSecret {
       );
     }
 
+    let variable = get_variable(&self.name).await?;
+    let mut set = doc! { "is_secret": self.is_secret };
+    if variable.is_secret != self.is_secret {
+      // Decrypt when becoming non secret, encrypt when becoming secret.
+      let value = encrypt_value(
+        self.is_secret,
+        decrypt_variable(variable)?.value,
+      )?;
+      set.insert("value", value);
+    }
+
     db_client()
       .variables
-      .update_one(
-        doc! { "name": &self.name },
-        doc! { "$set": { "is_secret": self.is_secret } },
-      )
+      .update_one(doc! { "name": &self.name }, doc! { "$set": set })
       .await
       .context("Failed to update Variable 'is_secret' on db")?;
 
-    Ok(get_variable(&self.name).await?)
+    Ok(decrypt_variable_or_stored(get_variable(&self.name).await?))
   }
 }
 
@@ -260,6 +276,6 @@ impl Resolve<WriteArgs> for DeleteVariable {
 
     add_update(update).await?;
 
-    Ok(variable)
+    Ok(decrypt_variable_or_stored(variable))
   }
 }

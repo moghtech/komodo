@@ -50,6 +50,11 @@ pub struct ExportAllResourcesToToml {
   /// Default: false
   #[serde(default)]
   pub include_variables: bool,
+  /// Whether to export secret Variables with their encrypted value,
+  /// when Core `variable_encryption_key` is configured.
+  /// Default: `true`
+  #[serde(default = "default_encrypt_secret_variables")]
+  pub encrypt_secret_variables: bool,
   /// Whether to include user groups in the exported contents.
   /// Default: false
   #[serde(default)]
@@ -60,6 +65,10 @@ pub struct ExportAllResourcesToToml {
 }
 
 fn default_include_resources() -> bool {
+  true
+}
+
+fn default_encrypt_secret_variables() -> bool {
   true
 }
 
@@ -98,6 +107,11 @@ pub struct ExportResourcesToToml {
   /// Whether to include variables
   #[serde(default)]
   pub include_variables: bool,
+  /// Whether to export secret Variables with their encrypted value,
+  /// when Core `variable_encryption_key` is configured.
+  /// Default: `true`
+  #[serde(default = "default_encrypt_secret_variables")]
+  pub encrypt_secret_variables: bool,
   /// Pass an existing [ResourcesToml] to preserve
   /// the meta configuration.
   pub existing: Option<ResourcesToml>,

@@ -43,7 +43,10 @@ use crate::{
   },
   auth::KomodoAuthImpl,
   config::core_config,
-  helpers::update::init_execution_update,
+  helpers::{
+    encryption::{decrypt_variable, encrypt_value},
+    update::init_execution_update,
+  },
   network, resource,
   state::db_client,
 };
@@ -117,12 +120,65 @@ pub async fn on_startup() {
 
   // Standard startup tasks
   tokio::join!(
+    encrypt_secret_variables(),
     in_progress_update_cleanup(),
     open_alert_cleanup(),
     action_api_key_cleanup(),
     ensure_first_server_and_builder(),
     ensure_init_user_and_resources(),
   );
+}
+
+/// Encrypts plain text secret Variables if `variable_encryption_key` is set.
+async fn encrypt_secret_variables() {
+  let variables = match find_collect(
+    &db_client().variables,
+    doc! { "is_secret": true },
+    None,
+  )
+  .await
+  {
+    Ok(variables) => variables,
+    Err(e) => {
+      error!("Failed to query secret Variables | {e:#}");
+      return;
+    }
+  };
+  let mut encrypted = 0;
+  for variable in variables {
+    if let Err(e) = decrypt_variable(variable.clone()) {
+      warn!("{e:#} | It will fail to interpolate");
+      continue;
+    }
+    let value = match encrypt_value(true, variable.value.clone()) {
+      Ok(value) if value != variable.value => value,
+      Ok(_) => continue,
+      Err(e) => {
+        error!(
+          "Failed to encrypt secret Variable '{}' | {e:#}",
+          variable.name
+        );
+        continue;
+      }
+    };
+    match db_client()
+      .variables
+      .update_one(
+        doc! { "name": &variable.name },
+        doc! { "$set": { "value": value } },
+      )
+      .await
+    {
+      Ok(_) => encrypted += 1,
+      Err(e) => error!(
+        "Failed to store encrypted secret Variable '{}' | {e:#}",
+        variable.name
+      ),
+    }
+  }
+  if encrypted > 0 {
+    info!("Encrypted {encrypted} plain text secret Variables");
+  }
 }
 
 async fn in_progress_update_cleanup() {
