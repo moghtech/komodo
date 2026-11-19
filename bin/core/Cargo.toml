@@ -51,7 +51,7 @@ futures-util.workspace = true
 aws-sdk-ec2.workspace = true
 urlencoding.workspace = true
 aws-config.workspace = true
-tokio-util.workspace = true
+tokio-util = { workspace = true, features = ["rt"] }
 axum-extra.workspace = true
 serde_json.workspace = true
 typeshare.workspace = true

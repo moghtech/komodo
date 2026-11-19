@@ -21,7 +21,8 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use tokio::sync::Mutex;
-use tokio_util::sync::CancellationToken;
+use tokio_util::{sync::CancellationToken, task::AbortOnDropHandle};
+use tracing::Instrument as _;
 
 use crate::{
   alert::send_alerts,
@@ -80,9 +81,16 @@ impl Resolve<ExecuteArgs> for RunProcedure {
       task_id,
     }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
-    Ok(
+    // Poll each Procedure in its own task so nested Procedures do not
+    // grow the parent's worker stack. The caller still waits for completion.
+    let task = tokio::spawn(
       resolve_inner(self.procedure, user.clone(), update.clone())
-        .await?,
+        .in_current_span(),
+    );
+    Ok(
+      AbortOnDropHandle::new(task)
+        .await
+        .context("Procedure task failed")??,
     )
   }
 }
