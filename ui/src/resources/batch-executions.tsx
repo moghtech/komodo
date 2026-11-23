@@ -219,7 +219,9 @@ function BatchExecutionsModal({
                   write({ id: resource } as any);
                 } else if (
                   execution.startsWith("Refresh") ||
-                  execution.startsWith("Check")
+                  execution.startsWith("Check") ||
+                  // CommitSync is a write request, not an execution
+                  execution === "CommitSync"
                 ) {
                   write({ [usableResourceExecuteKey(type)]: resource } as any);
                 } else {
