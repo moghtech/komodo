@@ -193,7 +193,8 @@ pub enum ListPermits {
 pub struct FineListPermits {
   required: PermissionLevelAndSpecifics,
   base: PermissionLevelAndSpecifics,
-  permission_by_resource_id: HashMap<String, Permission>,
+  permission_by_resource_id:
+    HashMap<String, PermissionLevelAndSpecifics>,
   additional_specific_cache:
     HashMap<ResourceTarget, IndexSet<SpecificPermission>>,
   user: User,
@@ -257,15 +258,8 @@ pub async fn load_list_permits<T: KomodoResource>(
   .await
   .context("failed to query permissions on db")?;
 
-  let permission_by_resource_id = permissions
-    .into_iter()
-    .map(|perm| {
-      (
-        perm.resource_target.extract_variant_id().1.to_string(),
-        perm,
-      )
-    })
-    .collect::<HashMap<_, _>>();
+  let permission_by_resource_id =
+    permission_by_resource_id(permissions);
 
   Ok(ListPermits::Fine(
     FineListPermits {
@@ -277,6 +271,23 @@ pub async fn load_list_permits<T: KomodoResource>(
     }
     .into(),
   ))
+}
+
+/// Merges the user's own row and every group row on a resource
+/// into one: the highest level and the union of specifics,
+/// matching [get_user_permission_on_resource].
+fn permission_by_resource_id(
+  permissions: Vec<Permission>,
+) -> HashMap<String, PermissionLevelAndSpecifics> {
+  let mut merged =
+    HashMap::<String, PermissionLevelAndSpecifics>::new();
+  for perm in permissions {
+    merged
+      .entry(perm.resource_target.extract_variant_id().1.to_string())
+      .or_default()
+      .elevate(&perm);
+  }
+  merged
 }
 
 impl ListPermits {
@@ -749,4 +760,113 @@ pub async fn check_user_target_access(
     }
   }
   Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use komodo_client::entities::{
+    permission::UserTarget, server::ServerConfig,
+  };
+
+  use super::*;
+
+  fn row(
+    user_target: UserTarget,
+    server_id: &str,
+    level: PermissionLevel,
+  ) -> Permission {
+    Permission {
+      id: String::new(),
+      user_target,
+      resource_target: ResourceTarget::Server(server_id.into()),
+      level,
+      specific: IndexSet::new(),
+    }
+  }
+
+  fn server(id: &str) -> Server {
+    Server {
+      id: id.into(),
+      name: id.into(),
+      description: String::new(),
+      template: false,
+      tags: Vec::new(),
+      info: Default::default(),
+      config: ServerConfig::default(),
+      base_permission: PermissionLevel::None.into(),
+      updated_at: 0,
+    }
+  }
+
+  fn permits(rows: Vec<Permission>) -> ListPermits {
+    ListPermits::Fine(Box::new(FineListPermits {
+      required: PermissionLevel::Read.into(),
+      base: PermissionLevel::None.into(),
+      permission_by_resource_id: permission_by_resource_id(rows),
+      additional_specific_cache: Default::default(),
+      user: User::default(),
+    }))
+  }
+
+  /// A direct `None` and a group `Read` on the same server.
+  /// [get_user_permission_on_resource] takes the highest level
+  /// across every row, so GetServer allows Read. The list path
+  /// must agree, whichever row mongo returns last.
+  #[tokio::test]
+  async fn list_merges_direct_and_group_rows_like_get() {
+    let direct = row(
+      UserTarget::User("user".into()),
+      "srv",
+      PermissionLevel::None,
+    );
+    let group = row(
+      UserTarget::UserGroup("group".into()),
+      "srv",
+      PermissionLevel::Read,
+    );
+    for rows in
+      [vec![direct.clone(), group.clone()], vec![group, direct]]
+    {
+      let mut permits = permits(rows);
+      assert!(
+        permits.permitted::<Server>(&server("srv")).await.unwrap(),
+        "list hid a server the get path allows"
+      );
+    }
+  }
+
+  /// Specifics from a direct row and a group row add up, as
+  /// they do in [get_user_permission_on_resource].
+  #[tokio::test]
+  async fn list_unions_specifics_across_rows() {
+    let mut direct = row(
+      UserTarget::User("user".into()),
+      "srv",
+      PermissionLevel::Read,
+    );
+    direct.specific.insert(SpecificPermission::Logs);
+    let mut group = row(
+      UserTarget::UserGroup("group".into()),
+      "srv",
+      PermissionLevel::Read,
+    );
+    group.specific.insert(SpecificPermission::Inspect);
+    let required = PermissionLevel::Read.specifics(
+      [SpecificPermission::Logs, SpecificPermission::Inspect]
+        .into_iter()
+        .collect(),
+    );
+    for rows in
+      [vec![direct.clone(), group.clone()], vec![group, direct]]
+    {
+      let mut permits = permits(rows);
+      if let ListPermits::Fine(fine) = &mut permits {
+        fine.required = required.clone();
+      }
+      assert!(
+        permits.permitted::<Server>(&server("srv")).await.unwrap(),
+        "list dropped a specific the get path grants"
+      );
+    }
+  }
 }
