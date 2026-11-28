@@ -1,16 +1,17 @@
-import { UsableResource } from ".";
+import { ResourceComponents, UsableResource } from ".";
 import {
   EntityHeader,
   EntityHeaderProps,
   EntityPage,
   EntityPageProps,
+  PageBreadcrumbs,
 } from "mogh_ui";
 import { ReactNode } from "react";
 import { Group, Stack, Text } from "@mantine/core";
 import { DividedChildren } from "mogh_ui";
 import ResourceLink from "./link";
 import ResourceDescription from "./description";
-import { usableResourcePath } from "@/lib/utils";
+import { resourceTypeCrumb, usableResourcePath } from "@/lib/utils";
 import ResourceUpdates from "@/components/updates/resource";
 import { usePermissions } from "@/lib/hooks";
 import { Section } from "mogh_ui";
@@ -37,6 +38,7 @@ export default function ResourceSubPage({
   ...headerProps
 }: ResourceSubPageProps) {
   const { canExecute } = usePermissions({ type: parentType, id: parentId });
+  const parent = ResourceComponents[parentType].useListItem(parentId);
   const Header = (
     <Stack justify="space-between">
       <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
@@ -55,6 +57,20 @@ export default function ResourceSubPage({
       {...pageProps}
       backTo={
         pageProps?.backTo ?? `/${usableResourcePath(parentType)}/${parentId}`
+      }
+      breadcrumbs={
+        pageProps?.breadcrumbs ?? (
+          <PageBreadcrumbs
+            items={[
+              resourceTypeCrumb(parentType),
+              {
+                label: parent?.name ?? "Unknown",
+                to: `/${usableResourcePath(parentType)}/${parentId}`,
+              },
+              { label: headerProps.name },
+            ]}
+          />
+        )
       }
     >
       <Stack hiddenFrom="lg" w="100%">

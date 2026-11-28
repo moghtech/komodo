@@ -109,14 +109,19 @@ pub async fn on_startup() {
   // Configure manual network interface if specified
   network::configure_internet_gateway().await;
 
+  // Run legacy database fixes
+  tokio::join!(
+    clean_up_server_templates(),
+    v2_init_missing_resource_info(),
+  );
+
+  // Standard startup tasks
   tokio::join!(
     in_progress_update_cleanup(),
     open_alert_cleanup(),
     action_api_key_cleanup(),
     ensure_first_server_and_builder(),
     ensure_init_user_and_resources(),
-    clean_up_server_templates(),
-    v2_init_missing_resource_info(),
   );
 }
 

@@ -145,16 +145,18 @@ impl super::KomodoResource for Stack {
       })
       .unwrap_or_default();
 
-    let default_git = (
-      stack.config.git_provider,
-      stack.config.repo,
-      stack.config.branch,
-      stack.config.git_https,
-      String::new(),
-    );
+    let default_git = || {
+      (
+        stack.config.git_provider,
+        stack.config.repo,
+        stack.config.branch,
+        stack.config.git_https,
+        String::new(),
+      )
+    };
     let (git_provider, repo, branch, git_https, linked_repo_name) =
       if stack.config.linked_repo.is_empty() {
-        default_git
+        default_git()
       } else {
         all_resources_cache()
           .load()
@@ -169,7 +171,7 @@ impl super::KomodoResource for Stack {
               r.name.clone(),
             )
           })
-          .unwrap_or(default_git)
+          .unwrap_or_else(default_git)
       };
 
     // This is only true if it is KNOWN to be true. so other cases are false.

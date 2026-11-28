@@ -1,7 +1,7 @@
 [package]
 name = "komodo_client"
 description = "Client for the Komodo build and deployment system"
-version.workspace = true
+version = "2.3.3"
 edition.workspace = true
 license.workspace = true
 homepage.workspace = true

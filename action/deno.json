@@ -1,5 +1,1 @@
-{
-  "imports": {
-    "@std/toml": "jsr:@std/toml"
-  }
-}
+{}

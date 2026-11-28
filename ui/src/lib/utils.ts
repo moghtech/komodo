@@ -3,6 +3,7 @@ import { Types } from "komodo_client";
 import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
 import { RowSelectionState } from "@tanstack/react-table";
+import { Crumb } from "mogh_ui";
 
 export const EXECUTION_ACTION_STATE_REQUERY_MS = 500;
 
@@ -319,4 +320,10 @@ export function parseVersion(version: string): Types.Version {
     minor,
     patch,
   };
+}
+
+/** Crumb linking to the list page for a resource type, eg. `Servers` -> /servers */
+export function resourceTypeCrumb(type: UsableResource): Crumb {
+  const name = type === "ResourceSync" ? "Resource Sync" : type;
+  return { label: `${name}s`, to: `/${usableResourcePath(type)}` };
 }

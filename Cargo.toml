@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "2.3.2"
+version = "0.0.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/moghtech/komodo"
@@ -41,7 +41,7 @@ mogh_rate_limit = "1.0.1"
 partial_derive2 = "0.5.0"
 mongo_indexed = "2.1.0"
 mogh_resolver = "1.0.0"
-mogh_config = "1.1.0"
+mogh_config = "1.4.2"
 mogh_logger = "1.3.4"
 mogh_server = "1.5.0"
 toml_pretty = "2.0.0"
@@ -96,7 +96,7 @@ dotenvy = "0.15.7"
 envy = "0.4.2"
 
 # CRYPTO / AUTH
-uuid = { version = "1.24.0", features = ["v4", "fast-rng", "serde"] }
+uuid = { version = "1.25.0", features = ["v4", "fast-rng", "serde"] }
 rustls = { version = "0.23.43", features = ["aws-lc-rs"] }
 data-encoding = "2.11.1"
 urlencoding = "2.1.3"
@@ -112,20 +112,20 @@ hickory-resolver = "0.26.1"
 portable-pty = "0.9.0"
 shell-escape = "0.1.5"
 crossterm = "0.29.0"
-bollard = "0.21.0"
+bollard = "0.21.1"
 sysinfo = "0.39.6"
 shlex = "2.0.1"
 
 # CLOUD
-aws-config = "1.10.1"
-aws-sdk-ec2 = "1.246.0"
+aws-config = "1.11.0"
+aws-sdk-ec2 = "1.252.0"
 aws-credential-types = "1.3.0"
 
 ## CRON
 english-to-cron = "0.1.7"
 chrono-tz = "0.10.4"
 chrono = "0.4.45"
-croner = "3.0.1"
+croner = "4.0.0"
 
 # MISC
 async-compression = { version = "0.4.43", features = ["tokio", "gzip"] }

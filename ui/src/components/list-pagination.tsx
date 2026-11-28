@@ -1,5 +1,8 @@
 import { useRead } from "@/lib/hooks";
-import { Group, Pagination } from "@mantine/core";
+import {
+  ListPaginationProps,
+  ListPagination as MoghListPagination,
+} from "mogh_ui";
 
 /**
  * The server side default page size on `List<Resource>` calls,
@@ -18,29 +21,9 @@ export function usePageSize() {
  * Only renders when needed, ie the results fill the page
  * or the user is past the first page.
  */
-export default function ListPagination({
-  page,
-  setPage,
-  count,
-}: {
-  page: number;
-  setPage: (page: number) => void;
-  count: number;
-}) {
+export default function ListPagination(
+  props: Omit<ListPaginationProps, "pageSize">,
+) {
   const pageSize = usePageSize();
-  if (count < pageSize && page === 0) return null;
-  return (
-    <Pagination.Root
-      total={count >= pageSize ? page + 2 : page + 1}
-      value={page + 1}
-      onChange={(page) => setPage(page - 1)}
-    >
-      <Group gap="0.2rem" justify="center">
-        <Pagination.First />
-        <Pagination.Previous />
-        <Pagination.Items />
-        <Pagination.Next />
-      </Group>
-    </Pagination.Root>
-  );
+  return <MoghListPagination {...props} pageSize={pageSize} />;
 }

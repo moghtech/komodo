@@ -69,7 +69,7 @@ impl Resolve<crate::api::Args> for GetContainerLog {
       run_komodo_standard_command(
         "Get container log",
         command,
-        CommandOptions::default().timeout(Duration::from_secs(3)),
+        CommandOptions::default().timeout(Duration::from_secs(10)),
       )
       .await,
     )
@@ -104,7 +104,7 @@ impl Resolve<crate::api::Args> for GetContainerLogSearch {
       run_komodo_shell_command(
         "Get container log grep",
         command,
-        CommandOptions::default().timeout(Duration::from_secs(3)),
+        CommandOptions::default().timeout(Duration::from_secs(10)),
       )
       .await,
     )

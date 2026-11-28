@@ -9,24 +9,26 @@
 //! - Automatic container environment detection
 //! - Interface validation (existence and UP state)
 //! - Gateway discovery from routing tables or network configuration
-//! - Safe default route modification with privilege checking
+//! - Atomic default route replacement (never leaves the container without a default route)
 //! - Comprehensive error handling and logging
+
+use std::net::Ipv4Addr;
 
 use anyhow::{Context, anyhow};
 use tokio::process::Command;
 use tracing::{debug, info, trace, warn};
 
-/// Standard gateway addresses to test for Docker networks
-const DOCKER_GATEWAY_CANDIDATES: &[&str] = &[".1", ".254"];
-
 /// Container environment detection files
 const DOCKERENV_FILE: &str = "/.dockerenv";
+const CONTAINERENV_FILE: &str = "/run/.containerenv";
 const CGROUP_FILE: &str = "/proc/1/cgroup";
 
 /// Check if running in container environment
 fn is_container_environment() -> bool {
-  // Check for Docker-specific indicators
-  if std::path::Path::new(DOCKERENV_FILE).exists() {
+  // Check for Docker / Podman specific indicators
+  if std::path::Path::new(DOCKERENV_FILE).exists()
+    || std::path::Path::new(CONTAINERENV_FILE).exists()
+  {
     return true;
   }
 
@@ -35,7 +37,9 @@ fn is_container_environment() -> bool {
     return true;
   }
 
-  // Check cgroup for container runtime indicators
+  // Check cgroup for container runtime indicators.
+  // Only reliable on cgroup v1 - on cgroup v2 the file
+  // is usually just `0::/`, so the checks above carry detection.
   if let Ok(content) = std::fs::read_to_string(CGROUP_FILE)
     && (content.contains("docker") || content.contains("containerd"))
   {
@@ -51,23 +55,24 @@ pub async fn configure_internet_gateway() {
 
   let config = core_config();
 
+  if config.internet_interface.is_empty() {
+    debug!("No interface specified, using default routing");
+    return;
+  }
+
   if !is_container_environment() {
     debug!("Not in container, skipping network configuration");
     return;
   }
 
-  if !config.internet_interface.is_empty() {
-    debug!(
-      "Configuring internet interface: {}",
-      config.internet_interface
-    );
-    if let Err(e) =
-      configure_manual_interface(&config.internet_interface).await
-    {
-      warn!("Failed to configure internet gateway: {e:#}");
-    }
-  } else {
-    debug!("No interface specified, using default routing");
+  debug!(
+    "Configuring internet interface: {}",
+    config.internet_interface
+  );
+  if let Err(e) =
+    configure_manual_interface(&config.internet_interface).await
+  {
+    warn!("Failed to configure internet gateway: {e:#}");
   }
 }
 
@@ -91,7 +96,10 @@ async fn configure_manual_interface(
 
   let interface_info =
     String::from_utf8_lossy(&interface_check.stdout);
-  if !interface_info.contains("state UP") {
+  // tun / wireguard style interfaces report `state UNKNOWN` while operational
+  if !interface_info.contains("state UP")
+    && !interface_info.contains("state UNKNOWN")
+  {
     return Err(anyhow!(
       "Interface '{}' is not UP. Please ensure the interface is enabled and connected",
       interface_name
@@ -159,7 +167,7 @@ async fn find_gateway(
     .context("Failed to get routes for interface")?;
 
   if route_output.status.success() {
-    let routes = String::from_utf8(route_output.stdout)?;
+    let routes = String::from_utf8_lossy(&route_output.stdout);
     trace!("Routes for {}: {}", interface_name, routes.trim());
 
     // Look for routes with gateway
@@ -179,60 +187,75 @@ async fn find_gateway(
     }
   }
 
-  // Derive gateway from network configuration (Docker standard: .1)
-  if let Some(network_base) = ip_cidr.split('/').next() {
-    let ip_parts: Vec<&str> = network_base.split('.').collect();
-    if ip_parts.len() == 4 {
-      let potential_gateways: Vec<String> = DOCKER_GATEWAY_CANDIDATES
-        .iter()
-        .map(|suffix| {
-          format!(
-            "{}.{}.{}{}",
-            ip_parts[0], ip_parts[1], ip_parts[2], suffix
-          )
-        })
-        .collect();
+  // Derive candidates from the interface subnet
+  let candidates = derive_gateway_candidates(ip_cidr)
+    .with_context(|| {
+      format!(
+        "Could not determine gateway for interface '{interface_name}' in network '{ip_cidr}'"
+      )
+    })?;
 
-      for gateway in potential_gateways {
-        trace!(
-          "Testing potential gateway {} for {}",
-          gateway, interface_name
-        );
+  for gateway in &candidates {
+    trace!(
+      "Testing potential gateway {} for {}",
+      gateway, interface_name
+    );
 
-        // Check if gateway is reachable
-        let route_test = Command::new("ip")
-          .args(["route", "get", &gateway, "dev", interface_name])
-          .output()
-          .await;
+    // Note: `ip route get` only confirms the address is on-link
+    // for this interface, not that a router actually answers there.
+    let route_test = Command::new("ip")
+      .args(["route", "get", gateway, "dev", interface_name])
+      .output()
+      .await;
 
-        if let Ok(output) = route_test
-          && output.status.success()
-        {
-          trace!(
-            "Gateway {} is reachable via {}",
-            gateway, interface_name
-          );
-          return Ok(gateway.to_string());
-        }
-
-        // Fallback: assume .1 is gateway (Docker standard)
-        if gateway.ends_with(".1") {
-          trace!(
-            "Assuming Docker gateway {} for {}",
-            gateway, interface_name
-          );
-          return Ok(gateway.to_string());
-        }
-      }
+    if let Ok(output) = route_test
+      && output.status.success()
+    {
+      trace!("Gateway {} is on-link via {}", gateway, interface_name);
+      return Ok(gateway.clone());
     }
   }
 
-  Err(anyhow!(
-    "Could not determine gateway for interface '{}' in network '{}'. \
-        Ensure the interface is properly configured with a valid gateway",
-    interface_name,
-    ip_cidr
-  ))
+  // Fall back to the first host address (Docker standard)
+  let gateway = candidates
+    .into_iter()
+    .next()
+    .context("No gateway candidates derived")?;
+  trace!(
+    "Assuming Docker gateway {} for {}",
+    gateway, interface_name
+  );
+  Ok(gateway)
+}
+
+/// Derive candidate gateway addresses for the interface subnet:
+/// the first and last usable host addresses. Docker assigns the
+/// gateway the first host address of the subnet regardless of prefix length.
+fn derive_gateway_candidates(
+  ip_cidr: &str,
+) -> anyhow::Result<Vec<String>> {
+  let (ip, prefix) = ip_cidr
+    .split_once('/')
+    .context("Address is not in CIDR (ip/prefix) format")?;
+  let ip: Ipv4Addr =
+    ip.parse().context("Failed to parse IPv4 address")?;
+  let prefix: u32 =
+    prefix.parse().context("Failed to parse CIDR prefix")?;
+  if !(1..=30).contains(&prefix) {
+    return Err(anyhow!(
+      "Subnet /{prefix} cannot contain a distinct gateway address"
+    ));
+  }
+
+  let mask = u32::MAX << (32 - prefix);
+  let network = u32::from(ip) & mask;
+  let first_host = network + 1;
+  let last_host = (network | !mask) - 1;
+
+  Ok(vec![
+    Ipv4Addr::from(first_host).to_string(),
+    Ipv4Addr::from(last_host).to_string(),
+  ])
 }
 
 /// Set default gateway to use specified interface
@@ -245,48 +268,33 @@ async fn set_default_gateway(
     gateway, interface_name
   );
 
-  // Check if we have network privileges
-  if !check_network_privileges().await {
-    warn!(
-      "⚠️  Container lacks network privileges (NET_ADMIN capability required)"
-    );
-    warn!(
-      "Add 'cap_add: [\"NET_ADMIN\"]' to your docker-compose.yaml"
-    );
-    return Err(anyhow!(
-      "Insufficient network privileges to modify routing table. \
-            Container needs NET_ADMIN capability to configure network interfaces"
-    ));
-  }
-
-  // Remove existing default routes
-  let remove_default = Command::new("sh")
-    .args(["-c", "ip route del default 2>/dev/null || true"])
-    .output()
-    .await;
-
-  if let Ok(output) = remove_default
-    && output.status.success()
-  {
-    trace!("Removed existing default routes");
-  }
-
-  // Add new default route
-  let add_default_cmd = format!(
-    "ip route add default via {gateway} dev {interface_name}"
-  );
-  trace!("Adding default route: {}", add_default_cmd);
-
-  let add_default = Command::new("sh")
-    .args(["-c", &add_default_cmd])
+  // `replace` swaps the default route atomically, so a failure
+  // never leaves the container without any default route.
+  let replace = Command::new("ip")
+    .args([
+      "route",
+      "replace",
+      "default",
+      "via",
+      gateway,
+      "dev",
+      interface_name,
+    ])
     .output()
     .await
-    .context("Failed to add default route")?;
+    .context("Failed to run ip route replace")?;
 
-  if !add_default.status.success() {
-    let error = String::from_utf8_lossy(&add_default.stderr)
-      .trim()
-      .to_string();
+  if !replace.status.success() {
+    let error =
+      String::from_utf8_lossy(&replace.stderr).trim().to_string();
+    if error.contains("Operation not permitted") {
+      warn!(
+        "⚠️  Container lacks network privileges (NET_ADMIN capability required)"
+      );
+      warn!(
+        "Add 'cap_add: [\"NET_ADMIN\"]' to your docker-compose.yaml"
+      );
+    }
     return Err(anyhow!(
       "❌ Failed to set default gateway via '{}': {}. \
             Verify interface configuration and network permissions",
@@ -297,15 +305,4 @@ async fn set_default_gateway(
 
   trace!("Default gateway set to {} via {}", gateway, interface_name);
   Ok(())
-}
-
-/// Check if we have sufficient network privileges
-async fn check_network_privileges() -> bool {
-  // Try to test NET_ADMIN capability with a harmless route operation
-  let capability_test = Command::new("sh")
-        .args(["-c", "ip route add 198.51.100.1/32 dev lo 2>/dev/null && ip route del 198.51.100.1/32 dev lo 2>/dev/null"])
-        .output()
-        .await;
-
-  matches!(capability_test, Ok(output) if output.status.success())
 }

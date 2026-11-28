@@ -1,9 +1,12 @@
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
-import { ConfirmButton } from "mogh_ui";
-import { EntityPage } from "mogh_ui";
-import { LabelledSwitch } from "mogh_ui";
-import { PageGuard } from "mogh_ui";
-import { Section } from "mogh_ui";
+import {
+  ConfirmButton,
+  EntityPage,
+  LabelledSwitch,
+  PageGuard,
+  PageBreadcrumbs,
+  Section,
+} from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { UserCheck, UserMinus } from "lucide-react";
@@ -48,17 +51,22 @@ export default function User() {
             : undefined
       }
     >
-      <EntityPage backTo="/settings">
+      <EntityPage
+        backTo="/settings"
+        breadcrumbs={
+          <PageBreadcrumbs
+            items={[
+              { label: "Settings", to: "/settings" },
+              { label: user?.username },
+            ]}
+          />
+        }
+      >
         <UserHeader user={user} />
         <Stack mt="lg" gap="xl">
           {user?._id?.$oid !== adminUser?._id?.$oid &&
             (!user?.admin || (!user.super_admin && adminUser?.super_admin)) && (
-              <Section
-                title="User Permissions"
-                titleFz="h3"
-               
-                withBorder
-              >
+              <Section title="User Permissions" titleFz="h3" withBorder>
                 <Group>
                   <ConfirmButton
                     icon={

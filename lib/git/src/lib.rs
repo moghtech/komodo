@@ -31,7 +31,7 @@ pub async fn get_commit_hash_info(
     "git rev-parse --short HEAD",
     CommandOptions::default()
       .path(repo_dir)
-      .timeout(Duration::from_secs(1)),
+      .timeout(Duration::from_secs(2)),
   )
   .await;
   let hash = if hash.status.success() {
@@ -46,7 +46,7 @@ pub async fn get_commit_hash_info(
     "git log -1 --pretty=%B",
     CommandOptions::default()
       .path(repo_dir)
-      .timeout(Duration::from_secs(1)),
+      .timeout(Duration::from_secs(2)),
   )
   .await;
   let message = if message.status.success() {
@@ -93,7 +93,7 @@ pub async fn get_remote_url(path: &Path) -> anyhow::Result<String> {
     "git remote show origin",
     CommandOptions::default()
       .path(path)
-      .timeout(Duration::from_secs(1)),
+      .timeout(Duration::from_secs(2)),
   )
   .await;
   if output.success() {

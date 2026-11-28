@@ -21,7 +21,7 @@ pub async fn list_compose_projects()
   let res = run_komodo_standard_command(
     "List Projects",
     format!("{docker_compose} ls --all --format json"),
-    CommandOptions::default().timeout(Duration::from_secs(1)),
+    CommandOptions::default().timeout(Duration::from_secs(5)),
   )
   .await;
 

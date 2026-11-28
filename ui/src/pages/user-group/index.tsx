@@ -1,11 +1,14 @@
 import UserTable from "@/components/user/table";
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { DividedChildren } from "mogh_ui";
-import { EntityHeader } from "mogh_ui";
-import { EntityPage } from "mogh_ui";
-import { PageGuard } from "mogh_ui";
-import { Section } from "mogh_ui";
+import {
+  DividedChildren,
+  EntityHeader,
+  EntityPage,
+  PageBreadcrumbs,
+  PageGuard,
+  Section,
+} from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useParams } from "react-router-dom";
@@ -66,7 +69,17 @@ export default function UserGroup() {
             : undefined
       }
     >
-      <EntityPage backTo="/settings">
+      <EntityPage
+        backTo="/settings"
+        breadcrumbs={
+          <PageBreadcrumbs
+            items={[
+              { label: "Settings", to: "/settings" },
+              { label: group?.name },
+            ]}
+          />
+        }
+      >
         <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
           <EntityHeader
             name={group?.name}
